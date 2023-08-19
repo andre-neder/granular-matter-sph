@@ -32,8 +32,9 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
+std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME};
+// PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR;
+// PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR;
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
     std::optional<uint32_t> presentFamily;
@@ -235,6 +236,9 @@ private:
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
+
+        // auto function = (PFN_vkCmdBeginRenderingKHR)vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR");
+        // auto function2 = (PFN_vkCmdEndRenderingKHR)vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR");
     }
 
     void setupDebugMessenger() {
@@ -353,9 +357,12 @@ private:
                 deviceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
         }
 
+        vk::PhysicalDeviceDynamicRenderingFeatures dynamicRenderingFeature;
+        dynamicRenderingFeature = vk::PhysicalDeviceDynamicRenderingFeatures(VK_TRUE);
+
         vk::DeviceCreateInfo createInfo;
         if (enableValidation) {
-            createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, &deviceFeatures);
+            createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, &deviceFeatures, &dynamicRenderingFeature);
         }else{
             createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, &deviceFeatures);
         }
@@ -366,6 +373,7 @@ private:
         }
         graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
         presentQueue = device.getQueue(indices.presentFamily.value(), 0);
+
     }
 
     void createAllocator(){
@@ -499,9 +507,6 @@ private:
                 std::cerr << "Exception Thrown: " << e.what();
             }
         }
-        //record Command Buffers
-
-        
     }
 
     void recreateImGuiFramebuffer() {
@@ -692,8 +697,10 @@ private:
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
-
-        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, renderPass);
+        const vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo({}, 1, &swapChainImageFormat);
+       
+        // vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, renderPass);
+        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, {}, {}, {}, {}, &pipelineRenderingCreateInfo);
         
         vk::Result result;
         std::tie(result, graphicsPipeline) = device.createGraphicsPipeline( nullptr, pipelineInfo);
@@ -993,31 +1000,9 @@ private:
             std::cerr << "Exception Thrown: " << e.what();
         }
 
-        for (size_t i = 0; i < commandBuffers.size(); i++) {
-            vk::CommandBufferBeginInfo beginInfo;
-            try{
-                commandBuffers[i].begin(beginInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-            std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
-            vk::RenderPassBeginInfo renderPassInfo(renderPass, swapChainFramebuffers[i], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
-
-            commandBuffers[i].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-                commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-                std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
-                std::vector<vk::DeviceSize> offsets = {0};
-                commandBuffers[i].bindVertexBuffers(0, vertexBuffers, offsets);
-                commandBuffers[i].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
-                commandBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-                commandBuffers[i].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-            commandBuffers[i].endRenderPass();
-            try{
-                commandBuffers[i].end();
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-        }
+        // for (size_t i = 0; i < commandBuffers.size(); i++) {
+            
+        // }
     }
 
     void createSyncObjects() {
@@ -1068,6 +1053,7 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         updateUniformBuffer(imageIndex);
         recordCommandBuffer(imageIndex);
+        recordCommandBufferImgui(imageIndex);
 
         if ((VkFence) imagesInFlight[imageIndex] != VK_NULL_HANDLE)
             vk::Result result2 = device.waitForFences(imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
@@ -1091,8 +1077,117 @@ private:
             throw std::runtime_error("queue Present failed!");
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
-
     void recordCommandBuffer(uint32_t imageIndex){
+        vk::CommandBufferBeginInfo beginInfo;
+        try{
+            commandBuffers[imageIndex].begin(beginInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        
+        const vk::ImageMemoryBarrier imageMemoryBarrierStart(
+            vk::AccessFlagBits::eColorAttachmentWrite,
+            {},
+            vk::ImageLayout::ePresentSrcKHR,
+            vk::ImageLayout::eAttachmentOptimalKHR,
+            {},
+            {},
+            swapChainImages[imageIndex],
+            vk::ImageSubresourceRange(
+                vk::ImageAspectFlagBits::eColor,
+                0,
+                1,
+                0,
+                1
+            )
+        );
+
+        commandBuffers[imageIndex].pipelineBarrier(
+            vk::PipelineStageFlagBits::eTopOfPipe, 
+            vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            &imageMemoryBarrierStart
+        );
+
+        std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
+        // vk::RenderPassBeginInfo renderPassInfo(renderPass, swapChainFramebuffers[imageIndex], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
+        // commandBuffers[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
+        const vk::RenderingAttachmentInfo colorAttachmentInfo( 
+            swapChainImageViews[imageIndex],
+            vk::ImageLayout::eAttachmentOptimalKHR,
+            vk::ResolveModeFlagBits::eNone,
+            {},
+            vk::ImageLayout::eUndefined,
+            vk::AttachmentLoadOp::eClear,
+            vk::AttachmentStoreOp::eStore,
+            clearValues[0]
+        );
+
+        vk::Rect2D scissor(vk::Offset2D(0, 0),swapChainExtent);
+        
+        const vk::RenderingInfo renderInfo(
+            {}, 
+            scissor, 
+            1, 
+            {}, 
+            1, 
+            &colorAttachmentInfo); 
+
+        commandBuffers[imageIndex].beginRendering(&renderInfo);
+
+        commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+        // std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
+        // std::vector<vk::DeviceSize> offsets = {0};
+        // commandBuffers[imageIndex].bindVertexBuffers(0, vertexBuffers, offsets);
+        // commandBuffers[imageIndex].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+        // commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
+        commandBuffers[imageIndex].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+
+        commandBuffersImgui[imageIndex].endRendering();
+        // commandBuffers[imageIndex].endRenderPass();
+
+        const vk::ImageMemoryBarrier imageMemoryBarrier(
+            vk::AccessFlagBits::eColorAttachmentWrite,
+            {},
+            vk::ImageLayout::eAttachmentOptimalKHR,
+            vk::ImageLayout::ePresentSrcKHR,
+            {},
+            {},
+            swapChainImages[imageIndex],
+            vk::ImageSubresourceRange(
+                vk::ImageAspectFlagBits::eColor,
+                0,
+                1,
+                0,
+                1
+            )
+        );
+
+        commandBuffersImgui[imageIndex].pipelineBarrier(
+            vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+            vk::PipelineStageFlagBits::eBottomOfPipe, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            &imageMemoryBarrier
+        );
+
+        try{
+            commandBuffers[imageIndex].end();
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    void recordCommandBufferImgui(uint32_t imageIndex){
         vk::CommandBufferBeginInfo beginInfo;
         try{
             commandBuffersImgui[imageIndex].begin(beginInfo);
@@ -1102,13 +1197,103 @@ private:
         std::array<vk::ClearValue, 1> clearValues{
             vk::ClearValue(vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}))
         };
-        vk::RenderPassBeginInfo renderPassInfo(renderPassImgui, framebuffersImgui[imageIndex], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
 
-        commandBuffersImgui[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+        const vk::ImageMemoryBarrier imageMemoryBarrierStart(
+            vk::AccessFlagBits::eColorAttachmentWrite,
+            {},
+            vk::ImageLayout::ePresentSrcKHR,
+            vk::ImageLayout::eAttachmentOptimalKHR,
+            {},
+            {},
+            swapChainImages[imageIndex],
+            vk::ImageSubresourceRange(
+                vk::ImageAspectFlagBits::eColor,
+                0,
+                1,
+                0,
+                1
+            )
+        );
 
+        commandBuffersImgui[imageIndex].pipelineBarrier(
+            vk::PipelineStageFlagBits::eTopOfPipe, 
+            vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            &imageMemoryBarrierStart
+        );
+
+        // vk::RenderPassBeginInfo renderPassInfo(renderPassImgui, framebuffersImgui[imageIndex], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
+
+        // commandBuffersImgui[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
+        const vk::RenderingAttachmentInfo colorAttachmentInfo( 
+            swapChainImageViews[imageIndex],
+            vk::ImageLayout::eAttachmentOptimalKHR,
+            vk::ResolveModeFlagBits::eNone,
+            {},
+            vk::ImageLayout::eUndefined,
+            vk::AttachmentLoadOp::eClear,
+            vk::AttachmentStoreOp::eStore,
+            clearValues[0]
+        );
+   
+        vk::Rect2D scissor(vk::Offset2D(0, 0),swapChainExtent);
+        
+        const vk::RenderingInfo renderInfo(
+            {}, 
+            scissor, 
+            1, 
+            {}, 
+            1, 
+            &colorAttachmentInfo); 
+    
+        // renderInfo = vk::RenderingAttachmentInfoKHR({},render_area,1,1,&colorAttachmentInfo);
+        commandBuffersImgui[imageIndex].beginRendering(&renderInfo);
+        // vkCmdBeginRenderingKHR(commandBuffersImgui[imageIndex], (VkRenderingInfo*)&renderInfo);
+
+        // Draw calls here
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffersImgui[imageIndex]);
 
-        commandBuffersImgui[imageIndex].endRenderPass();
+        commandBuffersImgui[imageIndex].endRendering();
+        // vkCmdEndRenderingKHR(commandBuffersImgui[imageIndex]);
+
+
+
+        const vk::ImageMemoryBarrier imageMemoryBarrier(
+            vk::AccessFlagBits::eColorAttachmentWrite,
+            {},
+            vk::ImageLayout::eAttachmentOptimalKHR,
+            vk::ImageLayout::ePresentSrcKHR,
+            {},
+            {},
+            swapChainImages[imageIndex],
+            vk::ImageSubresourceRange(
+                vk::ImageAspectFlagBits::eColor,
+                0,
+                1,
+                0,
+                1
+            )
+        );
+
+        commandBuffersImgui[imageIndex].pipelineBarrier(
+            vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+            vk::PipelineStageFlagBits::eBottomOfPipe, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            {}, 
+            &imageMemoryBarrier
+        );
+
+        // commandBuffersImgui[imageIndex].endRenderPass();
         try{
             commandBuffersImgui[imageIndex].end();
         }catch(std::exception& e) {
