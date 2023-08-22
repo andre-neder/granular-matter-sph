@@ -32,7 +32,11 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
-std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME};
+std::vector<const char*> deviceExtensions = {
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+    VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, 
+    VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME, //Required for dynamic rendering
+    VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME}; //Required for dynamic rendering
 // PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR;
 // PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR;
 struct QueueFamilyIndices {

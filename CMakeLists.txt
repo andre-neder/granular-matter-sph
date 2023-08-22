@@ -64,6 +64,8 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/glslang)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE glslang SPIRV)
 
 #add imgui
+set(USE_BACKEND_GLFW ON)
+set(USE_BACKEND_VULKAN ON)
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/imgui)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE vendor/imgui)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE imgui)
