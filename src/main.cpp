@@ -31,7 +31,7 @@
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
-const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+
 std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 struct QueueFamilyIndices {
@@ -86,14 +86,6 @@ struct UniformBufferObject {
     glm::mat4 proj = glm::mat4(1.0f);
 };
 
-static void check_vk_result(VkResult err)
-{
-    if (err == 0)
-        return;
-    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
-    if (err < 0)
-        abort();
-}
 
 #ifdef IMGUI_VULKAN_DEBUG_REPORT
     static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
@@ -107,20 +99,18 @@ static void check_vk_result(VkResult err)
 
 class VulkanBase {
 public:
-    void run() {
+        void run() {
         initWindow();
-        initVulkan();
+                initVulkan();
         mainLoop();
         cleanup();
     }
 private:
     GLFWwindow* window;
-    VmaAllocator allocator;
+        VmaAllocator allocator;
     vk::Instance instance;
     bool enableValidation = true;
     vk::DebugUtilsMessengerEXT debugMessenger;
-    vk::DebugUtilsMessageSeverityFlagsEXT messageSeverityFlags = vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
-    vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation;
     vk::PhysicalDevice physicalDevice;
     vk::Device device;
     vk::Queue graphicsQueue;
@@ -182,9 +172,10 @@ private:
     }
 
     void initVulkan(){
-        createInstance();
-        if(enableValidation)
-            setupDebugMessenger();
+        instance = createInstance(enableValidation);
+        if(enableValidation){
+            debugMessenger = createDebugMessenger(instance);
+        }
         createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
@@ -209,67 +200,7 @@ private:
         createSyncObjects();
         initImGui();
     }
-
-    void createInstance(){
-        if (enableValidation && !checkValidationLayerSupport()) {
-            throw std::runtime_error("validation layers requested, but not available!");
-        }
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-        vk::ApplicationInfo applicationInfo("VulkanBase", VK_MAKE_VERSION(0, 0 ,1), "VulkanEngine", 1, VK_API_VERSION_1_1);
-
-        try {
-            if(enableValidation){
-                extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-                vk::StructureChain<vk::InstanceCreateInfo, vk::DebugUtilsMessengerCreateInfoEXT> instanceCreateInfoChain{
-                    vk::InstanceCreateInfo(vk::InstanceCreateFlags(), &applicationInfo, validationLayers, extensions),
-                    vk::DebugUtilsMessengerCreateInfoEXT({}, messageSeverityFlags, messageTypeFlags, debugCallback)
-                };
-                instance = vk::createInstance(instanceCreateInfoChain.get<vk::InstanceCreateInfo>());
-            }else{
-                vk::InstanceCreateInfo instanceCreateInfo(vk::InstanceCreateFlags(), &applicationInfo, {}, extensions);
-                instance = vk::createInstance(instanceCreateInfo);
-            }
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-    }
-
-    void setupDebugMessenger() {
-        pfnVkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(instance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
-        if (!pfnVkCreateDebugUtilsMessengerEXT){
-            throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkCreateDebugUtilsMessengerEXT function.");
-        }
-        pfnVkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(instance.getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
-        if (!pfnVkDestroyDebugUtilsMessengerEXT){
-            throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkDestroyDebugUtilsMessengerEXT function.");
-        }
-        vk::DebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo({}, messageSeverityFlags, messageTypeFlags, debugCallback);
-        try{
-            debugMessenger = instance.createDebugUtilsMessengerEXT(debugMessengerCreateInfo, nullptr);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-    }
-
-    bool checkValidationLayerSupport() {
-        std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
-        for (const char* layerName : validationLayers) {
-            bool layerFound = false;
-            for (const auto& layerProperties : availableLayers) {
-                if (strcmp(layerName, layerProperties.layerName) == 0) {
-                    layerFound = true;
-                    break;
-                }
-            }
-            if (!layerFound) {
-                return false;
-            }
-        }
-        return true;
-    }
+    
 
     void createSurface() {
         if (glfwCreateWindowSurface(instance, window, nullptr, reinterpret_cast<VkSurfaceKHR*>(&surface)) != VK_SUCCESS) {
@@ -1230,8 +1161,8 @@ private:
     }
 
     static void framebufferResizeCallback(GLFWwindow *window, int width, int height){
-        auto app = reinterpret_cast<VulkanBase *>(glfwGetWindowUserPointer(window));
-        app->framebufferResized = true;
+    auto app = reinterpret_cast<VulkanBase *>(glfwGetWindowUserPointer(window));
+    app->framebufferResized = true;
     }
 };
 

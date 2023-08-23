@@ -1,4 +1,5 @@
 #include <vulkan/vulkan.hpp>
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <sstream>
 
@@ -59,4 +60,80 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBits
 	}
 	std::cout << message.str() << std::endl;
 	return VK_FALSE;
+}
+
+
+const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
+vk::DebugUtilsMessageSeverityFlagsEXT messageSeverityFlags = vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation;
+
+bool checkValidationLayerSupport() {
+	std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
+	for (const char* layerName : validationLayers) {
+		bool layerFound = false;
+		for (const auto& layerProperties : availableLayers) {
+			if (strcmp(layerName, layerProperties.layerName) == 0) {
+				layerFound = true;
+				break;
+			}
+		}
+		if (!layerFound) {
+			return false;
+		}
+	}
+	return true;
+}
+    
+vk::Instance createInstance(bool enableValidation){
+	if (enableValidation && !checkValidationLayerSupport()) {
+		throw std::runtime_error("validation layers requested, but not available!");
+	}
+	uint32_t glfwExtensionCount = 0;
+	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+	vk::ApplicationInfo applicationInfo("VulkanBase", VK_MAKE_VERSION(0, 0 ,1), "VulkanEngine", 1, VK_API_VERSION_1_1);
+
+	try {
+		if(enableValidation){
+			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			vk::StructureChain<vk::InstanceCreateInfo, vk::DebugUtilsMessengerCreateInfoEXT> instanceCreateInfoChain{
+				vk::InstanceCreateInfo(vk::InstanceCreateFlags(), &applicationInfo, validationLayers, extensions),
+				vk::DebugUtilsMessengerCreateInfoEXT({}, messageSeverityFlags, messageTypeFlags, debugCallback)
+			};
+			return vk::createInstance(instanceCreateInfoChain.get<vk::InstanceCreateInfo>());
+		}else{
+			vk::InstanceCreateInfo instanceCreateInfo(vk::InstanceCreateFlags(), &applicationInfo, {}, extensions);
+			return vk::createInstance(instanceCreateInfo);
+		}
+	}catch(std::exception& e) {
+		std::cerr << "Exception Thrown: " << e.what();
+	}
+}
+
+vk::DebugUtilsMessengerEXT createDebugMessenger(vk::Instance instance) {
+	pfnVkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(instance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
+	if (!pfnVkCreateDebugUtilsMessengerEXT){
+		throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkCreateDebugUtilsMessengerEXT function.");
+	}
+	pfnVkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(instance.getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
+	if (!pfnVkDestroyDebugUtilsMessengerEXT){
+		throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkDestroyDebugUtilsMessengerEXT function.");
+	}
+	vk::DebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo({}, messageSeverityFlags, messageTypeFlags, debugCallback);
+	try{
+		return instance.createDebugUtilsMessengerEXT(debugMessengerCreateInfo, nullptr);
+	}catch(std::exception& e) {
+		std::cerr << "Exception Thrown: " << e.what();
+	}
+}
+
+
+static void check_vk_result(VkResult err)
+{
+    if (err == 0)
+        return;
+    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+    if (err < 0)
+        abort();
 }
