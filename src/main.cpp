@@ -101,13 +101,13 @@ class VulkanBase {
 public:
         void run() {
         initWindow();
-                initVulkan();
+        initVulkan();
         mainLoop();
         cleanup();
     }
 private:
     GLFWwindow* window;
-        VmaAllocator allocator;
+    VmaAllocator allocator;
     vk::Instance instance;
     bool enableValidation = true;
     vk::DebugUtilsMessengerEXT debugMessenger;
@@ -144,7 +144,6 @@ private:
     VmaAllocation textureImageAllocation;
     vk::ImageView textureImageView;
     vk::Sampler textureSampler;
-
 
     vk::DescriptorPool descriptorPool;
     std::vector<vk::DescriptorSet> descriptorSets;
@@ -200,7 +199,6 @@ private:
         createSyncObjects();
         initImGui();
     }
-    
 
     void createSurface() {
         if (glfwCreateWindowSurface(instance, window, nullptr, reinterpret_cast<VkSurfaceKHR*>(&surface)) != VK_SUCCESS) {
@@ -915,7 +913,7 @@ private:
         }
     }
 
-   void createCommandBuffers(){
+    void createCommandBuffers(){
         commandBuffers.resize(swapChainFramebuffers.size());
         vk::CommandBufferAllocateInfo allocInfo(commandPool, vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
         try{
