@@ -106,13 +106,15 @@ public:
         cleanup();
     }
 private:
-    GLFWwindow* window;
-    VmaAllocator allocator;
-    vk::Instance instance;
     bool enableValidation = true;
+    vk::Instance instance;
     vk::DebugUtilsMessengerEXT debugMessenger;
     vk::PhysicalDevice physicalDevice;
     vk::Device device;
+    
+    VmaAllocator allocator;
+
+    GLFWwindow* window;
     vk::Queue graphicsQueue;
     vk::Queue presentQueue;
     vk::SurfaceKHR surface;
@@ -126,11 +128,11 @@ private:
     
     vk::RenderPass renderPass;
     vk::PipelineLayout pipelineLayout;
+    vk::Pipeline graphicsPipeline;
     vk::DescriptorSetLayout descriptorSetLayout;
 
     vk::ShaderModule vertShaderModule;
     vk::ShaderModule fragShaderModule;
-    vk::Pipeline graphicsPipeline;
 
     vk::CommandPool commandPool; 
     std::vector<vk::CommandBuffer> commandBuffers;
