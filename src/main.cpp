@@ -995,8 +995,11 @@ private:
         if(result == vk::Result::eErrorOutOfDateKHR){
             recreateSwapChain();
             return;
-        }else if(result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
+        }
+        else if(result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR){
             throw std::runtime_error("failed to acquire swap chain image!");
+        }
+        
         updateUniformBuffer(imageIndex);
         recordCommandBuffer(imageIndex);
 
