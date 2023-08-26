@@ -21,11 +21,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <vk_mem_alloc.h>
-#include "spirv_utils.h"
-#include "vulkan_utils.h"
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+#include "spirv_utils.h"
+#include "vulkan_utils.h"
+#include "window.h"
 
 
 const uint32_t WIDTH = 800;
@@ -114,7 +115,7 @@ private:
     
     VmaAllocator allocator;
 
-    GLFWwindow* window;
+    gpu::Window window;
     vk::Queue graphicsQueue;
     vk::Queue presentQueue;
     vk::SurfaceKHR surface;
@@ -155,7 +156,7 @@ private:
     std::vector<vk::Fence> inFlightFences;
     std::vector<vk::Fence> imagesInFlight;
     size_t currentFrame = 0;
-    bool framebufferResized = false;
+    // bool framebufferResized = false;
 
     vk::DescriptorPool descriptorPoolImgui;
     vk::RenderPass renderPassImgui;
@@ -164,12 +165,7 @@ private:
     std::vector<vk::Framebuffer> framebuffersImgui;
 
     void initWindow(){
-        glfwInit();
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        window = glfwCreateWindow(WIDTH, HEIGHT, "VulkanBase", nullptr, nullptr);
-        glfwSetWindowUserPointer(window, this);
-        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+        window = gpu::Window("Application", WIDTH, HEIGHT);
     }
 
     void initVulkan(){
@@ -203,7 +199,7 @@ private:
     }
 
     void createSurface() {
-        if (glfwCreateWindowSurface(instance, window, nullptr, reinterpret_cast<VkSurfaceKHR*>(&surface)) != VK_SUCCESS) {
+        if (glfwCreateWindowSurface(instance, window.getGLFWWindow(), nullptr, reinterpret_cast<VkSurfaceKHR*>(&surface)) != VK_SUCCESS) {
             throw std::runtime_error("failed to create window surface!");
         }
     }
@@ -321,7 +317,7 @@ private:
         // Setup Dear ImGui style
         ImGui::StyleColorsDark();
         //ImGui::StyleColorsClassic();
-        ImGui_ImplGlfw_InitForVulkan(window, true);
+        ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
 
         std::array<vk::DescriptorPoolSize, 11> poolSizes{
             vk::DescriptorPoolSize{ vk::DescriptorType::eSampler, 1000 },
@@ -474,7 +470,7 @@ private:
             return capabilities.currentExtent;
         } else {
             int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
+            window.getSize(&width, &height);
             vk::Extent2D actualExtent = {
                 static_cast<uint32_t>(width),
                 static_cast<uint32_t>(height)
@@ -1017,9 +1013,16 @@ private:
 
         std::vector<vk::SwapchainKHR> swapChains = {swapChain};
         vk::PresentInfoKHR presentInfo(signalSemaphores, swapChains, imageIndex);
-        result = presentQueue.presentKHR(presentInfo);
-        if(result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || framebufferResized){
-            framebufferResized = false;
+        try{
+            result = presentQueue.presentKHR(presentInfo);
+        }
+        catch(const std::exception& e){
+            std::cerr << e.what() << '\n';
+        }
+        
+        if(result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || window.wasResized()){
+            // framebufferResized = false;
+            window.resizeHandled();
             recreateSwapChain();
         }else if(result != vk::Result::eSuccess)
             throw std::runtime_error("queue Present failed!");
@@ -1056,7 +1059,7 @@ private:
 
         bool show_demo_window = true;
 
-        while (!glfwWindowShouldClose(window)) {
+        while (!window.shouldClose()) {
             glfwPollEvents();
 
             ImGui_ImplVulkan_NewFrame();
@@ -1070,7 +1073,7 @@ private:
             if((glfwGetTime() - time) >= 1.0){
                 time = glfwGetTime();
                 std::string title = "VulkanBase  FPS:"+std::to_string(fps);
-                glfwSetWindowTitle(window, title.c_str());
+                window.setTitle(title);
                 fps = 0;
             }
         }
@@ -1133,15 +1136,15 @@ private:
         }
         instance.destroySurfaceKHR(surface);
         instance.destroy();
-        glfwDestroyWindow(window);
-        glfwTerminate();
+        
+        window.destroy();
     }
 
     void recreateSwapChain() {
         int width = 0, height = 0;
-        glfwGetFramebufferSize(window, &width, &height);
+        window.getSize(&width, &height);
         while (width == 0 || height == 0) {
-            glfwGetFramebufferSize(window, &width, &height);
+            window.getSize(&width, &height);
             glfwWaitEvents();
         }
         device.waitIdle();
@@ -1161,11 +1164,6 @@ private:
         imagesInFlight.resize(swapChainImages.size(), VK_NULL_HANDLE);
 
         recreateImGuiFramebuffer();
-    }
-
-    static void framebufferResizeCallback(GLFWwindow *window, int width, int height){
-    auto app = reinterpret_cast<VulkanBase *>(glfwGetWindowUserPointer(window));
-    app->framebufferResized = true;
     }
 };
 
