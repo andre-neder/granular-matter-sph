@@ -158,8 +158,9 @@ private:
         createTextureImage();
         textureImageView = core.createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
         textureSampler = core.createTextureSampler();
-        createVertexBuffer();
-        createIndexBuffer();
+        vertexBuffer = core.bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+        indexBuffer = core.bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+
         createUniformBuffers();
         createDescriptorPool();
         createDescriptorSets();
@@ -518,37 +519,6 @@ private:
         core.transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
         core.copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
         core.transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-
-        core.destroyBuffer(stagingBuffer);
-    }
-
-
-    void createVertexBuffer(){
-        vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-        vk::Buffer stagingBuffer = core.createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
-        
-        void* mappedData = core.mapBuffer(stagingBuffer);
-        memcpy(mappedData, vertices.data(), (size_t) bufferSize);
-        core.unmapBuffer(stagingBuffer);
-
-        vertexBuffer = core.createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
-        core.copyBufferToBuffer(stagingBuffer, vertexBuffer, bufferSize);
-
-        core.destroyBuffer(stagingBuffer);
-    }
-
-    void createIndexBuffer() {
-        VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
-
-        vk::Buffer stagingBuffer = core.createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
-        
-        void* mappedData = core.mapBuffer(stagingBuffer);
-        memcpy(mappedData, indices.data(), (size_t) bufferSize);
-        core.unmapBuffer(stagingBuffer);
-
-        indexBuffer = core.createBuffer(bufferSize, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
-        core.copyBufferToBuffer(stagingBuffer, indexBuffer, bufferSize);
 
         core.destroyBuffer(stagingBuffer);
     }

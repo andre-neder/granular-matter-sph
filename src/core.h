@@ -28,7 +28,8 @@ namespace gpu
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
             SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
             
-            vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
+            vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
+            vk::Buffer bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
             void* mapBuffer(vk::Buffer buffer);
             void unmapBuffer(vk::Buffer buffer);
             void flushBuffer(vk::Buffer buffer, size_t offset, size_t size);
@@ -218,6 +219,27 @@ namespace gpu
             throw std::runtime_error("failed to create buffer!");
         }
         m_bufferAllocations[buffer] = allocation;
+        return buffer;
+    }
+    vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage){
+        if(memoryUsage != VMA_MEMORY_USAGE_CPU_ONLY && memoryUsage != VMA_MEMORY_USAGE_GPU_ONLY){
+            throw std::exception("Unsupported memory usage.");
+        }
+
+        vk::Buffer stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
+        
+        void* mappedData = mapBuffer(stagingBuffer);
+        memcpy(mappedData, data, (size_t) size);
+        unmapBuffer(stagingBuffer);
+
+        if(memoryUsage == VMA_MEMORY_USAGE_CPU_ONLY){
+            return stagingBuffer;
+        }
+
+        vk::Buffer buffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferDst | bufferUsage, VMA_MEMORY_USAGE_GPU_ONLY);
+        copyBufferToBuffer(stagingBuffer, buffer, size);
+        destroyBuffer(stagingBuffer);
+
         return buffer;
     }
     void* Core::mapBuffer(vk::Buffer buffer){
