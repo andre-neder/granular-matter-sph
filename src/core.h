@@ -30,7 +30,7 @@ namespace gpu
             std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
             vk::Instance instance;
-            vk::DebugUtilsMessengerEXT debugMessenger;
+            vk::DebugUtilsMessengerEXT m_debugMessenger;
             vk::SurfaceKHR surface;
             vk::PhysicalDevice physicalDevice;
             vk::Device device;
@@ -49,7 +49,7 @@ namespace gpu
         m_enableValidation = enableValidation;
         instance = createInstance(m_enableValidation);
          if(m_enableValidation){
-            debugMessenger = createDebugMessenger(instance);
+            m_debugMessenger = createDebugMessenger(instance);
         }
         if (glfwCreateWindowSurface(instance, window->getGLFWWindow(), nullptr, reinterpret_cast<VkSurfaceKHR*>(&surface)) != VK_SUCCESS) {
             throw std::runtime_error("failed to create window surface!");
@@ -60,10 +60,11 @@ namespace gpu
     }
 
     void Core::destroy(){
+        vmaDestroyAllocator(allocator);
         device.destroy();
         instance.destroySurfaceKHR(surface);
         if (m_enableValidation) {
-            instance.destroyDebugUtilsMessengerEXT(debugMessenger);
+            instance.destroyDebugUtilsMessengerEXT(m_debugMessenger);
         }
         instance.destroy();
     }

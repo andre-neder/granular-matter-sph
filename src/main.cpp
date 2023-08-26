@@ -357,14 +357,6 @@ private:
         }
     }
 
-    // SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice) {
-    //     SwapChainSupportDetails details;
-    //     details.capabilities = pDevice.getSurfaceCapabilitiesKHR(surface);
-    //     details.formats = pDevice.getSurfaceFormatsKHR(surface);
-    //     details.presentModes = pDevice.getSurfacePresentModesKHR(surface);
-    //     return details;
-    // }
-
     void createSwapChain() {
         SwapChainSupportDetails swapChainSupport = core.querySwapChainSupport(physicalDevice);
 
@@ -1004,8 +996,6 @@ private:
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
-
-        vmaDestroyAllocator(allocator);
         
         window.destroy();
 
