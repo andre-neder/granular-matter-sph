@@ -35,8 +35,14 @@ namespace gpu
             void destroyBuffer(vk::Buffer buffer);
             void copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
             void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
-            
+
+            vk::Image createImage(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling);
             void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+            vk::ImageView createImageView(vk::Image image, vk::Format format);
+            vk::Sampler createTextureSampler();
+            void destroyImage(vk::Image image);
+            void destroyImageView(vk::ImageView view);
+            void destroySampler(vk::Sampler sampler);
 
             void createCommandPool();
             vk::CommandBuffer beginSingleTimeCommands();
@@ -56,6 +62,7 @@ namespace gpu
             vk::CommandPool commandPool; 
 
             std::map<vk::Buffer, VmaAllocation> m_bufferAllocations;
+            std::map<vk::Image, VmaAllocation> m_imageAllocations;
 
             void pickPhysicalDevice();
             bool isDeviceSuitable(vk::PhysicalDevice pDevice);
@@ -311,6 +318,70 @@ namespace gpu
         commandBuffer.pipelineBarrier(sourceStage, destinationStage, {}, {}, {}, {}, {}, 1, &barrier);
 
         endSingleTimeCommands(commandBuffer);
+    }
+    vk::Image Core::createImage(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
+        vk::Image image;
+        VmaAllocation imageAllocation;
+        vk::ImageCreateInfo imageInfo({}, vk::ImageType::e2D, format, vk::Extent3D{{width, height}, 1}, 1, 1, vk::SampleCountFlagBits::e1, tiling, imageUsage, vk::SharingMode::eExclusive, {}, {}, vk::ImageLayout::eUndefined);
+        VmaAllocationCreateInfo allocInfoImage = {};
+        allocInfoImage.usage = memoryUsage;
+        if(vmaCreateImage(allocator, reinterpret_cast<VkImageCreateInfo*>(&imageInfo), &allocInfoImage, reinterpret_cast<VkImage*>(&image), &imageAllocation, nullptr) != VK_SUCCESS){
+            throw std::runtime_error("failed to create image!");
+        }
+        m_imageAllocations[image] = imageAllocation;
+        return image;
+    }
+    void Core::destroyImage(vk::Image image){
+        vmaDestroyImage(allocator, image, m_imageAllocations[image]);
+        m_imageAllocations.erase(image);
+    }
+
+    void Core::destroyImageView(vk::ImageView view){
+        device.destroyImageView(view);
+    }
+
+    vk::ImageView Core::createImageView(vk::Image image, vk::Format format) {
+        vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e2D, format, {}, vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+        vk::ImageView imageView;
+        try{
+            imageView = device.createImageView(viewInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        return imageView;
+    }
+
+    vk::Sampler Core::createTextureSampler() {
+        vk::Sampler sampler;
+        vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
+
+        vk::SamplerCreateInfo samplerInfo(
+            {}, 
+            vk::Filter::eLinear, 
+            vk::Filter::eLinear, 
+            vk::SamplerMipmapMode::eLinear, 
+            vk::SamplerAddressMode::eRepeat, 
+            vk::SamplerAddressMode::eRepeat, 
+            vk::SamplerAddressMode::eRepeat,
+            0.0f, 
+            VK_TRUE, 
+            properties.limits.maxSamplerAnisotropy, 
+            VK_FALSE,  
+            vk::CompareOp::eAlways, 
+            0.0f,
+            0.0f, 
+            vk::BorderColor::eIntOpaqueBlack, 
+            VK_FALSE 
+        );
+        try{
+            sampler = device.createSampler(samplerInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        return sampler;
+    }
+    void Core::destroySampler(vk::Sampler sampler){
+        device.destroySampler(sampler);
     }
 } // namespace gpu
 

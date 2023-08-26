@@ -114,7 +114,7 @@ private:
     vk::Buffer indexBuffer;
     std::vector<vk::Buffer> uniformBuffers;
     vk::Image textureImage;
-    VmaAllocation textureImageAllocation;
+    // VmaAllocation textureImageAllocation;
     vk::ImageView textureImageView;
     vk::Sampler textureSampler;
 
@@ -156,8 +156,8 @@ private:
         createGraphicsPipeline();
         createFramebuffers();
         createTextureImage();
-        createTextureImageView();
-        createTextureSampler();
+        textureImageView = core.createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
+        textureSampler = core.createTextureSampler();
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
@@ -392,7 +392,7 @@ private:
     void createImageViews(){
         swapChainImageViews.resize(swapChainImages.size());
         for (size_t i = 0; i < swapChainImages.size(); i++) {
-            swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
+            swapChainImageViews[i] = core.createImageView(swapChainImages[i], swapChainImageFormat);
         }
     }
 
@@ -513,65 +513,15 @@ private:
 
         stbi_image_free(pixels);
 
-        createImage(textureImage, textureImageAllocation, vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, VMA_MEMORY_USAGE_GPU_ONLY, texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal);
-
+        textureImage = core.createImage(vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, VMA_MEMORY_USAGE_GPU_ONLY, texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal);
+        
         core.transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-            core.copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+        core.copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
         core.transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         core.destroyBuffer(stagingBuffer);
     }
 
-    void createTextureImageView() {
-        textureImageView = createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
-    }
-
-    void createTextureSampler() {
-        vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
-
-        vk::SamplerCreateInfo samplerInfo(
-            {}, 
-            vk::Filter::eLinear, 
-            vk::Filter::eLinear, 
-            vk::SamplerMipmapMode::eLinear, 
-            vk::SamplerAddressMode::eRepeat, 
-            vk::SamplerAddressMode::eRepeat, 
-            vk::SamplerAddressMode::eRepeat,
-            0.0f, 
-            VK_TRUE, 
-            properties.limits.maxSamplerAnisotropy, 
-            VK_FALSE,  
-            vk::CompareOp::eAlways, 
-            0.0f,
-            0.0f, 
-            vk::BorderColor::eIntOpaqueBlack, 
-            VK_FALSE 
-        );
-        try{
-            textureSampler = device.createSampler(samplerInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-    }
-
-    vk::ImageView createImageView(vk::Image image, vk::Format format) {
-        vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e2D, format, {}, vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-        vk::ImageView imageView;
-        try{
-            imageView = device.createImageView(viewInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-        return imageView;
-    }
-
-    void createImage(vk::Image& image, VmaAllocation& imageAllocation, vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
-        vk::ImageCreateInfo imageInfo({}, vk::ImageType::e2D, format, vk::Extent3D{{width, height}, 1}, 1, 1, vk::SampleCountFlagBits::e1, tiling, imageUsage, vk::SharingMode::eExclusive, {}, {}, vk::ImageLayout::eUndefined);
-        VmaAllocationCreateInfo allocInfoImage = {};
-        allocInfoImage.usage = memoryUsage;
-        if(vmaCreateImage(allocator, reinterpret_cast<VkImageCreateInfo*>(&imageInfo), &allocInfoImage, reinterpret_cast<VkImage*>(&image), &imageAllocation, nullptr) != VK_SUCCESS)
-            throw std::runtime_error("failed to create image!");
-    }
 
     void createVertexBuffer(){
         vk::DeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
@@ -829,7 +779,7 @@ private:
         device.destroyPipelineLayout(pipelineLayout);
         device.destroyRenderPass(renderPass);
         for (auto imageView : swapChainImageViews) {
-            device.destroyImageView(imageView);
+            core.destroyImageView(imageView);
         }
         device.destroySwapchainKHR(swapChain);
         for (size_t i = 0; i < swapChainImages.size(); i++) {
@@ -847,9 +797,11 @@ private:
 
         device.destroyShaderModule(fragShaderModule);
         device.destroyShaderModule(vertShaderModule);
-        device.destroySampler(textureSampler);
-        device.destroyImageView(textureImageView);
-        vmaDestroyImage(allocator, textureImage, textureImageAllocation);
+
+        core.destroySampler(textureSampler);
+        core.destroyImageView(textureImageView);
+        core.destroyImage(textureImage);
+
         device.destroyDescriptorSetLayout(descriptorSetLayout);
 
         core.destroyBuffer(indexBuffer);
