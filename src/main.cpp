@@ -160,7 +160,6 @@ private:
         textureSampler = core.createTextureSampler();
         vertexBuffer = core.bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
         indexBuffer = core.bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
-
         createUniformBuffers();
         createDescriptorPool();
         createDescriptorSets();
