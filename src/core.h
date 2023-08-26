@@ -4,6 +4,7 @@
 #include "vulkan_utils.h"
 #include "window.h"
 #include <vk_mem_alloc.h>
+#include <map>
 
 namespace gpu
 {
@@ -22,9 +23,22 @@ namespace gpu
             inline vk::Queue getGraphicsQueue(){ return graphicsQueue; };
             inline vk::Queue getPresentQueue(){ return presentQueue; };
             inline VmaAllocator getAllocator(){ return allocator; };
+            inline vk::CommandPool getCommandPool(){ return commandPool; };
             
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
             SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
+            
+            vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
+            void* mapBuffer(vk::Buffer buffer);
+            void unmapBuffer(vk::Buffer buffer);
+            void flushBuffer(vk::Buffer buffer, size_t offset, size_t size);
+            void destroyBuffer(vk::Buffer buffer);
+            void copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
+            void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
+
+            void createCommandPool();
+            vk::CommandBuffer beginSingleTimeCommands();
+            void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
         private:
             bool m_enableValidation = true;
             std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -37,6 +51,9 @@ namespace gpu
             vk::Queue graphicsQueue;
             vk::Queue presentQueue;
             VmaAllocator allocator;
+            vk::CommandPool commandPool; 
+
+            std::map<vk::Buffer, VmaAllocation> m_bufferAllocations;
 
             void pickPhysicalDevice();
             bool isDeviceSuitable(vk::PhysicalDevice pDevice);
@@ -57,9 +74,13 @@ namespace gpu
         pickPhysicalDevice();
         createLogicalDevice();
         createAllocator();
+
+        createCommandPool();
     }
 
     void Core::destroy(){
+        device.destroyCommandPool(commandPool);
+
         vmaDestroyAllocator(allocator);
         device.destroy();
         instance.destroySurfaceKHR(surface);
@@ -176,6 +197,91 @@ namespace gpu
         
         if(vmaCreateAllocator(&allocatorInfo, &allocator) != VK_SUCCESS)
             throw std::runtime_error("failed to create Allocator");
+    }
+
+    vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage){
+        vk::Buffer buffer;
+        VmaAllocation allocation;
+        vk::BufferCreateInfo bufferInfoStaging({}, size, bufferUsage);
+        VmaAllocationCreateInfo allocInfoStaging = {};
+        allocInfoStaging.usage = memoryUsage;
+        if(vmaCreateBuffer(allocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfoStaging), &allocInfoStaging, reinterpret_cast<VkBuffer*>(&buffer), &allocation, nullptr) != VK_SUCCESS){
+            throw std::runtime_error("failed to create buffer!");
+        }
+        m_bufferAllocations[buffer] = allocation;
+        return buffer;
+    }
+    void* Core::mapBuffer(vk::Buffer buffer){
+        void* mappedData;
+        vmaMapMemory(allocator, m_bufferAllocations[buffer], &mappedData);
+        return mappedData;
+    }
+    void Core::unmapBuffer(vk::Buffer buffer){
+        vmaUnmapMemory(allocator, m_bufferAllocations[buffer]);
+    }
+    void Core::destroyBuffer(vk::Buffer buffer){
+        vmaDestroyBuffer(allocator, buffer, m_bufferAllocations[buffer]);
+        m_bufferAllocations.erase(buffer);
+    }
+    void Core::flushBuffer(vk::Buffer buffer, size_t offset, size_t size){
+        vmaFlushAllocation(allocator, m_bufferAllocations[buffer], offset, size);
+    }
+    void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
+        vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
+
+        vk::BufferCopy copyRegion(0, 0, size);
+        commandBuffer.copyBuffer(srcBuffer, dstBuffer, 1, &copyRegion);
+
+        endSingleTimeCommands(commandBuffer);
+    }
+    vk::CommandBuffer Core::beginSingleTimeCommands() {
+        vk::CommandBufferAllocateInfo allocInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1);
+        vk::CommandBuffer commandBuffer;
+        try{
+            commandBuffer = device.allocateCommandBuffers(allocInfo)[0];
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+
+        vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+        try{
+            commandBuffer.begin(beginInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        return commandBuffer;
+    }
+    void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
+        try{
+            commandBuffer.end();
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+
+        vk::SubmitInfo submitInfoCopy({}, {}, commandBuffer, {});
+        graphicsQueue.submit(submitInfoCopy, {});
+        graphicsQueue.waitIdle();
+        device.freeCommandBuffers(commandPool, 1, &commandBuffer);
+    }
+
+     void Core::createCommandPool() {
+        QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+        vk::CommandPoolCreateInfo poolInfo({}, queueFamilyIndices.graphicsFamily.value());
+        try{
+            commandPool = device.createCommandPool(poolInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height) {
+        vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
+
+        vk::BufferImageCopy region(0, 0, 0, vk::ImageSubresourceLayers( vk::ImageAspectFlagBits::eColor, 0, 0, 1), {0, 0, 0}, vk::Extent3D{{width, height}, 1});
+
+        commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
+
+        endSingleTimeCommands(commandBuffer);
     }
 } // namespace gpu
 
