@@ -1,7 +1,10 @@
+#pragma once
+
 #include <string>
 #include <GLFW/glfw3.h>
-#include <functional>
-// Primitve Vulkan Framework
+// #include <functional>
+
+
 namespace gpu {
 
     class Window{
@@ -18,6 +21,7 @@ namespace gpu {
             void setTitle(std::string title);
             void getSize(int* width, int* height);
             void destroy();
+            // vk::SurfaceKHR createSurface(vk::Instance instance);
         private:
             GLFWwindow* m_window;
             bool m_wasResized = false;
@@ -68,4 +72,11 @@ namespace gpu {
         glfwDestroyWindow(m_window);
         glfwTerminate();
     }
+    // vk::SurfaceKHR Window::createSurface(vk::Instance instance){
+    //     vk::SurfaceKHR surface;
+    //     if (glfwCreateWindowSurface(instance, m_window, nullptr, reinterpret_cast<VkSurfaceKHR*>(&surface)) != VK_SUCCESS) {
+    //         throw std::runtime_error("failed to create window surface!");
+    //     }
+    //     return surface;
+    // }
 }
