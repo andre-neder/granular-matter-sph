@@ -3,6 +3,7 @@
 #include "spirv_utils.h"
 #include "vulkan_utils.h"
 #include "window.h"
+#include <vk_mem_alloc.h>
 
 namespace gpu
 {
@@ -20,6 +21,7 @@ namespace gpu
             inline vk::Device getDevice(){ return device; };
             inline vk::Queue getGraphicsQueue(){ return graphicsQueue; };
             inline vk::Queue getPresentQueue(){ return presentQueue; };
+            inline VmaAllocator getAllocator(){ return allocator; };
             
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
             SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
@@ -34,11 +36,13 @@ namespace gpu
             vk::Device device;
             vk::Queue graphicsQueue;
             vk::Queue presentQueue;
+            VmaAllocator allocator;
 
             void pickPhysicalDevice();
             bool isDeviceSuitable(vk::PhysicalDevice pDevice);
             bool checkDeviceExtensionSupport(vk::PhysicalDevice pDevice);
             void createLogicalDevice();
+            void createAllocator();
     };
 
     Core::Core(bool enableValidation, Window* window){
@@ -52,6 +56,7 @@ namespace gpu
         }
         pickPhysicalDevice();
         createLogicalDevice();
+        createAllocator();
     }
 
     void Core::destroy(){
@@ -160,6 +165,16 @@ namespace gpu
         }
         graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
         presentQueue = device.getQueue(indices.presentFamily.value(), 0);
+    }
+    void Core::createAllocator(){
+        VmaAllocatorCreateInfo allocatorInfo = {};
+        allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+        allocatorInfo.physicalDevice = physicalDevice;
+        allocatorInfo.device = device;
+        allocatorInfo.instance = instance;
+        
+        if(vmaCreateAllocator(&allocatorInfo, &allocator) != VK_SUCCESS)
+            throw std::runtime_error("failed to create Allocator");
     }
 } // namespace gpu
 

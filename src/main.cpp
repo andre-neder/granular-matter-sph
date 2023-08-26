@@ -20,7 +20,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
-#include <vk_mem_alloc.h>
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -150,8 +149,7 @@ private:
         device = core.getDevice();
         graphicsQueue = core.getGraphicsQueue();
         presentQueue = core.getPresentQueue();
-        
-        createAllocator();
+        allocator = core.getAllocator();
         createSwapChain();
         createImageViews();
         createRenderPass();
