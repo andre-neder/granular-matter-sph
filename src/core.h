@@ -522,7 +522,15 @@ namespace gpu
         }
     }
     void Core::createRenderPass(){
-        vk::AttachmentDescription colorAttachment({}, swapChainImageFormat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
+        vk::AttachmentDescription colorAttachment({}, 
+        swapChainImageFormat, 
+        vk::SampleCountFlagBits::e1, 
+        vk::AttachmentLoadOp::eClear, 
+        vk::AttachmentStoreOp::eStore, 
+        vk::AttachmentLoadOp::eDontCare, 
+        vk::AttachmentStoreOp::eDontCare, 
+        vk::ImageLayout::eUndefined, 
+        vk::ImageLayout::eColorAttachmentOptimal);
         vk::AttachmentReference colorAttachmentRef({}, vk::ImageLayout::eColorAttachmentOptimal);
         vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentRef);
         vk::RenderPassCreateInfo renderPassInfo({}, colorAttachment, subpass);
