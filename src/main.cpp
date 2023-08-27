@@ -8,15 +8,12 @@
     #include <windows.h>
 #endif
 
-// #include <optional>
-// #include <set>
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include <tiny_gltf.h>
 #include <chrono>
+#include <functional>
 
-// #include <vulkan/vulkan.hpp>
-// #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
@@ -90,13 +87,7 @@ private:
     vk::Queue presentQueue;
     vk::SurfaceKHR surface;
 
-    vk::SwapchainKHR swapChain;
-    vk::Format swapChainImageFormat;
     vk::Extent2D swapChainExtent;
-    std::vector<vk::Image> swapChainImages;
-    std::vector<vk::ImageView> swapChainImageViews;
-    std::vector<vk::Framebuffer> swapChainFramebuffers;
-    vk::RenderPass renderPass;
     
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline graphicsPipeline;
@@ -141,13 +132,10 @@ private:
         graphicsQueue = core.getGraphicsQueue();
         presentQueue = core.getPresentQueue();
         commandPool = core.getCommandPool();
-        createSwapChain();
-        createImageViews();
-        createRenderPass();
+        swapChainExtent = core.getSwapChainExtent();
         createDescriptorSetLayout();
         readAndCompileShaders();
         createGraphicsPipeline();
-        createFramebuffers();
         createTextureImage();
         textureImageView = core.createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
         textureSampler = core.createTextureSampler();
@@ -198,7 +186,7 @@ private:
 
         vk::AttachmentDescription attachment(
             {}, 
-            swapChainImageFormat, 
+            core.getSwapChainImageFormat(), 
             vk::SampleCountFlagBits::e1, 
             vk::AttachmentLoadOp::eLoad, 
             vk::AttachmentStoreOp::eStore, 
@@ -242,8 +230,8 @@ private:
         init_info.PipelineCache = VK_NULL_HANDLE;
         init_info.DescriptorPool = descriptorPoolImgui;
         init_info.Allocator = VK_NULL_HANDLE;
-        init_info.MinImageCount = static_cast<uint32_t>(swapChainFramebuffers.size());
-        init_info.ImageCount = static_cast<uint32_t>(swapChainFramebuffers.size());
+        init_info.MinImageCount = static_cast<uint32_t>(core.getSwapChainImageCount());
+        init_info.ImageCount = static_cast<uint32_t>(core.getSwapChainImageCount());
         init_info.CheckVkResultFn = check_vk_result;
         ImGui_ImplVulkan_Init(&init_info, renderPassImgui);
 
@@ -261,7 +249,7 @@ private:
         }
 
         //create commandbuffers
-        commandBuffersImgui.resize(swapChainFramebuffers.size());
+        commandBuffersImgui.resize(core.getSwapChainImageCount());
         vk::CommandBufferAllocateInfo allocInfo(commandPoolImgui, vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffersImgui.size());
         try{
             commandBuffersImgui = device.allocateCommandBuffers(allocInfo);
@@ -269,12 +257,12 @@ private:
             std::cerr << "Exception Thrown: " << e.what();
         }
         //create Framebuffers
-        framebuffersImgui.resize(swapChainImageViews.size());
-        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+        framebuffersImgui.resize(core.getSwapChainImageCount());
+        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
             std::array<vk::ImageView, 1> attachments = {
-                swapChainImageViews[i]
+                core.getSwapChainImageView(i)
             };
-            vk::FramebufferCreateInfo framebufferInfo({}, renderPassImgui, attachments, swapChainExtent.width, swapChainExtent.height, 1);
+            vk::FramebufferCreateInfo framebufferInfo({}, renderPassImgui, attachments, core.getSwapChainExtent().width, core.getSwapChainExtent().height, 1);
             try{
                 framebuffersImgui[i] = device.createFramebuffer(framebufferInfo);
             }catch(std::exception& e) {
@@ -288,10 +276,10 @@ private:
 
     void recreateImGuiFramebuffer() {
         //create Framebuffers
-        framebuffersImgui.resize(swapChainImageViews.size());
-        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+        framebuffersImgui.resize(core.getSwapChainImageCount());
+        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
             std::array<vk::ImageView, 1> attachments = {
-                swapChainImageViews[i]
+                core.getSwapChainImageView(i)
             };
             vk::FramebufferCreateInfo framebufferInfo({}, renderPassImgui, attachments, swapChainExtent.width, swapChainExtent.height, 1);
             try{
@@ -302,92 +290,6 @@ private:
         }
     }
 
-    vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
-        for (const auto& availableFormat : availableFormats) {
-            if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
-                return availableFormat;
-            }
-        }
-        return availableFormats[0];
-    }
-
-    vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) {
-        for (const auto& availablePresentMode : availablePresentModes) {
-            if (availablePresentMode == vk::PresentModeKHR::eMailbox) {
-                return availablePresentMode;
-            }
-        }
-        return vk::PresentModeKHR::eFifo;
-    }
-
-    vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) {
-        if (capabilities.currentExtent.width != UINT32_MAX) {
-            return capabilities.currentExtent;
-        } else {
-            int width, height;
-            window.getSize(&width, &height);
-            vk::Extent2D actualExtent = {
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height)
-            };
-            actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-            actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-            return actualExtent;
-        }
-    }
-
-    void createSwapChain() {
-        SwapChainSupportDetails swapChainSupport = core.querySwapChainSupport(physicalDevice);
-
-        vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-        vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-        vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
-
-        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-        if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
-            imageCount = swapChainSupport.capabilities.maxImageCount;
-        }
-
-        QueueFamilyIndices indices = core.findQueueFamilies(physicalDevice);
-        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
-        
-        vk::SwapchainCreateInfoKHR createInfo;
-        createInfo.flags = {};
-        createInfo.surface = surface;
-        createInfo.minImageCount = imageCount;
-        createInfo.imageFormat = surfaceFormat.format;
-        createInfo.imageColorSpace = surfaceFormat.colorSpace;
-        createInfo.imageExtent = extent;
-        createInfo.imageArrayLayers = 1;
-        createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
-        if (indices.graphicsFamily != indices.presentFamily) {
-            createInfo.imageSharingMode = vk::SharingMode::eConcurrent;
-            createInfo.queueFamilyIndexCount = 2;
-            createInfo.pQueueFamilyIndices = queueFamilyIndices;
-        } else {
-            createInfo.imageSharingMode = vk::SharingMode::eExclusive;
-        }
-        createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-        createInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
-        createInfo.presentMode = presentMode;
-        createInfo.clipped = VK_TRUE;
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
-        try{
-            swapChain = device.createSwapchainKHR(createInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-        swapChainImages = device.getSwapchainImagesKHR(swapChain);
-        swapChainImageFormat = surfaceFormat.format;
-        swapChainExtent = extent;
-    }
-
-    void createImageViews(){
-        swapChainImageViews.resize(swapChainImages.size());
-        for (size_t i = 0; i < swapChainImages.size(); i++) {
-            swapChainImageViews[i] = core.createImageView(swapChainImages[i], swapChainImageFormat);
-        }
-    }
 
     vk::ShaderModule createShaderModule(const std::vector<uint32_t> code) {
         vk::ShaderModuleCreateInfo createInfo({}, code);
@@ -398,18 +300,6 @@ private:
             std::cerr << "Exception Thrown: " << e.what();
         }
         return shaderModule;
-    }
-
-    void createRenderPass(){
-        vk::AttachmentDescription colorAttachment({}, swapChainImageFormat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
-        vk::AttachmentReference colorAttachmentRef({}, vk::ImageLayout::eColorAttachmentOptimal);
-        vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentRef);
-        vk::RenderPassCreateInfo renderPassInfo({}, colorAttachment, subpass);
-        try{
-            renderPass = device.createRenderPass(renderPassInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
     }
 
     void createDescriptorSetLayout() {
@@ -467,26 +357,13 @@ private:
             std::cerr << "Exception Thrown: " << e.what();
         }
 
-        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, renderPass);
+        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, core.getRenderPass());
         
         vk::Result result;
         std::tie(result, graphicsPipeline) = device.createGraphicsPipeline( nullptr, pipelineInfo);
         switch ( result ){
             case vk::Result::eSuccess: break;
             default: throw std::runtime_error("failed to create graphics Pipeline!");
-        }
-    }
-    
-    void createFramebuffers() {
-        swapChainFramebuffers.resize(swapChainImageViews.size());
-        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-            std::vector<vk::ImageView> attachments = {swapChainImageViews[i]};
-            vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, swapChainExtent.width, swapChainExtent.height, 1);
-            try{
-                swapChainFramebuffers[i] = device.createFramebuffer(framebufferInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
         }
     }
 
@@ -518,18 +395,18 @@ private:
     void createUniformBuffers() {
         vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
-        uniformBuffers.resize(swapChainImages.size());
-        for (size_t i = 0; i < swapChainImages.size(); i++) {
+        uniformBuffers.resize(core.getSwapChainImageCount());
+        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
             uniformBuffers[i] = core.createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
         }
     }
 
     void createDescriptorPool() {
-        vk::DescriptorPoolSize poolSizeUbo(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(swapChainImages.size()));
-        vk::DescriptorPoolSize poolSizeSampler(vk::DescriptorType::eCombinedImageSampler, static_cast<uint32_t>(swapChainImages.size()));
+        vk::DescriptorPoolSize poolSizeUbo(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(core.getSwapChainImageCount()));
+        vk::DescriptorPoolSize poolSizeSampler(vk::DescriptorType::eCombinedImageSampler, static_cast<uint32_t>(core.getSwapChainImageCount()));
         std::array<vk::DescriptorPoolSize, 2> poolSizes{poolSizeUbo, poolSizeSampler};
 
-        vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(swapChainImages.size()), poolSizes);
+        vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(core.getSwapChainImageCount()), poolSizes);
         try{
             descriptorPool = device.createDescriptorPool(poolInfo);
         }catch(std::exception& e) {
@@ -538,16 +415,16 @@ private:
     }
 
     void createDescriptorSets() {
-        std::vector<vk::DescriptorSetLayout> layouts(swapChainImages.size(), descriptorSetLayout);
-        vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(swapChainImages.size()), layouts.data());
-        descriptorSets.resize(swapChainImages.size());
+        std::vector<vk::DescriptorSetLayout> layouts(core.getSwapChainImageCount(), descriptorSetLayout);
+        vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(core.getSwapChainImageCount()), layouts.data());
+        descriptorSets.resize(core.getSwapChainImageCount());
         try{
             descriptorSets = device.allocateDescriptorSets(allocInfo);
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
 
-        for (size_t i = 0; i < swapChainImages.size(); i++) {
+        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
 
             vk::DescriptorBufferInfo bufferInfo(uniformBuffers[i], 0, sizeof(UniformBufferObject));
             vk::DescriptorImageInfo imageInfo(textureSampler, textureImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -561,7 +438,7 @@ private:
     }
 
     void createCommandBuffers(){
-        commandBuffers.resize(swapChainFramebuffers.size());
+        commandBuffers.resize(core.getSwapChainImageCount());
         vk::CommandBufferAllocateInfo allocInfo(commandPool, vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
         try{
             commandBuffers = device.allocateCommandBuffers(allocInfo);
@@ -574,7 +451,7 @@ private:
         imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        imagesInFlight.resize(swapChainImages.size(), VK_NULL_HANDLE);
+        imagesInFlight.resize(core.getSwapChainImageCount(), VK_NULL_HANDLE);
         vk::SemaphoreCreateInfo semaphoreInfo;
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -609,7 +486,13 @@ private:
     void drawFrame(){
         vk::Result result1 = device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
         uint32_t imageIndex;
-        vk::Result result = device.acquireNextImageKHR(swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        vk::Result result;
+        try{
+            result = device.acquireNextImageKHR(core.getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        }
+        catch(const std::exception& e){
+            std::cerr << e.what() << '\n';
+        }
         if(result == vk::Result::eErrorOutOfDateKHR){
             recreateSwapChain();
             return;
@@ -633,7 +516,7 @@ private:
         device.resetFences(inFlightFences[currentFrame]);
         graphicsQueue.submit(submitInfo, inFlightFences[currentFrame]);
 
-        std::vector<vk::SwapchainKHR> swapChains = {swapChain};
+        std::vector<vk::SwapchainKHR> swapChains = {core.getSwapChain()};
         vk::PresentInfoKHR presentInfo(signalSemaphores, swapChains, imageIndex);
         try{
             result = presentQueue.presentKHR(presentInfo);
@@ -683,7 +566,7 @@ private:
                 std::cerr << "Exception Thrown: " << e.what();
             }
             std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
-            vk::RenderPassBeginInfo renderPassInfo(renderPass, swapChainFramebuffers[imageIndex], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
+            vk::RenderPassBeginInfo renderPassInfo(core.getRenderPass(), core.getFramebuffer(imageIndex), vk::Rect2D({0, 0}, swapChainExtent), clearValues);
 
             commandBuffers[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
                 commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
@@ -730,9 +613,7 @@ private:
     }
 
     void cleanupSwapchain(){
-        for (auto framebuffer : swapChainFramebuffers) {
-            device.destroyFramebuffer(framebuffer);
-        }
+        core.destroyFramebuffers();
         // imgui
         for (auto framebuffer : framebuffersImgui) {
             device.destroyFramebuffer(framebuffer);
@@ -740,12 +621,10 @@ private:
         device.freeCommandBuffers(commandPool, commandBuffers);
         device.destroyPipeline(graphicsPipeline);
         device.destroyPipelineLayout(pipelineLayout);
-        device.destroyRenderPass(renderPass);
-        for (auto imageView : swapChainImageViews) {
-            core.destroyImageView(imageView);
-        }
-        device.destroySwapchainKHR(swapChain);
-        for (size_t i = 0; i < swapChainImages.size(); i++) {
+        core.destroyRenderPass();
+        core.destroySwapChainImageViews();
+        core.destroySwapChain();
+        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
             core.destroyBuffer(uniformBuffers[i]);
         }
         device.destroyDescriptorPool(descriptorPool);
@@ -798,17 +677,18 @@ private:
 
         cleanupSwapchain();
 
-        createSwapChain();
-        createImageViews();
-        createRenderPass();
+        core.createSwapChain(&window);
+        swapChainExtent = core.getSwapChainExtent();
+        core.createSwapChainImageViews();
+        core.createRenderPass();
+        core.createFramebuffers();
         createGraphicsPipeline();
-        createFramebuffers();
         createUniformBuffers();
         createDescriptorPool();
         createDescriptorSets();
         createCommandBuffers();
 
-        imagesInFlight.resize(swapChainImages.size(), VK_NULL_HANDLE);
+        imagesInFlight.resize(core.getSwapChainImageCount(), VK_NULL_HANDLE);
 
         recreateImGuiFramebuffer();
     }

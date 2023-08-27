@@ -24,6 +24,13 @@ namespace gpu
             inline vk::Queue getPresentQueue(){ return presentQueue; };
             inline VmaAllocator getAllocator(){ return allocator; };
             inline vk::CommandPool getCommandPool(){ return commandPool; };
+            inline vk::Format getSwapChainImageFormat(){ return swapChainImageFormat; };
+            inline size_t getSwapChainImageCount(){ return swapChainImages.size(); };
+            inline vk::Extent2D getSwapChainExtent(){ return swapChainExtent; };
+            inline vk::ImageView getSwapChainImageView(int index){ return swapChainImageViews[index]; };
+            inline vk::SwapchainKHR getSwapChain(){ return swapChain; };
+            inline vk::Framebuffer getFramebuffer(int index){ return swapChainFramebuffers[index]; };
+            inline vk::RenderPass getRenderPass(){ return renderPass; };
             
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
             SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
@@ -48,6 +55,18 @@ namespace gpu
             void createCommandPool();
             vk::CommandBuffer beginSingleTimeCommands();
             void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
+
+            vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+            vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+            vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
+            void createSwapChain(Window* window);
+            void createSwapChainImageViews();
+            void createRenderPass();
+            void createFramebuffers();
+            void destroySwapChainImageViews();
+            void destroyFramebuffers();
+            void destroyRenderPass();
+            void destroySwapChain();
         private:
             bool m_enableValidation = true;
             std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -61,6 +80,14 @@ namespace gpu
             vk::Queue presentQueue;
             VmaAllocator allocator;
             vk::CommandPool commandPool; 
+
+            vk::SwapchainKHR swapChain;
+            vk::Format swapChainImageFormat;
+            vk::Extent2D swapChainExtent;
+            std::vector<vk::Image> swapChainImages;
+            std::vector<vk::ImageView> swapChainImageViews;
+            std::vector<vk::Framebuffer> swapChainFramebuffers;
+            vk::RenderPass renderPass;
 
             std::map<vk::Buffer, VmaAllocation> m_bufferAllocations;
             std::map<vk::Image, VmaAllocation> m_imageAllocations;
@@ -84,8 +111,11 @@ namespace gpu
         pickPhysicalDevice();
         createLogicalDevice();
         createAllocator();
-
         createCommandPool();
+        createSwapChain(window);
+        createSwapChainImageViews();
+        createRenderPass();
+        createFramebuffers();
     }
 
     void Core::destroy(){
@@ -405,5 +435,131 @@ namespace gpu
     void Core::destroySampler(vk::Sampler sampler){
         device.destroySampler(sampler);
     }
+
+    vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
+        for (const auto& availableFormat : availableFormats) {
+            if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+                return availableFormat;
+            }
+        }
+        return availableFormats[0];
+    }
+
+    vk::PresentModeKHR Core::chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) {
+        for (const auto& availablePresentMode : availablePresentModes) {
+            if (availablePresentMode == vk::PresentModeKHR::eMailbox) {
+                return availablePresentMode;
+            }
+        }
+        return vk::PresentModeKHR::eFifo;
+    }
+
+    vk::Extent2D Core::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window) {
+        if (capabilities.currentExtent.width != UINT32_MAX) {
+            return capabilities.currentExtent;
+        } else {
+            int width, height;
+            window->getSize(&width, &height);
+            vk::Extent2D actualExtent = {
+                static_cast<uint32_t>(width),
+                static_cast<uint32_t>(height)
+            };
+            actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+            actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+            return actualExtent;
+        }
+    }
+
+    void Core::createSwapChain(Window* window) {
+        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+
+        vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+        vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+        vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window);
+
+        uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+        if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
+            imageCount = swapChainSupport.capabilities.maxImageCount;
+        }
+
+        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+        uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+        
+        vk::SwapchainCreateInfoKHR createInfo;
+        createInfo.flags = {};
+        createInfo.surface = surface;
+        createInfo.minImageCount = imageCount;
+        createInfo.imageFormat = surfaceFormat.format;
+        createInfo.imageColorSpace = surfaceFormat.colorSpace;
+        createInfo.imageExtent = extent;
+        createInfo.imageArrayLayers = 1;
+        createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
+        if (indices.graphicsFamily != indices.presentFamily) {
+            createInfo.imageSharingMode = vk::SharingMode::eConcurrent;
+            createInfo.queueFamilyIndexCount = 2;
+            createInfo.pQueueFamilyIndices = queueFamilyIndices;
+        } else {
+            createInfo.imageSharingMode = vk::SharingMode::eExclusive;
+        }
+        createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+        createInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+        createInfo.presentMode = presentMode;
+        createInfo.clipped = VK_TRUE;
+        createInfo.oldSwapchain = VK_NULL_HANDLE;
+        try{
+            swapChain = device.createSwapchainKHR(createInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        swapChainImages = device.getSwapchainImagesKHR(swapChain);
+        swapChainImageFormat = surfaceFormat.format;
+        swapChainExtent = extent;
+    }
+    void Core::createSwapChainImageViews(){
+        swapChainImageViews.resize(swapChainImages.size());
+        for (size_t i = 0; i < swapChainImages.size(); i++) {
+            swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
+        }
+    }
+    void Core::createRenderPass(){
+        vk::AttachmentDescription colorAttachment({}, swapChainImageFormat, vk::SampleCountFlagBits::e1, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore, vk::AttachmentLoadOp::eDontCare, vk::AttachmentStoreOp::eDontCare, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
+        vk::AttachmentReference colorAttachmentRef({}, vk::ImageLayout::eColorAttachmentOptimal);
+        vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentRef);
+        vk::RenderPassCreateInfo renderPassInfo({}, colorAttachment, subpass);
+        try{
+            renderPass = device.createRenderPass(renderPassInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    void Core::createFramebuffers() {
+        swapChainFramebuffers.resize(swapChainImageViews.size());
+        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+            std::vector<vk::ImageView> attachments = {swapChainImageViews[i]};
+            vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, swapChainExtent.width, swapChainExtent.height, 1);
+            try{
+                swapChainFramebuffers[i] = device.createFramebuffer(framebufferInfo);
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
+        }
+    }
+    void Core::destroySwapChainImageViews(){
+        for (auto imageView : swapChainImageViews) {
+            destroyImageView(imageView);
+        }
+    }
+    void Core::destroyFramebuffers(){
+        for (auto framebuffer : swapChainFramebuffers) {
+            device.destroyFramebuffer(framebuffer);
+        }
+    }
+    void Core::destroyRenderPass(){
+        device.destroyRenderPass(renderPass);
+    }
+    void Core::destroySwapChain(){
+        device.destroySwapchainKHR(swapChain);
+    }
+    
 } // namespace gpu
 
