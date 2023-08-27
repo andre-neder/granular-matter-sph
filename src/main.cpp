@@ -573,10 +573,6 @@ private:
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
-
-        // for (size_t i = 0; i < commandBuffers.size(); i++) {
-            
-        // }
     }
 
     void createSyncObjects() {
