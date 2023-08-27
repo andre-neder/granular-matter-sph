@@ -99,8 +99,8 @@ private:
     std::vector<vk::Image> swapChainImages;
     std::vector<vk::ImageView> swapChainImageViews;
     std::vector<vk::Framebuffer> swapChainFramebuffers;
-    
     vk::RenderPass renderPass;
+    
     vk::PipelineLayout pipelineLayout;
     vk::Pipeline graphicsPipeline;
     vk::DescriptorSetLayout descriptorSetLayout;
@@ -574,31 +574,9 @@ private:
             std::cerr << "Exception Thrown: " << e.what();
         }
 
-        for (size_t i = 0; i < commandBuffers.size(); i++) {
-            vk::CommandBufferBeginInfo beginInfo;
-            try{
-                commandBuffers[i].begin(beginInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-            std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
-            vk::RenderPassBeginInfo renderPassInfo(renderPass, swapChainFramebuffers[i], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
-
-            commandBuffers[i].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-                commandBuffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-                std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
-                std::vector<vk::DeviceSize> offsets = {0};
-                commandBuffers[i].bindVertexBuffers(0, vertexBuffers, offsets);
-                commandBuffers[i].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
-                commandBuffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
-                commandBuffers[i].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-            commandBuffers[i].endRenderPass();
-            try{
-                commandBuffers[i].end();
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-        }
+        // for (size_t i = 0; i < commandBuffers.size(); i++) {
+            
+        // }
     }
 
     void createSyncObjects() {
@@ -683,26 +661,53 @@ private:
     }
 
     void recordCommandBuffer(uint32_t imageIndex){
-        vk::CommandBufferBeginInfo beginInfo;
-        try{
-            commandBuffersImgui[imageIndex].begin(beginInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
+        {
+            vk::CommandBufferBeginInfo beginInfo;
+            try{
+                commandBuffersImgui[imageIndex].begin(beginInfo);
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
+            std::array<vk::ClearValue, 1> clearValues{
+                vk::ClearValue(vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}))
+            };
+            vk::RenderPassBeginInfo renderPassInfo(renderPassImgui, framebuffersImgui[imageIndex], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
+
+            commandBuffersImgui[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffersImgui[imageIndex]);
+
+            commandBuffersImgui[imageIndex].endRenderPass();
+            try{
+                commandBuffersImgui[imageIndex].end();
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
         }
-        std::array<vk::ClearValue, 1> clearValues{
-            vk::ClearValue(vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}))
-        };
-        vk::RenderPassBeginInfo renderPassInfo(renderPassImgui, framebuffersImgui[imageIndex], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
+        {
+            vk::CommandBufferBeginInfo beginInfo;
+            try{
+                commandBuffers[imageIndex].begin(beginInfo);
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
+            std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
+            vk::RenderPassBeginInfo renderPassInfo(renderPass, swapChainFramebuffers[imageIndex], vk::Rect2D({0, 0}, swapChainExtent), clearValues);
 
-        commandBuffersImgui[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffersImgui[imageIndex]);
-
-        commandBuffersImgui[imageIndex].endRenderPass();
-        try{
-            commandBuffersImgui[imageIndex].end();
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
+            commandBuffers[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+                commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+                std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
+                std::vector<vk::DeviceSize> offsets = {0};
+                commandBuffers[imageIndex].bindVertexBuffers(0, vertexBuffers, offsets);
+                commandBuffers[imageIndex].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+                commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
+                commandBuffers[imageIndex].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            commandBuffers[imageIndex].endRenderPass();
+            try{
+                commandBuffers[imageIndex].end();
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
         }
     }
 
