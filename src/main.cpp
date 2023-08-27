@@ -81,11 +81,8 @@ public:
     }
 private:
     bool enableValidation = true;
-    vk::Instance instance;
     vk::PhysicalDevice physicalDevice;
     vk::Device device;
-    
-    VmaAllocator allocator;
 
     gpu::Core core;
     gpu::Window window;
@@ -138,13 +135,11 @@ private:
 
     void initVulkan(){
         core = gpu::Core(enableValidation, &window);
-        instance = core.getInstance();
         surface = core.getSurface();
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
         graphicsQueue = core.getGraphicsQueue();
         presentQueue = core.getPresentQueue();
-        allocator = core.getAllocator();
         commandPool = core.getCommandPool();
         createSwapChain();
         createImageViews();
@@ -239,7 +234,7 @@ private:
         }
 
         ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = instance;
+        init_info.Instance = core.getInstance();
         init_info.PhysicalDevice = physicalDevice;
         init_info.Device = device;
         init_info.QueueFamily = core.findQueueFamilies(physicalDevice).graphicsFamily.value();
