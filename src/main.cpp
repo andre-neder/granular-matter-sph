@@ -114,7 +114,6 @@ private:
     vk::Buffer indexBuffer;
     std::vector<vk::Buffer> uniformBuffers;
     vk::Image textureImage;
-    // VmaAllocation textureImageAllocation;
     vk::ImageView textureImageView;
     vk::Sampler textureSampler;
 
@@ -126,7 +125,6 @@ private:
     std::vector<vk::Fence> inFlightFences;
     std::vector<vk::Fence> imagesInFlight;
     size_t currentFrame = 0;
-    // bool framebufferResized = false;
 
     vk::DescriptorPool descriptorPoolImgui;
     vk::RenderPass renderPassImgui;
