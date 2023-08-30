@@ -730,7 +730,6 @@ private:
         for (auto framebuffer : framebuffersImgui) {
             device.destroyFramebuffer(framebuffer);
         }
-        basicRenderPass.destroyFrameResources();
 
         core.destroySwapChainImageViews();
         core.destroySwapChain();
@@ -738,7 +737,10 @@ private:
     }
 
     void cleanup(){
+        basicRenderPass.destroy();
+
         cleanupSwapchain();
+
         // imgui
         device.freeCommandBuffers(commandPoolImgui, commandBuffersImgui);
         device.destroyRenderPass(renderPassImgui);
@@ -770,18 +772,13 @@ private:
         }
         device.waitIdle();
 
+        basicRenderPass.destroyFrameResources();
         cleanupSwapchain();
 
         core.createSwapChain(&window);
         swapChainExtent = core.getSwapChainExtent();
         core.createSwapChainImageViews();
-        // createRenderPass();
-        // createFramebuffers();
-        // createGraphicsPipeline();
-        // createUniformBuffers();
-        // createDescriptorPool();
-        // createDescriptorSets();
-        // createCommandBuffers();
+   
         basicRenderPass.init();
 
         createFramebuffersImgui();
