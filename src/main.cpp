@@ -67,6 +67,333 @@ struct UniformBufferObject {
 };
 
 
+namespace gpu{
+     class BasicRenderPass{
+        public:
+            BasicRenderPass(){};
+            BasicRenderPass(gpu::Core* core);
+            ~BasicRenderPass(){};
+
+            inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
+            void createRenderPass();
+            void createFramebuffers();
+            void createCommandBuffers();
+            void readAndCompileShaders();
+            void createDescriptorSets();
+            void createGraphicsPipeline();
+            void createTextureImage();
+            void createDescriptorSetLayout();
+            void updateUniformBuffer(uint32_t currentImage);
+            void createUniformBuffers();
+            void createDescriptorPool();
+            vk::ShaderModule BasicRenderPass::createShaderModule(const std::vector<uint32_t> code); // hat hier nichts verloren
+            void destroy(); 
+            void update(int imageIndex);
+            void init();
+            void destroyFrameResources();
+        private:
+            gpu::Core* m_core;
+
+            vk::RenderPass renderPass;
+            std::vector<vk::Framebuffer> framebuffersDefault;
+            std::vector<vk::CommandBuffer> commandBuffers;
+            vk::Buffer vertexBuffer;
+            vk::Buffer indexBuffer;
+            std::vector<vk::Buffer> uniformBuffers;
+            vk::Image textureImage;
+            vk::ImageView textureImageView;
+            vk::Sampler textureSampler;
+            vk::DescriptorPool descriptorPool;
+            std::vector<vk::DescriptorSet> descriptorSets;
+            vk::PipelineLayout pipelineLayout;
+            vk::Pipeline graphicsPipeline;
+            vk::DescriptorSetLayout descriptorSetLayout;
+            vk::ShaderModule vertShaderModule;
+            vk::ShaderModule fragShaderModule;
+    };
+    BasicRenderPass::BasicRenderPass(gpu::Core* core){
+        m_core = core;
+
+        readAndCompileShaders();
+        createTextureImage();
+        textureImageView = m_core->createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
+        textureSampler = m_core->createTextureSampler();
+        vertexBuffer = m_core->bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+        indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+        createDescriptorSetLayout();
+        init();
+    }
+    void BasicRenderPass::init(){
+        createRenderPass();
+        createFramebuffers();
+        createGraphicsPipeline();
+        createUniformBuffers();
+        createDescriptorPool();
+        createDescriptorSets();
+        createCommandBuffers();
+    }
+    void BasicRenderPass::createRenderPass(){
+        vk::AttachmentDescription colorAttachment({}, 
+            m_core->getSwapChainImageFormat(), 
+            vk::SampleCountFlagBits::e1, 
+            vk::AttachmentLoadOp::eClear, 
+            vk::AttachmentStoreOp::eStore, 
+            vk::AttachmentLoadOp::eDontCare, 
+            vk::AttachmentStoreOp::eDontCare, 
+            vk::ImageLayout::eUndefined, 
+            vk::ImageLayout::eColorAttachmentOptimal);
+        vk::AttachmentReference colorAttachmentRef({}, vk::ImageLayout::eColorAttachmentOptimal);
+        vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentRef);
+        vk::RenderPassCreateInfo renderPassInfo({}, colorAttachment, subpass);
+        try{
+            renderPass = m_core->getDevice().createRenderPass(renderPassInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    void BasicRenderPass::createFramebuffers(){
+        framebuffersDefault.resize(m_core->getSwapChainImageCount());
+        for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+            std::vector<vk::ImageView> attachments = {
+                m_core->getSwapChainImageView(i)
+            };
+            vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, m_core->getSwapChainExtent().width, m_core->getSwapChainExtent().height, 1);
+            try{
+                framebuffersDefault[i] = m_core->getDevice().createFramebuffer(framebufferInfo);
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
+        }
+    }
+    void BasicRenderPass::update(int imageIndex){
+        updateUniformBuffer(imageIndex);
+
+        vk::CommandBufferBeginInfo beginInfo;
+        try{
+            commandBuffers[imageIndex].begin(beginInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
+        vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffersDefault[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
+
+        commandBuffers[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+            commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
+            std::vector<vk::DeviceSize> offsets = {0};
+            commandBuffers[imageIndex].bindVertexBuffers(0, vertexBuffers, offsets);
+            commandBuffers[imageIndex].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+            commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
+            commandBuffers[imageIndex].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        commandBuffers[imageIndex].endRenderPass();
+        try{
+            commandBuffers[imageIndex].end();
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    void BasicRenderPass::createCommandBuffers(){
+        commandBuffers.resize(m_core->getSwapChainImageCount());
+        vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
+        try{
+            commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    void BasicRenderPass::createDescriptorSets() {
+        std::vector<vk::DescriptorSetLayout> layouts(m_core->getSwapChainImageCount(), descriptorSetLayout);
+        vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(m_core->getSwapChainImageCount()), layouts.data());
+        descriptorSets.resize(m_core->getSwapChainImageCount());
+        try{
+            descriptorSets = m_core->getDevice().allocateDescriptorSets(allocInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+
+        for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+
+            vk::DescriptorBufferInfo bufferInfo(uniformBuffers[i], 0, sizeof(UniformBufferObject));
+            vk::DescriptorImageInfo imageInfo(textureSampler, textureImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
+            vk::WriteDescriptorSet descriptorWriteUbo(descriptorSets[i], 0, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfo);
+            vk::WriteDescriptorSet descriptorWriteSampler(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo);
+
+            std::array<vk::WriteDescriptorSet, 2> descriptorWrites{descriptorWriteUbo, descriptorWriteSampler};
+            
+            m_core->getDevice().updateDescriptorSets(descriptorWrites, nullptr);
+        }
+    }
+    
+    void BasicRenderPass::createGraphicsPipeline(){
+        vk::PipelineShaderStageCreateInfo vertShaderStageInfo({}, vk::ShaderStageFlagBits::eVertex, vertShaderModule, "main");
+        vk::PipelineShaderStageCreateInfo fragShaderStageInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main");
+
+        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
+
+        auto bindingDescription = Vertex::getBindingDescription();
+        auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
+        vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindingDescription, attributeDescriptions);
+        vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
+        vk::Viewport viewport(0.0f, 0.0f, (float) m_core->getSwapChainExtent().width, (float) m_core->getSwapChainExtent().height, 0.0f, 1.0f);
+        vk::Rect2D scissor(vk::Offset2D(0, 0),m_core->getSwapChainExtent());
+        vk::PipelineViewportStateCreateInfo viewportState({}, viewport, scissor);
+        vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
+        vk::PipelineMultisampleStateCreateInfo multisampling({}, vk::SampleCountFlagBits::e1, VK_FALSE);
+        vk::PipelineColorBlendAttachmentState colorBlendAttachment(VK_FALSE, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
+        vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
+        vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout);
+
+        try{
+            pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+
+        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, renderPass);
+        
+        vk::Result result;
+        std::tie(result, graphicsPipeline) = m_core->getDevice().createGraphicsPipeline( nullptr, pipelineInfo);
+        switch ( result ){
+            case vk::Result::eSuccess: break;
+            default: throw std::runtime_error("failed to create graphics Pipeline!");
+        }
+    }
+
+    void BasicRenderPass::createTextureImage() {
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load(RESOURCE_PATH "/checker.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        vk::DeviceSize imageSize = texWidth * texHeight * 4;
+
+        if (!pixels) {
+            throw std::runtime_error("failed to load texture image!");
+        }
+        
+        vk::Buffer stagingBuffer = m_core->createBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
+        void* mappedData = m_core->mapBuffer(stagingBuffer);
+        memcpy(mappedData, pixels, static_cast<size_t>(imageSize));
+        m_core->unmapBuffer(stagingBuffer);
+
+        stbi_image_free(pixels);
+
+        textureImage = m_core->createImage(vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, VMA_MEMORY_USAGE_GPU_ONLY, texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal);
+        
+        m_core->transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+        m_core->copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+        m_core->transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+        m_core->destroyBuffer(stagingBuffer);
+    }
+
+    void BasicRenderPass::createUniformBuffers() {
+        vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
+
+        uniformBuffers.resize(m_core->getSwapChainImageCount());
+        for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+            uniformBuffers[i] = m_core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+        }
+    }
+
+    void BasicRenderPass::createDescriptorPool() {
+        vk::DescriptorPoolSize poolSizeUbo(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(m_core->getSwapChainImageCount()));
+        vk::DescriptorPoolSize poolSizeSampler(vk::DescriptorType::eCombinedImageSampler, static_cast<uint32_t>(m_core->getSwapChainImageCount()));
+        std::array<vk::DescriptorPoolSize, 2> poolSizes{poolSizeUbo, poolSizeSampler};
+
+        vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(m_core->getSwapChainImageCount()), poolSizes);
+        try{
+            descriptorPool = m_core->getDevice().createDescriptorPool(poolInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+
+    void BasicRenderPass::createDescriptorSetLayout() {
+        vk::DescriptorSetLayoutBinding uboLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr);
+        vk::DescriptorSetLayoutBinding samplerLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr);
+
+        std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+        vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
+
+        try{
+            descriptorSetLayout = m_core->getDevice().createDescriptorSetLayout(layoutInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    void BasicRenderPass::readAndCompileShaders() {
+        glslang::InitializeProcess();
+        std::vector<uint32_t> vertShaderCodeSPIRV;
+        std::vector<uint32_t> fragShaderCodeSPIRV;
+        SpirvHelper::GLSLtoSPV(vk::ShaderStageFlagBits::eVertex, "/shader.vert", vertShaderCodeSPIRV);
+        SpirvHelper::GLSLtoSPV(vk::ShaderStageFlagBits::eFragment, "/shader.frag", fragShaderCodeSPIRV);
+        try{
+            vertShaderModule = createShaderModule(vertShaderCodeSPIRV);
+            fragShaderModule = createShaderModule(fragShaderCodeSPIRV);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        glslang::FinalizeProcess();
+    }
+    vk::ShaderModule BasicRenderPass::createShaderModule(const std::vector<uint32_t> code) {
+        vk::ShaderModuleCreateInfo createInfo({}, code);
+        vk::ShaderModule shaderModule;
+        try{
+            shaderModule = m_core->getDevice().createShaderModule(createInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        return shaderModule;
+    }
+    void BasicRenderPass::destroyFrameResources(){
+        vk::Device device = m_core->getDevice();
+        for (auto framebuffer : framebuffersDefault) {
+            device.destroyFramebuffer(framebuffer);
+        }
+        device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
+        device.destroyPipeline(graphicsPipeline);
+        device.destroyPipelineLayout(pipelineLayout);
+        device.destroyRenderPass(renderPass);
+        for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+            m_core->destroyBuffer(uniformBuffers[i]);
+        }
+        device.destroyDescriptorPool(descriptorPool);
+    }
+    void BasicRenderPass::destroy(){
+        destroyFrameResources();
+
+        vk::Device device = m_core->getDevice();
+
+        device.destroyShaderModule(fragShaderModule);
+        device.destroyShaderModule(vertShaderModule);
+
+        m_core->destroySampler(textureSampler);
+        m_core->destroyImageView(textureImageView);
+        m_core->destroyImage(textureImage);
+
+        device.destroyDescriptorSetLayout(descriptorSetLayout);
+
+        m_core->destroyBuffer(indexBuffer);
+        m_core->destroyBuffer(vertexBuffer);
+    }
+    void BasicRenderPass::updateUniformBuffer(uint32_t currentImage) {
+        static auto startTime = std::chrono::high_resolution_clock::now();
+
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+        UniformBufferObject ubo{};
+        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / (float) m_core->getSwapChainExtent().height, 0.1f, 10.0f);
+        ubo.proj[1][1] *= -1;
+        
+        void* mappedData = m_core->mapBuffer(uniformBuffers[currentImage]);
+        memcpy(mappedData, &ubo, (size_t) sizeof(ubo));
+        m_core->flushBuffer(uniformBuffers[currentImage], 0, (size_t) sizeof(ubo));
+        m_core->unmapBuffer(uniformBuffers[currentImage]);
+    }
+
+}
 
 class VulkanBase {
 public:
@@ -88,25 +415,8 @@ private:
     vk::SurfaceKHR surface;
 
     vk::Extent2D swapChainExtent;
-    
-    vk::PipelineLayout pipelineLayout;
-    vk::Pipeline graphicsPipeline;
-    vk::DescriptorSetLayout descriptorSetLayout;
 
-    vk::ShaderModule vertShaderModule;
-    vk::ShaderModule fragShaderModule;
-
-    vk::CommandPool commandPool; 
-    std::vector<vk::CommandBuffer> commandBuffers;
-    vk::Buffer vertexBuffer;
-    vk::Buffer indexBuffer;
-    std::vector<vk::Buffer> uniformBuffers;
-    vk::Image textureImage;
-    vk::ImageView textureImageView;
-    vk::Sampler textureSampler;
-
-    vk::DescriptorPool descriptorPool;
-    std::vector<vk::DescriptorSet> descriptorSets;
+    gpu::BasicRenderPass basicRenderPass;
 
     std::vector<vk::Semaphore> imageAvailableSemaphores;
     std::vector<vk::Semaphore> renderFinishedSemaphores;
@@ -131,37 +441,24 @@ private:
         device = core.getDevice();
         graphicsQueue = core.getGraphicsQueue();
         presentQueue = core.getPresentQueue();
-        commandPool = core.getCommandPool();
         swapChainExtent = core.getSwapChainExtent();
-        createDescriptorSetLayout();
-        readAndCompileShaders();
-        createGraphicsPipeline();
-        createTextureImage();
-        textureImageView = core.createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
-        textureSampler = core.createTextureSampler();
-        vertexBuffer = core.bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
-        indexBuffer = core.bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
-        createUniformBuffers();
-        createDescriptorPool();
-        createDescriptorSets();
-        createCommandBuffers();
+
+        basicRenderPass = gpu::BasicRenderPass(&core);
+        // createRenderPass();
+        // createFramebuffers();
+        // createDescriptorSetLayout();
+        // readAndCompileShaders();
+        // createGraphicsPipeline();
+        // createTextureImage();
+        // createUniformBuffers();
+        // createDescriptorPool();
+        // createDescriptorSets();
+        // createCommandBuffers();
         createSyncObjects();
         initImGui();
     }
 
-    void initImGui() {
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void)io;
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-        // Setup Dear ImGui style
-        ImGui::StyleColorsDark();
-        //ImGui::StyleColorsClassic();
-        ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
-
+    void createDescriptorPoolImgui(){
         std::array<vk::DescriptorPoolSize, 11> poolSizes{
             vk::DescriptorPoolSize{ vk::DescriptorType::eSampler, 1000 },
             vk::DescriptorPoolSize{ vk::DescriptorType::eCombinedImageSampler, 1000 },
@@ -183,7 +480,9 @@ private:
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
+    }
 
+    void createRenderPassImgui(){
         vk::AttachmentDescription attachment(
             {}, 
             core.getSwapChainImageFormat(), 
@@ -220,6 +519,59 @@ private:
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
+    }
+    
+    void createCommandPoolImgui(){
+        QueueFamilyIndices queueFamilyIndices = core.findQueueFamilies(physicalDevice);
+        vk::CommandPoolCreateInfo commandPoolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());
+        try{
+            commandPoolImgui = device.createCommandPool(commandPoolInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+
+    void createCommandBuffersImgui(){
+        commandBuffersImgui.resize(core.getSwapChainImageCount());
+        vk::CommandBufferAllocateInfo allocInfo(commandPoolImgui, vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffersImgui.size());
+        try{
+            commandBuffersImgui = device.allocateCommandBuffers(allocInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+
+    void createFramebuffersImgui(){
+        framebuffersImgui.resize(core.getSwapChainImageCount());
+        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
+            std::array<vk::ImageView, 1> attachments = {
+                core.getSwapChainImageView(i)
+            };
+            vk::FramebufferCreateInfo framebufferInfo({}, renderPassImgui, attachments, core.getSwapChainExtent().width, core.getSwapChainExtent().height, 1);
+            try{
+                framebuffersImgui[i] = device.createFramebuffer(framebufferInfo);
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
+        }
+    }
+    
+    void initImGui() {
+        // Setup Dear ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO(); (void)io;
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+        // Setup Dear ImGui style
+        ImGui::StyleColorsDark();
+        //ImGui::StyleColorsClassic();
+        ImGui_ImplGlfw_InitForVulkan(window.getGLFWWindow(), true);
+
+        createDescriptorPoolImgui();
+
+        createRenderPassImgui();        
 
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance = core.getInstance();
@@ -240,211 +592,11 @@ private:
         core.endSingleTimeCommands(command_buffer);    
 
         //create command pool
-        QueueFamilyIndices queueFamilyIndices = core.findQueueFamilies(physicalDevice);
-        vk::CommandPoolCreateInfo commandPoolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());
-        try{
-            commandPoolImgui = device.createCommandPool(commandPoolInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-
+        createCommandPoolImgui();
         //create commandbuffers
-        commandBuffersImgui.resize(core.getSwapChainImageCount());
-        vk::CommandBufferAllocateInfo allocInfo(commandPoolImgui, vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffersImgui.size());
-        try{
-            commandBuffersImgui = device.allocateCommandBuffers(allocInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+        createCommandBuffersImgui();
         //create Framebuffers
-        framebuffersImgui.resize(core.getSwapChainImageCount());
-        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
-            std::array<vk::ImageView, 1> attachments = {
-                core.getSwapChainImageView(i)
-            };
-            vk::FramebufferCreateInfo framebufferInfo({}, renderPassImgui, attachments, core.getSwapChainExtent().width, core.getSwapChainExtent().height, 1);
-            try{
-                framebuffersImgui[i] = device.createFramebuffer(framebufferInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-        }
-        //record Command Buffers
-
-        
-    }
-
-    void recreateImGuiFramebuffer() {
-        //create Framebuffers
-        framebuffersImgui.resize(core.getSwapChainImageCount());
-        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
-            std::array<vk::ImageView, 1> attachments = {
-                core.getSwapChainImageView(i)
-            };
-            vk::FramebufferCreateInfo framebufferInfo({}, renderPassImgui, attachments, swapChainExtent.width, swapChainExtent.height, 1);
-            try{
-                framebuffersImgui[i] = device.createFramebuffer(framebufferInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-        }
-    }
-
-
-    vk::ShaderModule createShaderModule(const std::vector<uint32_t> code) {
-        vk::ShaderModuleCreateInfo createInfo({}, code);
-        vk::ShaderModule shaderModule;
-        try{
-            shaderModule = device.createShaderModule(createInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-        return shaderModule;
-    }
-
-    void createDescriptorSetLayout() {
-        vk::DescriptorSetLayoutBinding uboLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr);
-        vk::DescriptorSetLayoutBinding samplerLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr);
-
-        std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
-        vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
-
-        try{
-            descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-    }
-
-    void readAndCompileShaders() {
-        glslang::InitializeProcess();
-        std::vector<uint32_t> vertShaderCodeSPIRV;
-        std::vector<uint32_t> fragShaderCodeSPIRV;
-        SpirvHelper::GLSLtoSPV(vk::ShaderStageFlagBits::eVertex, "/shader.vert", vertShaderCodeSPIRV);
-        SpirvHelper::GLSLtoSPV(vk::ShaderStageFlagBits::eFragment, "/shader.frag", fragShaderCodeSPIRV);
-        try{
-            vertShaderModule = createShaderModule(vertShaderCodeSPIRV);
-            fragShaderModule = createShaderModule(fragShaderCodeSPIRV);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-        glslang::FinalizeProcess();
-    }
-
-    void createGraphicsPipeline(){
-        vk::PipelineShaderStageCreateInfo vertShaderStageInfo({}, vk::ShaderStageFlagBits::eVertex, vertShaderModule, "main");
-        vk::PipelineShaderStageCreateInfo fragShaderStageInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main");
-
-        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
-
-        auto bindingDescription = Vertex::getBindingDescription();
-        auto attributeDescriptions = Vertex::getAttributeDescriptions();
-
-        vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindingDescription, attributeDescriptions);
-        vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
-        vk::Viewport viewport(0.0f, 0.0f, (float) swapChainExtent.width, (float) swapChainExtent.height, 0.0f, 1.0f);
-        vk::Rect2D scissor(vk::Offset2D(0, 0),swapChainExtent);
-        vk::PipelineViewportStateCreateInfo viewportState({}, viewport, scissor);
-        vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
-        vk::PipelineMultisampleStateCreateInfo multisampling({}, vk::SampleCountFlagBits::e1, VK_FALSE);
-        vk::PipelineColorBlendAttachmentState colorBlendAttachment(VK_FALSE, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-        vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
-        vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout);
-
-        try{
-            pipelineLayout = device.createPipelineLayout(pipelineLayoutInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-
-        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, core.getRenderPass());
-        
-        vk::Result result;
-        std::tie(result, graphicsPipeline) = device.createGraphicsPipeline( nullptr, pipelineInfo);
-        switch ( result ){
-            case vk::Result::eSuccess: break;
-            default: throw std::runtime_error("failed to create graphics Pipeline!");
-        }
-    }
-
-    void createTextureImage() {
-        int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(RESOURCE_PATH "/checker.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        vk::DeviceSize imageSize = texWidth * texHeight * 4;
-
-        if (!pixels) {
-            throw std::runtime_error("failed to load texture image!");
-        }
-        
-        vk::Buffer stagingBuffer = core.createBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
-        void* mappedData = core.mapBuffer(stagingBuffer);
-        memcpy(mappedData, pixels, static_cast<size_t>(imageSize));
-        core.unmapBuffer(stagingBuffer);
-
-        stbi_image_free(pixels);
-
-        textureImage = core.createImage(vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, VMA_MEMORY_USAGE_GPU_ONLY, texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal);
-        
-        core.transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-        core.copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-        core.transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-
-        core.destroyBuffer(stagingBuffer);
-    }
-
-    void createUniformBuffers() {
-        vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
-
-        uniformBuffers.resize(core.getSwapChainImageCount());
-        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
-            uniformBuffers[i] = core.createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
-        }
-    }
-
-    void createDescriptorPool() {
-        vk::DescriptorPoolSize poolSizeUbo(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(core.getSwapChainImageCount()));
-        vk::DescriptorPoolSize poolSizeSampler(vk::DescriptorType::eCombinedImageSampler, static_cast<uint32_t>(core.getSwapChainImageCount()));
-        std::array<vk::DescriptorPoolSize, 2> poolSizes{poolSizeUbo, poolSizeSampler};
-
-        vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(core.getSwapChainImageCount()), poolSizes);
-        try{
-            descriptorPool = device.createDescriptorPool(poolInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-    }
-
-    void createDescriptorSets() {
-        std::vector<vk::DescriptorSetLayout> layouts(core.getSwapChainImageCount(), descriptorSetLayout);
-        vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(core.getSwapChainImageCount()), layouts.data());
-        descriptorSets.resize(core.getSwapChainImageCount());
-        try{
-            descriptorSets = device.allocateDescriptorSets(allocInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-
-        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
-
-            vk::DescriptorBufferInfo bufferInfo(uniformBuffers[i], 0, sizeof(UniformBufferObject));
-            vk::DescriptorImageInfo imageInfo(textureSampler, textureImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
-            vk::WriteDescriptorSet descriptorWriteUbo(descriptorSets[i], 0, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfo);
-            vk::WriteDescriptorSet descriptorWriteSampler(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo);
-
-            std::array<vk::WriteDescriptorSet, 2> descriptorWrites{descriptorWriteUbo, descriptorWriteSampler};
-            
-            device.updateDescriptorSets(descriptorWrites, nullptr);
-        }
-    }
-
-    void createCommandBuffers(){
-        commandBuffers.resize(core.getSwapChainImageCount());
-        vk::CommandBufferAllocateInfo allocInfo(commandPool, vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
-        try{
-            commandBuffers = device.allocateCommandBuffers(allocInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+        createFramebuffersImgui();
     }
 
     void createSyncObjects() {
@@ -465,24 +617,6 @@ private:
         }
     }
 
-    void updateUniformBuffer(uint32_t currentImage) {
-        static auto startTime = std::chrono::high_resolution_clock::now();
-
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-        UniformBufferObject ubo{};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
-        ubo.proj[1][1] *= -1;
-        
-        void* mappedData = core.mapBuffer(uniformBuffers[currentImage]);
-        memcpy(mappedData, &ubo, (size_t) sizeof(ubo));
-        core.flushBuffer(uniformBuffers[currentImage], 0, (size_t) sizeof(ubo));
-        core.unmapBuffer(uniformBuffers[currentImage]);
-    }
-
     void drawFrame(){
         vk::Result result1 = device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
         uint32_t imageIndex;
@@ -501,7 +635,7 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
         
-        updateUniformBuffer(imageIndex);
+        // updateUniformBuffer(imageIndex);
         recordCommandBuffer(imageIndex);
 
         if ((VkFence) imagesInFlight[imageIndex] != VK_NULL_HANDLE)
@@ -511,7 +645,7 @@ private:
         std::vector<vk::Semaphore> waitSemaphores = {imageAvailableSemaphores[currentFrame]};
         std::vector<vk::PipelineStageFlags> waitStages = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
         std::vector<vk::Semaphore> signalSemaphores = {renderFinishedSemaphores[currentFrame]};
-        std::array<vk::CommandBuffer, 2> submitCommandBuffers = { commandBuffers[imageIndex], commandBuffersImgui[imageIndex]};
+        std::array<vk::CommandBuffer, 2> submitCommandBuffers = { basicRenderPass.getCommandBuffer(imageIndex), commandBuffersImgui[imageIndex]};
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
         device.resetFences(inFlightFences[currentFrame]);
         graphicsQueue.submit(submitInfo, inFlightFences[currentFrame]);
@@ -559,29 +693,7 @@ private:
             }
         }
         {
-            vk::CommandBufferBeginInfo beginInfo;
-            try{
-                commandBuffers[imageIndex].begin(beginInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-            std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
-            vk::RenderPassBeginInfo renderPassInfo(core.getRenderPass(), core.getFramebuffer(imageIndex), vk::Rect2D({0, 0}, swapChainExtent), clearValues);
-
-            commandBuffers[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-                commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-                std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
-                std::vector<vk::DeviceSize> offsets = {0};
-                commandBuffers[imageIndex].bindVertexBuffers(0, vertexBuffers, offsets);
-                commandBuffers[imageIndex].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
-                commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
-                commandBuffers[imageIndex].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-            commandBuffers[imageIndex].endRenderPass();
-            try{
-                commandBuffers[imageIndex].end();
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
+            basicRenderPass.update(imageIndex);
         }
     }
 
@@ -613,21 +725,16 @@ private:
     }
 
     void cleanupSwapchain(){
-        core.destroyFramebuffers();
+       
         // imgui
         for (auto framebuffer : framebuffersImgui) {
             device.destroyFramebuffer(framebuffer);
         }
-        device.freeCommandBuffers(commandPool, commandBuffers);
-        device.destroyPipeline(graphicsPipeline);
-        device.destroyPipelineLayout(pipelineLayout);
-        core.destroyRenderPass();
+        basicRenderPass.destroyFrameResources();
+
         core.destroySwapChainImageViews();
         core.destroySwapChain();
-        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
-            core.destroyBuffer(uniformBuffers[i]);
-        }
-        device.destroyDescriptorPool(descriptorPool);
+        
     }
 
     void cleanup(){
@@ -636,18 +743,6 @@ private:
         device.freeCommandBuffers(commandPoolImgui, commandBuffersImgui);
         device.destroyRenderPass(renderPassImgui);
         device.destroyDescriptorPool(descriptorPoolImgui);
-
-        device.destroyShaderModule(fragShaderModule);
-        device.destroyShaderModule(vertShaderModule);
-
-        core.destroySampler(textureSampler);
-        core.destroyImageView(textureImageView);
-        core.destroyImage(textureImage);
-
-        device.destroyDescriptorSetLayout(descriptorSetLayout);
-
-        core.destroyBuffer(indexBuffer);
-        core.destroyBuffer(vertexBuffer);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             device.destroySemaphore(imageAvailableSemaphores[i]);
@@ -680,17 +775,19 @@ private:
         core.createSwapChain(&window);
         swapChainExtent = core.getSwapChainExtent();
         core.createSwapChainImageViews();
-        core.createRenderPass();
-        core.createFramebuffers();
-        createGraphicsPipeline();
-        createUniformBuffers();
-        createDescriptorPool();
-        createDescriptorSets();
-        createCommandBuffers();
+        // createRenderPass();
+        // createFramebuffers();
+        // createGraphicsPipeline();
+        // createUniformBuffers();
+        // createDescriptorPool();
+        // createDescriptorSets();
+        // createCommandBuffers();
+        basicRenderPass.init();
+
+        createFramebuffersImgui();
 
         imagesInFlight.resize(core.getSwapChainImageCount(), VK_NULL_HANDLE);
 
-        recreateImGuiFramebuffer();
     }
 };
 

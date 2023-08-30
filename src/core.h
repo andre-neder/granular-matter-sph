@@ -29,8 +29,6 @@ namespace gpu
             inline vk::Extent2D getSwapChainExtent(){ return swapChainExtent; };
             inline vk::ImageView getSwapChainImageView(int index){ return swapChainImageViews[index]; };
             inline vk::SwapchainKHR getSwapChain(){ return swapChain; };
-            inline vk::Framebuffer getFramebuffer(int index){ return swapChainFramebuffers[index]; };
-            inline vk::RenderPass getRenderPass(){ return renderPass; };
             
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
             SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
@@ -61,11 +59,7 @@ namespace gpu
             vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
             void createSwapChain(Window* window);
             void createSwapChainImageViews();
-            void createRenderPass();
-            void createFramebuffers();
             void destroySwapChainImageViews();
-            void destroyFramebuffers();
-            void destroyRenderPass();
             void destroySwapChain();
         private:
             bool m_enableValidation = true;
@@ -86,8 +80,6 @@ namespace gpu
             vk::Extent2D swapChainExtent;
             std::vector<vk::Image> swapChainImages;
             std::vector<vk::ImageView> swapChainImageViews;
-            std::vector<vk::Framebuffer> swapChainFramebuffers;
-            vk::RenderPass renderPass;
 
             std::map<vk::Buffer, VmaAllocation> m_bufferAllocations;
             std::map<vk::Image, VmaAllocation> m_imageAllocations;
@@ -114,8 +106,6 @@ namespace gpu
         createCommandPool();
         createSwapChain(window);
         createSwapChainImageViews();
-        createRenderPass();
-        createFramebuffers();
     }
 
     void Core::destroy(){
@@ -521,53 +511,13 @@ namespace gpu
             swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
         }
     }
-    void Core::createRenderPass(){
-        vk::AttachmentDescription colorAttachment({}, 
-        swapChainImageFormat, 
-        vk::SampleCountFlagBits::e1, 
-        vk::AttachmentLoadOp::eClear, 
-        vk::AttachmentStoreOp::eStore, 
-        vk::AttachmentLoadOp::eDontCare, 
-        vk::AttachmentStoreOp::eDontCare, 
-        vk::ImageLayout::eUndefined, 
-        vk::ImageLayout::eColorAttachmentOptimal);
-        vk::AttachmentReference colorAttachmentRef({}, vk::ImageLayout::eColorAttachmentOptimal);
-        vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentRef);
-        vk::RenderPassCreateInfo renderPassInfo({}, colorAttachment, subpass);
-        try{
-            renderPass = device.createRenderPass(renderPassInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-    }
-    void Core::createFramebuffers() {
-        swapChainFramebuffers.resize(swapChainImageViews.size());
-        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-            std::vector<vk::ImageView> attachments = {swapChainImageViews[i]};
-            vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, swapChainExtent.width, swapChainExtent.height, 1);
-            try{
-                swapChainFramebuffers[i] = device.createFramebuffer(framebufferInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-        }
-    }
     void Core::destroySwapChainImageViews(){
         for (auto imageView : swapChainImageViews) {
             destroyImageView(imageView);
         }
-    }
-    void Core::destroyFramebuffers(){
-        for (auto framebuffer : swapChainFramebuffers) {
-            device.destroyFramebuffer(framebuffer);
-        }
-    }
-    void Core::destroyRenderPass(){
-        device.destroyRenderPass(renderPass);
     }
     void Core::destroySwapChain(){
         device.destroySwapchainKHR(swapChain);
     }
     
 } // namespace gpu
-
