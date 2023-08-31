@@ -86,6 +86,13 @@ using namespace gpu;
     }
     
     void ImguiRenderPass::update(int imageIndex){
+        
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow(&show_demo_window);
+        ImGui::Render();
+
         vk::CommandBufferBeginInfo beginInfo;
         try{
             commandBuffers[imageIndex].begin(beginInfo);

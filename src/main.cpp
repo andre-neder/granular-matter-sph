@@ -162,16 +162,10 @@ private:
         double time = glfwGetTime();
         uint32_t fps = 0;
 
-        bool show_demo_window = true;
 
         while (!window.shouldClose()) {
             glfwPollEvents();
 
-            ImGui_ImplVulkan_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-            ImGui::ShowDemoWindow(&show_demo_window);
-            ImGui::Render();
 
             drawFrame();
             fps++;

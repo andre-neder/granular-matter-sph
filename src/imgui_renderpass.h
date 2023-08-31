@@ -29,5 +29,7 @@ namespace gpu{
             
             void createRenderPass();
             void createDescriptorPool();
+        
+            bool show_demo_window = true;
     };
 }
