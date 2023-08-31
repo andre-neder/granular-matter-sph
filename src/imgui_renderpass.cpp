@@ -145,8 +145,6 @@ using namespace gpu;
     void ImguiRenderPass::destroy(){
         destroyFrameResources();
 
-        m_core->getDevice().destroyRenderPass(renderPass);
-        m_core->getDevice().destroyDescriptorPool(descriptorPool);
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
