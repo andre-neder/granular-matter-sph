@@ -237,7 +237,7 @@ using namespace gpu;
         m_core->destroySampler(textureSampler);
         m_core->destroyImageView(textureImageView);
         m_core->destroyImage(textureImage);
-
+        
         device.destroyDescriptorSetLayout(descriptorSetLayout);
 
         m_core->destroyBuffer(indexBuffer);

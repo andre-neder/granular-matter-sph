@@ -123,7 +123,7 @@ using namespace gpu;
             vk::DescriptorPoolSize{ vk::DescriptorType::eStorageBufferDynamic, 1000 },
             vk::DescriptorPoolSize{ vk::DescriptorType::eInputAttachment, 1000 }
         };
-
+        //vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet
         vk::DescriptorPoolCreateInfo descriptorPoolInfo({}, static_cast<uint32_t>(1000 * poolSizes.size()), poolSizes);
 
         try{
@@ -139,8 +139,8 @@ using namespace gpu;
             device.destroyFramebuffer(framebuffer);
         }
         device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
-        
-        device.destroyDescriptorPool(descriptorPool);
+        m_core->getDevice().destroyRenderPass(renderPass);
+        m_core->getDevice().destroyDescriptorPool(descriptorPool);
     }
     void ImguiRenderPass::destroy(){
         destroyFrameResources();
