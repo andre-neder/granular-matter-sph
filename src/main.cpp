@@ -25,7 +25,7 @@ const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-class VulkanBase {
+class Application {
 public:
     void run() {
         initWindow();
@@ -165,7 +165,7 @@ private:
             fps++;
             if((glfwGetTime() - time) >= 1.0){
                 time = glfwGetTime();
-                std::string title = "VulkanBase  FPS:"+std::to_string(fps);
+                std::string title = "Application  FPS:"+std::to_string(fps);
                 window.setTitle(title);
                 fps = 0;
             }
@@ -223,7 +223,7 @@ private:
 };
 
 int main() {
-    VulkanBase app;
+    Application app;
     try {
         app.run();
     } catch (const std::exception& e) {
