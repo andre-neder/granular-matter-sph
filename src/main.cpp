@@ -55,12 +55,6 @@ private:
     std::vector<vk::Fence> imagesInFlight;
     size_t currentFrame = 0;
 
-    // vk::RenderPass renderPassImgui;
-    // vk::CommandPool commandPoolImgui;
-    // vk::DescriptorPool descriptorPoolImgui;
-    // std::vector<vk::CommandBuffer> commandBuffersImgui;
-    // std::vector<vk::Framebuffer> framebuffersImgui;
-
     void initWindow(){
         window = gpu::Window("Application", WIDTH, HEIGHT);
     }
@@ -106,7 +100,7 @@ private:
             result = device.acquireNextImageKHR(core.getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
         }
         catch(const std::exception& e){
-            std::cerr << e.what() << '\n';
+            // std::cerr << e.what() << '\n';
         }
         if(result == vk::Result::eErrorOutOfDateKHR){
             recreateSwapChain();
@@ -139,7 +133,7 @@ private:
             result = presentQueue.presentKHR(presentInfo);
         }
         catch(const std::exception& e){
-            std::cerr << e.what() << '\n';
+            // std::cerr << e.what() << '\n';
         }
         
         if(result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || window.wasResized()){
@@ -222,8 +216,6 @@ private:
    
         basicRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
-
-        // createFramebuffersImgui();
 
         imagesInFlight.resize(core.getSwapChainImageCount(), VK_NULL_HANDLE);
 
