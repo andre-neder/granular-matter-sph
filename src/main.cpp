@@ -27,7 +27,7 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class VulkanBase {
 public:
-        void run() {
+    void run() {
         initWindow();
         initVulkan();
         mainLoop();
