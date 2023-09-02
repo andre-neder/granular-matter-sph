@@ -61,6 +61,11 @@ namespace gpu
             void createSwapChainImageViews();
             void destroySwapChainImageViews();
             void destroySwapChain();
+
+            // void readAndCompileShaders();
+            vk::ShaderModule createShaderModule(const std::vector<uint32_t> code);
+            vk::ShaderModule loadShaderModule(std::string src);
+            
         private:
             bool m_enableValidation = true;
             std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -71,6 +76,7 @@ namespace gpu
             vk::PhysicalDevice physicalDevice;
             vk::Device device;
             vk::Queue graphicsQueue;
+            vk::Queue computeQueue;
             vk::Queue presentQueue;
             VmaAllocator allocator;
             vk::CommandPool commandPool; 

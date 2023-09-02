@@ -68,6 +68,9 @@ QueueFamilyIndices Core::findQueueFamilies(vk::PhysicalDevice pDevice) {
         if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) {
             indices.graphicsFamily = i;
         }
+        if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eCompute) {
+            indices.computeFamily = i;
+        }
         if (pDevice.getSurfaceSupportKHR(i, surface)) {
             indices.presentFamily = i;
         }
@@ -127,6 +130,7 @@ void Core::createLogicalDevice(){
         std::cerr << "Exception Thrown: " << e.what();
     }
     graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
+    computeQueue = device.getQueue(indices.computeFamily.value(), 0);
     presentQueue = device.getQueue(indices.presentFamily.value(), 0);
 }
 void Core::createAllocator(){
@@ -429,4 +433,42 @@ void Core::destroySwapChainImageViews(){
 }
 void Core::destroySwapChain(){
     device.destroySwapchainKHR(swapChain);
+}
+
+
+vk::ShaderModule Core::createShaderModule(const std::vector<uint32_t> code) {
+    vk::ShaderModuleCreateInfo createInfo({}, code);
+    vk::ShaderModule shaderModule;
+    try{
+        shaderModule = device.createShaderModule(createInfo);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+    return shaderModule;
+}
+
+vk::ShaderModule Core::loadShaderModule(std::string src) {
+    vk::ShaderModule shaderModule;
+    glslang::InitializeProcess();
+    std::vector<uint32_t> shaderCodeSPIRV;
+    std::string fileExtension = src.substr(src.find_last_of('.'));
+    vk::ShaderStageFlagBits stage;
+    if (fileExtension == ".vert"){
+        stage = vk::ShaderStageFlagBits::eVertex;
+    }
+    else if (fileExtension == ".frag"){
+        stage = vk::ShaderStageFlagBits::eFragment;
+    }
+    else if (fileExtension == ".comp"){
+        stage = vk::ShaderStageFlagBits::eCompute;
+    }
+
+    SpirvHelper::GLSLtoSPV(stage, src, shaderCodeSPIRV);
+    try{
+        shaderModule = createShaderModule(shaderCodeSPIRV);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+    glslang::FinalizeProcess();
+    return shaderModule;
 }

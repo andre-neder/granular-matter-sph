@@ -6,7 +6,7 @@ PFN_vkCreateDebugUtilsMessengerEXT pfnVkCreateDebugUtilsMessengerEXT;
 PFN_vkDestroyDebugUtilsMessengerEXT pfnVkDestroyDebugUtilsMessengerEXT;
 
 bool QueueFamilyIndices::isComplete() {
-	return graphicsFamily.has_value() && presentFamily.has_value();
+	return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
 }
 
 #ifdef IMGUI_VULKAN_DEBUG_REPORT

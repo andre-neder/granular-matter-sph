@@ -132,7 +132,7 @@ EShLanguage SpirvHelper::FindLanguage(const vk::ShaderStageFlagBits shader_type)
 }
 
 bool SpirvHelper::GLSLtoSPV(const vk::ShaderStageFlagBits shader_type, const std::string &filename, std::vector<unsigned int> &spirv) {
-    std::ifstream input_file(SHADER_PATH + filename);
+    std::ifstream input_file(filename);
     if (!input_file.is_open()) {
         std::cerr << "Could not open the file - '" << filename << "'" << std::endl;
         exit(EXIT_FAILURE);
