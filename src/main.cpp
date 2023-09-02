@@ -195,8 +195,6 @@ private:
 
     void recordCommandBuffer(uint32_t imageIndex){
         
-        simulation.update(imageIndex);
-
         imguiRenderPass.update(imageIndex);
         basicRenderPass.update(imageIndex);
     
