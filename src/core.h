@@ -20,19 +20,28 @@ namespace gpu
             inline vk::SurfaceKHR getSurface(){ return surface; };
             inline vk::PhysicalDevice getPhysicalDevice(){ return physicalDevice; };
             inline vk::Device getDevice(){ return device; };
+            //* Queues
             inline vk::Queue getGraphicsQueue(){ return graphicsQueue; };
             inline vk::Queue getPresentQueue(){ return presentQueue; };
+            inline vk::Queue getComputeQueue(){ return computeQueue; };
+
             inline VmaAllocator getAllocator(){ return allocator; };
+
             inline vk::CommandPool getCommandPool(){ return commandPool; };
+            //* SwapChain
             inline vk::Format getSwapChainImageFormat(){ return swapChainImageFormat; };
             inline size_t getSwapChainImageCount(){ return swapChainImages.size(); };
             inline vk::Extent2D getSwapChainExtent(){ return swapChainExtent; };
             inline vk::ImageView getSwapChainImageView(int index){ return swapChainImageViews[index]; };
             inline vk::SwapchainKHR getSwapChain(){ return swapChain; };
-            
+            //* Helpers
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
             SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
+            vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
+            vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
+            vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
             
+            //* Buffers
             vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
             vk::Buffer bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
             void* mapBuffer(vk::Buffer buffer);
@@ -41,28 +50,26 @@ namespace gpu
             void destroyBuffer(vk::Buffer buffer);
             void copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
             void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
-
+            //* Images
             vk::Image createImage(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling);
             void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
             vk::ImageView createImageView(vk::Image image, vk::Format format);
-            vk::Sampler createTextureSampler();
             void destroyImage(vk::Image image);
             void destroyImageView(vk::ImageView view);
+            //* Samplers
+            vk::Sampler createTextureSampler();
             void destroySampler(vk::Sampler sampler);
-
+            
             void createCommandPool();
             vk::CommandBuffer beginSingleTimeCommands();
             void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
 
-            vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
-            vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
-            vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
             void createSwapChain(Window* window);
             void createSwapChainImageViews();
             void destroySwapChainImageViews();
             void destroySwapChain();
 
-            // void readAndCompileShaders();
+            //* Shaders
             vk::ShaderModule createShaderModule(const std::vector<uint32_t> code);
             vk::ShaderModule loadShaderModule(std::string src);
             

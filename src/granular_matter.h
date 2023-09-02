@@ -12,6 +12,21 @@ struct Particle{
   float p = 0.0;
   Particle(){};
   inline Particle(float x, float y) { position = glm::vec2(x, y); }
+
+  static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
+      std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
+          vk::VertexInputBindingDescription(0, sizeof(Particle), vk::VertexInputRate::eVertex)
+      };
+      return bindingDescriptions;
+  }
+  static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
+      std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
+          vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, position)),
+          // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Particle, color)),
+          // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, texCoord))
+      };
+      return attributeDescriptions;
+  }
 };
 
 

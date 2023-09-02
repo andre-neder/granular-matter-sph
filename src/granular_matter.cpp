@@ -4,19 +4,27 @@ GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
     densityPressureModule = m_core->loadShaderModule(SHADER_PATH"/density_pressure.comp");
-    forceModule = m_core->loadShaderModule(SHADER_PATH"/force.comp");
-    integrateModule = m_core->loadShaderModule(SHADER_PATH"/integrate.comp");
+    // forceModule = m_core->loadShaderModule(SHADER_PATH"/force.comp");
+    // integrateModule = m_core->loadShaderModule(SHADER_PATH"/integrate.comp");
     
     particles = std::vector<Particle>(64 * 64);
     std::generate(particles.begin(), particles.end(), [this]() {
         return Particle((static_cast<float>(std::rand()) / RAND_MAX) * settings.DOMAIN_WIDTH, (static_cast<float>(std::rand()) / RAND_MAX) * settings.DOMAIN_HEIGHT);
     });
+
+    particlesBufferA.resize(m_core->getSwapChainImageCount());
+    particlesBufferB.resize(m_core->getSwapChainImageCount());
+    settingsBuffer.resize(m_core->getSwapChainImageCount());
     for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
         particlesBufferA[i] = m_core->bufferFromData(particles.data(),particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particlesBufferB[i] = m_core->bufferFromData(particles.data(),particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         settingsBuffer[i]   = m_core->bufferFromData(&settings, sizeof(SPHSettings), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
     }
     initFrameResources();
+    createDescriptorPool();
+    createDescriptorSetLayout();
+    createDescriptorSets();
+    createComputePipeline();
 }
 
 GranularMatter::~GranularMatter()
@@ -37,6 +45,19 @@ void GranularMatter::destroyFrameResources(){
 }
 void GranularMatter::destroy(){
     destroyFrameResources();
+    vk::Device device = m_core->getDevice();
+    //* destroy density pressure stuff
+    device.destroyPipelineLayout(densityPressureLayout);
+    device.destroyShaderModule(densityPressureModule);
+    device.destroyPipeline(densityPressurePipeline);
+
+    for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+        m_core->destroyBuffer(particlesBufferA[i]);
+        m_core->destroyBuffer(particlesBufferB[i]);
+        m_core->destroyBuffer(settingsBuffer[i]);
+    }
+    
+    device.destroyDescriptorSetLayout(descriptorSetLayout);
 }
 void GranularMatter::initFrameResources(){
     createCommandBuffers();
@@ -87,7 +108,7 @@ void GranularMatter::createDescriptorSets() {
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
-
+    
     for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
 
         vk::DescriptorBufferInfo bufferInfoA(particlesBufferA[i], 0, particles.size());
@@ -159,68 +180,68 @@ void GranularMatter::createComputePipeline(){
         case vk::Result::eSuccess: break;
         default: throw std::runtime_error("failed to create compute Pipeline!");
     }
-    //* Force Pipeline
-    vk::PipelineShaderStageCreateInfo forceStageInfo{
-        {},
-        vk::ShaderStageFlagBits::eCompute,
-        forceModule,
-        "main"
-    };
+    // //* Force Pipeline
+    // vk::PipelineShaderStageCreateInfo forceStageInfo{
+    //     {},
+    //     vk::ShaderStageFlagBits::eCompute,
+    //     forceModule,
+    //     "main"
+    // };
 
-    vk::PipelineLayoutCreateInfo forceLayoutInfo{
-        {},
-        descriptorSetLayout,
-        {}
-    };
+    // vk::PipelineLayoutCreateInfo forceLayoutInfo{
+    //     {},
+    //     descriptorSetLayout,
+    //     {}
+    // };
 
-    try{
-        forceLayout = m_core->getDevice().createPipelineLayout(forceLayoutInfo, nullptr);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    // try{
+    //     forceLayout = m_core->getDevice().createPipelineLayout(forceLayoutInfo, nullptr);
+    // }catch(std::exception& e) {
+    //     std::cerr << "Exception Thrown: " << e.what();
+    // }
 
-    vk::ComputePipelineCreateInfo forcePipelineInfo{
-        {},
-        forceStageInfo,
-        forceLayout,
-    };
-
-    
-    std::tie(result, forcePipeline) = m_core->getDevice().createComputePipeline( nullptr, forcePipelineInfo);
-    switch ( result ){
-        case vk::Result::eSuccess: break;
-        default: throw std::runtime_error("failed to create compute Pipeline!");
-    }
-    //* Integrate Pipeline
-    vk::PipelineShaderStageCreateInfo integrateStageInfo{
-        {},
-        vk::ShaderStageFlagBits::eCompute,
-        integrateModule,
-        "main"
-    };
-
-    vk::PipelineLayoutCreateInfo integrateLayoutInfo{
-        {},
-        descriptorSetLayout,
-        {}
-    };
-
-    try{
-        integrateLayout = m_core->getDevice().createPipelineLayout(integrateLayoutInfo, nullptr);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-
-    vk::ComputePipelineCreateInfo integratePipelineInfo{
-        {},
-        integrateStageInfo,
-        integrateLayout,
-    };
+    // vk::ComputePipelineCreateInfo forcePipelineInfo{
+    //     {},
+    //     forceStageInfo,
+    //     forceLayout,
+    // };
 
     
-    std::tie(result, integratePipeline) = m_core->getDevice().createComputePipeline( nullptr, integratePipelineInfo);
-    switch ( result ){
-        case vk::Result::eSuccess: break;
-        default: throw std::runtime_error("failed to create compute Pipeline!");
-    }
+    // std::tie(result, forcePipeline) = m_core->getDevice().createComputePipeline( nullptr, forcePipelineInfo);
+    // switch ( result ){
+    //     case vk::Result::eSuccess: break;
+    //     default: throw std::runtime_error("failed to create compute Pipeline!");
+    // }
+    // //* Integrate Pipeline
+    // vk::PipelineShaderStageCreateInfo integrateStageInfo{
+    //     {},
+    //     vk::ShaderStageFlagBits::eCompute,
+    //     integrateModule,
+    //     "main"
+    // };
+
+    // vk::PipelineLayoutCreateInfo integrateLayoutInfo{
+    //     {},
+    //     descriptorSetLayout,
+    //     {}
+    // };
+
+    // try{
+    //     integrateLayout = m_core->getDevice().createPipelineLayout(integrateLayoutInfo, nullptr);
+    // }catch(std::exception& e) {
+    //     std::cerr << "Exception Thrown: " << e.what();
+    // }
+
+    // vk::ComputePipelineCreateInfo integratePipelineInfo{
+    //     {},
+    //     integrateStageInfo,
+    //     integrateLayout,
+    // };
+
+    
+    // std::tie(result, integratePipeline) = m_core->getDevice().createComputePipeline( nullptr, integratePipelineInfo);
+    // switch ( result ){
+    //     case vk::Result::eSuccess: break;
+    //     default: throw std::runtime_error("failed to create compute Pipeline!");
+    // }
 }

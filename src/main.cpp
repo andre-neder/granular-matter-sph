@@ -50,8 +50,10 @@ private:
     gpu::BasicRenderPass basicRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
 
-    // GranularMatter simulation;
+    GranularMatter simulation;
 
+    std::vector<vk::Fence> computeInFlightFences;
+    std::vector<vk::Semaphore> computeFinishedSemaphores;
     std::vector<vk::Semaphore> imageAvailableSemaphores;
     std::vector<vk::Semaphore> renderFinishedSemaphores;
     std::vector<vk::Fence> inFlightFences;
@@ -74,12 +76,14 @@ private:
         basicRenderPass = gpu::BasicRenderPass(&core);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
 
-        // simulation = GranularMatter(&core);
+        simulation = GranularMatter(&core);
         
         createSyncObjects();
     }
 
     void createSyncObjects() {
+        computeInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+        computeFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -88,9 +92,11 @@ private:
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             try{
+                computeFinishedSemaphores[i] = device.createSemaphore(semaphoreInfo);
                 imageAvailableSemaphores[i] = device.createSemaphore(semaphoreInfo);
                 renderFinishedSemaphores[i] = device.createSemaphore(semaphoreInfo);
                 inFlightFences[i] = device.createFence(fenceInfo);
+                computeInFlightFences[i] = device.createFence(fenceInfo);
             }catch(std::exception& e) {
                 std::cerr << "Exception Thrown: " << e.what();
             }
@@ -98,6 +104,30 @@ private:
     }
 
     void drawFrame(){
+
+        // vk::Result result2 = device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+        // device.resetFences(computeInFlightFences[currentFrame]);
+
+        // simulation.update(currentFrame);
+        
+        // std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
+        //     simulation.getCommandBuffer(currentFrame)
+        // }; 
+
+        // std::vector<vk::Semaphore> signalComputeSemaphores = {computeFinishedSemaphores[currentFrame]};
+
+        // vk::SubmitInfo computeSubmitInfo{
+        //     {},
+        //     {},
+        //     submitComputeCommandBuffers,
+        //     signalComputeSemaphores
+        // };
+
+
+        // core.getComputeQueue().submit(computeSubmitInfo);
+
+
         vk::Result result1 = device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
         uint32_t imageIndex;
         vk::Result result;
@@ -114,21 +144,33 @@ private:
         else if(result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR){
             throw std::runtime_error("failed to acquire swap chain image!");
         }
-        
+
         // updateUniformBuffer(imageIndex);
         recordCommandBuffer(imageIndex);
 
-        if ((VkFence) imagesInFlight[imageIndex] != VK_NULL_HANDLE)
+
+        if ((VkFence) imagesInFlight[imageIndex] != VK_NULL_HANDLE){
             vk::Result result2 = device.waitForFences(imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+        }
         imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
-        std::vector<vk::Semaphore> waitSemaphores = {imageAvailableSemaphores[currentFrame]};
-        std::vector<vk::PipelineStageFlags> waitStages = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
-        std::vector<vk::Semaphore> signalSemaphores = {renderFinishedSemaphores[currentFrame]};
+        std::vector<vk::Semaphore> waitSemaphores = {
+            // computeFinishedSemaphores[currentFrame], 
+            imageAvailableSemaphores[currentFrame]
+        };
+        std::vector<vk::PipelineStageFlags> waitStages = {
+            // vk::PipelineStageFlagBits::eVertexInput, 
+            vk::PipelineStageFlagBits::eColorAttachmentOutput
+        };
+        std::vector<vk::Semaphore> signalSemaphores = {
+            renderFinishedSemaphores[currentFrame]
+        };
         std::array<vk::CommandBuffer, 2> submitCommandBuffers = { 
             basicRenderPass.getCommandBuffer(imageIndex), 
-            imguiRenderPass.getCommandBuffer(imageIndex)};
+            imguiRenderPass.getCommandBuffer(imageIndex)
+        };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
+
         device.resetFences(inFlightFences[currentFrame]);
 
         graphicsQueue.submit(submitInfo, inFlightFences[currentFrame]);
@@ -153,7 +195,7 @@ private:
 
     void recordCommandBuffer(uint32_t imageIndex){
         
-        // simulation.update(imageIndex);
+        simulation.update(imageIndex);
 
         imguiRenderPass.update(imageIndex);
         basicRenderPass.update(imageIndex);
@@ -191,14 +233,16 @@ private:
         basicRenderPass.destroy();
         imguiRenderPass.destroy();
 
-        // simulation.destroy();
+        simulation.destroy();
 
         cleanupSwapchain();
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             device.destroySemaphore(imageAvailableSemaphores[i]);
             device.destroySemaphore(renderFinishedSemaphores[i]);
+            device.destroySemaphore(computeFinishedSemaphores[i]);
             device.destroyFence(inFlightFences[i]);
+            device.destroyFence(computeInFlightFences[i]);
         }
         
         window.destroy();

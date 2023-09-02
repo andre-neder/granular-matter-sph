@@ -11,6 +11,7 @@ using namespace gpu;
         textureSampler = m_core->createTextureSampler();
         vertexBuffer = m_core->bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
         indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+        
         createDescriptorSetLayout();
         initFrameResources();
     }
@@ -70,6 +71,7 @@ using namespace gpu;
             std::cerr << "Exception Thrown: " << e.what();
         }
     }
+    
     void BasicRenderPass::createDescriptorSets() {
         std::vector<vk::DescriptorSetLayout> layouts(m_core->getSwapChainImageCount(), descriptorSetLayout);
         vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(m_core->getSwapChainImageCount()), layouts.data());
@@ -200,7 +202,9 @@ using namespace gpu;
         device.destroyPipelineLayout(pipelineLayout);
         for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
             m_core->destroyBuffer(uniformBuffers[i]);
+            // device.freeDescriptorSets(descriptorPool, descriptorSets[i]);
         }
+        // device.destroyDescriptorSetLayout(descriptorSetLayout);
         device.destroyDescriptorPool(descriptorPool);
         device.destroyRenderPass(renderPass);
     }

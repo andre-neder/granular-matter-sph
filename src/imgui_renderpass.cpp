@@ -4,6 +4,7 @@ using namespace gpu;
 
     ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
         m_core = core;
+        m_deviceProperties = m_core->getPhysicalDevice().getProperties();
         // Setup Dear ImGui context
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -90,6 +91,11 @@ using namespace gpu;
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        ImGui::Begin("GPU Info", &showGPUInfo);
+        ImGui::Text(m_deviceProperties.deviceName);
+        ImGui::End();
+
         ImGui::ShowDemoWindow(&show_demo_window);
         ImGui::Render();
 
