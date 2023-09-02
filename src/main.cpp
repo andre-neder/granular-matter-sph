@@ -41,8 +41,6 @@ private:
 
     gpu::Core core;
     gpu::Window window;
-    vk::Queue graphicsQueue;
-    vk::Queue presentQueue;
     vk::SurfaceKHR surface;
 
     vk::Extent2D swapChainExtent;
@@ -69,8 +67,6 @@ private:
         surface = core.getSurface();
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
-        graphicsQueue = core.getGraphicsQueue();
-        presentQueue = core.getPresentQueue();
         swapChainExtent = core.getSwapChainExtent();
 
         basicRenderPass = gpu::BasicRenderPass(&core);
@@ -124,7 +120,6 @@ private:
         //     signalComputeSemaphores
         // };
 
-
         // core.getComputeQueue().submit(computeSubmitInfo);
 
 
@@ -172,12 +167,12 @@ private:
 
         device.resetFences(inFlightFences[currentFrame]);
 
-        graphicsQueue.submit(submitInfo, inFlightFences[currentFrame]);
+        core.getGraphicsQueue().submit(submitInfo, inFlightFences[currentFrame]);
 
         std::vector<vk::SwapchainKHR> swapChains = {core.getSwapChain()};
         vk::PresentInfoKHR presentInfo(signalSemaphores, swapChains, imageIndex);
         try{
-            result = presentQueue.presentKHR(presentInfo);
+            result = core.getPresentQueue().presentKHR(presentInfo);
         }
         catch(const std::exception& e){
             std::cerr << e.what() << '\n';
