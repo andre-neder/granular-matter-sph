@@ -1,0 +1,87 @@
+#version 450
+#define VULKAN 100
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+struct Particle{
+  vec2 position;
+  vec2 velocity;
+  vec2 force;
+  float rho;
+  float p;
+};
+
+layout(set = 0, binding = 0) buffer StorageInput{
+    Particle particles[];
+} inStorage;
+
+layout(set = 1, binding = 0) buffer StorageOutput{
+    Particle particles[];
+} outStorage;
+
+
+layout(set = 2, binding = 0) uniform SPHSettings{
+  vec2 G;                 // external (gravitational) forces
+  float PI;
+  float REST_DENS;  // rest density
+  float GAS_CONST; // const for equation of state
+  float KERNEL_RADIUS;		   // kernel radius
+  float KERNEL_RADIUS_SQ;		   // radius^2 for optimization
+  float MASS;		   // assume all particles have the same mass
+  float VISC;	   // viscosity constant
+  float DT;	   // integration timestep
+
+  // smoothing kernels defined in Müller and their gradients
+  // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
+  float POLY6;
+  float SPIKY_GRAD;
+  float VISC_LAP;
+
+  // simulation parameters
+  float BOUNDARY_EPSILON; // boundary epsilon
+  float BOUNDARY_DAMPING;
+  float DOMAIN_WIDTH;
+  float DOMAIN_HEIGHT;
+
+  
+  float pad0, pad1, pad2;
+} sphSettings;
+
+uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+
+Particle readCurrentParticle(){
+    return inStorage.particles[particleID];
+}
+void writeCurrentParticle(in Particle p){
+    outStorage.particles[particleID] = p;
+}
+
+void main(){
+    Particle p = readCurrentParticle();
+    vec2 fpress = vec2(0.f, 0.f);
+    vec2 fvisc = vec2(0.f, 0.f);
+    for (int i = 0; i < inStorage.particles.length();i++)
+    {
+        Particle pi = inStorage.particles[i];
+        
+        if (i == particleID)
+        {
+            continue;
+        }
+
+        vec2 p_pi = pi.position - p.position;
+        float r = length(p_pi);
+
+        if (r < sphSettings.KERNEL_RADIUS)
+        {
+            // compute pressure force contribution
+            fpress += -normalize(p_pi) * sphSettings.MASS * (p.p + pi.p) / (2.f * pi.rho) * sphSettings.SPIKY_GRAD * pow(sphSettings.KERNEL_RADIUS - r, 3.f);
+            // compute viscosity force contribution
+            fvisc += sphSettings.VISC * sphSettings.MASS * (pi.velocity - p.velocity) / pi.rho * sphSettings.VISC_LAP * (sphSettings.KERNEL_RADIUS - r);
+        }
+    }
+    vec2 fgrav = sphSettings.G * sphSettings.MASS / p.rho;
+    p.force = fpress + fvisc + fgrav;
+
+    writeCurrentParticle(p);
+}

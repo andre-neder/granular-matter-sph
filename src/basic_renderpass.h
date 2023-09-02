@@ -72,7 +72,6 @@ namespace gpu{
             vk::ShaderModule fragShaderModule;
 
             void createRenderPass();
-            void readAndCompileShaders();
             void createDescriptorSets();
             void createGraphicsPipeline();
             void createTextureImage();
@@ -80,6 +79,5 @@ namespace gpu{
             void updateUniformBuffer(uint32_t currentImage);
             void createUniformBuffers();
             void createDescriptorPool();
-            vk::ShaderModule BasicRenderPass::createShaderModule(const std::vector<uint32_t> code); // hat hier nichts verloren
     };
 }

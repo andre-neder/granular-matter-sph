@@ -4,7 +4,8 @@ using namespace gpu;
     BasicRenderPass::BasicRenderPass(gpu::Core* core){
         m_core = core;
 
-        readAndCompileShaders();
+        vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.vert");
+        fragShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.frag");
         createTextureImage();
         textureImageView = m_core->createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
         textureSampler = m_core->createTextureSampler();
@@ -188,30 +189,7 @@ using namespace gpu;
             std::cerr << "Exception Thrown: " << e.what();
         }
     }
-    void BasicRenderPass::readAndCompileShaders() {
-        glslang::InitializeProcess();
-        std::vector<uint32_t> vertShaderCodeSPIRV;
-        std::vector<uint32_t> fragShaderCodeSPIRV;
-        SpirvHelper::GLSLtoSPV(vk::ShaderStageFlagBits::eVertex, "/shader.vert", vertShaderCodeSPIRV);
-        SpirvHelper::GLSLtoSPV(vk::ShaderStageFlagBits::eFragment, "/shader.frag", fragShaderCodeSPIRV);
-        try{
-            vertShaderModule = createShaderModule(vertShaderCodeSPIRV);
-            fragShaderModule = createShaderModule(fragShaderCodeSPIRV);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-        glslang::FinalizeProcess();
-    }
-    vk::ShaderModule BasicRenderPass::createShaderModule(const std::vector<uint32_t> code) {
-        vk::ShaderModuleCreateInfo createInfo({}, code);
-        vk::ShaderModule shaderModule;
-        try{
-            shaderModule = m_core->getDevice().createShaderModule(createInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-        return shaderModule;
-    }
+    
     void BasicRenderPass::destroyFrameResources(){
         vk::Device device = m_core->getDevice();
         for (auto framebuffer : framebuffers) {
@@ -220,11 +198,11 @@ using namespace gpu;
         device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
         device.destroyPipeline(graphicsPipeline);
         device.destroyPipelineLayout(pipelineLayout);
-        device.destroyRenderPass(renderPass);
         for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
             m_core->destroyBuffer(uniformBuffers[i]);
         }
         device.destroyDescriptorPool(descriptorPool);
+        device.destroyRenderPass(renderPass);
     }
     void BasicRenderPass::destroy(){
         destroyFrameResources();

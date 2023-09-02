@@ -146,8 +146,8 @@ using namespace gpu;
             device.destroyFramebuffer(framebuffer);
         }
         device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
-        m_core->getDevice().destroyRenderPass(renderPass);
         m_core->getDevice().destroyDescriptorPool(descriptorPool);
+        m_core->getDevice().destroyRenderPass(renderPass);
     }
     void ImguiRenderPass::destroy(){
         destroyFrameResources();

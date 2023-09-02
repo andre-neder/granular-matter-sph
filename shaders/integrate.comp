@@ -1,0 +1,86 @@
+#version 450
+#define VULKAN 100
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+struct Particle{
+  vec2 position;
+  vec2 velocity;
+  vec2 force;
+  float rho;
+  float p;
+};
+
+layout(set = 0, binding = 0) buffer StorageInput{
+    Particle particles[];
+} inStorage;
+
+layout(set = 1, binding = 0) buffer StorageOutput{
+    Particle particles[];
+} outStorage;
+
+
+layout(set = 2, binding = 0) uniform SPHSettings{
+  vec2 G;                 // external (gravitational) forces
+  float PI;
+  float REST_DENS;  // rest density
+  float GAS_CONST; // const for equation of state
+  float KERNEL_RADIUS;		   // kernel radius
+  float KERNEL_RADIUS_SQ;		   // radius^2 for optimization
+  float MASS;		   // assume all particles have the same mass
+  float VISC;	   // viscosity constant
+  float DT;	   // integration timestep
+
+  // smoothing kernels defined in Müller and their gradients
+  // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
+  float POLY6;
+  float SPIKY_GRAD;
+  float VISC_LAP;
+
+  // simulation parameters
+  float BOUNDARY_EPSILON; // boundary epsilon
+  float BOUNDARY_DAMPING;
+  float DOMAIN_WIDTH;
+  float DOMAIN_HEIGHT;
+  
+  float pad0, pad1, pad2;
+} sphSettings;
+
+uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+
+Particle readCurrentParticle(){
+    return inStorage.particles[particleID];
+}
+void writeCurrentParticle(in Particle p){
+    outStorage.particles[particleID] = p;
+}
+
+void main(){
+    Particle p = readCurrentParticle();
+    
+    p.velocity += sphSettings.DT * p.force / p.rho;
+    p.position += sphSettings.DT * p.velocity;
+
+    // enforce boundary conditions
+    if (p.position.x - sphSettings.BOUNDARY_EPSILON < 0.f)
+    {
+        p.velocity.x *= sphSettings.BOUNDARY_DAMPING;
+        p.position.x = sphSettings.BOUNDARY_EPSILON;
+    }
+    if (p.position.x + sphSettings.BOUNDARY_EPSILON > sphSettings.DOMAIN_WIDTH)
+    {
+        p.velocity.x *= sphSettings.BOUNDARY_DAMPING;
+        p.position.x = sphSettings.DOMAIN_WIDTH - sphSettings.BOUNDARY_EPSILON;
+    }
+    if (p.position.y - sphSettings.BOUNDARY_EPSILON < 0.f)
+    {
+        p.velocity.y *= sphSettings.BOUNDARY_DAMPING;
+        p.position.y = sphSettings.BOUNDARY_EPSILON;
+    }
+    if (p.position.y + sphSettings.BOUNDARY_EPSILON > sphSettings.DOMAIN_HEIGHT)
+    {
+        p.velocity.y *= sphSettings.BOUNDARY_DAMPING;
+        p.position.y = sphSettings.DOMAIN_HEIGHT - sphSettings.BOUNDARY_EPSILON;
+    }
+    writeCurrentParticle(p);
+}

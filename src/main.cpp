@@ -19,6 +19,7 @@
 
 #include "basic_renderpass.h"
 #include "imgui_renderpass.h"
+#include "granular_matter.h"
 
 
 const uint32_t WIDTH = 800;
@@ -49,6 +50,8 @@ private:
     gpu::BasicRenderPass basicRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
 
+    // GranularMatter simulation;
+
     std::vector<vk::Semaphore> imageAvailableSemaphores;
     std::vector<vk::Semaphore> renderFinishedSemaphores;
     std::vector<vk::Fence> inFlightFences;
@@ -70,6 +73,8 @@ private:
 
         basicRenderPass = gpu::BasicRenderPass(&core);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
+
+        // simulation = GranularMatter(&core);
         
         createSyncObjects();
     }
@@ -125,6 +130,7 @@ private:
             imguiRenderPass.getCommandBuffer(imageIndex)};
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
         device.resetFences(inFlightFences[currentFrame]);
+
         graphicsQueue.submit(submitInfo, inFlightFences[currentFrame]);
 
         std::vector<vk::SwapchainKHR> swapChains = {core.getSwapChain()};
@@ -146,7 +152,9 @@ private:
     }
 
     void recordCommandBuffer(uint32_t imageIndex){
-    
+        
+        // simulation.update(imageIndex);
+
         imguiRenderPass.update(imageIndex);
         basicRenderPass.update(imageIndex);
     
@@ -159,7 +167,6 @@ private:
 
         while (!window.shouldClose()) {
             glfwPollEvents();
-
 
             drawFrame();
             fps++;
@@ -183,6 +190,8 @@ private:
     void cleanup(){
         basicRenderPass.destroy();
         imguiRenderPass.destroy();
+
+        // simulation.destroy();
 
         cleanupSwapchain();
 
