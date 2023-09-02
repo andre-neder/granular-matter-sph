@@ -41,9 +41,6 @@ private:
 
     gpu::Core core;
     gpu::Window window;
-    vk::SurfaceKHR surface;
-
-    vk::Extent2D swapChainExtent;
 
     gpu::BasicRenderPass basicRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
@@ -64,10 +61,8 @@ private:
 
     void initVulkan(){
         core = gpu::Core(enableValidation, &window);
-        surface = core.getSurface();
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
-        swapChainExtent = core.getSwapChainExtent();
 
         basicRenderPass = gpu::BasicRenderPass(&core);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
@@ -140,7 +135,8 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        recordCommandBuffer(imageIndex);
+        imguiRenderPass.update(imageIndex);
+        basicRenderPass.update(imageIndex);
 
 
         if ((VkFence) imagesInFlight[imageIndex] != VK_NULL_HANDLE){
@@ -184,13 +180,6 @@ private:
         }else if(result != vk::Result::eSuccess)
             throw std::runtime_error("queue Present failed!");
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-    }
-
-    void recordCommandBuffer(uint32_t imageIndex){
-        
-        imguiRenderPass.update(imageIndex);
-        basicRenderPass.update(imageIndex);
-    
     }
 
     void mainLoop(){
@@ -255,7 +244,6 @@ private:
         cleanupSwapchain();
 
         core.createSwapChain(&window);
-        swapChainExtent = core.getSwapChainExtent();
         core.createSwapChainImageViews();
    
         basicRenderPass.initFrameResources();
