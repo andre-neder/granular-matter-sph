@@ -58,6 +58,7 @@ void GranularMatter::destroy(){
     }
     
     device.destroyDescriptorSetLayout(descriptorSetLayout);
+    device.destroyDescriptorPool(descriptorPool);
 }
 void GranularMatter::initFrameResources(){
     createCommandBuffers();

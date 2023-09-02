@@ -19,7 +19,7 @@
 
 #include "basic_renderpass.h"
 #include "imgui_renderpass.h"
-// #include "granular_matter.h"
+#include "granular_matter.h"
 
 
 const uint32_t WIDTH = 800;
@@ -50,7 +50,7 @@ private:
     gpu::BasicRenderPass basicRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
 
-    // GranularMatter simulation;
+    GranularMatter simulation;
 
     std::vector<vk::Fence> computeInFlightFences;
     std::vector<vk::Semaphore> computeFinishedSemaphores;
@@ -76,7 +76,7 @@ private:
         basicRenderPass = gpu::BasicRenderPass(&core);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
 
-        // simulation = GranularMatter(&core);
+        simulation = GranularMatter(&core);
         
         createSyncObjects();
     }
@@ -135,7 +135,7 @@ private:
             result = device.acquireNextImageKHR(core.getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
         }
         catch(const std::exception& e){
-            // std::cerr << e.what() << '\n';
+            std::cerr << e.what() << '\n';
         }
         if(result == vk::Result::eErrorOutOfDateKHR){
             recreateSwapChain();
@@ -145,7 +145,6 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        // updateUniformBuffer(imageIndex);
         recordCommandBuffer(imageIndex);
 
 
@@ -181,11 +180,10 @@ private:
             result = presentQueue.presentKHR(presentInfo);
         }
         catch(const std::exception& e){
-            // std::cerr << e.what() << '\n';
+            std::cerr << e.what() << '\n';
         }
         
         if(result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || window.wasResized()){
-            // framebufferResized = false;
             window.resizeHandled();
             recreateSwapChain();
         }else if(result != vk::Result::eSuccess)
@@ -231,7 +229,7 @@ private:
         basicRenderPass.destroy();
         imguiRenderPass.destroy();
 
-        // simulation.destroy();
+        simulation.destroy();
 
         cleanupSwapchain();
 
