@@ -19,7 +19,7 @@
 
 #include "basic_renderpass.h"
 #include "imgui_renderpass.h"
-#include "granular_matter.h"
+// #include "granular_matter.h"
 
 
 const uint32_t WIDTH = 800;
@@ -50,7 +50,7 @@ private:
     gpu::BasicRenderPass basicRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
 
-    GranularMatter simulation;
+    // GranularMatter simulation;
 
     std::vector<vk::Fence> computeInFlightFences;
     std::vector<vk::Semaphore> computeFinishedSemaphores;
@@ -76,7 +76,7 @@ private:
         basicRenderPass = gpu::BasicRenderPass(&core);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
 
-        simulation = GranularMatter(&core);
+        // simulation = GranularMatter(&core);
         
         createSyncObjects();
     }
@@ -221,7 +221,7 @@ private:
     }
 
     void cleanupSwapchain(){
-    
+        core.getDevice().waitIdle();
         core.destroySwapChainImageViews();
         core.destroySwapChain();
         
@@ -231,7 +231,7 @@ private:
         basicRenderPass.destroy();
         imguiRenderPass.destroy();
 
-        simulation.destroy();
+        // simulation.destroy();
 
         cleanupSwapchain();
 

@@ -202,9 +202,7 @@ using namespace gpu;
         device.destroyPipelineLayout(pipelineLayout);
         for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
             m_core->destroyBuffer(uniformBuffers[i]);
-            // device.freeDescriptorSets(descriptorPool, descriptorSets[i]);
         }
-        // device.destroyDescriptorSetLayout(descriptorSetLayout);
         device.destroyDescriptorPool(descriptorPool);
         device.destroyRenderPass(renderPass);
     }

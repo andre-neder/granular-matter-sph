@@ -17,10 +17,8 @@ using namespace gpu;
         //ImGui::StyleColorsClassic();
         ImGui_ImplGlfw_InitForVulkan(window->getGLFWWindow(), true);
 
-        createDescriptorPool();
-
-        createRenderPass();        
-
+        initFrameResources();
+  
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance = m_core->getInstance();
         init_info.PhysicalDevice = m_core->getPhysicalDevice();
@@ -36,10 +34,9 @@ using namespace gpu;
         ImGui_ImplVulkan_Init(&init_info, renderPass);
 
         vk::CommandBuffer command_buffer = m_core->beginSingleTimeCommands();
-            ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+        ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
         m_core->endSingleTimeCommands(command_buffer);    
 
-        initFrameResources();
     }
     void ImguiRenderPass::initFrameResources(){
         createRenderPass();
