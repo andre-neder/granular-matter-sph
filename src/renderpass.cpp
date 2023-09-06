@@ -19,7 +19,7 @@ using namespace gpu;
     }
 
     void RenderPass::createCommandBuffers(){
-        commandBuffers.resize(m_core->getSwapChainImageCount());
+        commandBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
         try{
             commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);

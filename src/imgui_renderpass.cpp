@@ -83,7 +83,7 @@ using namespace gpu;
         }
     }
     
-    void ImguiRenderPass::update(int imageIndex){
+    void ImguiRenderPass::update(int currentFrame, int imageIndex){
         
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -98,7 +98,7 @@ using namespace gpu;
 
         vk::CommandBufferBeginInfo beginInfo;
         try{
-            commandBuffers[imageIndex].begin(beginInfo);
+            commandBuffers[currentFrame].begin(beginInfo);
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
@@ -107,13 +107,13 @@ using namespace gpu;
         };
         vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
 
-        commandBuffers[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+        commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[imageIndex]);
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
 
-        commandBuffers[imageIndex].endRenderPass();
+        commandBuffers[currentFrame].endRenderPass();
         try{
-            commandBuffers[imageIndex].end();
+            commandBuffers[currentFrame].end();
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }

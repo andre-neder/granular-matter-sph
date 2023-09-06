@@ -12,10 +12,10 @@ GranularMatter::GranularMatter(gpu::Core* core)
         return Particle((static_cast<float>(std::rand()) / RAND_MAX) * settings.DOMAIN_WIDTH, (static_cast<float>(std::rand()) / RAND_MAX) * settings.DOMAIN_HEIGHT);
     });
     
-    particlesBufferA.resize(m_core->getSwapChainImageCount());
-    particlesBufferB.resize(m_core->getSwapChainImageCount());
-    settingsBuffer.resize(m_core->getSwapChainImageCount());
-    for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+    particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    settingsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         particlesBufferA[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         settingsBuffer[i]   = m_core->bufferFromData(&settings, sizeof(SPHSettings), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
@@ -31,7 +31,7 @@ GranularMatter::~GranularMatter()
 {
 }
 void GranularMatter::createCommandBuffers(){
-    commandBuffers.resize(m_core->getSwapChainImageCount());
+    commandBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
     try{
         commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
@@ -61,7 +61,7 @@ void GranularMatter::destroy(){
     device.destroyShaderModule(integrateModule);
     device.destroyPipeline(integratePipeline);
 
-    for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->destroyBuffer(particlesBufferA[i]);
         m_core->destroyBuffer(particlesBufferB[i]);
         m_core->destroyBuffer(settingsBuffer[i]);
@@ -73,40 +73,40 @@ void GranularMatter::destroy(){
 void GranularMatter::initFrameResources(){
     createCommandBuffers();
 }
-void GranularMatter::update(int imageIndex){
+void GranularMatter::update(int currentFrame, int imageIndex){
     vk::CommandBufferBeginInfo beginInfo;
     try{
-        commandBuffers[imageIndex].begin(beginInfo);
+        commandBuffers[currentFrame].begin(beginInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
 
     vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
-    commandBuffers[imageIndex].copyBuffer(particlesBufferB[(imageIndex - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[imageIndex], 1, &copyRegion);
+    commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
     
     // vk::BufferMemoryBarrier barrier{};
-    commandBuffers[imageIndex].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-    // commandBuffers[imageIndex].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, nullptr);
   
-    commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eCompute, densityPressurePipeline);
-    commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityPressureLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
-    commandBuffers[imageIndex].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityPressurePipeline);
+    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityPressureLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
   
-    commandBuffers[imageIndex].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
 
-    commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eCompute, forcePipeline);
-    commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eCompute, forceLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
-    commandBuffers[imageIndex].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, forcePipeline);
+    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, forceLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
   
-    commandBuffers[imageIndex].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
 
-    commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eCompute, integratePipeline);
-    commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
-    commandBuffers[imageIndex].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integratePipeline);
+    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
 
    
     try{
-        commandBuffers[imageIndex].end();
+        commandBuffers[currentFrame].end();
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
@@ -132,16 +132,16 @@ void GranularMatter::createDescriptorSetLayout() {
 }
 // Todo: connect all simulation frames
 void GranularMatter::createDescriptorSets() {
-    std::vector<vk::DescriptorSetLayout> layouts(m_core->getSwapChainImageCount(), descriptorSetLayout);
-    vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(m_core->getSwapChainImageCount()), layouts.data());
-    descriptorSets.resize(m_core->getSwapChainImageCount());
+    std::vector<vk::DescriptorSetLayout> layouts(gpu::MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+    vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), layouts.data());
+    descriptorSets.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     try{
         descriptorSets = m_core->getDevice().allocateDescriptorSets(allocInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
     
-    for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
 
         vk::DescriptorBufferInfo bufferInfoA(particlesBufferA[i], 0, sizeof(Particle) * particles.size());
         vk::DescriptorBufferInfo bufferInfoB(particlesBufferB[i], 0, sizeof(Particle) * particles.size());
@@ -162,16 +162,16 @@ void GranularMatter::createDescriptorSets() {
 }
 
 void GranularMatter::createDescriptorPool() {
-    vk::DescriptorPoolSize particlesInSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(m_core->getSwapChainImageCount()));
-    vk::DescriptorPoolSize particlesOutSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(m_core->getSwapChainImageCount()));
-    vk::DescriptorPoolSize settingsSize(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(m_core->getSwapChainImageCount()));
+    vk::DescriptorPoolSize particlesInSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+    vk::DescriptorPoolSize particlesOutSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+    vk::DescriptorPoolSize settingsSize(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
     std::array<vk::DescriptorPoolSize, 3> poolSizes{
         particlesInSize, 
         particlesOutSize,
         settingsSize
     };
 
-    vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(m_core->getSwapChainImageCount()), poolSizes);
+    vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), poolSizes);
     try{
         descriptorPool = m_core->getDevice().createDescriptorPool(poolInfo);
     }catch(std::exception& e) {

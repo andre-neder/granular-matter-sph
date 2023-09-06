@@ -69,12 +69,12 @@ private:
 
         simulation = GranularMatter(&core);
 
-        basicRenderPass.vertexBuffer.resize(core.getSwapChainImageCount());
-        for (size_t i = 0; i < core.getSwapChainImageCount(); i++) {
+        basicRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             basicRenderPass.vertexBuffer[i] = simulation.particlesBufferB[i];
         }
         basicRenderPass.vertexCount = simulation.particles.size();
-        
+
         basicRenderPass.attributeDescriptions = Particle::getAttributeDescriptions();
         basicRenderPass.bindingDescription = Particle::getBindingDescription();
 
@@ -89,7 +89,7 @@ private:
         imageAvailableSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        imagesInFlight.resize(core.getSwapChainImageCount(), VK_NULL_HANDLE);
+        imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
         vk::SemaphoreCreateInfo semaphoreInfo;
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -111,7 +111,7 @@ private:
 
         device.resetFences(computeInFlightFences[currentFrame]);
 
-        simulation.update(currentFrame);
+        simulation.update(currentFrame, 0);
         
         std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
             simulation.getCommandBuffer(currentFrame)
@@ -147,14 +147,14 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        imguiRenderPass.update(imageIndex);
-        basicRenderPass.update(imageIndex);
+        imguiRenderPass.update(currentFrame, imageIndex);
+        basicRenderPass.update(currentFrame, imageIndex);
 
 
-        if ((VkFence) imagesInFlight[imageIndex] != VK_NULL_HANDLE){
-            vk::Result result2 = device.waitForFences(imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+        if ((VkFence) imagesInFlight[currentFrame] != VK_NULL_HANDLE){
+            vk::Result result2 = device.waitForFences(imagesInFlight[currentFrame], VK_TRUE, UINT64_MAX);
         }
-        imagesInFlight[imageIndex] = inFlightFences[currentFrame];
+        imagesInFlight[currentFrame] = inFlightFences[currentFrame];
 
         std::vector<vk::Semaphore> waitSemaphores = {
             computeFinishedSemaphores[currentFrame], 
@@ -168,14 +168,16 @@ private:
             renderFinishedSemaphores[currentFrame]
         };
         std::array<vk::CommandBuffer, 2> submitCommandBuffers = { 
-            basicRenderPass.getCommandBuffer(imageIndex), 
-            imguiRenderPass.getCommandBuffer(imageIndex)
+            basicRenderPass.getCommandBuffer(currentFrame), 
+            imguiRenderPass.getCommandBuffer(currentFrame)
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
 
         device.resetFences(inFlightFences[currentFrame]);
 
         core.getGraphicsQueue().submit(submitInfo, inFlightFences[currentFrame]);
+
+        std::cout << "Current Frame: " << currentFrame << " Image Index: " << imageIndex << std::endl;
 
         std::vector<vk::SwapchainKHR> swapChains = {core.getSwapChain()};
         vk::PresentInfoKHR presentInfo(signalSemaphores, swapChains, imageIndex);
@@ -261,7 +263,7 @@ private:
         basicRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
 
-        imagesInFlight.resize(core.getSwapChainImageCount(), VK_NULL_HANDLE);
+        imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 
     }
 };

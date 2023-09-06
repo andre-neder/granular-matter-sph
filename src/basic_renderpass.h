@@ -53,7 +53,7 @@ namespace gpu{
             ~BasicRenderPass(){};
 
             void initFrameResources();
-            void update(int imageIndex);
+            void update(int currentFrame, int imageIndex);
             void destroyFrameResources();
             void destroy(); 
             void init();

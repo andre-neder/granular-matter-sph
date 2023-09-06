@@ -21,7 +21,7 @@ namespace gpu{
             ~ImguiRenderPass(){};
 
             void initFrameResources();
-            void update(int imageIndex);
+            void update(int currentFrame, int imageIndex);
             void destroyFrameResources();
             void destroy(); 
         private:

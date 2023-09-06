@@ -421,8 +421,8 @@ void Core::createSwapChain(Window* window) {
     swapChainExtent = extent;
 }
 void Core::createSwapChainImageViews(){
-    swapChainImageViews.resize(swapChainImages.size());
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
+    swapChainImageViews.resize(getSwapChainImageCount());
+    for (size_t i = 0; i < getSwapChainImageCount(); i++) {
         swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
     }
 }

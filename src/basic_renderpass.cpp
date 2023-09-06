@@ -12,8 +12,8 @@ using namespace gpu;
         createTextureImage();
         textureImageView = m_core->createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
         textureSampler = m_core->createTextureSampler();
-        // vertexBuffer.resize(m_core->getSwapChainImageCount());
-        // for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+        // vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         //     vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
         // }
         // vertexCount = 4;
@@ -51,46 +51,46 @@ using namespace gpu;
         }
     }
     
-    void BasicRenderPass::update(int imageIndex){
-        updateUniformBuffer(imageIndex);
+    void BasicRenderPass::update(int currentFrame, int imageIndex){
+        updateUniformBuffer(currentFrame);
 
         vk::CommandBufferBeginInfo beginInfo;
         try{
-            commandBuffers[imageIndex].begin(beginInfo);
+            commandBuffers[currentFrame].begin(beginInfo);
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
         std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
         vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
 
-        commandBuffers[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-            commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[imageIndex]};
+        commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[currentFrame]};
             std::vector<vk::DeviceSize> offsets = {0};
-            commandBuffers[imageIndex].bindVertexBuffers(0, vertexBuffers, offsets);
-            // commandBuffers[imageIndex].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
-            commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
-            // commandBuffers[imageIndex].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-            commandBuffers[imageIndex].draw(vertexCount, 1, 0, 0);
-        commandBuffers[imageIndex].endRenderPass();
+            commandBuffers[currentFrame].bindVertexBuffers(0, vertexBuffers, offsets);
+            // commandBuffers[currentFrame].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            commandBuffers[currentFrame].draw(vertexCount, 1, 0, 0);
+        commandBuffers[currentFrame].endRenderPass();
         try{
-            commandBuffers[imageIndex].end();
+            commandBuffers[currentFrame].end();
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
     }
     
     void BasicRenderPass::createDescriptorSets() {
-        std::vector<vk::DescriptorSetLayout> layouts(m_core->getSwapChainImageCount(), descriptorSetLayout);
-        vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(m_core->getSwapChainImageCount()), layouts.data());
-        descriptorSets.resize(m_core->getSwapChainImageCount());
+        std::vector<vk::DescriptorSetLayout> layouts(gpu::MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+        vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), layouts.data());
+        descriptorSets.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         try{
             descriptorSets = m_core->getDevice().allocateDescriptorSets(allocInfo);
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
 
-        for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
 
             vk::DescriptorBufferInfo bufferInfo(uniformBuffers[i], 0, sizeof(UniformBufferObject));
             vk::DescriptorImageInfo imageInfo(textureSampler, textureImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -167,18 +167,18 @@ using namespace gpu;
     void BasicRenderPass::createUniformBuffers() {
         vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
-        uniformBuffers.resize(m_core->getSwapChainImageCount());
-        for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+        uniformBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             uniformBuffers[i] = m_core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
         }
     }
 
     void BasicRenderPass::createDescriptorPool() {
-        vk::DescriptorPoolSize poolSizeUbo(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(m_core->getSwapChainImageCount()));
-        vk::DescriptorPoolSize poolSizeSampler(vk::DescriptorType::eCombinedImageSampler, static_cast<uint32_t>(m_core->getSwapChainImageCount()));
+        vk::DescriptorPoolSize poolSizeUbo(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        vk::DescriptorPoolSize poolSizeSampler(vk::DescriptorType::eCombinedImageSampler, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
         std::array<vk::DescriptorPoolSize, 2> poolSizes{poolSizeUbo, poolSizeSampler};
 
-        vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(m_core->getSwapChainImageCount()), poolSizes);
+        vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), poolSizes);
         try{
             descriptorPool = m_core->getDevice().createDescriptorPool(poolInfo);
         }catch(std::exception& e) {
@@ -208,7 +208,7 @@ using namespace gpu;
         device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
         device.destroyPipeline(graphicsPipeline);
         device.destroyPipelineLayout(pipelineLayout);
-        for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             m_core->destroyBuffer(uniformBuffers[i]);
         }
         device.destroyDescriptorPool(descriptorPool);
@@ -230,7 +230,7 @@ using namespace gpu;
 
         // m_core->destroyBuffer(indexBuffer);
 
-        // for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         //     m_core->destroyBuffer(vertexBuffer[i]);
         // }
     }
