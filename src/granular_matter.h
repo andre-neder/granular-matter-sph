@@ -39,7 +39,7 @@ struct SPHSettings{
   float KERNEL_RADIUS_SQ = KERNEL_RADIUS * KERNEL_RADIUS;		   // radius^2 for optimization
   float MASS = 2.5f;		   // assume all particles have the same mass
   float VISC = 200.f;	   // viscosity constant
-  float DT = 0.0007f;	   // integration timestep
+  float DT = 0.00007f;	   // integration timestep
 
   // smoothing kernels defined in Müller and their gradients
   // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
@@ -63,10 +63,9 @@ private:
 
     std::vector<vk::CommandBuffer> commandBuffers;
     
-    std::vector<Particle> particles;
     std::vector<vk::Buffer> particlesBufferA;
-    std::vector<vk::Buffer> particlesBufferB;
     std::vector<vk::Buffer> settingsBuffer;
+    glm::vec3 computeSpace = glm::vec3(5, 5, 1);
 
     vk::DescriptorSetLayout descriptorSetLayout;
     std::vector<vk::DescriptorSet> descriptorSets;
@@ -95,6 +94,9 @@ public:
     GranularMatter(/* args */){};
     GranularMatter(gpu::Core* core);
     ~GranularMatter();
+
+    std::vector<Particle> particles;
+    std::vector<vk::Buffer> particlesBufferB;
 
     inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
     void initFrameResources();

@@ -3,14 +3,21 @@ using namespace gpu;
 
     BasicRenderPass::BasicRenderPass(gpu::Core* core){
         m_core = core;
+       
+    }
+    void BasicRenderPass::init(){
 
         vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.vert");
         fragShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.frag");
         createTextureImage();
         textureImageView = m_core->createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
         textureSampler = m_core->createTextureSampler();
-        vertexBuffer = m_core->bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
-        indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+        // vertexBuffer.resize(m_core->getSwapChainImageCount());
+        // for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+        //     vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
+        // }
+        // vertexCount = 4;
+        // indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
         
         createDescriptorSetLayout();
         initFrameResources();
@@ -58,12 +65,13 @@ using namespace gpu;
 
         commandBuffers[imageIndex].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
             commandBuffers[imageIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
+            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[imageIndex]};
             std::vector<vk::DeviceSize> offsets = {0};
             commandBuffers[imageIndex].bindVertexBuffers(0, vertexBuffers, offsets);
-            commandBuffers[imageIndex].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+            // commandBuffers[imageIndex].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
             commandBuffers[imageIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[imageIndex], 0, nullptr);
-            commandBuffers[imageIndex].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            // commandBuffers[imageIndex].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            commandBuffers[imageIndex].draw(vertexCount, 1, 0, 0);
         commandBuffers[imageIndex].endRenderPass();
         try{
             commandBuffers[imageIndex].end();
@@ -101,11 +109,11 @@ using namespace gpu;
 
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
 
-        auto bindingDescription = Vertex::getBindingDescription();
-        auto attributeDescriptions = Vertex::getAttributeDescriptions();
+        // auto bindingDescription = Vertex::getBindingDescription();
+        // auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindingDescription, attributeDescriptions);
-        vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
+        vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::ePointList, VK_FALSE);
         vk::Viewport viewport(0.0f, 0.0f, (float) m_core->getSwapChainExtent().width, (float) m_core->getSwapChainExtent().height, 0.0f, 1.0f);
         vk::Rect2D scissor(vk::Offset2D(0, 0),m_core->getSwapChainExtent());
         vk::PipelineViewportStateCreateInfo viewportState({}, viewport, scissor);
@@ -220,8 +228,11 @@ using namespace gpu;
         
         device.destroyDescriptorSetLayout(descriptorSetLayout);
 
-        m_core->destroyBuffer(indexBuffer);
-        m_core->destroyBuffer(vertexBuffer);
+        // m_core->destroyBuffer(indexBuffer);
+
+        // for (size_t i = 0; i < m_core->getSwapChainImageCount(); i++) {
+        //     m_core->destroyBuffer(vertexBuffer[i]);
+        // }
     }
     void BasicRenderPass::updateUniformBuffer(uint32_t currentImage) {
         static auto startTime = std::chrono::high_resolution_clock::now();
@@ -230,8 +241,8 @@ using namespace gpu;
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
         UniformBufferObject ubo{};
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.model = glm::mat4(1.0f),// glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / (float) m_core->getSwapChainExtent().height, 0.1f, 10.0f);
         ubo.proj[1][1] *= -1;
         

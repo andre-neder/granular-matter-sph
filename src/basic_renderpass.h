@@ -56,9 +56,16 @@ namespace gpu{
             void update(int imageIndex);
             void destroyFrameResources();
             void destroy(); 
+            void init();
+
+            std::vector<vk::Buffer> vertexBuffer;
+            uint32_t vertexCount;
+            std::array<vk::VertexInputBindingDescription, 1> bindingDescription;
+            std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions;
+
         private:
+
    
-            vk::Buffer vertexBuffer;
             vk::Buffer indexBuffer;
             std::vector<vk::Buffer> uniformBuffers;
             vk::Image textureImage;

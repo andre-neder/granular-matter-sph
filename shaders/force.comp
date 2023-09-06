@@ -11,16 +11,16 @@ struct Particle{
   float p;
 };
 
-layout(set = 0, binding = 0) buffer StorageInput{
+layout(set = 0, binding = 1) buffer StorageInput{
     Particle particles[];
 } inStorage;
 
-layout(set = 1, binding = 0) buffer StorageOutput{
+layout(set = 0, binding = 0) buffer StorageOutput{
     Particle particles[];
 } outStorage;
 
 
-layout(set = 2, binding = 0) uniform SPHSettings{
+layout(set = 0, binding = 2) uniform SPHSettings{
   vec2 G;                 // external (gravitational) forces
   float PI;
   float REST_DENS;  // rest density
