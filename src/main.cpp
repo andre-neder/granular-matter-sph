@@ -177,8 +177,6 @@ private:
 
         core.getGraphicsQueue().submit(submitInfo, inFlightFences[currentFrame]);
 
-        std::cout << "Current Frame: " << currentFrame << " Image Index: " << imageIndex << std::endl;
-
         std::vector<vk::SwapchainKHR> swapChains = {core.getSwapChain()};
         vk::PresentInfoKHR presentInfo(signalSemaphores, swapChains, imageIndex);
         try{

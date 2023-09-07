@@ -1,4 +1,6 @@
 #include "granular_matter.h"
+#include <chrono>
+#include "iostream"
 
 GranularMatter::GranularMatter(gpu::Core* core)
 {
@@ -18,7 +20,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         particlesBufferA[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
-        settingsBuffer[i]   = m_core->bufferFromData(&settings, sizeof(SPHSettings), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        settingsBuffer[i]   = m_core->bufferFromData(&settings, sizeof(SPHSettings), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU);
     }
     initFrameResources();
     createDescriptorPool();
@@ -73,7 +75,21 @@ void GranularMatter::destroy(){
 void GranularMatter::initFrameResources(){
     createCommandBuffers();
 }
+
+std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
+
 void GranularMatter::update(int currentFrame, int imageIndex){
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+    startTime = std::chrono::high_resolution_clock::now();
+   
+    settings.DT = 0.01f * dt;
+    std::cout << dt << std::endl;
+    void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
+    memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
+    m_core->flushBuffer(settingsBuffer[currentFrame], 0, (size_t) sizeof(SPHSettings));
+    m_core->unmapBuffer(settingsBuffer[currentFrame]);
+
     vk::CommandBufferBeginInfo beginInfo;
     try{
         commandBuffers[currentFrame].begin(beginInfo);

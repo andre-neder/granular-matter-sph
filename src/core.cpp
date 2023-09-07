@@ -157,17 +157,29 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
     return buffer;
 }
 vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage){
-    if(memoryUsage != VMA_MEMORY_USAGE_CPU_ONLY && memoryUsage != VMA_MEMORY_USAGE_GPU_ONLY){
+    if(memoryUsage != VMA_MEMORY_USAGE_CPU_ONLY && 
+        memoryUsage != VMA_MEMORY_USAGE_GPU_ONLY &&
+        memoryUsage != VMA_MEMORY_USAGE_CPU_TO_GPU){
         throw std::exception("Unsupported memory usage.");
     }
 
-    vk::Buffer stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
+    vk::Buffer stagingBuffer;
+
+    if(memoryUsage == VMA_MEMORY_USAGE_GPU_ONLY){
+        stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
+    }
+    else if(memoryUsage == VMA_MEMORY_USAGE_CPU_TO_GPU){
+        stagingBuffer = createBuffer(size, bufferUsage, memoryUsage);
+    }
     
     void* mappedData = mapBuffer(stagingBuffer);
     memcpy(mappedData, data, (size_t) size);
+    if(memoryUsage == VMA_MEMORY_USAGE_CPU_TO_GPU){
+        flushBuffer(stagingBuffer, 0, size);
+    }
     unmapBuffer(stagingBuffer);
 
-    if(memoryUsage == VMA_MEMORY_USAGE_CPU_ONLY){
+    if(memoryUsage == VMA_MEMORY_USAGE_CPU_ONLY || memoryUsage == VMA_MEMORY_USAGE_CPU_TO_GPU){
         return stagingBuffer;
     }
 
