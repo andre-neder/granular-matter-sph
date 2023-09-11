@@ -19,26 +19,29 @@ layout(set = 0, binding = 1) buffer StorageOutput{
     Particle particles[];
 } outStorage;
 
+layout(set = 0, binding = 3) buffer BoundaryStorage{
+    Particle particles[];
+} boundary;
 
 layout(set = 0, binding = 2) uniform SPHSettings{
   vec2 G;                 // external (gravitational) forces
   float PI;
-  float REST_DENS;  // rest density
+  float rhoRest;  // rest density
   // 4
   float GAS_CONST; // const for equation of state
-  float KERNEL_RADIUS;		   // kernel radius
-  float KERNEL_RADIUS_SQ;		   // radius^2 for optimization
+  float kernelRadius;		   // kernel radius
+  float kernelRadiusSquared;		   // radius^2 for optimization
   float MASS;		   // assume all particles have the same mass
   // 8
-  float VISC;	   // viscosity constant
-  float DT;	   // integration timestep
+  float VISC;	   // viscosity constant //! unused
+  float dt;	   // integration timestep
 
   // smoothing kernels defined in Müller and their gradients
   // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
-  float POLY6;
-  float SPIKY_GRAD;
+  float POLY6; //! unused
+  float SPIKY_GRAD; //! unused
   // 12
-  float VISC_LAP;
+  float VISC_LAP; //! unused
 
   // simulation parameters
   float BOUNDARY_EPSILON; // boundary epsilon
@@ -60,8 +63,22 @@ void writeCurrentParticle(in Particle p){
     outStorage.particles[particleID] = p;
 }
 
+// https://pysph.readthedocs.io/en/latest/_modules/pysph/base/kernels.html#CubicSpline
+#define KERNEL_DIM 1
+#define KERNEL_FAC 2.f/3.f // One dimenion
+float cubicSplineKernel(float rij, float h){
+    float h1 = 1.f / h;
+    float q = rij * h1;
+    float fac = KERNEL_FAC * pow(h1, KERNEL_DIM);
+    float tmp2 = 2.f - q;
+    float val = q > 2.f ? 0 : (q > 1.f ? 0.25f * pow(tmp2, 3): 1.f - 1.5f * q * q * (1.f - 0.5f * q));
+    return val * fac;
+}
+
 void main(){
     Particle p = readCurrentParticle();
+
+    float sumWb = 0.f;
 
     p.rho = 0.f;
     for (int i = 0; i< inStorage.particles.length();i++)
@@ -69,13 +86,47 @@ void main(){
         Particle pi = inStorage.particles[i];
         vec2 p_pi = pi.position - p.position;
         float r2 = dot(p_pi, p_pi);
+        float rij = sqrt(r2);
 
-        if (r2 < sphSettings.KERNEL_RADIUS_SQ)
+        if (r2 < sphSettings.kernelRadiusSquared)
         {
-            p.rho += sphSettings.MASS * sphSettings.POLY6 * pow(sphSettings.KERNEL_RADIUS_SQ - r2, 3.f);
+            p.rho += sphSettings.MASS * cubicSplineKernel(rij, sphSettings.kernelRadius);
+            // Todo: Create sum for boundry 
+            // for (int j = 0; j< boundary.particles.length();j++)
+            // {
+            //     Particle pb = boundary.particles[j];
+            //     vec2 p_pb = pb.position - p.position;
+            //     r2 = dot(p_pb, p_pb);
+            //     rij = sqrt(r2);
+
+            //     if (r2 < sphSettings.kernelRadiusSquared)
+            //     {
+            //         vec2 pi_pb = pb.position - pi.position;
+            //         r2 = dot(pi_pb, pi_pb);
+            //         rij = sqrt(r2);
+            //         sumWb += cubicSplineKernel(rij, sphSettings.kernelRadius);
+            //     }
+            // }
         }
     }
-    p.p = sphSettings.GAS_CONST * (p.rho - sphSettings.REST_DENS);
+    // Todo: Boundary
+    // float deltaB = 1.f / sumWb;
 
+    // for (int i = 0; i< boundary.particles.length();i++)
+    // {
+    //     Particle pb = boundary.particles[i];
+    //     vec2 p_pb = pb.position - p.position;
+    //     float r2 = dot(p_pb, p_pb);
+    //     float rij = sqrt(r2);
+
+    //     if (r2 < sphSettings.kernelRadiusSquared)
+    //     {
+    //         p.rho += (sphSettings.rhoRest / deltaB) * cubicSplineKernel(rij, sphSettings.kernelRadius);
+    //     }
+    // }
+
+    p.rho = min(p.rho, sphSettings.rhoRest);    //* rho <= rhoRest 
+    p.p = max(p.rho - sphSettings.rhoRest, 0);  //* p >= 0
+    
     writeCurrentParticle(p);
 }

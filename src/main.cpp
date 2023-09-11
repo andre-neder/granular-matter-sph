@@ -70,10 +70,15 @@ private:
         simulation = GranularMatter(&core);
 
         basicRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        basicRenderPass.vertexBuffer1.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             basicRenderPass.vertexBuffer[i] = simulation.particlesBufferB[i];
         }
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+            basicRenderPass.vertexBuffer1[i] = simulation.boundaryParticlesBuffer[i];
+        }
         basicRenderPass.vertexCount = simulation.particles.size();
+        basicRenderPass.vertexCount1 = simulation.boundaryParticles.size();
 
         basicRenderPass.attributeDescriptions = Particle::getAttributeDescriptions();
         basicRenderPass.bindingDescription = Particle::getBindingDescription();

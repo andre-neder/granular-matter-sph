@@ -19,17 +19,21 @@ layout(set = 0, binding = 1) buffer StorageOutput{
     Particle particles[];
 } outStorage;
 
+layout(set = 0, binding = 3) buffer BoundaryStorage{
+    Particle particles[];
+} boundary;
+
 
 layout(set = 0, binding = 2) uniform SPHSettings{
   vec2 G;                 // external (gravitational) forces
   float PI;
-  float REST_DENS;  // rest density
+  float rhoRest;  // rest density
   float GAS_CONST; // const for equation of state
-  float KERNEL_RADIUS;		   // kernel radius
-  float KERNEL_RADIUS_SQ;		   // radius^2 for optimization
+  float kernelRadius;		   // kernel radius
+  float kernelRadiusSquared;		   // radius^2 for optimization
   float MASS;		   // assume all particles have the same mass
   float VISC;	   // viscosity constant
-  float DT;	   // integration timestep
+  float dt;	   // integration timestep
 
   // smoothing kernels defined in Müller and their gradients
   // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
@@ -93,8 +97,8 @@ void boundaryConditions(inout Particle p){
 }
 
 void euler(inout Particle p){
-    p.velocity += sphSettings.DT * p.force / p.rho;
-    p.position += sphSettings.DT * p.velocity;
+    p.velocity += sphSettings.dt * p.force / p.rho;
+    p.position += sphSettings.dt * p.velocity;
 }
 
 void main(){

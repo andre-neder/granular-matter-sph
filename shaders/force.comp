@@ -1,5 +1,6 @@
 #version 450
 #define VULKAN 100
+#define EPSILON 0.0000001f
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -19,17 +20,20 @@ layout(set = 0, binding = 0) buffer StorageOutput{
     Particle particles[];
 } outStorage;
 
+layout(set = 0, binding = 3) buffer BoundaryStorage{
+    Particle particles[];
+} boundary;
 
 layout(set = 0, binding = 2) uniform SPHSettings{
   vec2 G;                 // external (gravitational) forces
   float PI;
-  float REST_DENS;  // rest density
+  float rhoRest;  // rest density
   float GAS_CONST; // const for equation of state
-  float KERNEL_RADIUS;		   // kernel radius
-  float KERNEL_RADIUS_SQ;		   // radius^2 for optimization
+  float kernelRadius;		   // kernel radius
+  float kernelRadiusSquared;		   // radius^2 for optimization
   float MASS;		   // assume all particles have the same mass
   float VISC;	   // viscosity constant
-  float DT;	   // integration timestep
+  float dt;	   // integration timestep
 
   // smoothing kernels defined in Müller and their gradients
   // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
@@ -55,11 +59,52 @@ Particle readCurrentParticle(){
 void writeCurrentParticle(in Particle p){
     outStorage.particles[particleID] = p;
 }
+// https://pysph.readthedocs.io/en/latest/_modules/pysph/base/kernels.html#CubicSpline
+#define KERNEL_DIM 1
+#define KERNEL_FAC 2.f/3.f // One dimenion
+float cubicSplineKernel(float rij, float h){
+    float h1 = 1.f / h;
+    float q = rij * h1;
+    float fac = KERNEL_FAC * pow(h1, KERNEL_DIM);
+    float tmp2 = 2.f - q;
+    float val = q > 2.f ? 
+        0 : 
+        (q > 1.f ? 
+            0.25f * pow(tmp2, 3): 
+            1.f - 1.5f * q * q * (1.f - 0.5f * q)
+        );
+    return val * fac;
+}
+float dwdq(float rij, float h){
+    float h1 = 1.f / h;
+    float q = rij * h1;
+    float fac = KERNEL_FAC * pow(h1, KERNEL_DIM);
+    float tmp2 = 2.f - q;
+    float val = 0.f;
+    if(rij > EPSILON){
+        val = q > 2.f ? 
+            0 : 
+            (q > 1.f ? 
+                -0.75f * pow(tmp2, 2): 
+                -3.f * q * (1.f - 0.75f * q)
+            );
+    }
+    return val * fac;
+}
+vec2 gradient(in vec2 xij, float rij, float h){
+    float h1 = 1.f / h;
+    float tmp = 0.f;
+    if(rij > EPSILON){
+        float wdash = dwdq(rij, h);
+        tmp = wdash * h1 / rij;
+    }
+    return xij * tmp;
+}
 
 void main(){
     Particle p = readCurrentParticle();
-    vec2 fpress = vec2(0.f, 0.f);
-    vec2 fvisc = vec2(0.f, 0.f);
+    vec2 pressureForce = vec2(0.f, 0.f);
+    float pRhoSq = p.rho * p.rho;
     for (int i = 0; i < inStorage.particles.length();i++)
     {
         Particle pi = inStorage.particles[i];
@@ -71,17 +116,17 @@ void main(){
 
         vec2 p_pi = pi.position - p.position;
         float r = length(p_pi);
-
-        if (r < sphSettings.KERNEL_RADIUS)
+        //
+        if (r < sphSettings.kernelRadius)
         {
-            // compute pressure force contribution
-            fpress += -normalize(p_pi) * sphSettings.MASS * (p.p + pi.p) / (2.f * pi.rho) * sphSettings.SPIKY_GRAD * pow(sphSettings.KERNEL_RADIUS - r, 3.f);
-            // compute viscosity force contribution
-            fvisc += sphSettings.VISC * sphSettings.MASS * (pi.velocity - p.velocity) / pi.rho * sphSettings.VISC_LAP * (sphSettings.KERNEL_RADIUS - r);
+            float piRhoSq = pi.rho * pi.rho;
+            pressureForce += sphSettings.MASS * (p.p / pRhoSq + pi.p / piRhoSq) * gradient(p_pi, r, sphSettings.kernelRadius);
         }
     }
-    vec2 fgrav = sphSettings.G * sphSettings.MASS / p.rho;
-    p.force = fpress + fvisc + fgrav;
+    vec2 gravity = sphSettings.G * sphSettings.MASS / p.rho;
+    pressureForce = -sphSettings.MASS * pressureForce;
+    //Todo: add friction forces
+    p.force = gravity + pressureForce;
 
     writeCurrentParticle(p);
 }

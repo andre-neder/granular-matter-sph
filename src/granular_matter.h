@@ -33,22 +33,22 @@ struct Particle{
 struct SPHSettings{
   glm::vec2 G = glm::vec2(0.f, -10.f);                 // external (gravitational) forces
   float PI = (float)M_PI;
-  float REST_DENS = 300.f;  // rest density
+  float rhoRest = 300.f;  // rest density
   float GAS_CONST = 2000.f; // const for equation of state
-  float KERNEL_RADIUS = 16.f;		   // kernel radius
-  float KERNEL_RADIUS_SQ = KERNEL_RADIUS * KERNEL_RADIUS;		   // radius^2 for optimization
+  float kernelRadius = 16.f;		   // kernel radius
+  float kernelRadiusSquared = kernelRadius * kernelRadius;		   // radius^2 for optimization
   float MASS = 2.5f;		   // assume all particles have the same mass
   float VISC = 200.f;	   // viscosity constant
-  float DT = 0.0007f;	   // integration timestep
+  float dt = 0.0007f;	   // integration timestep
 
   // smoothing kernels defined in Müller and their gradients
   // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
-  float POLY6 = 4.f / ((float)M_PI * pow(KERNEL_RADIUS, 8.f));
-  float SPIKY_GRAD = -10.f / ((float)M_PI * pow(KERNEL_RADIUS, 5.f));
-  float VISC_LAP = 40.f / ((float)M_PI * pow(KERNEL_RADIUS, 5.f));
+  float POLY6 = 4.f / ((float)M_PI * pow(kernelRadius, 8.f));
+  float SPIKY_GRAD = -10.f / ((float)M_PI * pow(kernelRadius, 5.f));
+  float VISC_LAP = 40.f / ((float)M_PI * pow(kernelRadius, 5.f));
 
   // simulation parameters
-  float BOUNDARY_EPSILON = KERNEL_RADIUS; // boundary epsilon
+  float BOUNDARY_EPSILON = kernelRadius; // boundary epsilon
   float BOUNDARY_DAMPING = -0.5f;
   float DOMAIN_WIDTH = 1.5 * 800.f;
   float DOMAIN_HEIGHT = 1.5 * 600.f;
@@ -96,7 +96,9 @@ public:
     ~GranularMatter();
 
     std::vector<Particle> particles;
+    std::vector<Particle> boundaryParticles;
     std::vector<vk::Buffer> particlesBufferB;
+    std::vector<vk::Buffer> boundaryParticlesBuffer;
 
     inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
     void initFrameResources();

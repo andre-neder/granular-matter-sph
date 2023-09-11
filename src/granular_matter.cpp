@@ -13,14 +13,29 @@ GranularMatter::GranularMatter(gpu::Core* core)
     std::generate(particles.begin(), particles.end(), [this]() {
         return Particle((static_cast<float>(std::rand()) / RAND_MAX) * settings.DOMAIN_WIDTH, (static_cast<float>(std::rand()) / RAND_MAX) * settings.DOMAIN_HEIGHT);
     });
+    // equilibrium distance
+    float r0 = 0.5f * settings.kernelRadius;
     
+    for(float i = 0.f;i < settings.DOMAIN_HEIGHT; i+=r0){
+        boundaryParticles.push_back(Particle(0.f, i));
+        boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH, i));
+    }
+
+    for(float i = 0.f;i < settings.DOMAIN_WIDTH; i+=r0){
+        boundaryParticles.push_back(Particle(i, 0.f));
+        boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT));
+    }
+    
+
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     settingsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    boundaryParticlesBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         particlesBufferA[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         settingsBuffer[i]   = m_core->bufferFromData(&settings, sizeof(SPHSettings), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU);
+        boundaryParticlesBuffer[i] = m_core->bufferFromData(boundaryParticles.data(),sizeof(Particle) * boundaryParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
     }
     initFrameResources();
     createDescriptorPool();
@@ -67,6 +82,7 @@ void GranularMatter::destroy(){
         m_core->destroyBuffer(particlesBufferA[i]);
         m_core->destroyBuffer(particlesBufferB[i]);
         m_core->destroyBuffer(settingsBuffer[i]);
+        m_core->destroyBuffer(boundaryParticlesBuffer[i]);
     }
     
     device.destroyDescriptorSetLayout(descriptorSetLayout);
@@ -83,8 +99,8 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
     startTime = std::chrono::high_resolution_clock::now();
    
-    settings.DT = 0.01f * dt;
-    std::cout << dt << std::endl;
+    settings.dt = 0.1f * dt; //0.02f *
+    // std::cout << dt << std::endl;
     void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
     memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
     m_core->flushBuffer(settingsBuffer[currentFrame], 0, (size_t) sizeof(SPHSettings));
@@ -132,11 +148,13 @@ void GranularMatter::createDescriptorSetLayout() {
     vk::DescriptorSetLayoutBinding particlesLayoutBindingIn(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
     vk::DescriptorSetLayoutBinding particlesLayoutBindingOut(1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
     vk::DescriptorSetLayoutBinding settingsLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute | vk::ShaderStageFlagBits::eVertex, nullptr);
+    vk::DescriptorSetLayoutBinding boundaryLayoutBinding(3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
 
-    std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {
+    std::array<vk::DescriptorSetLayoutBinding, 4> bindings = {
         particlesLayoutBindingIn, 
         particlesLayoutBindingOut,
-        settingsLayoutBinding
+        settingsLayoutBinding,
+        boundaryLayoutBinding
     };
     vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
 
@@ -162,15 +180,18 @@ void GranularMatter::createDescriptorSets() {
         vk::DescriptorBufferInfo bufferInfoA(particlesBufferA[i], 0, sizeof(Particle) * particles.size());
         vk::DescriptorBufferInfo bufferInfoB(particlesBufferB[i], 0, sizeof(Particle) * particles.size());
         vk::DescriptorBufferInfo bufferInfoSettings(settingsBuffer[i], 0, sizeof(SPHSettings));
+        vk::DescriptorBufferInfo bufferInfoBoundary(boundaryParticlesBuffer[i], 0, sizeof(Particle) * boundaryParticles.size());
     
         vk::WriteDescriptorSet descriptorWriteA(descriptorSets[i], 0, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoA);
         vk::WriteDescriptorSet descriptorWriteB(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoB);
         vk::WriteDescriptorSet descriptorWriteSettings(descriptorSets[i], 2, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfoSettings);
+        vk::WriteDescriptorSet descriptorWriteBoundary(descriptorSets[i], 3, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoBoundary);
 
-        std::array<vk::WriteDescriptorSet, 3> descriptorWrites{
+        std::array<vk::WriteDescriptorSet, 4> descriptorWrites{
             descriptorWriteA, 
             descriptorWriteB,
-            descriptorWriteSettings
+            descriptorWriteSettings,
+            descriptorWriteBoundary
         };
         
         m_core->getDevice().updateDescriptorSets(descriptorWrites, nullptr);
