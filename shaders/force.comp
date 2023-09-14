@@ -10,6 +10,10 @@ struct Particle{
   vec2 force;
   float rho;
   float p;
+  float deltaB;
+  float pad0; 
+  float pad1;
+  float pad2;
 };
 
 layout(set = 0, binding = 1) buffer StorageInput{
@@ -105,6 +109,11 @@ void main(){
     Particle p = readCurrentParticle();
     vec2 pressureForce = vec2(0.f, 0.f);
     float pRhoSq = p.rho * p.rho;
+
+    mat2 D = mat2(0);
+
+    // mat2 velocityGradient = mat2(0);
+    //* Sum up pressure forces and strain
     for (int i = 0; i < inStorage.particles.length();i++)
     {
         Particle pi = inStorage.particles[i];
@@ -116,17 +125,93 @@ void main(){
 
         vec2 p_pi = pi.position - p.position;
         float r = length(p_pi);
-        //
+        
         if (r < sphSettings.kernelRadius)
         {
             float piRhoSq = pi.rho * pi.rho;
-            pressureForce += sphSettings.MASS * (p.p / pRhoSq + pi.p / piRhoSq) * gradient(p_pi, r, sphSettings.kernelRadius);
+            vec2 gradient_ij = gradient(p_pi, r, sphSettings.kernelRadius);
+            pressureForce += sphSettings.MASS * (p.p / pRhoSq + pi.p / piRhoSq) * gradient_ij;
+
+            // float V_j = sphSettings.MASS / pi.rho;
+            // velocityGradient += V_j * outerProduct(gradient_ij, pi.velocity);
+
+            // D += 1.f / pi.rho * outerProduct(gradient_ij, gradient_ij);
         }
     }
+    //* Boundary
+    // for (int i = 0; i < boundary.particles.length();i++)
+    // {
+    //     Particle pi = boundary.particles[i];
+       
+    //     vec2 p_pi = pi.position - p.position;
+    //     float r = length(p_pi);
+        
+    //     if (r < sphSettings.kernelRadius)
+    //     {
+    //         float piRhoSq = pi.rho * pi.rho;
+    //         vec2 gradient_ij = gradient(p_pi, r, sphSettings.kernelRadius);
+    //         pressureForce += (sphSettings.rhoRest / p.deltaB) * (p.p / pRhoSq) * gradient_ij;
+
+    //         float V_j = sphSettings.MASS / pi.rho;
+    //         // Todo: fix boundary velocity
+    //         velocityGradient += (1.f / p.deltaB) * outerProduct(gradient_ij, pi.velocity);
+
+    //         // D += 1.f / pi.rho * outerProduct(gradient_ij, gradient_ij);
+    //     }
+    // }
+    //* Pressure force
+    pressureForce *= -sphSettings.MASS;
+
+    //* Strain Tensor
+    // mat2 strain = 0.5f * (velocityGradient + transpose(velocityGradient));
+    
     vec2 gravity = sphSettings.G * sphSettings.MASS / p.rho;
-    pressureForce = -sphSettings.MASS * pressureForce;
-    //Todo: add friction forces
-    p.force = gravity + pressureForce;
+
+    //* Friction & Cohesion
+    // D = (2 * sphSettings.MASS * sphSettings.MASS * sphSettings.dt / pRhoSq) * D;
+    // mat2 stress = inverse(D) * strain;
+    // mat2 hydrostaticStress = mat2((stress[0][0] + stress[1][1]) / 2.f);
+    // mat2 deviatoricStress = stress - hydrostaticStress ;
+
+    // vec2 frictionCohesionForce = vec2(0);
+    // for (int i = 0; i < inStorage.particles.length();i++)
+    // {
+    //     Particle pi = inStorage.particles[i];
+        
+    //     if (i == particleID)
+    //     {
+    //         continue;
+    //     }
+
+    //     vec2 p_pi = pi.position - p.position;
+    //     float r = length(p_pi);
+    //     //
+    //     if (r < sphSettings.kernelRadius)
+    //     {
+    //         float piRhoSq = pi.rho * pi.rho;
+    //         vec2 gradient_ij = gradient(p_pi, r, sphSettings.kernelRadius);
+    //         // Todo: use separate stress for each particle
+    //         frictionCohesionForce += sphSettings.MASS * (deviatoricStress / pRhoSq + deviatoricStress / piRhoSq) * gradient_ij;
+    //     }
+    // }
+    //* Boundary
+    // for (int i = 0; i < boundary.particles.length();i++)
+    // {
+    //     Particle pi = boundary.particles[i];
+
+    //     vec2 p_pi = pi.position - p.position;
+    //     float r = length(p_pi);
+    //     //
+    //     if (r < sphSettings.kernelRadius)
+    //     {
+    //         float piRhoSq = pi.rho * pi.rho;
+    //         vec2 gradient_ij = gradient(p_pi, r, sphSettings.kernelRadius);
+    //         frictionCohesionForce += (1.f / p.deltaB) * (deviatoricStress / pRhoSq) * gradient_ij;
+    //     }
+    // }
+    // frictionCohesionForce *= -sphSettings.MASS;
+
+    p.force = gravity + pressureForce;// + frictionCohesionForce;
 
     writeCurrentParticle(p);
 }

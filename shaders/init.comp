@@ -1,0 +1,77 @@
+#version 450
+#define VULKAN 100
+
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+struct Particle{
+  vec2 position;
+  vec2 velocity;
+  vec2 force;
+  float rho;
+  float p;
+  float deltaB;
+  float pad0; 
+  float pad1;
+  float pad2;
+};
+
+layout(set = 0, binding = 0) buffer StorageInput{
+    Particle particles[];
+} inStorage;
+
+layout(set = 0, binding = 1) buffer StorageOutput{
+    Particle particles[];
+} outStorage;
+
+layout(set = 0, binding = 3) buffer BoundaryStorage{
+    Particle particles[];
+} boundary;
+
+layout(set = 0, binding = 2) uniform SPHSettings{
+  vec2 G;                 // external (gravitational) forces
+  float PI;
+  float rhoRest;  // rest density
+  // 4
+  float GAS_CONST; // const for equation of state
+  float kernelRadius;		   // kernel radius
+  float kernelRadiusSquared;		   // radius^2 for optimization
+  float MASS;		   // assume all particles have the same mass
+  // 8
+  float VISC;	   // viscosity constant //! unused
+  float dt;	   // integration timestep
+
+  // smoothing kernels defined in Müller and their gradients
+  // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
+  float POLY6; //! unused
+  float SPIKY_GRAD; //! unused
+  // 12
+  float VISC_LAP; //! unused
+
+  // simulation parameters
+  float BOUNDARY_EPSILON; // boundary epsilon
+  float BOUNDARY_DAMPING;
+  float DOMAIN_WIDTH;
+  // 16
+  float DOMAIN_HEIGHT;
+
+  float pad0, pad1, pad2;
+  // 20
+} sphSettings;
+
+Particle readCurrentParticle(){
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    return inStorage.particles[particleID];
+}
+void writeCurrentParticle(in Particle p){
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    outStorage.particles[particleID] = p;
+}
+
+void main(){
+    Particle p = readCurrentParticle();
+
+    p.p = 0.f;
+    p.force = sphSettings.G;
+
+    writeCurrentParticle(p);
+}

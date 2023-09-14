@@ -10,6 +10,10 @@ struct Particle{
   glm::vec2 force = glm::vec2(0,0);
   float rho = 0.0;
   float p = 0.0;
+  float deltaB = 0.0;
+  float pad0 = 0.0;
+  float pad1 = 0.0;
+  float pad2 = 0.0;
   Particle(){};
   inline Particle(float x, float y) { position = glm::vec2(x, y); }
 
@@ -49,7 +53,7 @@ struct SPHSettings{
 
   // simulation parameters
   float BOUNDARY_EPSILON = kernelRadius; // boundary epsilon
-  float BOUNDARY_DAMPING = -0.5f;
+  float BOUNDARY_DAMPING = -0.1f;
   float DOMAIN_WIDTH = 1.5 * 800.f;
   float DOMAIN_HEIGHT = 1.5 * 600.f;
 

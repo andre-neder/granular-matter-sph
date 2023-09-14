@@ -9,6 +9,10 @@ struct Particle{
   vec2 force;
   float rho;
   float p;
+  float deltaB;
+  float pad0; 
+  float pad1;
+  float pad2;
 };
 
 layout(set = 0, binding = 0) buffer StorageInput{
@@ -94,6 +98,7 @@ void boundaryConditions(inout Particle p){
         p.velocity.y *= sphSettings.BOUNDARY_DAMPING;
         p.position.y = sphSettings.DOMAIN_HEIGHT - sphSettings.BOUNDARY_EPSILON;
     }
+    
 }
 
 void euler(inout Particle p){
