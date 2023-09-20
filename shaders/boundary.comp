@@ -59,12 +59,13 @@ layout(set = 0, binding = 2) uniform SPHSettings{
 
 Particle readCurrentParticle(){
     uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-    return inStorage.particles[particleID];
+    return boundary.particles[particleID];
 }
 void writeCurrentParticle(in Particle p){
     uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-    outStorage.particles[particleID] = p;
+    boundary.particles[particleID] = p;
 }
+
 
 // https://pysph.readthedocs.io/en/latest/_modules/pysph/base/kernels.html#CubicSpline
 #define KERNEL_DIM 1
@@ -78,47 +79,25 @@ float cubicSplineKernel(float rij, float h){
     return val * fac;
 }
 
+//* this shader calculates the density of a boundary particle b, summed up over all boundary particle neighbors
 void main(){
-    Particle p = readCurrentParticle();
-
-    p.rho = 0.f;
+    Particle p_b = readCurrentParticle();
+    float deltaB = 0.f;
     for (int i = 0; i< inStorage.particles.length();i++)
     {
         Particle pi = inStorage.particles[i];
-        vec2 p_pi = pi.position - p.position;
+        vec2 p_pi = p_b.position - pi.position;
         float r2 = dot(p_pi, p_pi);
         float rij = sqrt(r2);
        
 
         if (r2 < sphSettings.kernelRadiusSquared)
         {
-            p.rho += sphSettings.MASS * cubicSplineKernel(rij, sphSettings.kernelRadius);
+            deltaB += cubicSplineKernel(rij, sphSettings.kernelRadius);
         }
     }
 
+    p_b.deltaB = 1.f / deltaB;
 
-    //* Boundary handling
-    for (int i = 0; i< boundary.particles.length();i++)
-    {
-        Particle pb = boundary.particles[i];
-        vec2 p_pb = pb.position - p.position;
-        float r2 = dot(p_pb, p_pb);
-        float rij = sqrt(r2);
-        if (r2 < sphSettings.kernelRadiusSquared)
-        {
-            float w_b = cubicSplineKernel(rij, sphSettings.kernelRadius);
-            p.rho += (sphSettings.rhoRest / pb.deltaB) * w_b;
-        }
-    }
-
-    // Todo: Replace with Predictor Corrector setup
-    p.rho = min(p.rho, sphSettings.rhoRest);    //* rho <= rhoRest 
-
-    float gamma = 7.f;
-    float k = 0.01f;
-    p.p = ((k * sphSettings.rhoRest) / gamma) * (pow((p.rho  / sphSettings.rhoRest), gamma) - 1.f);
-
-    p.p = max(p.p, 0);  //* p >= 0
-    
-    writeCurrentParticle(p);
+    writeCurrentParticle(p_b);
 }

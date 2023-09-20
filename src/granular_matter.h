@@ -6,14 +6,13 @@
 
 struct Particle{
   glm::vec2 position = glm::vec2(0,0);
+  glm::vec2 boundaryNormal = glm::vec2(0,0);
   glm::vec2 velocity = glm::vec2(0,0);
   glm::vec2 force = glm::vec2(0,0);
   float rho = 0.0;
   float p = 0.0;
   float deltaB = 0.0;
   float pad0 = 0.0;
-  float pad1 = 0.0;
-  float pad2 = 0.0;
   Particle(){};
   inline Particle(float x, float y) { position = glm::vec2(x, y); }
 
@@ -74,15 +73,18 @@ private:
     vk::DescriptorSetLayout descriptorSetLayout;
     std::vector<vk::DescriptorSet> descriptorSets;
     vk::DescriptorPool descriptorPool;
-
+    //Todo: Abstract compute pass
+    vk::ShaderModule boundaryModule;
     vk::ShaderModule densityPressureModule;
     vk::ShaderModule forceModule;
     vk::ShaderModule integrateModule;
 
+    vk::PipelineLayout boundaryLayout;
     vk::PipelineLayout densityPressureLayout;
     vk::PipelineLayout forceLayout;
     vk::PipelineLayout integrateLayout;
 
+    vk::Pipeline boundaryPipeline;
     vk::Pipeline densityPressurePipeline;
     vk::Pipeline forcePipeline;
     vk::Pipeline integratePipeline;
@@ -110,3 +112,4 @@ public:
     void destroyFrameResources();
     void destroy(); 
 };
+

@@ -5,6 +5,7 @@
 GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
+    boundaryModule = m_core->loadShaderModule(SHADER_PATH"/boundary.comp");
     densityPressureModule = m_core->loadShaderModule(SHADER_PATH"/density_pressure.comp");
     forceModule = m_core->loadShaderModule(SHADER_PATH"/force.comp");
     integrateModule = m_core->loadShaderModule(SHADER_PATH"/integrate.comp");
@@ -63,6 +64,11 @@ void GranularMatter::destroyFrameResources(){
 void GranularMatter::destroy(){
     destroyFrameResources();
     vk::Device device = m_core->getDevice();
+    //* Boundary
+    device.destroyShaderModule(boundaryModule);
+    device.destroyPipelineLayout(boundaryLayout);
+    device.destroyPipeline(boundaryPipeline);
+
     //* destroy density pressure stuff
     device.destroyPipelineLayout(densityPressureLayout);
     device.destroyShaderModule(densityPressureModule);
@@ -112,31 +118,43 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
-
+    //* Copy data from last 
+    // Todo: replace with alternating buffers
     vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
     commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
-    
-    // vk::BufferMemoryBarrier barrier{};
+    //* Wait for copy action
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-    // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, nullptr);
-  
+    // Todo: Find neighbors
+    // Todo: Add init pass
+    // Todo: do 3 times
+        // Todo: add predict velocity/position pass
+        // Todo: add predict pressure/density pass
+        // Todo: add force pass
+    // Todo: add udate velocity/position
+    //* compute boundary densities
+    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryPipeline);
+    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    commandBuffers[currentFrame].dispatch(boundaryParticles.size(), 1, 1);
+    //* wait for compute pass
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    //* compute pressure
     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityPressurePipeline);
     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityPressureLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
     commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-  
+    //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-
+    //* compute forces
     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, forcePipeline);
     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, forceLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
     commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-  
+    //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-
+    //* integrate
     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integratePipeline);
     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
     commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+    //* submit calls
 
-   
     try{
         commandBuffers[currentFrame].end();
     }catch(std::exception& e) {
@@ -217,6 +235,38 @@ void GranularMatter::createDescriptorPool() {
 }
 void GranularMatter::createComputePipeline(){
     vk::Result result;
+    //* Boundary Pipeline
+    vk::PipelineShaderStageCreateInfo boundaryStageInfo{
+        {},
+        vk::ShaderStageFlagBits::eCompute,
+        boundaryModule,
+        "main"
+    };
+
+    vk::PipelineLayoutCreateInfo boundaryLayoutInfo{
+        {},
+        descriptorSetLayout,
+        {}
+    };
+
+    try{
+        boundaryLayout = m_core->getDevice().createPipelineLayout(boundaryLayoutInfo, nullptr);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+
+    vk::ComputePipelineCreateInfo boundaryPipelineInfo{
+        {},
+        boundaryStageInfo,
+        boundaryLayout,
+    };
+
+    
+    std::tie(result, boundaryPipeline) = m_core->getDevice().createComputePipeline( nullptr, boundaryPipelineInfo);
+    switch ( result ){
+        case vk::Result::eSuccess: break;
+        default: throw std::runtime_error("failed to create compute Pipeline!");
+    }
     //* Density Pressure Pipeline
     vk::PipelineShaderStageCreateInfo densityPressureStageInfo{
         {},

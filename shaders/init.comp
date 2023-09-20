@@ -5,14 +5,13 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 struct Particle{
   vec2 position;
+  vec2 boundaryNormal;
   vec2 velocity;
   vec2 force;
   float rho;
   float p;
   float deltaB;
   float pad0; 
-  float pad1;
-  float pad2;
 };
 
 layout(set = 0, binding = 0) buffer StorageInput{
@@ -69,9 +68,11 @@ void writeCurrentParticle(in Particle p){
 
 void main(){
     Particle p = readCurrentParticle();
-
+    //* Reset pressure
     p.p = 0.f;
-    p.force = sphSettings.G;
+    p.force = vec2(0.0);
+    //* Apply external force
+    p.velocity = sphSettings.G * sphSettings.dt;
 
     writeCurrentParticle(p);
 }
