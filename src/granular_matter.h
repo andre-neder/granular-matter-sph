@@ -3,6 +3,7 @@
 #include "core.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "compute_pass.h"
 
 struct Particle{
   glm::vec2 position = glm::vec2(0,0);
@@ -73,21 +74,11 @@ private:
     vk::DescriptorSetLayout descriptorSetLayout;
     std::vector<vk::DescriptorSet> descriptorSets;
     vk::DescriptorPool descriptorPool;
-    //Todo: Abstract compute pass
-    vk::ShaderModule boundaryModule;
-    vk::ShaderModule densityPressureModule;
-    vk::ShaderModule forceModule;
-    vk::ShaderModule integrateModule;
-
-    vk::PipelineLayout boundaryLayout;
-    vk::PipelineLayout densityPressureLayout;
-    vk::PipelineLayout forceLayout;
-    vk::PipelineLayout integrateLayout;
-
-    vk::Pipeline boundaryPipeline;
-    vk::Pipeline densityPressurePipeline;
-    vk::Pipeline forcePipeline;
-    vk::Pipeline integratePipeline;
+ 
+    gpu::ComputePass boundaryUpdatePass;
+    gpu::ComputePass densityPressurePass;
+    gpu::ComputePass forcePass;
+    gpu::ComputePass integratePass;
 
     SPHSettings settings;
 
@@ -95,7 +86,6 @@ private:
     void createDescriptorSetLayout();
     void createDescriptorPool();
     void createDescriptorSets();
-    void createComputePipeline();
 public:
     GranularMatter(/* args */){};
     GranularMatter(gpu::Core* core);

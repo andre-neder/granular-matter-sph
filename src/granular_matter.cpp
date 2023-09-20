@@ -5,10 +5,7 @@
 GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
-    boundaryModule = m_core->loadShaderModule(SHADER_PATH"/boundary.comp");
-    densityPressureModule = m_core->loadShaderModule(SHADER_PATH"/density_pressure.comp");
-    forceModule = m_core->loadShaderModule(SHADER_PATH"/force.comp");
-    integrateModule = m_core->loadShaderModule(SHADER_PATH"/integrate.comp");
+    
     
     particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
     std::generate(particles.begin(), particles.end(), [this]() {
@@ -42,7 +39,11 @@ GranularMatter::GranularMatter(gpu::Core* core)
     createDescriptorPool();
     createDescriptorSetLayout();
     createDescriptorSets();
-    createComputePipeline();
+    
+    boundaryUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/boundary.comp", descriptorSetLayout);
+    densityPressurePass = gpu::ComputePass(m_core, SHADER_PATH"/density_pressure.comp", descriptorSetLayout);
+    forcePass = gpu::ComputePass(m_core, SHADER_PATH"/force.comp", descriptorSetLayout);
+    integratePass = gpu::ComputePass(m_core, SHADER_PATH"/integrate.comp", descriptorSetLayout);
 }
 
 GranularMatter::~GranularMatter()
@@ -65,24 +66,16 @@ void GranularMatter::destroy(){
     destroyFrameResources();
     vk::Device device = m_core->getDevice();
     //* Boundary
-    device.destroyShaderModule(boundaryModule);
-    device.destroyPipelineLayout(boundaryLayout);
-    device.destroyPipeline(boundaryPipeline);
+    boundaryUpdatePass.destroy();
 
     //* destroy density pressure stuff
-    device.destroyPipelineLayout(densityPressureLayout);
-    device.destroyShaderModule(densityPressureModule);
-    device.destroyPipeline(densityPressurePipeline);
+    densityPressurePass.destroy();
 
     //* destroy force stuff
-    device.destroyPipelineLayout(forceLayout);
-    device.destroyShaderModule(forceModule);
-    device.destroyPipeline(forcePipeline);
+    forcePass.destroy();
 
     //* destroy integrate stuff
-    device.destroyPipelineLayout(integrateLayout);
-    device.destroyShaderModule(integrateModule);
-    device.destroyPipeline(integratePipeline);
+    integratePass.destroy();
 
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->destroyBuffer(particlesBufferA[i]);
@@ -132,26 +125,26 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         // Todo: add force pass
     // Todo: add udate velocity/position
     //* compute boundary densities
-    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryPipeline);
-    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
+    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
     commandBuffers[currentFrame].dispatch(boundaryParticles.size(), 1, 1);
     //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
     //* compute pressure
-    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityPressurePipeline);
-    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityPressureLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityPressurePass.m_pipeline);
+    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityPressurePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
     commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
     //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
     //* compute forces
-    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, forcePipeline);
-    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, forceLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, forcePass.m_pipeline);
+    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, forcePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
     commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
     //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
     //* integrate
-    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integratePipeline);
-    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integratePass.m_pipeline);
+    commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integratePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
     commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
     //* submit calls
 
@@ -231,136 +224,5 @@ void GranularMatter::createDescriptorPool() {
         descriptorPool = m_core->getDevice().createDescriptorPool(poolInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
-    }
-}
-void GranularMatter::createComputePipeline(){
-    vk::Result result;
-    //* Boundary Pipeline
-    vk::PipelineShaderStageCreateInfo boundaryStageInfo{
-        {},
-        vk::ShaderStageFlagBits::eCompute,
-        boundaryModule,
-        "main"
-    };
-
-    vk::PipelineLayoutCreateInfo boundaryLayoutInfo{
-        {},
-        descriptorSetLayout,
-        {}
-    };
-
-    try{
-        boundaryLayout = m_core->getDevice().createPipelineLayout(boundaryLayoutInfo, nullptr);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-
-    vk::ComputePipelineCreateInfo boundaryPipelineInfo{
-        {},
-        boundaryStageInfo,
-        boundaryLayout,
-    };
-
-    
-    std::tie(result, boundaryPipeline) = m_core->getDevice().createComputePipeline( nullptr, boundaryPipelineInfo);
-    switch ( result ){
-        case vk::Result::eSuccess: break;
-        default: throw std::runtime_error("failed to create compute Pipeline!");
-    }
-    //* Density Pressure Pipeline
-    vk::PipelineShaderStageCreateInfo densityPressureStageInfo{
-        {},
-        vk::ShaderStageFlagBits::eCompute,
-        densityPressureModule,
-        "main"
-    };
-
-    vk::PipelineLayoutCreateInfo densityPressureLayoutInfo{
-        {},
-        descriptorSetLayout,
-        {}
-    };
-
-    try{
-        densityPressureLayout = m_core->getDevice().createPipelineLayout(densityPressureLayoutInfo, nullptr);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-
-    vk::ComputePipelineCreateInfo densityPressurePipelineInfo{
-        {},
-        densityPressureStageInfo,
-        densityPressureLayout,
-    };
-
-    
-    std::tie(result, densityPressurePipeline) = m_core->getDevice().createComputePipeline( nullptr, densityPressurePipelineInfo);
-    switch ( result ){
-        case vk::Result::eSuccess: break;
-        default: throw std::runtime_error("failed to create compute Pipeline!");
-    }
-    //* Force Pipeline
-    vk::PipelineShaderStageCreateInfo forceStageInfo{
-        {},
-        vk::ShaderStageFlagBits::eCompute,
-        forceModule,
-        "main"
-    };
-
-    vk::PipelineLayoutCreateInfo forceLayoutInfo{
-        {},
-        descriptorSetLayout,
-        {}
-    };
-
-    try{
-        forceLayout = m_core->getDevice().createPipelineLayout(forceLayoutInfo, nullptr);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-
-    vk::ComputePipelineCreateInfo forcePipelineInfo{
-        {},
-        forceStageInfo,
-        forceLayout,
-    };
-
-    
-    std::tie(result, forcePipeline) = m_core->getDevice().createComputePipeline( nullptr, forcePipelineInfo);
-    switch ( result ){
-        case vk::Result::eSuccess: break;
-        default: throw std::runtime_error("failed to create compute Pipeline!");
-    }
-    //* Integrate Pipeline
-    vk::PipelineShaderStageCreateInfo integrateStageInfo{
-        {},
-        vk::ShaderStageFlagBits::eCompute,
-        integrateModule,
-        "main"
-    };
-
-    vk::PipelineLayoutCreateInfo integrateLayoutInfo{
-        {},
-        descriptorSetLayout,
-        {}
-    };
-
-    try{
-        integrateLayout = m_core->getDevice().createPipelineLayout(integrateLayoutInfo, nullptr);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-
-    vk::ComputePipelineCreateInfo integratePipelineInfo{
-        {},
-        integrateStageInfo,
-        integrateLayout,
-    };
-
-    
-    std::tie(result, integratePipeline) = m_core->getDevice().createComputePipeline( nullptr, integratePipelineInfo);
-    switch ( result ){
-        case vk::Result::eSuccess: break;
-        default: throw std::runtime_error("failed to create compute Pipeline!");
     }
 }
