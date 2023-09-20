@@ -98,8 +98,8 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
     startTime = std::chrono::high_resolution_clock::now();
    
-    settings.dt = 0.1f * dt; //0.02f *
-    // std::cout << dt << std::endl;
+    settings.dt = 0.1f * dt; 
+    
     void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
     memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
     m_core->flushBuffer(settingsBuffer[currentFrame], 0, (size_t) sizeof(SPHSettings));
