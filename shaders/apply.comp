@@ -37,7 +37,7 @@ layout(set = 0, binding = 2) uniform SPHSettings{
   // 4
   float GAS_CONST; // const for equation of state
   float kernelRadius;		   // kernel radius
-  float kernelRadiusSquared;		   // radius^2 for optimization
+  float volume;		   // radius^2 for optimization
   float MASS;		   // assume all particles have the same mass
   // 8
   float VISC;	   // viscosity constant //! unused
@@ -69,12 +69,12 @@ Particle readCurrentParticle(){
 void writeCurrentParticle(in Particle p){
     outStorage.particles[particleID] = p;
 }
-float dampening = 0.7;
+float dampening = 0.7f;
 void main(){
     Particle p = readCurrentParticle();
-    //* Apply internal pressureAcceleration  + sphSettings.G
+    //* Apply internal pressureAcceleration  
     
-    p.velocity += (p.pressureAcceleration) * sphSettings.dt;
+    p.velocity += p.pressureAcceleration * sphSettings.dt;
     p.position += p.velocity * sphSettings.dt;
 
     if(p.position.x <= 0.f){

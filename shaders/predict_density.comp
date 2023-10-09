@@ -38,7 +38,7 @@ layout(set = 0, binding = 2) uniform SPHSettings{
   // 4
   float GAS_CONST; // const for equation of state
   float kernelRadius;		   // kernel radius
-  float kernelRadiusSquared;		   // radius^2 for optimization
+  float volume;		   // radius^2 for optimization
   float MASS;		   // assume all particles have the same mass
   // 8
   float VISC;	   // viscosity constant //! unused
@@ -73,21 +73,23 @@ void writeCurrentParticle(in Particle p){
 
 // https://github.com/InteractiveComputerGraphics/SPlisHSPlasH/blob/master/SPlisHSPlasH/SPHKernels.h
 float W(float rij, float h){
-    float res = 0.f;
-    float q = rij / h;
-    float h3 = h * h * h;
-    float k = 8.f / (PI * h3);
-    if(q <= 1.f){
-        if(q <= 0.5f){
-            float q2 = q * q;
-            float q3 = q2 * q;
-            res = k * 6.f * q3 + 6.f * q2 +1.f;
-        }
-        else{
-            res = k * 2.f * pow(1.f - q, 3);
-        }
-    }
-    return res;
+    // float res = 0.f;
+    // float q = rij / h;
+    // float h3 = h * h * h;
+    // float k = 8.f / (PI * h3);
+    // if(q <= 1.f){
+    //     if(q <= 0.5f){
+    //         float q2 = q * q;
+    //         float q3 = q2 * q;
+    //         res = k * (6.f * q3 - 6.f * q2 + 1.f);
+    //     }
+    //     else{
+    //         res = k * (2.f * pow(1.f - q, 3.f));
+    //     }
+    // }
+    // return res;
+    float volume = PI * pow(h, 4.f) / 6.f;
+    return (h - rij) * (h - rij) / volume;
 }
 
 
@@ -112,8 +114,8 @@ void main(){
     }
     neighborDensity *= sphSettings.MASS;
     
-    float sumW_b = 0.f;
-    float boundaryDensity = 0.f;
+    // float sumW_b = 0.f;
+    // float boundaryDensity = 0.f;
     //* Loop over all boundary particles
     // for (int i = 0; i< boundary.particles.length();i++)
     // {
@@ -132,7 +134,8 @@ void main(){
     // boundaryDensity = psi_b * sumW_b;
     // p.psi_b = psi_b;
 
-    p.rho = neighborDensity + boundaryDensity;
+    // p.rho = neighborDensity;// + boundaryDensity;
+    // p.rho *= sphSettings.rhoRest;
     
     // p.rho = max(p.rho, sphSettings.rhoRest); 
 
@@ -141,13 +144,15 @@ void main(){
     // float nu = 0.01f;
     // float c = 4.42f;
     // float exponent = 7.f;
-    // float B = (sphSettings.rhoRest * c * c) / exponent;
-    // p.p = B * (pow(p.rho / sphSettings.rhoRest, exponent) - 1.f); // tait's equation
+    //? tait's equation
+    // float B = 50.f;// (sphSettings.rhoRest * c * c) / exponent;
+    // p.p = B * (pow(p.rho / sphSettings.rhoRest, exponent) - 1.f); 
     // float stiffness = 10.f;
     // p.p = stiffness * (p.rho / sphSettings.rhoRest - 1.f);
-    float stiffness = 1.f;
-    p.p = stiffness * (p.rho - sphSettings.rhoRest); // Ideal gas equation
-    p.p = max(p.p, 0.f);
+    //* Ideal gas equation
+    float stiffness = 5.f;
+    p.p = stiffness * (p.rho - sphSettings.rhoRest); 
+    // p.p = max(p.p, 0.f);
 
     writeCurrentParticle(p);
 }

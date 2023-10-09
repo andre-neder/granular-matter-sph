@@ -49,11 +49,11 @@ struct SPHSettings{
   //? 0.063 bis 2 mm // 1dm = 10cm = 100mm
   float particleRadius = 0.001f; //* m
   float kernelRadius = particleRadius * 4.f; // *m		  
-  float kernelRadiusSquared = kernelRadius * kernelRadius;		
+  float volume = (float) M_PI * (particleRadius * particleRadius);		
   //? sphere Volume in dm^3 * density
   //   float MASS = (4.f / 3.f * (float) M_PI * (particleRadius * particleRadius * particleRadius)) * rhoRest; 
   //? sphere Volume in 2D 
-  float MASS = (float) M_PI * (particleRadius * particleRadius) * rhoRest; //* kg
+  float MASS = volume * rhoRest; //* kg
   float VISC = 1.f;	  
   float dt = 0.000f;	  
 
@@ -81,7 +81,7 @@ private:
     
     std::vector<vk::Buffer> particlesBufferA;
     std::vector<vk::Buffer> settingsBuffer;
-    glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
+    glm::ivec3 computeSpace = glm::ivec3(48, 48, 1);
 
     vk::DescriptorSetLayout descriptorSetLayout;
     std::vector<vk::DescriptorSet> descriptorSets;

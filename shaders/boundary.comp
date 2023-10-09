@@ -38,7 +38,7 @@ layout(set = 0, binding = 2) uniform SPHSettings{
   // 4
   float GAS_CONST; // const for equation of state
   float kernelRadius;		   // kernel radius
-  float kernelRadiusSquared;		   // radius^2 for optimization
+  float volume;		   // radius^2 for optimization
   float MASS;		   // assume all particles have the same mass
   // 8
   float VISC;	   // viscosity constant //! unused
@@ -82,10 +82,10 @@ float W(float rij, float h){
         if(q <= 0.5f){
             float q2 = q * q;
             float q3 = q2 * q;
-            res = k * 6.f * q3 + 6.f * q2 +1.f;
+            res = k * 6.f * q3 - 6.f * q2 + 1.f;
         }
         else{
-            res = k * 2.f * pow(1.f - q, 3);
+            res = k * 2.f * pow(1.f - q, 3.f);
         }
     }
     return res;
