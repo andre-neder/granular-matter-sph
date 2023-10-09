@@ -70,34 +70,13 @@ Particle readCurrentParticle(){
 void writeCurrentParticle(in Particle p){
     outStorage.particles[particleID] = p;
 }
-// https://github.com/InteractiveComputerGraphics/SPlisHSPlasH/blob/master/SPlisHSPlasH/SPHKernels.h
-float W(float rij, float h){
-    float res = 0.f;
-    float q = rij / h;
-    float h3 = h * h * h;
-    float k = 8.f / (PI * h3);
-    if(q <= 1.f){
-        if(q <= 0.5f){
-            float q2 = q * q;
-            float q3 = q2 * q;
-            res = k * (6.f * q3 - 6.f * q2 + 1.f);
-        }
-        else{
-            res = k * (2.f * pow(1.f - q, 3.f));
-        }
-    }
-    return res;
-}
 
 void main(){
     Particle p = readCurrentParticle();
     //* Reset pressure & pressureAcceleration
-    p.p = 0.f;
-    p.rho = sphSettings.volume * W(0, sphSettings.kernelRadius);
-    p.pressureAcceleration = vec2(0.0);
-
     p.velocity += sphSettings.G * sphSettings.dt;
-    p.predPosition = p.position + p.velocity * sphSettings.dt;
+    p.predPosition = p.position;
+    p.predPosition += p.velocity * sphSettings.dt;
     
     writeCurrentParticle(p);
 }

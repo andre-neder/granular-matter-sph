@@ -96,23 +96,23 @@ float W(float rij, float h){
 void main(){
     Particle p = readCurrentParticle();
 
-    float neighborDensity = 0.f;
+    p.rho = 0.f;
     //* Loop over neighboring particles
     for (int i = 0; i< inStorage.particles.length();i++)
     {
         Particle pi = inStorage.particles[i];
-        if (i == particleID){
-            continue;
-        }
+        // if (i == particleID){
+        //     continue;
+        // }
         vec2 p_pi = p.predPosition - pi.predPosition;
         float r = length(p_pi);
        
         if (r < sphSettings.kernelRadius)
         {
-            neighborDensity += W(r, sphSettings.kernelRadius);
+            p.rho += W(r, sphSettings.kernelRadius);
         }
     }
-    neighborDensity *= sphSettings.MASS;
+    p.rho *= sphSettings.MASS;
     
     // float sumW_b = 0.f;
     // float boundaryDensity = 0.f;
