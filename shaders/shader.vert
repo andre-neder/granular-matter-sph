@@ -1,7 +1,7 @@
 #version 450
 
-#define DOMAIN_WIDTH (1.5 * 800)
-#define DOMAIN_HEIGHT (1.5 * 600)
+#define DOMAIN_WIDTH (1.f)
+#define DOMAIN_HEIGHT (1.f)
 
 layout(binding = 0) uniform UniformBufferObject {
     mat4 model;

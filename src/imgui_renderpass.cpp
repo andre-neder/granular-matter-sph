@@ -1,4 +1,9 @@
 #include "imgui_renderpass.h"
+#include "global.h"
+bool simulationRunning = false;
+bool show_demo_window = true;
+bool showGPUInfo = true;
+bool showSimulationSettings = true;
 
 using namespace gpu;
 
@@ -91,6 +96,10 @@ using namespace gpu;
 
         ImGui::Begin("GPU Info", &showGPUInfo);
         ImGui::Text(m_deviceProperties.deviceName);
+        ImGui::End();
+
+        ImGui::Begin("Simulation", &showSimulationSettings);
+        ImGui::Checkbox("Simulation running", &simulationRunning);
         ImGui::End();
 
         ImGui::ShowDemoWindow(&show_demo_window);

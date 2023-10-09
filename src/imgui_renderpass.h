@@ -31,7 +31,5 @@ namespace gpu{
             void createDescriptorPool();
         
             vk::PhysicalDeviceProperties m_deviceProperties;
-            bool show_demo_window = true;
-            bool showGPUInfo = true;
     };
 }

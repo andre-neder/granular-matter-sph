@@ -10,7 +10,7 @@ struct Particle{
   vec2 predPosition;
   vec2 velocity;
   vec2 predVelocity;
-  vec2 force;
+  vec2 pressureAcceleration;
   float rho;
   float p;
   float V;
@@ -19,11 +19,11 @@ struct Particle{
   float pad2; 
 };
 
-layout(set = 0, binding = 0) buffer StorageInput{
+layout(set = 0, binding = 1) buffer StorageInput{
     Particle particles[];
 } inStorage;
 
-layout(set = 0, binding = 1) buffer StorageOutput{
+layout(set = 0, binding = 0) buffer StorageOutput{
     Particle particles[];
 } outStorage;
 
@@ -62,52 +62,21 @@ layout(set = 0, binding = 2) uniform SPHSettings{
   // 20
 } sphSettings;
 
+uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+
 Particle readCurrentParticle(){
-    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-    return boundary.particles[particleID];
+    return inStorage.particles[particleID];
 }
 void writeCurrentParticle(in Particle p){
-    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-    boundary.particles[particleID] = p;
+    outStorage.particles[particleID] = p;
 }
 
-
-// https://github.com/InteractiveComputerGraphics/SPlisHSPlasH/blob/master/SPlisHSPlasH/SPHKernels.h
-float W(float rij, float h){
-    float res = 0.f;
-    float q = rij / h;
-    float h3 = h * h * h;
-    float k = 8.f / (PI * h3);
-    if(q <= 1.f){
-        if(q <= 0.5f){
-            float q2 = q * q;
-            float q3 = q2 * q;
-            res = k * 6.f * q3 + 6.f * q2 +1.f;
-        }
-        else{
-            res = k * 2.f * pow(1.f - q, 3);
-        }
-    }
-    return res;
-}
-
-//* this shader calculates the density of a boundary particle b, summed up over all boundary particle neighbors
 void main(){
-    // Particle p_b = readCurrentParticle();
-    // float V = 0.f;
-    // for (int i = 0; i< boundary.particles.length();i++)
-    // {
-    //     Particle pi = boundary.particles[i];
-    //     vec2 p_pi = p_b.position - pi.position;
-    //     float r = length(p_pi);
-
-    //     if (r < sphSettings.kernelRadius)
-    //     {
-    //         V += W(r, sphSettings.kernelRadius);
-    //     }
-    // }
-
-    // p_b.V = 1.f / V;
-
-    // writeCurrentParticle(p_b);
+    Particle p = readCurrentParticle();
+    //* Predict position
+    // vec2 acceleration = sphSettings.G + p.pressureAcceleration;
+    // p.predVelocity = p.velocity + acceleration * sphSettings.dt;
+    // p.predPosition = p.position + p.velocity * sphSettings.dt;
+    
+    writeCurrentParticle(p);
 }

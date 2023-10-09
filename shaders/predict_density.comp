@@ -14,7 +14,7 @@ struct Particle{
   float rho;
   float p;
   float V;
-  float pad0; 
+  float psi_b; 
   float pad1; 
   float pad2; 
 };
@@ -32,7 +32,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 } boundary;
 
 layout(set = 0, binding = 2) uniform SPHSettings{
-  vec2 G;                 // external (gravitational) forces
+  vec2 G;                 // external (gravitational) pressureAccelerations
   float padPI;
   float rhoRest;  // rest density
   // 4
@@ -92,14 +92,63 @@ float W(float rij, float h){
 
 void main(){
     Particle p = readCurrentParticle();
-    //* Reset pressure & pressureAcceleration
-    p.p = 0.f;
-    p.rho = 0.f; // W(vec2(0.f), sphSettings.kernelRadius);
-    p.pressureAcceleration = vec2(0.0);
-    // * Apply external acceleration
-    p.predPosition = p.position;
-    p.predVelocity = p.velocity;
-    // vec2 acceleration = sphSettings.G;
-    // p.velocity += acceleration * sphSettings.dt;
+
+    float neighborDensity = 0.f;
+    //* Loop over neighboring particles
+    for (int i = 0; i< inStorage.particles.length();i++)
+    {
+        Particle pi = inStorage.particles[i];
+        if (i == particleID){
+            continue;
+        }
+        vec2 p_pi = p.predPosition - pi.predPosition;
+        float r = length(p_pi);
+       
+        if (r < sphSettings.kernelRadius)
+        {
+            neighborDensity += W(r, sphSettings.kernelRadius);
+        }
+    }
+    neighborDensity *= sphSettings.MASS;
+    
+    float sumW_b = 0.f;
+    float boundaryDensity = 0.f;
+    //* Loop over all boundary particles
+    for (int i = 0; i< boundary.particles.length();i++)
+    {
+        Particle pb = boundary.particles[i];
+        vec2 p_pb = p.predPosition - pb.position;
+        float r = length(p_pb);
+        if (r < sphSettings.kernelRadius)
+        {
+            // boundaryDensity += (sphSettings.rhoRest * pb.V) * W(r, sphSettings.kernelRadius);
+            sumW_b += W(r, sphSettings.kernelRadius);
+            // boundaryDensity += sphSettings.MASS * W(r, sphSettings.kernelRadius);
+        }
+    }
+    float V_b = 1.f / sumW_b;
+    float psi_b = V_b * sphSettings.rhoRest;
+    boundaryDensity = psi_b * sumW_b;
+    p.psi_b = psi_b;
+
+    p.rho = neighborDensity + boundaryDensity;
+    
+    // p.rho = max(p.rho, sphSettings.rhoRest); 
+
+    //* Calculate pressure
+    // float deltaRho = p.rho - sphSettings.rhoRest;
+    // float nu = 0.01f;
+    // float c = 4.42f;
+    // float exponent = 7.f;
+    // float B = (sphSettings.rhoRest * c * c) / exponent;
+    // p.p = B * (pow(p.rho / sphSettings.rhoRest, exponent) - 1.f); // tait's equation
+    // float stiffness = 10.f;
+    // p.p = stiffness * (p.rho / sphSettings.rhoRest - 1.f);
+    float stiffness = 1000.f;
+    p.p = stiffness * (p.rho - sphSettings.rhoRest); // Ideal gas equation
+    p.p = max(p.p, 0.f);
+
     writeCurrentParticle(p);
 }
+
+// volume = mass / density

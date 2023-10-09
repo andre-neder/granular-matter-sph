@@ -106,7 +106,7 @@ vec2 gradient(in vec2 xij, float rij, float h){
 
 void main(){
     Particle p = readCurrentParticle();
-    vec2 pressureForce = vec2(0.f, 0.f);
+    vec2 pressureAcceleration = vec2(0.f, 0.f);
     float pRhoSq = p.rho * p.rho;
 
     // mat2 D = mat2(0);
@@ -129,7 +129,7 @@ void main(){
         {
             float piRhoSq = pi.rho * pi.rho;
             vec2 gradient_ij = gradient(p_pi, r, sphSettings.kernelRadius);
-            pressureForce += sphSettings.MASS * (p.p / pRhoSq + pi.p / piRhoSq) * gradient_ij;
+            pressureAcceleration += sphSettings.MASS * (p.p / pRhoSq + pi.p / piRhoSq) * gradient_ij;
 
             // float V_j = sphSettings.MASS / pi.rho;
             // velocityGradient += V_j * outerProduct(gradient_ij, pi.velocity);
@@ -149,7 +149,7 @@ void main(){
         {
             float piRhoSq = pi.rho * pi.rho;
             vec2 gradient_ij = gradient(p_pi, r, sphSettings.kernelRadius);
-            pressureForce += (sphSettings.rhoRest / pi.deltaB) * (p.p / pRhoSq) * gradient_ij;
+            pressureAcceleration += (sphSettings.rhoRest / pi.deltaB) * (p.p / pRhoSq) * gradient_ij;
 
             // float V_j = sphSettings.MASS / pi.rho;
             // Todo: fix boundary velocity
@@ -159,7 +159,7 @@ void main(){
         }
     }
     //* Pressure force
-    pressureForce *= -sphSettings.MASS;
+    pressureAcceleration *= -sphSettings.MASS;
 
     //* Strain Tensor
     // mat2 strain = 0.5f * (velocityGradient + transpose(velocityGradient));
@@ -210,7 +210,7 @@ void main(){
     // }
     // frictionCohesionForce *= -sphSettings.MASS;
 
-    p.force = gravity + pressureForce;// + frictionCohesionForce;
+    p.force = gravity + pressureAcceleration;// + frictionCohesionForce;
 
     writeCurrentParticle(p);
 }
