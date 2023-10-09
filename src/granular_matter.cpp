@@ -107,7 +107,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     startTime = std::chrono::high_resolution_clock::now();
    
     if(simulationRunning){
-        settings.dt = 0.01f * dt; 
+        settings.dt = 0.1f * dt; 
     }                            
     else {
         settings.dt = 0.f;

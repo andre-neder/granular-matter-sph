@@ -144,23 +144,23 @@ void main(){
     // vec2 sumGradBoundary = vec2(0.f);
     vec2 boundarypressureAcceleration = vec2(0.f);
     //* For all boundary particles
-    for (int i = 0; i < boundary.particles.length();i++)
-    {
-        Particle pb = boundary.particles[i];
+    // for (int i = 0; i < boundary.particles.length();i++)
+    // {
+    //     Particle pb = boundary.particles[i];
        
-        vec2 p_pb = p.predPosition - pb.position;
-        float r = length(p_pb);
+    //     vec2 p_pb = p.predPosition - pb.position;
+    //     float r = length(p_pb);
         
-        if (r < sphSettings.kernelRadius)
-        {
-            vec2 gradient = gradW(p_pb, sphSettings.kernelRadius);
-            // sumGradBoundary += gradient;
-            // boundarypressureAcceleration += (p.p / pRhoSq + p.p / (sphSettings.rhoRest * sphSettings.rhoRest)) * gradient;
-            // boundarypressureAcceleration += (sphSettings.rhoRest / pb.V) * (p.p / pRhoSq + p.p / rhoRestSq) * gradient;
-            boundarypressureAcceleration += p.psi_b * (p.p / pRhoSq) * gradient;
-            // boundarypressureAcceleration += gradient;
-        }
-    }
+    //     if (r < sphSettings.kernelRadius)
+    //     {
+    //         vec2 gradient = gradW(p_pb, sphSettings.kernelRadius);
+    //         // sumGradBoundary += gradient;
+    //         // boundarypressureAcceleration += (p.p / pRhoSq + p.p / (sphSettings.rhoRest * sphSettings.rhoRest)) * gradient;
+    //         // boundarypressureAcceleration += (sphSettings.rhoRest / pb.V) * (p.p / pRhoSq + p.p / rhoRestSq) * gradient;
+    //         boundarypressureAcceleration += p.psi_b * (p.p / pRhoSq) * gradient;
+    //         // boundarypressureAcceleration += gradient;
+    //     }
+    // }
     boundarypressureAcceleration *= -sphSettings.MASS;
     // boundarypressureAcceleration *= -p.p * (2.f * sphSettings.MASS / pRhoSq);
 

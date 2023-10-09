@@ -69,11 +69,29 @@ Particle readCurrentParticle(){
 void writeCurrentParticle(in Particle p){
     outStorage.particles[particleID] = p;
 }
-
+float dampening = 0.7;
 void main(){
     Particle p = readCurrentParticle();
-    //* Apply internal pressureAcceleration
-    p.velocity += (p.pressureAcceleration + sphSettings.G) * sphSettings.dt;
+    //* Apply internal pressureAcceleration  + sphSettings.G
+    
+    p.velocity += (p.pressureAcceleration) * sphSettings.dt;
     p.position += p.velocity * sphSettings.dt;
+
+    if(p.position.x <= 0.f){
+        p.position.x = 0.f;
+        p.velocity.x *= -1.f * dampening;
+    }
+    if(p.position.x >= sphSettings.DOMAIN_HEIGHT){
+        p.position.x = sphSettings.DOMAIN_HEIGHT;
+        p.velocity.x *= -1.f * dampening;
+    }
+     if(p.position.y <= 0.f){
+        p.position.y = 0.f;
+        p.velocity.y *= -1.f * dampening;
+    }
+    if(p.position.y >= sphSettings.DOMAIN_WIDTH){
+        p.position.y = sphSettings.DOMAIN_WIDTH;
+        p.velocity.y *= -1.f * dampening;
+    }
     writeCurrentParticle(p);
 }

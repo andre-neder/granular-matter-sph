@@ -81,7 +81,7 @@ private:
     
     std::vector<vk::Buffer> particlesBufferA;
     std::vector<vk::Buffer> settingsBuffer;
-    glm::ivec3 computeSpace = glm::ivec3(64, 64, 1);
+    glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
 
     vk::DescriptorSetLayout descriptorSetLayout;
     std::vector<vk::DescriptorSet> descriptorSets;

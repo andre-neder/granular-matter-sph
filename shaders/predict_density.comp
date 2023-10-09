@@ -90,6 +90,7 @@ float W(float rij, float h){
     return res;
 }
 
+
 void main(){
     Particle p = readCurrentParticle();
 
@@ -114,22 +115,22 @@ void main(){
     float sumW_b = 0.f;
     float boundaryDensity = 0.f;
     //* Loop over all boundary particles
-    for (int i = 0; i< boundary.particles.length();i++)
-    {
-        Particle pb = boundary.particles[i];
-        vec2 p_pb = p.predPosition - pb.position;
-        float r = length(p_pb);
-        if (r < sphSettings.kernelRadius)
-        {
-            // boundaryDensity += (sphSettings.rhoRest * pb.V) * W(r, sphSettings.kernelRadius);
-            sumW_b += W(r, sphSettings.kernelRadius);
-            // boundaryDensity += sphSettings.MASS * W(r, sphSettings.kernelRadius);
-        }
-    }
-    float V_b = 1.f / sumW_b;
-    float psi_b = V_b * sphSettings.rhoRest;
-    boundaryDensity = psi_b * sumW_b;
-    p.psi_b = psi_b;
+    // for (int i = 0; i< boundary.particles.length();i++)
+    // {
+    //     Particle pb = boundary.particles[i];
+    //     vec2 p_pb = p.predPosition - pb.position;
+    //     float r = length(p_pb);
+    //     if (r < sphSettings.kernelRadius)
+    //     {
+    //         // boundaryDensity += (sphSettings.rhoRest * pb.V) * W(r, sphSettings.kernelRadius);
+    //         sumW_b += W(r, sphSettings.kernelRadius);
+    //         // boundaryDensity += sphSettings.MASS * W(r, sphSettings.kernelRadius);
+    //     }
+    // }
+    // float V_b = 1.f / sumW_b;
+    // float psi_b = V_b * sphSettings.rhoRest;
+    // boundaryDensity = psi_b * sumW_b;
+    // p.psi_b = psi_b;
 
     p.rho = neighborDensity + boundaryDensity;
     
@@ -144,7 +145,7 @@ void main(){
     // p.p = B * (pow(p.rho / sphSettings.rhoRest, exponent) - 1.f); // tait's equation
     // float stiffness = 10.f;
     // p.p = stiffness * (p.rho / sphSettings.rhoRest - 1.f);
-    float stiffness = 1000.f;
+    float stiffness = 1.f;
     p.p = stiffness * (p.rho - sphSettings.rhoRest); // Ideal gas equation
     p.p = max(p.p, 0.f);
 
