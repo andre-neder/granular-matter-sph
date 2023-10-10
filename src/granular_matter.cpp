@@ -102,8 +102,11 @@ std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_res
 
 
 void GranularMatter::updateSettings(float dt, int currentFrame){
-    // settings.rhoRest = rhoRest;
-    // settings.stiffness = stiffness;
+    settings.rhoRest = rhoRest;
+    settings.stiffness = stiffness;
+    settings.mass = mass;
+    settings.kernelRadius = kernelRadius;
+    settings.G = gravity;
     if(simulationRunning){
         settings.dt = dt; 
     }                            

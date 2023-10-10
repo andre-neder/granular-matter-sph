@@ -132,7 +132,7 @@ void main(){
     // p.p = stiffness * (p.rho / sphSettings.rhoRest - 1.f);
     //* Ideal gas equation
     p.p = settings.stiffness * (p.rho - settings.rhoRest); 
-    p.p = max(p.p, 0.f);
+    // p.p = max(p.p, 0.f);
 
     writeCurrentParticle(p);
 }
