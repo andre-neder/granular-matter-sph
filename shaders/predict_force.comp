@@ -32,35 +32,19 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 } boundary;
 
 layout(set = 0, binding = 2) uniform SPHSettings{
-  vec2 G;                 // external (gravitational) forces
-  float padPI;
-  float rhoRest;  // rest density
-  // 4
-  float GAS_CONST; // const for equation of state
-  float kernelRadius;		   // kernel radius
-  float volume;		   // radius^2 for optimization
-  float MASS;		   // assume all particles have the same mass
-  // 8
-  float VISC;	   // viscosity constant //! unused
-  float dt;	   // integration timestep
+  vec2 G;       
+  float rhoRest;
+  float kernelRadius;		   
 
-  // smoothing kernels defined in Müller and their gradients
-  // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
-  float POLY6; //! unused
-  float SPIKY_GRAD; //! unused
-  // 12
-  float VISC_LAP; //! unused
-
-  // simulation parameters
-  float BOUNDARY_EPSILON; // boundary epsilon
-  float BOUNDARY_DAMPING;
+  float mass;		 
+  float stiffness;
+  float dt;	  
   float DOMAIN_WIDTH;
-  // 16
-  float DOMAIN_HEIGHT;
 
+  float DOMAIN_HEIGHT;
   float pad0, pad1, pad2;
-  // 20
-} sphSettings;
+
+} settings;
 
 uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
 
@@ -92,6 +76,10 @@ float W(float rij, float h){
     return (h - rij) * (h - rij) / volume;
 }
 
+float rand(){
+    return fract(sin(dot(vec2(settings.dt * 25165843.f, settings.dt * 786433), vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 vec2 gradW(vec2 rij, float h){
     // vec2 res = vec2(0.f);
     // float rl = length(rij);
@@ -111,7 +99,7 @@ vec2 gradW(vec2 rij, float h){
     // }
     // return res;
     float r = length(rij);
-    vec2 dir = r <= EPSILON ? vec2(0) : normalize(rij);
+    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); //?
     float scale = -12.f / (PI * pow(h, 4.f));
     float slope = scale * (r - h);
     return dir * slope;
@@ -121,7 +109,7 @@ void main(){
     Particle p = readCurrentParticle();
     //* Init pressure pressureAcceleration
     p.pressureAcceleration = vec2(0.f);
-    // float pRhoSq = p.rho * p.rho;
+    float pRhoSq = p.rho * p.rho;
     // float rhoRestSq = sphSettings.rhoRest * sphSettings.rhoRest;
 
     // vec2 sumGradNeighbor = vec2(0.f);
@@ -137,11 +125,12 @@ void main(){
         vec2 p_pi = p.predPosition - pi.predPosition;
         float r = length(p_pi);
         
-        if (r < sphSettings.kernelRadius)
+        if (r < settings.kernelRadius)
         {
-            // float piRhoSq = pi.rho * pi.rho;
+            float piRhoSq = pi.rho * pi.rho;
             // (p.p / pRhoSq + pi.p / piRhoSq)
-            p.pressureAcceleration += ((p.p + pi.p) / 2.f) * gradW(p_pi, sphSettings.kernelRadius) * -sphSettings.MASS / pi.rho;
+            p.pressureAcceleration += ((p.p + pi.p) / 2.f) * gradW(p_pi, settings.kernelRadius) * settings.mass / pi.rho;
+            // p.pressureAcceleration -= sphSettings.MASS * (p.p / pRhoSq + pi.p / piRhoSq) * gradW(p_pi, sphSettings.kernelRadius);
         }
     }
     // pressureAcceleration *= -sphSettings.MASS;

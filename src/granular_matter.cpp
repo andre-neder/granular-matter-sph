@@ -8,7 +8,6 @@ GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
     
-    
     particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
     std::generate(particles.begin(), particles.end(), [this]() {
         return Particle(((static_cast<float>(std::rand()) / RAND_MAX)) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX)) * settings.DOMAIN_HEIGHT);
@@ -17,21 +16,21 @@ GranularMatter::GranularMatter(gpu::Core* core)
     float r0 = 0.5f * settings.kernelRadius;
     
     for(float i = 0.f;i < settings.DOMAIN_HEIGHT; i+=r0){
-        boundaryParticles.push_back(Particle(-2.f * r0, i));
-        boundaryParticles.push_back(Particle(-r0, i));
+        // boundaryParticles.push_back(Particle(-2.f * r0, i));
+        // boundaryParticles.push_back(Particle(-r0, i));
         boundaryParticles.push_back(Particle(0.f, i));
         boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH, i));
-        boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH + r0, i));
-        boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH + 2.f * r0, i));
+        // boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH + r0, i));
+        // boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH + 2.f * r0, i));
     }
 
     for(float i = 0.f;i < settings.DOMAIN_WIDTH; i+=r0){
-        boundaryParticles.push_back(Particle(i, -2.f * r0));
-        boundaryParticles.push_back(Particle(i, -r0));
+        // boundaryParticles.push_back(Particle(i, -2.f * r0));
+        // boundaryParticles.push_back(Particle(i, -r0));
         boundaryParticles.push_back(Particle(i, 0.f));
         boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT));
-        boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT + r0));
-        boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT + 2.f * r0));
+        // boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT + r0));
+        // boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT + 2.f * r0));
     }
     
 
@@ -101,105 +100,122 @@ void GranularMatter::initFrameResources(){
 
 std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
-void GranularMatter::update(int currentFrame, int imageIndex){
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-    startTime = std::chrono::high_resolution_clock::now();
-   
+
+void GranularMatter::updateSettings(float dt, int currentFrame){
+    // settings.rhoRest = rhoRest;
+    // settings.stiffness = stiffness;
     if(simulationRunning){
-        settings.dt = 0.1f * dt; 
+        settings.dt = dt; 
     }                            
     else {
         settings.dt = 0.f;
-    }                                   
+    }  
+
     void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
     memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
     m_core->flushBuffer(settingsBuffer[currentFrame], 0, (size_t) sizeof(SPHSettings));
     m_core->unmapBuffer(settingsBuffer[currentFrame]);
 
-    vk::CommandBufferBeginInfo beginInfo;
-    try{
-        commandBuffers[currentFrame].begin(beginInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+}
 
-    //* Copy data from last frame B to current frame A 
-    {
-        // Todo: try with mutiple descriptor sets
-        vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
-        commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
-    }
-    //* Wait for copy action
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-    //* compute boundary densities
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch(boundaryParticles.size(), 1, 1);
-    }
-    //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-    //* init pass
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, initPass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, initPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-    }
-    //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+void GranularMatter::update(int currentFrame, int imageIndex){
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+    startTime = std::chrono::high_resolution_clock::now();
+    std::cout << dt << std::endl;
+    // float accumulator = dt;
+    // float stepSize = 1.f/120.f;
     
-    //? maybe add dynamic loop here
-    //* Do 3 iterations
-    for (size_t i = 0; i < 1; i++)
-    {
-        //* predict position
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictPositionPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictPositionPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+    updateSettings(dt, currentFrame);
+
+    // while( accumulator >= dt ){
+
+        vk::CommandBufferBeginInfo beginInfo;
+        try{
+            commandBuffers[currentFrame].begin(beginInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
         }
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-        //* predict density
+
+        //* Copy data from last frame B to current frame A 
         {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-        }
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-        //* predict force
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-        }
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, nullptr);      
-        //* Copy data from A to B 
-        {
+            // Todo: try with mutiple descriptor sets
             vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
-            commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
+            commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
         }
         //* Wait for copy action
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-    }
-    //* apply force
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, applyPass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, applyPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-    }
-    //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);   
-    
-    //* submit calls
-    try{
-        commandBuffers[currentFrame].end();
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+        //* compute boundary densities
+        // {
+        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].dispatch((uint32_t)boundaryParticles.size(), 1, 1);
+        // }
+        // //* wait for compute pass
+        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+        //* init pass
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, initPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, initPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+        }
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+        
+        //? maybe add dynamic loop here
+        //* Do 3 iterations
+        for (size_t i = 0; i < 1; i++)
+        {
+            //* predict position
+            {
+                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictPositionPass.m_pipeline);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictPositionPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+            }
+            //* wait for compute pass
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+            //* predict density
+            {
+                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+            }
+            //* wait for compute pass
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+            //* predict force
+            {
+                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+            }
+            //* wait for compute pass
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, nullptr);      
+            //* Copy data from A to B 
+            {
+                vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
+                commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
+            }
+            //* Wait for copy action
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+        }
+        //* apply force
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, applyPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, applyPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+        }
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);   
+
+        //* submit calls
+        try{
+            commandBuffers[currentFrame].end();
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+
+    //     accumulator -= stepSize;
+    // }
 }
 
 void GranularMatter::createDescriptorSetLayout() {

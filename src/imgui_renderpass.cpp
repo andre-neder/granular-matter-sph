@@ -1,6 +1,8 @@
 #include "imgui_renderpass.h"
 #include "global.h"
 bool simulationRunning = false;
+float rhoRest = 165.f;
+float stiffness = 5.f;
 bool show_demo_window = true;
 bool showGPUInfo = true;
 bool showSimulationSettings = true;
@@ -100,6 +102,8 @@ using namespace gpu;
 
         ImGui::Begin("Simulation", &showSimulationSettings);
         ImGui::Checkbox("Simulation running", &simulationRunning);
+        // ImGui::DragFloat("Rest Density", &rhoRest);
+        // ImGui::DragFloat("Stiffness", &stiffness);
         ImGui::End();
 
         ImGui::ShowDemoWindow(&show_demo_window);

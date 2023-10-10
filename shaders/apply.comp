@@ -31,35 +31,19 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 } boundary;
 
 layout(set = 0, binding = 2) uniform SPHSettings{
-  vec2 G;                 // external (gravitational) forces
-  float PI;
-  float rhoRest;  // rest density
-  // 4
-  float GAS_CONST; // const for equation of state
-  float kernelRadius;		   // kernel radius
-  float volume;		   // radius^2 for optimization
-  float MASS;		   // assume all particles have the same mass
-  // 8
-  float VISC;	   // viscosity constant //! unused
-  float dt;	   // integration timestep
+  vec2 G;       
+  float rhoRest;
+  float kernelRadius;		   
 
-  // smoothing kernels defined in Müller and their gradients
-  // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
-  float POLY6; //! unused
-  float SPIKY_GRAD; //! unused
-  // 12
-  float VISC_LAP; //! unused
-
-  // simulation parameters
-  float BOUNDARY_EPSILON; // boundary epsilon
-  float BOUNDARY_DAMPING;
+  float mass;		 
+  float stiffness;
+  float dt;	  
   float DOMAIN_WIDTH;
-  // 16
-  float DOMAIN_HEIGHT;
 
+  float DOMAIN_HEIGHT;
   float pad0, pad1, pad2;
-  // 20
-} sphSettings;
+
+} settings;
 
 uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
 
@@ -69,28 +53,28 @@ Particle readCurrentParticle(){
 void writeCurrentParticle(in Particle p){
     outStorage.particles[particleID] = p;
 }
-float dampening = 0.7f;
+float dampening = 0.95f;
 void main(){
     Particle p = readCurrentParticle();
     //* Apply internal pressureAcceleration  
     
-    p.velocity += p.pressureAcceleration * sphSettings.dt;
-    p.position += p.velocity * sphSettings.dt;
+    p.velocity += p.pressureAcceleration * settings.dt;
+    p.position += p.velocity * settings.dt;
 
     if(p.position.x <= 0.f){
         p.position.x = 0.f;
         p.velocity.x *= -1.f * dampening;
     }
-    if(p.position.x >= sphSettings.DOMAIN_HEIGHT){
-        p.position.x = sphSettings.DOMAIN_HEIGHT;
+    if(p.position.x >= settings.DOMAIN_HEIGHT){
+        p.position.x = settings.DOMAIN_HEIGHT;
         p.velocity.x *= -1.f * dampening;
     }
      if(p.position.y <= 0.f){
         p.position.y = 0.f;
         p.velocity.y *= -1.f * dampening;
     }
-    if(p.position.y >= sphSettings.DOMAIN_WIDTH){
-        p.position.y = sphSettings.DOMAIN_WIDTH;
+    if(p.position.y >= settings.DOMAIN_WIDTH){
+        p.position.y = settings.DOMAIN_WIDTH;
         p.velocity.y *= -1.f * dampening;
     }
     writeCurrentParticle(p);

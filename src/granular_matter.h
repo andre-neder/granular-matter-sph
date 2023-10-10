@@ -39,37 +39,25 @@ struct Particle{
       return attributeDescriptions;
   }
 };
-
-
-struct SPHSettings{
-  glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
-  float PI = (float)M_PI;
-  //? 1.5 - 2.2 kg / dm^3 (1950kg/m^3)
-  float rhoRest = 165.f; //* kg / m^3 -> 2D kg / m^2
-  //? 0.063 bis 2 mm // 1dm = 10cm = 100mm
-  float particleRadius = 0.001f; //* m
-  float kernelRadius = particleRadius * 4.f; // *m		  
-  float volume = (float) M_PI * (particleRadius * particleRadius);		
   //? sphere Volume in dm^3 * density
   //   float MASS = (4.f / 3.f * (float) M_PI * (particleRadius * particleRadius * particleRadius)) * rhoRest; 
   //? sphere Volume in 2D 
-  float MASS = volume * rhoRest; //* kg
-  float VISC = 1.f;	  
-  float dt = 0.000f;	  
+  // float mass = volume * rhoRest; //* kg
+#define particleRadius 0.001f //* m   //? 0.063 bis 2 mm // 1dm = 10cm = 100mm
+#define volume (float) M_PI * (particleRadius * particleRadius)
 
-  // smoothing kernels defined in Müller and their gradients
-  // adapted to 2D per "SPH Based Shallow Water Simulation" by Solenthaler et al.
-  float POLY6 = 4.f / ((float)M_PI * pow(kernelRadius, 8.f));
-  float SPIKY_GRAD = -10.f / ((float)M_PI * pow(kernelRadius, 5.f));
-  float VISC_LAP = 40.f / ((float)M_PI * pow(kernelRadius, 5.f));
+struct SPHSettings{
+    glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
+    float rhoRest = 1.5f; //* kg / m^3 -> 2D kg / m^2  //? 1.5 - 2.2 kg / dm^3 (1950kg/m^3)
+    float kernelRadius = 0.3f; // *m	
 
-  // simulation parameters
-  float BOUNDARY_EPSILON = 0.f; // boundary epsilon
-  float BOUNDARY_DAMPING = 0.f;
-  float DOMAIN_WIDTH = 1.f; //* m
-  float DOMAIN_HEIGHT = 1.f; //* m
+    float mass = 1.f;
+    float stiffness = 25.f;	  
+    float dt = 0.000f;	  
+    float DOMAIN_WIDTH = 9.f; //* m
 
-  float pad0, pad1, pad2;
+    float DOMAIN_HEIGHT = 9.f; //* m
+    float pad0, pad1, pad2;
 };
 
 class GranularMatter
@@ -81,7 +69,7 @@ private:
     
     std::vector<vk::Buffer> particlesBufferA;
     std::vector<vk::Buffer> settingsBuffer;
-    glm::ivec3 computeSpace = glm::ivec3(64, 64, 1);
+    glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
 
     vk::DescriptorSetLayout descriptorSetLayout;
     std::vector<vk::DescriptorSet> descriptorSets;
@@ -112,6 +100,7 @@ public:
 
     inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
     void initFrameResources();
+    void updateSettings(float dt, int currentFrame);
     void update(int currentFrame, int imageIndex);
     void destroyFrameResources();
     void destroy(); 

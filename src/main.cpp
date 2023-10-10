@@ -116,10 +116,10 @@ private:
 
         device.resetFences(computeInFlightFences[currentFrame]);
 
-        simulation.update(currentFrame, 0);
+        simulation.update((int)currentFrame, 0);
         
         std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
-            simulation.getCommandBuffer(currentFrame)
+            simulation.getCommandBuffer((int)currentFrame)
         }; 
 
         std::vector<vk::Semaphore> signalComputeSemaphores = {computeFinishedSemaphores[currentFrame]};
@@ -152,8 +152,8 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        imguiRenderPass.update(currentFrame, imageIndex);
-        basicRenderPass.update(currentFrame, imageIndex);
+        imguiRenderPass.update((int) currentFrame, imageIndex);
+        basicRenderPass.update((int) currentFrame, imageIndex);
 
 
         if ((VkFence) imagesInFlight[currentFrame] != VK_NULL_HANDLE){
@@ -173,8 +173,8 @@ private:
             renderFinishedSemaphores[currentFrame]
         };
         std::array<vk::CommandBuffer, 2> submitCommandBuffers = { 
-            basicRenderPass.getCommandBuffer(currentFrame), 
-            imguiRenderPass.getCommandBuffer(currentFrame)
+            basicRenderPass.getCommandBuffer((int) currentFrame), 
+            imguiRenderPass.getCommandBuffer((int) currentFrame)
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
 
