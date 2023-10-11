@@ -3,12 +3,9 @@
 
 #include <glm/gtc/type_ptr.hpp>
 bool simulationRunning = false;
-float rhoRest = 1.5f;
-float stiffness = 25.f;
-float kernelRadius = 0.3f;
-float mass = 1.f;
-glm::vec2 gravity = glm::vec2(0.f, -9.81f);
-bool show_demo_window = true;
+
+SPHSettings settings = SPHSettings();
+bool show_demo_window = false;
 bool showGPUInfo = true;
 bool showSimulationSettings = true;
 
@@ -107,11 +104,11 @@ using namespace gpu;
 
         ImGui::Begin("Simulation", &showSimulationSettings);
         ImGui::Checkbox("Simulation running", &simulationRunning);
-        ImGui::DragFloat("Rest Density", &rhoRest);
-        ImGui::DragFloat("Stiffness", &stiffness);
-        ImGui::DragFloat("Mass", &mass);
-        ImGui::DragFloat("Kernel Radius", &kernelRadius);
-        ImGui::DragFloat2("Gravity", glm::value_ptr(gravity));
+        ImGui::DragFloat("Rest Density", &settings.rhoRest);
+        ImGui::DragFloat("Stiffness", &settings.stiffness);
+        ImGui::DragFloat("Mass", &settings.mass);
+        ImGui::DragFloat("Kernel Radius", &settings.kernelRadius);
+        ImGui::DragFloat2("Gravity", glm::value_ptr(settings.G));
         ImGui::End();
 
         ImGui::ShowDemoWindow(&show_demo_window);

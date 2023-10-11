@@ -102,11 +102,7 @@ std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_res
 
 
 void GranularMatter::updateSettings(float dt, int currentFrame){
-    settings.rhoRest = rhoRest;
-    settings.stiffness = stiffness;
-    settings.mass = mass;
-    settings.kernelRadius = kernelRadius;
-    settings.G = gravity;
+
     if(simulationRunning){
         settings.dt = dt; 
     }                            
@@ -224,7 +220,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 void GranularMatter::createDescriptorSetLayout() {
     vk::DescriptorSetLayoutBinding particlesLayoutBindingIn(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
     vk::DescriptorSetLayoutBinding particlesLayoutBindingOut(1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
-    vk::DescriptorSetLayoutBinding settingsLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute | vk::ShaderStageFlagBits::eVertex, nullptr);
+    vk::DescriptorSetLayoutBinding settingsLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
     vk::DescriptorSetLayoutBinding boundaryLayoutBinding(3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
 
     std::array<vk::DescriptorSetLayoutBinding, 4> bindings = {

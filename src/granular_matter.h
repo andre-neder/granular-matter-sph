@@ -30,34 +30,14 @@ struct Particle{
       };
       return bindingDescriptions;
   }
-  static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
-      std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
+  static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
+      std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
           vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, position)),
-          // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Particle, color)),
+          vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(Particle, rho)),
           // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, texCoord))
       };
       return attributeDescriptions;
   }
-};
-  //? sphere Volume in dm^3 * density
-  //   float MASS = (4.f / 3.f * (float) M_PI * (particleRadius * particleRadius * particleRadius)) * rhoRest; 
-  //? sphere Volume in 2D 
-  // float mass = volume * rhoRest; //* kg
-#define particleRadius 0.001f //* m   //? 0.063 bis 2 mm // 1dm = 10cm = 100mm
-#define volume (float) M_PI * (particleRadius * particleRadius)
-
-struct SPHSettings{
-    glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
-    float rhoRest = 1.5f; //* kg / m^3 -> 2D kg / m^2  //? 1.5 - 2.2 kg / dm^3 (1950kg/m^3)
-    float kernelRadius = 0.3f; // *m	
-
-    float mass = 1.f;
-    float stiffness = 25.f;	  
-    float dt = 0.000f;	  
-    float DOMAIN_WIDTH = 9.f; //* m
-
-    float DOMAIN_HEIGHT = 9.f; //* m
-    float pad0, pad1, pad2;
 };
 
 class GranularMatter
@@ -81,8 +61,6 @@ private:
     gpu::ComputePass predictDensityPass;
     gpu::ComputePass predictForcePass;
     gpu::ComputePass applyPass;
-
-    SPHSettings settings;
 
     void createCommandBuffers();
     void createDescriptorSetLayout();

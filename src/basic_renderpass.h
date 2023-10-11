@@ -62,16 +62,17 @@ namespace gpu{
             uint32_t vertexCount;
             uint32_t vertexCount1;
             std::array<vk::VertexInputBindingDescription, 1> bindingDescription;
-            std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions;
+            std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions;
 
         private:
 
    
             vk::Buffer indexBuffer;
             std::vector<vk::Buffer> uniformBuffers;
-            vk::Image textureImage;
-            vk::ImageView textureImageView;
-            vk::Sampler textureSampler;
+            std::vector<vk::Buffer> uniformBuffersSettings;
+            // vk::Image textureImage;
+            // vk::ImageView textureImageView;
+            // vk::Sampler textureSampler;
             vk::DescriptorPool descriptorPool;
             std::vector<vk::DescriptorSet> descriptorSets;
             vk::PipelineLayout pipelineLayout;
