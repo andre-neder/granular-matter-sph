@@ -14,8 +14,8 @@ struct Particle{
   float rho;
   float p;
   float V;
-  float pad0; 
-  float pad1; 
+  float psi_p0; 
+  float stress; 
   float pad2; 
 };
 

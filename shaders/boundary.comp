@@ -15,7 +15,7 @@ struct BoundaryParticle{
   float p;
   float V;
   float psi_p0; 
-  float pad1; 
+  float stress; 
   float pad2; 
 };
 
@@ -94,8 +94,8 @@ void main(){
         }
     }
 
-    delta_b = 1.f / delta_b;
-    p_b.psi_p0 = settings.rhoRest / delta_b;
+    p_b.V = 1.f / delta_b;
+    p_b.psi_p0 = settings.rhoRest / p_b.V;
 
     writeCurrentParticle(p_b);
 }

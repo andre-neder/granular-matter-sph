@@ -15,6 +15,20 @@ struct Particle{
   float p;
   float V;
   float psi_p0; 
+  float stress; 
+  float pad2; 
+};
+
+struct BoundaryParticle{
+  vec2 position;
+  vec2 normal;
+  vec2 velocity;
+  vec2 predVelocity;
+  vec2 force;
+  float rho;
+  float p;
+  float V;
+  float psi_p0; 
   float pad1; 
   float pad2; 
 };
@@ -28,7 +42,7 @@ layout(set = 0, binding = 1) buffer StorageOutput{
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    Particle particles[];
+    BoundaryParticle particles[];
 } boundary;
 
 layout(set = 0, binding = 2) uniform SPHSettings{
@@ -76,11 +90,78 @@ float W(float rij, float h){
     return (h - rij) * (h - rij) / volume;
 }
 
+//* https://github.com/glslify/glsl-frobenius/blob/master/index.glsl
+float frobenius(mat2 m) {
+  return sqrt(dot(m[0],m[0]) + dot(m[1],m[1]));
+}
+
+float frobenius(mat3 m) {
+  return sqrt(dot(m[0],m[0]) + dot(m[1],m[1]) + dot(m[2],m[2]));
+}
+
+float rand(){
+    return fract(sin(dot(vec2(settings.dt * 25165843.f, settings.dt * 786433), vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+vec2 gradW(vec2 rij, float h){
+    // vec2 res = vec2(0.f);
+    // float rl = length(rij);
+    // float q = rl / h;
+    // float h3 = h * h * h;
+    // float l = 48.f / (PI * h3);
+    // if(rl > EPSILON && q <= 1.f){
+    //     vec2 gradq = rij / rl;
+    //     gradq /= h;
+    //     if(q < 0.5f){
+    //         res = l * (q * (3.f * q - 2.f) * gradq);
+    //     }
+    //     else{
+    //         float factor = 1.f - q;
+    //         res = l * (-factor * factor) * gradq;
+    //     }
+    // }
+    // return res;
+    float r = length(rij);
+    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
+    float scale = -12.f / (PI * pow(h, 4.f));
+    float slope = scale * (r - h);
+    return dir * slope;
+}
+
+vec2 gradW(float r, vec2 rij, float h){
+    // vec2 res = vec2(0.f);
+    // float rl = length(rij);
+    // float q = rl / h;
+    // float h3 = h * h * h;
+    // float l = 48.f / (PI * h3);
+    // if(rl > EPSILON && q <= 1.f){
+    //     vec2 gradq = rij / rl;
+    //     gradq /= h;
+    //     if(q < 0.5f){
+    //         res = l * (q * (3.f * q - 2.f) * gradq);
+    //     }
+    //     else{
+    //         float factor = 1.f - q;
+    //         res = l * (-factor * factor) * gradq;
+    //     }
+    // }
+    // return res;
+    // float r = length(rij);
+    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
+    float scale = -12.f / (PI * pow(h, 4.f));
+    float slope = scale * (r - h);
+    return dir * slope;
+}
 
 void main(){
     Particle p = readCurrentParticle();
-
+    //* Density
     p.rho = 0.f;
+
+    //* Strain & Stress 
+    mat2 velocityGradient = mat2(0.0);
+    mat2 D = mat2(0);
+
     //* For all fluid particles
     for (int i = 0; i< inStorage.particles.length();i++)
     {
@@ -90,25 +171,38 @@ void main(){
        
         if (r < settings.kernelRadius)
         {
+            //* Density
             p.rho += W(r, settings.kernelRadius);
+
+            //* Strain & Stress 
+            vec2 gradient = gradW(p_pi, settings.kernelRadius);
+            float V_i = settings.mass / pi.rho;
+            velocityGradient += V_i * outerProduct(gradient, pi.velocity);
+            D += 1.f / pi.rho * outerProduct(gradient, gradient);
         }
     }
     p.rho *= settings.mass;
-    
+  
     //* For all boundary particles
     for (int i = 0; i < boundary.particles.length();i++)
     {
-        Particle pi = boundary.particles[i];
-        vec2 p_pi = p.predPosition - pi.predPosition;
-        float r = length(p_pi);
+        BoundaryParticle pb = boundary.particles[i];
+        vec2 p_pb = p.predPosition - pb.position;
+        float r = length(p_pb);
        
         if (r < settings.kernelRadius)
         {
+            //* Density
             p.rho += p.psi_p0 * W(r, settings.kernelRadius);
+
+             //* Strain & Stress 
+            vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
+            velocityGradient += pb.V * outerProduct(gradient, pb.velocity);
+            D += 1.f / pb.rho * outerProduct(gradient, gradient);
         }
     }
     
-    //? tait's equation
+    //* tait's equation
     // p.rho = max(p.rho, settings.rhoRest); 
     // float exponent = 7.f;
     // float B = settings.stiffness;// (settings.rhoRest * c * c) / exponent;
@@ -117,7 +211,21 @@ void main(){
     // p.p = stiffness * (p.rho / settings.rhoRest - 1.f);
     //* Ideal gas equation
     p.p = settings.stiffness * (p.rho - settings.rhoRest); 
+    
+    //? required?
     // p.p = max(p.p, 0.f);
+
+         
+    //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
+    //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
+    float theta = 0.261799; //* angle of repose (15°)
+    float alpha  = sqrt((2.f / 3.f) * sin(theta)); //* frictional coefficient
+    D *= (2.f * settings.mass * settings.mass * settings.dt) / (p.rho * p.rho);
+    mat2 strainTensor = 0.5f * (velocityGradient + transpose(velocityGradient));
+    mat2 stressTensor = inverse(D) * strainTensor;
+    stressTensor -= 0.5f * (stressTensor[0][0] + stressTensor[1][1]);
+
+    p.stress = min(frobenius(stressTensor), sqrt(3) * alpha * p.p);
 
     writeCurrentParticle(p);
 }
