@@ -11,7 +11,7 @@ layout(binding = 0) uniform UniformBufferObject {
 
 layout(binding = 1) uniform SPHSettings {
     vec2 G;       
-    float rhoRest;
+    float rho0;
     float kernelRadius;		   
 
     float mass;		 
@@ -36,6 +36,6 @@ void main() {
     gl_PointSize = 1;
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4((inPosition.x / settings.DOMAIN_WIDTH) * 2.0 - 1.0, (inPosition.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
     // gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
-    fragColor = vec3(0.f, rho / settings.rhoRest, 1.f);
+    fragColor = vec3(0.f, rho / settings.rho0, 1.f);
     // fragTexCoord = inTexCoord;
 }

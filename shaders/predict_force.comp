@@ -14,7 +14,7 @@ struct Particle{
   float rho;
   float p;
   float V;
-  float psi_p0; 
+  float psi_rho0; 
   float stress; 
   float pad2; 
 };
@@ -28,7 +28,7 @@ struct BoundaryParticle{
   float rho;
   float p;
   float V;
-  float psi_p0; 
+  float psi_rho0; 
   float pad1; 
   float pad2; 
 };
@@ -47,7 +47,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 
 layout(set = 0, binding = 2) uniform Settings{
   vec2 G;       
-  float rhoRest;
+  float rho0;
   float kernelRadius;		   
 
   float mass;		 
@@ -149,6 +149,11 @@ void main(){
     //* Init pressure pressureAcceleration
     vec2 pressureAcceleration = vec2(0.f);
     vec2 frictionalAcceleration = vec2(0.f);
+    vec2 viscosityAcceleration = vec2(0.f);
+
+    float alpha = 0.25; //* viscousity constant (0.08 - 0.5)
+    float c = sqrt(2.f * length(settings.G) * settings.DOMAIN_HEIGHT); //* maximum velocity
+
     float pRhoSq = p.rho * p.rho;
 
     //* Sum up pressure forces and strain
@@ -168,8 +173,13 @@ void main(){
             //* Pressure calculation
             float piRhoSq = pi.rho * pi.rho;
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
-            pressureAcceleration += (p.p / pRhoSq + pi.p / piRhoSq) * gradient;
+            pressureAcceleration += settings.mass * (p.p / pRhoSq + pi.p / piRhoSq) * gradient;
             frictionalAcceleration += (p.stress / pRhoSq + pi.stress / piRhoSq) * gradient;
+
+            float v = (2 * alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
+            //? https://cg.informatik.uni-freiburg.de/publications/2007_SCA_SPH.pdf
+            float omicron = -v * (dot((p.velocity - pi.velocity), p_pi) / r * r + 0.01f * settings.kernelRadius * settings.kernelRadius);
+            viscosityAcceleration += settings.mass * omicron * gradient;
             
         }
     }
@@ -187,14 +197,17 @@ void main(){
             //* https://cg.informatik.uni-freiburg.de/publications/2012_VRIPHYS_hiResGranularSPH.pdf
             //* using normal instead of direction to boundary
             vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
-            pressureAcceleration += pb.psi_p0 * (p.p / pRhoSq) * gradient; 
-            frictionalAcceleration += pb.psi_p0 * (p.stress / pRhoSq) * gradient; 
+            pressureAcceleration += pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
+            frictionalAcceleration += pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
+            
+            float v = (2 * alpha * settings.kernelRadius * c) / (p.rho + pb.rho); //* viscousity constant
+            //? https://cg.informatik.uni-freiburg.de/publications/2007_SCA_SPH.pdf
+            float omicron = -v * (dot((p.velocity - pb.velocity), p_pb) / r * r + 0.01f * settings.kernelRadius * settings.kernelRadius);
+            viscosityAcceleration += pb.psi_rho0 * omicron * gradient;
         }
     }
-
-    // pressureAcceleration *= settings.mass; //! muss might be required later when having multiple materials
    
-    p.pressureAcceleration = pressureAcceleration + frictionalAcceleration;
+    p.pressureAcceleration = pressureAcceleration + frictionalAcceleration + viscosityAcceleration;
 
     writeCurrentParticle(p);
 }

@@ -104,7 +104,7 @@ using namespace gpu;
 
         ImGui::Begin("Simulation", &showSimulationSettings);
         ImGui::Checkbox("Simulation running", &simulationRunning);
-        ImGui::DragFloat("Rest Density", &settings.rhoRest, 1.f, 0.1f, 2000.f);
+        ImGui::DragFloat("Rest Density", &settings.rho0, 1.f, 0.1f, 2000.f);
         ImGui::DragFloat("Stiffness", &settings.stiffness, 1.f, 0.1f, 1000.f);
         ImGui::DragFloat("Mass", &settings.mass, 1.f, 0.1f, 100.f);
         ImGui::DragFloat("Kernel Radius", &settings.kernelRadius, 1.f, 0.1f, 100.f);

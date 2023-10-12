@@ -14,7 +14,7 @@ struct Particle{
   float rho;
   float p;
   float V;
-  float psi_p0; 
+  float psi_rho0; 
   float stress; 
   float pad2; 
 };
@@ -28,7 +28,7 @@ struct BoundaryParticle{
   float rho;
   float p;
   float V;
-  float psi_p0; 
+  float psi_rho0; 
   float pad1; 
   float pad2; 
 };
@@ -47,7 +47,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 
 layout(set = 0, binding = 2) uniform SPHSettings{
   vec2 G;       
-  float rhoRest;
+  float rho0;
   float kernelRadius;		   
 
   float mass;		 
@@ -193,7 +193,7 @@ void main(){
         if (r < settings.kernelRadius)
         {
             //* Density
-            p.rho += p.psi_p0 * W(r, settings.kernelRadius);
+            p.rho += p.psi_rho0 * W(r, settings.kernelRadius);
 
              //* Strain & Stress 
             vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
@@ -203,14 +203,14 @@ void main(){
     }
     
     //* tait's equation
-    // p.rho = max(p.rho, settings.rhoRest); 
+    // p.rho = max(p.rho, settings.rho0); 
     // float exponent = 7.f;
-    // float B = settings.stiffness;// (settings.rhoRest * c * c) / exponent;
-    // p.p = B * (pow(p.rho / settings.rhoRest, exponent) - 1.f); 
+    // float B = settings.stiffness;// (settings.rho0 * c * c) / exponent;
+    // p.p = B * (pow(p.rho / settings.rho0, exponent) - 1.f); 
     // float stiffness = 10.f;
-    // p.p = stiffness * (p.rho / settings.rhoRest - 1.f);
+    // p.p = stiffness * (p.rho / settings.rho0 - 1.f);
     //* Ideal gas equation
-    p.p = settings.stiffness * (p.rho - settings.rhoRest); 
+    p.p = settings.stiffness * (p.rho - settings.rho0); 
     
     //? required?
     // p.p = max(p.p, 0.f);

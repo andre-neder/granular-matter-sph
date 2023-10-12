@@ -17,7 +17,7 @@ struct Particle{
   float p = 0.0;
   // 12
   float V = 0.0;
-  float psi_p0 = 0.0;
+  float psi_rho0 = 0.0;
   float pad1 = 0.0;
   float pad2 = 0.0;
   // 16
