@@ -81,7 +81,7 @@ void main(){
     Particle p = readCurrentParticle();
 
     p.rho = 0.f;
-    //* Loop over neighboring particles
+    //* For all fluid particles
     for (int i = 0; i< inStorage.particles.length();i++)
     {
         Particle pi = inStorage.particles[i];
@@ -95,41 +95,26 @@ void main(){
     }
     p.rho *= settings.mass;
     
-    // float sumW_b = 0.f;
-    // float boundaryDensity = 0.f;
-    //* Loop over all boundary particles
-    // for (int i = 0; i< boundary.particles.length();i++)
-    // {
-    //     Particle pb = boundary.particles[i];
-    //     vec2 p_pb = p.predPosition - pb.position;
-    //     float r = length(p_pb);
-    //     if (r < sphSettings.kernelRadius)
-    //     {
-    //         // boundaryDensity += (sphSettings.rhoRest * pb.V) * W(r, sphSettings.kernelRadius);
-    //         sumW_b += W(r, sphSettings.kernelRadius);
-    //         // boundaryDensity += sphSettings.MASS * W(r, sphSettings.kernelRadius);
-    //     }
-    // }
-    // float V_b = 1.f / sumW_b;
-    // float psi_b = V_b * sphSettings.rhoRest;
-    // boundaryDensity = psi_b * sumW_b;
-    // p.psi_b = psi_b;
-
-    // p.rho = neighborDensity;// + boundaryDensity;
-    // p.rho *= sphSettings.rhoRest;
+    //* For all boundary particles
+    for (int i = 0; i < boundary.particles.length();i++)
+    {
+        Particle pi = boundary.particles[i];
+        vec2 p_pi = p.predPosition - pi.predPosition;
+        float r = length(p_pi);
+       
+        if (r < settings.kernelRadius)
+        {
+            p.rho += p.psi_b * W(r, settings.kernelRadius);
+        }
+    }
     
-    // p.rho = max(p.rho, sphSettings.rhoRest); 
-
-    //* Calculate pressure
-    // float deltaRho = p.rho - sphSettings.rhoRest;
-    // float nu = 0.01f;
-    // float c = 4.42f;
-    // float exponent = 7.f;
     //? tait's equation
-    // float B = 50.f;// (sphSettings.rhoRest * c * c) / exponent;
-    // p.p = B * (pow(p.rho / sphSettings.rhoRest, exponent) - 1.f); 
+    // p.rho = max(p.rho, settings.rhoRest); 
+    // float exponent = 7.f;
+    // float B = settings.stiffness;// (settings.rhoRest * c * c) / exponent;
+    // p.p = B * (pow(p.rho / settings.rhoRest, exponent) - 1.f); 
     // float stiffness = 10.f;
-    // p.p = stiffness * (p.rho / sphSettings.rhoRest - 1.f);
+    // p.p = stiffness * (p.rho / settings.rhoRest - 1.f);
     //* Ideal gas equation
     p.p = settings.stiffness * (p.rho - settings.rhoRest); 
     // p.p = max(p.p, 0.f);

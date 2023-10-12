@@ -61,21 +61,21 @@ void main(){
     p.velocity += p.pressureAcceleration * settings.dt;
     p.position += p.velocity * settings.dt;
 
-    if(p.position.x <= 0.f){
-        p.position.x = 0.f;
-        p.velocity.x *= -1.f * dampening;
-    }
-    if(p.position.x >= settings.DOMAIN_HEIGHT){
-        p.position.x = settings.DOMAIN_HEIGHT;
-        p.velocity.x *= -1.f * dampening;
-    }
-     if(p.position.y <= 0.f){
-        p.position.y = 0.f;
-        p.velocity.y *= -1.f * dampening;
-    }
-    if(p.position.y >= settings.DOMAIN_WIDTH){
-        p.position.y = settings.DOMAIN_WIDTH;
-        p.velocity.y *= -1.f * dampening;
-    }
+    // if(p.position.x <= 0.f){
+    //     p.position.x = 0.f;
+    //     p.velocity.x *= -1.f * dampening;
+    // }
+    // if(p.position.x >= settings.DOMAIN_HEIGHT){
+    //     p.position.x = settings.DOMAIN_HEIGHT;
+    //     p.velocity.x *= -1.f * dampening;
+    // }
+    //  if(p.position.y <= 0.f){
+    //     p.position.y = 0.f;
+    //     p.velocity.y *= -1.f * dampening;
+    // }
+    // if(p.position.y >= settings.DOMAIN_WIDTH){
+    //     p.position.y = settings.DOMAIN_WIDTH;
+    //     p.velocity.y *= -1.f * dampening;
+    // }
     writeCurrentParticle(p);
 }

@@ -31,7 +31,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
     Particle particles[];
 } boundary;
 
-layout(set = 0, binding = 2) uniform SPHSettings{
+layout(set = 0, binding = 2) uniform Settings{
   vec2 G;       
   float rhoRest;
   float kernelRadius;		   
@@ -110,9 +110,7 @@ void main(){
     //* Init pressure pressureAcceleration
     p.pressureAcceleration = vec2(0.f);
     float pRhoSq = p.rho * p.rho;
-    // float rhoRestSq = sphSettings.rhoRest * sphSettings.rhoRest;
-
-    // vec2 sumGradNeighbor = vec2(0.f);
+    
     //* Sum up pressure forces and strain
     for (int i = 0; i < inStorage.particles.length();i++)
     {
@@ -128,37 +126,25 @@ void main(){
         if (r < settings.kernelRadius)
         {
             float piRhoSq = pi.rho * pi.rho;
-            // (p.p / pRhoSq + pi.p / piRhoSq)
-            p.pressureAcceleration += ((p.p + pi.p) / 2.f) * gradW(p_pi, settings.kernelRadius) * settings.mass / pi.rho;
-            // p.pressureAcceleration -= sphSettings.MASS * (p.p / pRhoSq + pi.p / piRhoSq) * gradW(p_pi, sphSettings.kernelRadius);
+            p.pressureAcceleration += (p.p / pRhoSq + pi.p / piRhoSq) * gradW(p_pi, settings.kernelRadius);
         }
     }
-    // pressureAcceleration *= -sphSettings.MASS;
-    p.pressureAcceleration /= p.rho;
-    // vec2 sumGradBoundary = vec2(0.f);
-    // vec2 boundarypressureAcceleration = vec2(0.f);
-    //* For all boundary particles
-    // for (int i = 0; i < boundary.particles.length();i++)
-    // {
-    //     Particle pb = boundary.particles[i];
-       
-    //     vec2 p_pb = p.predPosition - pb.position;
-    //     float r = length(p_pb);
-        
-    //     if (r < sphSettings.kernelRadius)
-    //     {
-    //         vec2 gradient = gradW(p_pb, sphSettings.kernelRadius);
-    //         // sumGradBoundary += gradient;
-    //         // boundarypressureAcceleration += (p.p / pRhoSq + p.p / (sphSettings.rhoRest * sphSettings.rhoRest)) * gradient;
-    //         // boundarypressureAcceleration += (sphSettings.rhoRest / pb.V) * (p.p / pRhoSq + p.p / rhoRestSq) * gradient;
-    //         boundarypressureAcceleration += p.psi_b * (p.p / pRhoSq) * gradient;
-    //         // boundarypressureAcceleration += gradient;
-    //     }
-    // }
-    // boundarypressureAcceleration *= -sphSettings.MASS;
-    // boundarypressureAcceleration *= -p.p * (2.f * sphSettings.MASS / pRhoSq);
 
-    // vec2 gamma2 = vec2(1.f);// -((sumGradNeighbor * sumGradBoundary) / (sumGradBoundary * sumGradBoundary));
+    //* For all boundary particles
+    for (int i = 0; i < boundary.particles.length();i++)
+    {
+        Particle pb = boundary.particles[i];
+       
+        vec2 p_pb = p.predPosition - pb.position;
+        float r = length(p_pb);
+        
+        if (r < settings.kernelRadius)
+        {
+            //* https://cg.informatik.uni-freiburg.de/publications/2012_VRIPHYS_hiResGranularSPH.pdf
+            p.pressureAcceleration += pb.psi_b * (p.p / pRhoSq) * gradW(p_pb, settings.kernelRadius); 
+        }
+    }
+    p.pressureAcceleration *= settings.mass;
 
     writeCurrentParticle(p);
 }

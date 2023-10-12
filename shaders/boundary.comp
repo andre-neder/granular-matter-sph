@@ -14,7 +14,7 @@ struct Particle{
   float rho;
   float p;
   float V;
-  float pad0; 
+  float psi_b; 
   float pad1; 
   float pad2; 
 };
@@ -56,42 +56,46 @@ void writeCurrentParticle(in Particle p){
 }
 
 
+
 // https://github.com/InteractiveComputerGraphics/SPlisHSPlasH/blob/master/SPlisHSPlasH/SPHKernels.h
 float W(float rij, float h){
-    float res = 0.f;
-    float q = rij / h;
-    float h3 = h * h * h;
-    float k = 8.f / (PI * h3);
-    if(q <= 1.f){
-        if(q <= 0.5f){
-            float q2 = q * q;
-            float q3 = q2 * q;
-            res = k * 6.f * q3 - 6.f * q2 + 1.f;
-        }
-        else{
-            res = k * 2.f * pow(1.f - q, 3.f);
-        }
-    }
-    return res;
+    // float res = 0.f;
+    // float q = rij / h;
+    // float h3 = h * h * h;
+    // float k = 8.f / (PI * h3);
+    // if(q <= 1.f){
+    //     if(q <= 0.5f){
+    //         float q2 = q * q;
+    //         float q3 = q2 * q;
+    //         res = k * (6.f * q3 - 6.f * q2 + 1.f);
+    //     }
+    //     else{
+    //         res = k * (2.f * pow(1.f - q, 3.f));
+    //     }
+    // }
+    // return res;
+    float volume = PI * pow(h, 4.f) / 6.f;
+    return (h - rij) * (h - rij) / volume;
 }
 
 //* this shader calculates the density of a boundary particle b, summed up over all boundary particle neighbors
 void main(){
-    // Particle p_b = readCurrentParticle();
-    // float V = 0.f;
-    // for (int i = 0; i< boundary.particles.length();i++)
-    // {
-    //     Particle pi = boundary.particles[i];
-    //     vec2 p_pi = p_b.position - pi.position;
-    //     float r = length(p_pi);
+    Particle p_b = readCurrentParticle();
+    float delta_b = 0.f;
+    for (int i = 0; i< boundary.particles.length();i++)
+    {
+        Particle pi = boundary.particles[i];
+        vec2 p_pi = p_b.position - pi.position;
+        float r = length(p_pi);
 
-    //     if (r < sphSettings.kernelRadius)
-    //     {
-    //         V += W(r, sphSettings.kernelRadius);
-    //     }
-    // }
+        if (r < settings.kernelRadius)
+        {
+            delta_b += W(r, settings.kernelRadius);
+        }
+    }
 
-    // p_b.V = 1.f / V;
+    delta_b = 1.f / delta_b;
+    p_b.psi_b = settings.rhoRest / delta_b;
 
-    // writeCurrentParticle(p_b);
+    writeCurrentParticle(p_b);
 }
