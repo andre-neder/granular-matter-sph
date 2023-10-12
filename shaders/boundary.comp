@@ -5,30 +5,30 @@
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-struct Particle{
+struct BoundaryParticle{
   vec2 position;
-  vec2 predPosition;
+  vec2 normal;
   vec2 velocity;
   vec2 predVelocity;
   vec2 force;
   float rho;
   float p;
   float V;
-  float psi_b; 
+  float psi_p0; 
   float pad1; 
   float pad2; 
 };
 
 layout(set = 0, binding = 0) buffer StorageInput{
-    Particle particles[];
+    BoundaryParticle particles[];
 } inStorage;
 
 layout(set = 0, binding = 1) buffer StorageOutput{
-    Particle particles[];
+    BoundaryParticle particles[];
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    Particle particles[];
+    BoundaryParticle particles[];
 } boundary;
 
 layout(set = 0, binding = 2) uniform SPHSettings{
@@ -46,11 +46,11 @@ layout(set = 0, binding = 2) uniform SPHSettings{
 
 } settings;
 
-Particle readCurrentParticle(){
+BoundaryParticle readCurrentParticle(){
     uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
     return boundary.particles[particleID];
 }
-void writeCurrentParticle(in Particle p){
+void writeCurrentParticle(in BoundaryParticle p){
     uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
     boundary.particles[particleID] = p;
 }
@@ -78,13 +78,13 @@ float W(float rij, float h){
     return (h - rij) * (h - rij) / volume;
 }
 
-//* this shader calculates the density of a boundary particle b, summed up over all boundary particle neighbors
+//* this shader calculates the density of a boundary BoundaryParticle b, summed up over all boundary BoundaryParticle neighbors
 void main(){
-    Particle p_b = readCurrentParticle();
+    BoundaryParticle p_b = readCurrentParticle();
     float delta_b = 0.f;
     for (int i = 0; i< boundary.particles.length();i++)
     {
-        Particle pi = boundary.particles[i];
+        BoundaryParticle pi = boundary.particles[i];
         vec2 p_pi = p_b.position - pi.position;
         float r = length(p_pi);
 
@@ -95,7 +95,7 @@ void main(){
     }
 
     delta_b = 1.f / delta_b;
-    p_b.psi_b = settings.rhoRest / delta_b;
+    p_b.psi_p0 = settings.rhoRest / delta_b;
 
     writeCurrentParticle(p_b);
 }

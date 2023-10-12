@@ -17,7 +17,7 @@ struct Particle{
   float p = 0.0;
   // 12
   float V = 0.0;
-  float pad0 = 0.0;
+  float psi_p0 = 0.0;
   float pad1 = 0.0;
   float pad2 = 0.0;
   // 16
@@ -38,6 +38,13 @@ struct Particle{
       };
       return attributeDescriptions;
   }
+};
+
+struct BoundaryParticle : public Particle
+{
+    BoundaryParticle(float x, float y, float n_x, float n_y) : Particle(x, y){
+        predPosition = glm::vec2(n_x, n_y);
+    };
 };
 
 class GranularMatter

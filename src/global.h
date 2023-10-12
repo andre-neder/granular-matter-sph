@@ -21,9 +21,9 @@ struct SPHSettings{
     float mass = 1.f;
     float stiffness = 20.f;	  
     float dt = 0.000f;	  
-    float DOMAIN_WIDTH = 9.f; //* m
+    float DOMAIN_WIDTH = 20.f; //* m
 
-    float DOMAIN_HEIGHT = 9.f; //* m
+    float DOMAIN_HEIGHT = 20.f; //* m
     float pad0, pad1, pad2;
 };
 

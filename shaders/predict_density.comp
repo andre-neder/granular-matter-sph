@@ -14,7 +14,7 @@ struct Particle{
   float rho;
   float p;
   float V;
-  float psi_b; 
+  float psi_p0; 
   float pad1; 
   float pad2; 
 };
@@ -104,7 +104,7 @@ void main(){
        
         if (r < settings.kernelRadius)
         {
-            p.rho += p.psi_b * W(r, settings.kernelRadius);
+            p.rho += p.psi_p0 * W(r, settings.kernelRadius);
         }
     }
     

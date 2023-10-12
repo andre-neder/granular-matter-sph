@@ -14,7 +14,21 @@ struct Particle{
   float rho;
   float p;
   float V;
-  float psi_b; 
+  float psi_p0; 
+  float pad1; 
+  float pad2; 
+};
+
+struct BoundaryParticle{
+  vec2 position;
+  vec2 normal;
+  vec2 velocity;
+  vec2 predVelocity;
+  vec2 force;
+  float rho;
+  float p;
+  float V;
+  float psi_p0; 
   float pad1; 
   float pad2; 
 };
@@ -28,7 +42,7 @@ layout(set = 0, binding = 0) buffer StorageOutput{
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    Particle particles[];
+    BoundaryParticle particles[];
 } boundary;
 
 layout(set = 0, binding = 2) uniform Settings{
@@ -99,7 +113,32 @@ vec2 gradW(vec2 rij, float h){
     // }
     // return res;
     float r = length(rij);
-    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); //?
+    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
+    float scale = -12.f / (PI * pow(h, 4.f));
+    float slope = scale * (r - h);
+    return dir * slope;
+}
+
+vec2 gradW(float r, vec2 rij, float h){
+    // vec2 res = vec2(0.f);
+    // float rl = length(rij);
+    // float q = rl / h;
+    // float h3 = h * h * h;
+    // float l = 48.f / (PI * h3);
+    // if(rl > EPSILON && q <= 1.f){
+    //     vec2 gradq = rij / rl;
+    //     gradq /= h;
+    //     if(q < 0.5f){
+    //         res = l * (q * (3.f * q - 2.f) * gradq);
+    //     }
+    //     else{
+    //         float factor = 1.f - q;
+    //         res = l * (-factor * factor) * gradq;
+    //     }
+    // }
+    // return res;
+    // float r = length(rij);
+    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
     float scale = -12.f / (PI * pow(h, 4.f));
     float slope = scale * (r - h);
     return dir * slope;
@@ -110,7 +149,7 @@ void main(){
     //* Init pressure pressureAcceleration
     p.pressureAcceleration = vec2(0.f);
     float pRhoSq = p.rho * p.rho;
-    
+
     //* Sum up pressure forces and strain
     for (int i = 0; i < inStorage.particles.length();i++)
     {
@@ -133,7 +172,7 @@ void main(){
     //* For all boundary particles
     for (int i = 0; i < boundary.particles.length();i++)
     {
-        Particle pb = boundary.particles[i];
+        BoundaryParticle pb = boundary.particles[i];
        
         vec2 p_pb = p.predPosition - pb.position;
         float r = length(p_pb);
@@ -141,7 +180,8 @@ void main(){
         if (r < settings.kernelRadius)
         {
             //* https://cg.informatik.uni-freiburg.de/publications/2012_VRIPHYS_hiResGranularSPH.pdf
-            p.pressureAcceleration += pb.psi_b * (p.p / pRhoSq) * gradW(p_pb, settings.kernelRadius); 
+            //* using normal instead of direction to boundary
+            p.pressureAcceleration += pb.psi_p0 * (p.p / pRhoSq) * gradW(r, pb.normal, settings.kernelRadius); 
         }
     }
     p.pressureAcceleration *= settings.mass;

@@ -10,27 +10,19 @@ GranularMatter::GranularMatter(gpu::Core* core)
     
     particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
     std::generate(particles.begin(), particles.end(), [this]() {
-        return Particle(((static_cast<float>(std::rand()) / RAND_MAX)) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX)) * settings.DOMAIN_HEIGHT);
+        return Particle(((static_cast<float>(std::rand()) / RAND_MAX) / 2.f + 0.25f) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX  / 2.f + 0.25f)) * settings.DOMAIN_HEIGHT);
     });
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
     
     for(float i = 0.f;i < settings.DOMAIN_HEIGHT; i+=r0){
-        // boundaryParticles.push_back(Particle(-2.f * r0, i));
-        // boundaryParticles.push_back(Particle(-r0, i));
-        boundaryParticles.push_back(Particle(0.f, i));
-        boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH, i));
-        // boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH + r0, i));
-        // boundaryParticles.push_back(Particle(settings.DOMAIN_WIDTH + 2.f * r0, i));
+        boundaryParticles.push_back(BoundaryParticle(0.f, i, 1.f, 0.f));
+        boundaryParticles.push_back(BoundaryParticle(settings.DOMAIN_WIDTH, i, -1.f, 0.f));
     }
 
     for(float i = 0.f;i < settings.DOMAIN_WIDTH; i+=r0){
-        // boundaryParticles.push_back(Particle(i, -2.f * r0));
-        // boundaryParticles.push_back(Particle(i, -r0));
-        boundaryParticles.push_back(Particle(i, 0.f));
-        boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT));
-        // boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT + r0));
-        // boundaryParticles.push_back(Particle(i, settings.DOMAIN_HEIGHT + 2.f * r0));
+        boundaryParticles.push_back(BoundaryParticle(i, 0.f, 0.f, 1.f));
+        boundaryParticles.push_back(BoundaryParticle(i, settings.DOMAIN_HEIGHT, 0.f, -1.f));
     }
     
 
