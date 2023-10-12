@@ -181,6 +181,7 @@ void main(){
         {
             //* https://cg.informatik.uni-freiburg.de/publications/2012_VRIPHYS_hiResGranularSPH.pdf
             //* using normal instead of direction to boundary
+            //? check for front face
             p.pressureAcceleration += pb.psi_p0 * (p.p / pRhoSq) * gradW(r, pb.normal, settings.kernelRadius); 
         }
     }
