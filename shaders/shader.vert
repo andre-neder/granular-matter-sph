@@ -9,19 +9,25 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 proj;
 } ubo;
 
-layout(binding = 1) uniform SPHSettings {
-    vec2 G;       
-    float rho0;
-    float kernelRadius;		   
+layout(binding = 1) uniform Settings{
+  vec2 G;       
+  float rho0;
+  float kernelRadius;		   
 
-    float mass;		 
-    float stiffness;
-    float dt;	  
-    float DOMAIN_WIDTH;
+  float mass;		 
+  float stiffness;
+  float dt;	  
+  float DOMAIN_WIDTH;
 
-    float DOMAIN_HEIGHT;
-    float pad0, pad1, pad2;
+  float DOMAIN_HEIGHT;
+  float theta;
+  float sigma;
+  float beta;
 
+  float C;
+  float pad0;
+  float pad1;
+  float pad2;
 } settings;
 
 layout(location = 0) in vec3 inPosition;

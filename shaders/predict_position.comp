@@ -14,9 +14,9 @@ struct Particle{
   float rho;
   float p;
   float V;
-  float pad0; 
-  float pad1; 
-  float pad2; 
+  float psi_rho0; 
+  float stress; 
+  float cohesion; 
 };
 
 layout(set = 0, binding = 1) buffer StorageInput{
@@ -31,7 +31,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
     Particle particles[];
 } boundary;
 
-layout(set = 0, binding = 2) uniform SPHSettings{
+layout(set = 0, binding = 2) uniform Settings{
   vec2 G;       
   float rho0;
   float kernelRadius;		   
@@ -42,8 +42,14 @@ layout(set = 0, binding = 2) uniform SPHSettings{
   float DOMAIN_WIDTH;
 
   float DOMAIN_HEIGHT;
-  float pad0, pad1, pad2;
+  float theta;
+  float sigma;
+  float beta;
 
+  float C;
+  float pad0;
+  float pad1;
+  float pad2;
 } settings;
 
 uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;

@@ -1,6 +1,7 @@
 #include "imgui_renderpass.h"
 #include "global.h"
-
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <glm/gtc/type_ptr.hpp>
 bool simulationRunning = false;
 
@@ -108,6 +109,10 @@ using namespace gpu;
         ImGui::DragFloat("Stiffness", &settings.stiffness, 1.f, 0.1f, 1000.f);
         ImGui::DragFloat("Mass", &settings.mass, 1.f, 0.1f, 100.f);
         ImGui::DragFloat("Kernel Radius", &settings.kernelRadius, 1.f, 0.1f, 100.f);
+        ImGui::DragFloat("Angle of repose", &settings.theta, 1.f, 0.001f, (float)M_PI);
+        ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);
+        ImGui::DragFloat("Cohesion intensity", &settings.beta, 1.f, 0.01f, 10.f);
+        ImGui::DragFloat("Maximum Cohesion", &settings.C, 1.f, 0.01f, 10.f);
         ImGui::DragFloat2("Gravity", glm::value_ptr(settings.G));
         ImGui::End();
 

@@ -24,7 +24,14 @@ struct SPHSettings{
     float DOMAIN_WIDTH = 20.f; //* m
 
     float DOMAIN_HEIGHT = 20.f; //* m
-    float pad0, pad1, pad2;
+    float theta = 0.261799f; //* angle of repose
+    float sigma = 0.25f;     //* viscosity constant
+    float beta = 0.25f;      //* cohesion intensity
+
+    float C = 10.f;         //* maximum cohesion
+    float pad0 = 0.f;
+    float pad1 = 0.f;
+    float pad2 = 0.f;
 };
 
 
