@@ -152,7 +152,7 @@ void main(){
             //* using normal instead of direction to boundary
             vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
             pressureAcceleration += pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
-            vec2 a_f = pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
+            vec2 a_f = pb.psi_rho0 * (max(p.stress, p.cohesion) / pRhoSq) * gradient; 
             
             float v = (2 * settings.sigma * settings.kernelRadius * c) / (p.rho + pb.rho); //* viscousity constant
             //? https://cg.informatik.uni-freiburg.de/publications/2007_SCA_SPH.pdf
