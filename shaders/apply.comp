@@ -1,6 +1,8 @@
 #version 450
 #define VULKAN 100
 #define EPSILON 0.0000001f
+#define BUFFER_A 0
+#define BUFFER_B 1
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -18,11 +20,11 @@ struct Particle{
   float cohesion; 
 };
 
-layout(set = 0, binding = 0) buffer StorageInput{
+layout(set = 0, binding = BUFFER_A) buffer StorageInput{
     Particle particles[];
 } inStorage;
 
-layout(set = 0, binding = 1) buffer StorageOutput{
+layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
     Particle particles[];
 } outStorage;
 
@@ -46,7 +48,7 @@ layout(set = 0, binding = 2) uniform Settings{
   float beta;
 
   float C;
-  float pad0;
+  float alpha;
   float pad1;
   float pad2;
 } settings;

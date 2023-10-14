@@ -64,8 +64,8 @@ private:
  
     gpu::ComputePass boundaryUpdatePass;
     gpu::ComputePass initPass;
-    gpu::ComputePass predictPositionPass;
     gpu::ComputePass predictDensityPass;
+    gpu::ComputePass predictStressPass;
     gpu::ComputePass predictForcePass;
     gpu::ComputePass applyPass;
 

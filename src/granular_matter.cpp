@@ -43,8 +43,8 @@ GranularMatter::GranularMatter(gpu::Core* core)
     
     boundaryUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/boundary.comp", descriptorSetLayout);
     initPass = gpu::ComputePass(m_core, SHADER_PATH"/init.comp", descriptorSetLayout);
-    predictPositionPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_position.comp", descriptorSetLayout);
     predictDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_density.comp", descriptorSetLayout);
+    predictStressPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_stress.comp", descriptorSetLayout);
     predictForcePass = gpu::ComputePass(m_core, SHADER_PATH"/predict_force.comp", descriptorSetLayout);
     applyPass = gpu::ComputePass(m_core, SHADER_PATH"/apply.comp", descriptorSetLayout);
 }
@@ -71,7 +71,7 @@ void GranularMatter::destroy(){
 
     boundaryUpdatePass.destroy();
     initPass.destroy();
-    predictPositionPass.destroy();
+    predictStressPass.destroy();
     predictDensityPass.destroy();
     predictForcePass.destroy();
     applyPass.destroy();
@@ -157,18 +157,18 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         //* Do 3 iterations
         for (size_t i = 0; i < 1; i++)
         {
-            //* predict position
-            {
-                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictPositionPass.m_pipeline);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictPositionPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-            }
-            //* wait for compute pass
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
             //* predict density
             {
                 commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
                 commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+            }
+            //* wait for compute pass
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+            //* predict stress
+            {
+                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipeline);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
                 commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
             }
             //* wait for compute pass

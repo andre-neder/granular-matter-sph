@@ -2,6 +2,8 @@
 #define VULKAN 100
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
+#define BUFFER_A 0
+#define BUFFER_B 1
 
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -33,11 +35,11 @@ struct BoundaryParticle{
   float pad2; 
 };
 
-layout(set = 0, binding = 0) buffer StorageInput{
+layout(set = 0, binding = BUFFER_B) buffer StorageInput{
     Particle particles[];
 } inStorage;
 
-layout(set = 0, binding = 1) buffer StorageOutput{
+layout(set = 0, binding = BUFFER_A) buffer StorageOutput{
     Particle particles[];
 } outStorage;
 
@@ -61,7 +63,7 @@ layout(set = 0, binding = 2) uniform Settings{
   float beta;
 
   float C;
-  float pad0;
+  float alpha;
   float pad1;
   float pad2;
 } settings;
@@ -114,8 +116,8 @@ void main(){
     p.rho = 0.f;
 
     //* Strain & Stress 
-    mat2 velocityGradient = mat2(0.0);
-    mat2 D = mat2(0);
+    // mat2 velocityGradient = mat2(0.0);
+    // mat2 D = mat2(0);
 
     //* For all fluid particles
     for (int i = 0; i< inStorage.particles.length();i++)
@@ -130,10 +132,9 @@ void main(){
             p.rho += W(r, settings.kernelRadius);
 
             //* Strain & Stress 
-            vec2 gradient = gradW(p_pi, settings.kernelRadius);
-            float V_i = settings.mass / pi.rho;
-            velocityGradient += V_i * outerProduct(gradient, pi.velocity);
-            D += 1.f / pi.rho * outerProduct(gradient, gradient);
+            // vec2 gradient = gradW(p_pi, settings.kernelRadius);
+            // velocityGradient += pi.V * outerProduct(gradient, pi.velocity);
+            // D += 1.f / pi.rho * outerProduct(gradient, gradient);
         }
     }
     p.rho *= settings.mass;
@@ -150,10 +151,10 @@ void main(){
             //* Density
             p.rho += p.psi_rho0 * W(r, settings.kernelRadius);
 
-             //* Strain & Stress 
-            vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
-            velocityGradient += pb.V * outerProduct(gradient, pb.velocity);
-            D += 1.f / pb.rho * outerProduct(gradient, gradient);
+            //* Strain & Stress 
+            // vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
+            // velocityGradient += pb.V * outerProduct(gradient, pb.velocity);
+            // D += 1.f / pb.rho * outerProduct(gradient, gradient);
         }
     }
     
@@ -169,19 +170,21 @@ void main(){
     
     //? required?
     // p.p = max(p.p, 0.f);
+    p.V = settings.mass / p.rho;
 
          
     //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
     //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
-    float alpha  = sqrt((2.f / 3.f) * sin(settings.theta)); //* frictional coefficient
-    D *= (2.f * settings.mass * settings.mass * settings.dt) / (p.rho * p.rho);
-    mat2 strainTensor = 0.5f * (velocityGradient + transpose(velocityGradient));
-    mat2 stressTensor = inverse(D) * strainTensor;
-    mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
-    mat2 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
+    // float alpha  = sqrt((2.f / 3.f) * sin(settings.theta)); //* frictional coefficient
+    // D *= (2.f * settings.mass * settings.mass * settings.dt) / (p.rho * p.rho);
+    // mat2 strainTensor = 0.5f * (velocityGradient + transpose(velocityGradient));
+    // mat2 stressTensor = inverse(D) * strainTensor;
+    // mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
+    // mat2 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
 
-    p.stress = min(frobenius(deviatoricStressTensor), sqrt(3) * alpha * p.p);
-    p.cohesion = min(frobenius(stressTensor), settings.beta * settings.beta * settings.C);
+    // // p.stress = min(frobenius(deviatoricStressTensor), sqrt(3) * alpha * p.p); ??
+    // p.stress = min(frobenius(deviatoricStressTensor), alpha * p.p);
+    // // p.cohesion = min(frobenius(stressTensor), settings.beta * settings.beta * settings.C);
 
     writeCurrentParticle(p);
 }

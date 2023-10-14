@@ -2,11 +2,11 @@
 
 read A -> write B
 
-### predict pos
+### predict density
 
 read B -> write A
 
-### predict density
+### predict pos
 
 read A -> write B
 

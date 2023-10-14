@@ -25,7 +25,7 @@ layout(binding = 1) uniform Settings{
   float beta;
 
   float C;
-  float pad0;
+  float alpha;
   float pad1;
   float pad2;
 } settings;

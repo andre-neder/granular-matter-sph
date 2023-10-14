@@ -111,8 +111,8 @@ using namespace gpu;
         ImGui::DragFloat("Kernel Radius", &settings.kernelRadius, 1.f, 0.1f, 100.f);
         ImGui::DragFloat("Angle of repose", &settings.theta, 1.f, 0.001f, (float)M_PI);
         ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);
-        ImGui::DragFloat("Cohesion intensity", &settings.beta, 1.f, 0.01f, 10.f);
-        ImGui::DragFloat("Maximum Cohesion", &settings.C, 1.f, 0.01f, 10.f);
+        // ImGui::DragFloat("Cohesion intensity", &settings.beta, 1.f, 0.01f, 10.f);
+        // ImGui::DragFloat("Maximum Cohesion", &settings.C, 1.f, 0.01f, 10.f);
         ImGui::DragFloat2("Gravity", glm::value_ptr(settings.G));
         ImGui::End();
 
