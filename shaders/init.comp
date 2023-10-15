@@ -8,17 +8,15 @@
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 struct Particle{
-  vec2 position;
-  vec2 predPosition;
-  vec2 velocity;
-  vec2 predVelocity;
-  vec2 pressureAcceleration;
-  float rho;
-  float p;
-  float V;
-  float psi_rho0; 
-  float stress; 
-  float cohesion; 
+    vec2 position;
+    vec2 predPosition;
+    vec2 velocity;
+    vec2 pressureAcceleration;
+    float rho;
+    float p;
+    float V;
+    float psi_rho0; 
+    mat2 stress;
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
