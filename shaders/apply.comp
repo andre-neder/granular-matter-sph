@@ -64,9 +64,9 @@ void writeCurrentParticle(in Particle p){
 
 void main(){
     Particle p = readCurrentParticle();
-    
-    p.velocity = p.predVelocity + p.pressureAcceleration * settings.dt;
+    // Semi-implicit euler
     p.position += p.velocity * settings.dt;
+    p.velocity = p.predVelocity + p.pressureAcceleration * settings.dt;
 
     writeCurrentParticle(p);
 }

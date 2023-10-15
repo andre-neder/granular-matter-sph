@@ -21,7 +21,7 @@ struct SPHSettings{
     float kernelRadius = 0.3f; 
 
     float mass = 1.f;
-    float stiffness = 200.f;	  
+    float stiffness = 20.f;	  
     float dt = 0.000f;	  
     float DOMAIN_WIDTH = 60.f; 
 
