@@ -11,11 +11,13 @@ struct Particle{
     vec2 position;
     vec2 predPosition;
     vec2 velocity;
+    vec2 predVelocity;
     vec2 pressureAcceleration;
     float rho;
     float p;
     float V;
     float psi_rho0; 
+    float pad0, pad1;
     mat2 stress;
 };
 
@@ -23,11 +25,13 @@ struct BoundaryParticle{
     vec2 position;
     vec2 normal;
     vec2 velocity;
+    vec2 predVelocity;
     vec2 pressureAcceleration;
     float rho;
     float p;
     float V;
     float psi_rho0; 
+    float pad0, pad1;
     mat2 stress;
 };
 
@@ -131,7 +135,7 @@ void main(){
             // float v = (2.f * settings.alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
             // float omicron = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
             // vec2 a_v = settings.mass * omicron * gradient;
-            frictionalAcceleration += a_f;//a_v +
+            frictionalAcceleration += a_f;// + a_v;//a_v +
         }
     }
     
@@ -153,11 +157,11 @@ void main(){
             // float v = (settings.sigma * settings.kernelRadius * c) / (2.f* p.rho); //* viscousity constant 
             // float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
             // vec2 a_v = pb.psi_rho0 * omicron * gradient;
-            frictionalAcceleration += a_f; //max(a_f, a_v);  a_v +
+            frictionalAcceleration += a_f;// + a_v; //max(a_f, a_v);  a_v +
         }
     }
     
-    p.pressureAcceleration = pressureAcceleration + frictionalAcceleration;
+    p.pressureAcceleration = pressureAcceleration - frictionalAcceleration;
 
     writeCurrentParticle(p);
 }

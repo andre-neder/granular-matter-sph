@@ -10,15 +10,19 @@ struct Particle{
   glm::vec2 predPosition = glm::vec2(0,0);
   // 4
   glm::vec2 velocity = glm::vec2(0,0);
-  glm::vec2 pressureAcceleration = glm::vec2(0,0);
+  glm::vec2 predVelocity = glm::vec2(0,0);
   // 8
+  glm::vec2 pressureAcceleration = glm::vec2(0,0);
   float rho = 0.0;
   float p = 0.0;
+  // 12
   float V = 0.0;
   float psi_rho0 = 0.0;
-  // 12
-  glm::mat2 stress = glm::mat2(1.0);
+  float pad0 = 0.f;
+  float pad1 = 0.f;
   // 16
+  glm::mat2 stress = glm::mat2(1.0);
+  // 20
   Particle(){};
   inline Particle(float x, float y) { position = glm::vec2(x, y); }
 

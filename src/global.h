@@ -1,6 +1,8 @@
 #pragma once 
 #ifndef HEADER_H
 #define HEADER_H
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <glm/glm.hpp>
 
 extern bool simulationRunning;
@@ -15,20 +17,20 @@ extern bool simulationRunning;
 
 struct SPHSettings{
     glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
-    float rho0 = 1.5f; //* kg / m^3 -> 2D kg / m^2  //? 1.5 - 2.2 kg / dm^3 (1950kg/m^3)
-    float kernelRadius = 0.3f; // *m	
+    float rho0 = 1.5f; 
+    float kernelRadius = 0.3f; 
 
     float mass = 1.f;
-    float stiffness = 20.f;	  
+    float stiffness = 200.f;	  
     float dt = 0.000f;	  
-    float DOMAIN_WIDTH = 40.f; //* m
+    float DOMAIN_WIDTH = 60.f; 
 
-    float DOMAIN_HEIGHT = 20.f; //* m
-    float theta = 0.5; //* angle of repose
-    float sigma = 0.25f;     //* viscosity coefficient
-    float beta = 0.f;      //* cohesion intensity
+    float DOMAIN_HEIGHT = 30.f; 
+    float theta = 30.f * (float)M_PI / 180.f;     //* angle of repose
+    float sigma = 0.25f;    //* viscosity coefficient
+    float beta = 0.f;       //* cohesion intensity
 
-    float C = 0.f;         //* maximum cohesion
+    float C = 0.f;          //* maximum cohesion
     float alpha = 0.5f;     //* viscosity constant
     float pad1 = 0.f;
     float pad2 = 0.f;

@@ -1,7 +1,5 @@
 #include "imgui_renderpass.h"
 #include "global.h"
-#define _USE_MATH_DEFINES
-#include <math.h>
 #include <glm/gtc/type_ptr.hpp>
 bool simulationRunning = false;
 
@@ -28,11 +26,8 @@ using namespace gpu;
         ImGui_ImplGlfw_InitForVulkan(window->getGLFWWindow(), true);
 
         createDescriptorPool();
-
         createRenderPass();      
 
-        
-  
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance = m_core->getInstance();
         init_info.PhysicalDevice = m_core->getPhysicalDevice();
@@ -51,8 +46,7 @@ using namespace gpu;
         ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
         m_core->endSingleTimeCommands(command_buffer);    
 
-        initFrameResources();
-
+        initFrameResources(); // Todo: fix cleanup error
     }
     void ImguiRenderPass::initFrameResources(){
         createRenderPass();
@@ -178,8 +172,8 @@ using namespace gpu;
             device.destroyFramebuffer(framebuffer);
         }
         device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
-        m_core->getDevice().destroyRenderPass(renderPass);
         m_core->getDevice().destroyDescriptorPool(descriptorPool);
+        m_core->getDevice().destroyRenderPass(renderPass);
     }
     void ImguiRenderPass::destroy(){
         destroyFrameResources();

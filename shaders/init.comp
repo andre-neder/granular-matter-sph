@@ -11,11 +11,13 @@ struct Particle{
     vec2 position;
     vec2 predPosition;
     vec2 velocity;
+    vec2 predVelocity;
     vec2 pressureAcceleration;
     float rho;
     float p;
     float V;
     float psi_rho0; 
+    float pad0, pad1;
     mat2 stress;
 };
 
@@ -64,7 +66,8 @@ void writeCurrentParticle(in Particle p){
 void main(){
     Particle p = readCurrentParticle();
     //* Reset pressure & pressureAcceleration
-    p.velocity += settings.G * settings.dt;
+    p.predVelocity = p.velocity;
+    p.predVelocity += settings.G * settings.dt;
     p.predPosition = p.position;
     p.predPosition += p.velocity * 1.f/120.f;
     

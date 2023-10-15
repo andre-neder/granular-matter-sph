@@ -11,11 +11,13 @@ struct Particle{
     vec2 position;
     vec2 predPosition;
     vec2 velocity;
+    vec2 predVelocity;
     vec2 pressureAcceleration;
     float rho;
     float p;
     float V;
     float psi_rho0; 
+    float pad0, pad1;
     mat2 stress;
 };
 
@@ -23,11 +25,13 @@ struct BoundaryParticle{
     vec2 position;
     vec2 normal;
     vec2 velocity;
+    vec2 predVelocity;
     vec2 pressureAcceleration;
     float rho;
     float p;
     float V;
     float psi_rho0; 
+    float pad0, pad1;
     mat2 stress;
 };
 
@@ -110,8 +114,8 @@ void main(){
     Particle p = readCurrentParticle();
 
     //* Strain & Stress 
-    mat2 velocityGradient = mat2(1.f);
-    mat2 D = mat2(1.f);
+    mat2 velocityGradient = mat2(0.f);
+    mat2 D = mat2(0.f);
 
     //* For all fluid particles
     for (int i = 0; i< inStorage.particles.length();i++)
@@ -124,7 +128,7 @@ void main(){
         {
             //* Strain & Stress 
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
-            velocityGradient += pi.V * outerProduct(gradient, pi.velocity);
+            velocityGradient += pi.V * outerProduct(gradient, p.predVelocity - pi.predVelocity);
             D += 1.f / pi.rho * outerProduct(gradient, gradient);
         }
     }
@@ -141,7 +145,7 @@ void main(){
         {
             //* Strain & Stress 
             vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
-            velocityGradient += pb.V * outerProduct(gradient, pb.velocity);
+            velocityGradient += pb.V * outerProduct(gradient, p.predVelocity - pb.predVelocity);
             D += 1.f / pb.rho * outerProduct(gradient, gradient);
         }
     }
@@ -154,11 +158,11 @@ void main(){
     mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
     mat2 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
 
-    float alpha = sqrt((2.f / 3.f) * sin(settings.theta)); //* frictional coefficient
-    float yield = sqrt(3) * alpha * p.p;
-    p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : mat2(0);
-    // p.stress = min(frobenius(deviatoricStressTensor), sqrt(3) * alpha * p.p); //??
-    // p.stress = 0.f;//frobenius(deviatoricStressTensor);// min(frobenius(deviatoricStressTensor), alpha * p.p);
+    float alpha = sqrt(2.f) * sin(settings.theta); //* frictional coefficient // sqrt(2.f / 3.f)
+    float yield = alpha * p.p; // sqrt(3) *
+    p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
+    p.pad0 = frobenius(deviatoricStressTensor);
+    p.pad1 = yield;
     // p.cohesion = min(frobenius(stressTensor), settings.beta * settings.beta * settings.C);
 
     writeCurrentParticle(p);

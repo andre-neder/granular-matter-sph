@@ -222,8 +222,7 @@ private:
     void cleanupSwapchain(){
         core.getDevice().waitIdle();
         core.destroySwapChainImageViews();
-        core.destroySwapChain();
-        
+        core.destroySwapChain(); 
     }
 
     void cleanup(){
