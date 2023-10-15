@@ -21,7 +21,7 @@ struct SPHSettings{
     float mass = 1.f;
     float stiffness = 20.f;	  
     float dt = 0.000f;	  
-    float DOMAIN_WIDTH = 20.f; //* m
+    float DOMAIN_WIDTH = 40.f; //* m
 
     float DOMAIN_HEIGHT = 20.f; //* m
     float theta = 0.5; //* angle of repose

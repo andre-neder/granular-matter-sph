@@ -40,7 +40,7 @@ layout(location = 0) out vec3 fragColor;
 //
 void main() {
     gl_PointSize = 1;
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4((inPosition.x / settings.DOMAIN_WIDTH) * 2.0 - 1.0, (inPosition.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (inPosition.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (inPosition.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
     // gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
     fragColor = vec3(0.f, rho / settings.rho0, 1.f);
     // fragTexCoord = inTexCoord;

@@ -10,7 +10,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     
     particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
     std::generate(particles.begin(), particles.end(), [this]() {
-        return Particle(((static_cast<float>(std::rand()) / RAND_MAX) / 2.f + 0.25f) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX  / 2.f + 0.25f)) * settings.DOMAIN_HEIGHT);
+        return Particle(((static_cast<float>(std::rand()) / RAND_MAX) / 4.f + 0.375f) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX  / 2.f )) * settings.DOMAIN_HEIGHT);
     });
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
@@ -95,13 +95,8 @@ std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_res
 
 void GranularMatter::updateSettings(float dt, int currentFrame){
 
-    if(simulationRunning){
-        settings.dt = dt; 
-    }                            
-    else {
-        settings.dt = 0.f;
-    }  
-
+    settings.dt = dt; 
+                        
     void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
     memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
     m_core->flushBuffer(settingsBuffer[currentFrame], 0, (size_t) sizeof(SPHSettings));
@@ -120,22 +115,23 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     updateSettings(dt, currentFrame);
 
     // while( accumulator >= dt ){
+    vk::CommandBufferBeginInfo beginInfo;
+    try{
+        commandBuffers[currentFrame].begin(beginInfo);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
 
-        vk::CommandBufferBeginInfo beginInfo;
-        try{
-            commandBuffers[currentFrame].begin(beginInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
-
-        //* Copy data from last frame B to current frame A 
-        {
-            // Todo: try with mutiple descriptor sets
-            vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
-            commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
-        }
-        //* Wait for copy action
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    //* Copy data from last frame B to current frame A 
+    {
+        // Todo: try with mutiple descriptor sets
+        vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
+        commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
+    }
+    //* Wait for copy action
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    
+    if(simulationRunning){
         //* compute boundary densities
         {
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
@@ -198,13 +194,24 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         //* wait for compute pass
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);   
 
-        //* submit calls
-        try{
-            commandBuffers[currentFrame].end();
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
+    }
+    else{
+        {
+            // Todo: try with mutiple descriptor sets
+            vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
+            commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
         }
+        //* Wait for copy action
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+        
+    }
 
+    //* submit calls
+    try{
+        commandBuffers[currentFrame].end();
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
     //     accumulator -= stepSize;
     // }
 }
