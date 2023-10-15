@@ -83,6 +83,7 @@ void main(){
 
     p_b.V = 1.f / delta_b;
     p_b.psi_rho0 = settings.rho0 / p_b.V;
+    p_b.rho = settings.rho0;
 
     writeCurrentParticle(p_b);
 }

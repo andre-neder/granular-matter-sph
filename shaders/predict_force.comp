@@ -130,7 +130,7 @@ void main(){
             float piRhoSq = pi.rho * pi.rho;
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
             pressureAcceleration += settings.mass * (p.p / pRhoSq + pi.p / piRhoSq) * gradient;
-            vec2 a_f = settings.mass * (p.stress / pRhoSq) + (pi.stress / piRhoSq) * gradient;
+            vec2 a_f = settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
             // float v = (2.f * settings.alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
             // float omicron = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
