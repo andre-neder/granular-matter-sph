@@ -27,7 +27,11 @@ using namespace gpu;
         //ImGui::StyleColorsClassic();
         ImGui_ImplGlfw_InitForVulkan(window->getGLFWWindow(), true);
 
-        initFrameResources();
+        createDescriptorPool();
+
+        createRenderPass();      
+
+        
   
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance = m_core->getInstance();
@@ -46,6 +50,8 @@ using namespace gpu;
         vk::CommandBuffer command_buffer = m_core->beginSingleTimeCommands();
         ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
         m_core->endSingleTimeCommands(command_buffer);    
+
+        initFrameResources();
 
     }
     void ImguiRenderPass::initFrameResources(){
@@ -172,8 +178,8 @@ using namespace gpu;
             device.destroyFramebuffer(framebuffer);
         }
         device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
-        m_core->getDevice().destroyDescriptorPool(descriptorPool);
         m_core->getDevice().destroyRenderPass(renderPass);
+        m_core->getDevice().destroyDescriptorPool(descriptorPool);
     }
     void ImguiRenderPass::destroy(){
         destroyFrameResources();
