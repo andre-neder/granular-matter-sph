@@ -82,69 +82,66 @@ float rand(){
 }
 
 float W(float r, float h){
-    // float volume = PI * pow(h, 4.f) / 6.f;
-    // return (h - rij) * (h - rij) / volume;
-    float alpha = 1.5 / (PI * h * h);
-    float beta = 2.0 / 3.0;
-    float q = r / h;
-    if(r < EPSILON){
-        return 0;
-    }
-    if (q >= 0.0 && q < 1.0) {
-        return alpha * (1.0 - 1.5 * q * q + 0.75 * q * q * q);
-    } else if (q >= 1.0 && q < 2.0) {
-        return alpha * 0.25 * (2.0 - q) * (2.0 - q) * (2.0 - q);
-    } else {
-        return 0.0;
-    }
+    float volume = PI * pow(h, 4.f) / 6.f;
+    return (h - r) * (h - r) / volume;
+    // float alpha = 15.f / (14.f * PI * h * h);
+    // float q = r / h;
+    // if(r < EPSILON){
+    //     return 0;
+    // }
+    // if (q >= 0.0 && q < 1.0) {
+    //     return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
+    // } else if (q >= 1.f && q < 2.f) {
+    //     float beta = (2.f - q);
+    //     return alpha * 0.25f * beta * beta * beta;
+    // } else {
+    //     return 0.f;
+    // }
 }
-
-
-
 vec2 gradW(vec2 rij, float h){
-    // float r = length(rij);
-    // vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
-    // float scale = -12.f / (PI * pow(h, 4.f));
-    // float slope = scale * (r - h);
-    // return dir * slope;
-    float alpha = 1.5 / (PI * h * h);
-    float beta = 2.0 / 3.0;
     float r = length(rij);
-    float q = r / h;
-    if(r < EPSILON){
-        return vec2(0.0);
-    }
-    if (q >= 0.0 && q < 1.0) {
-        float coeff = alpha * (-3.0 * q + 2.25 * q * q);
-        return coeff * normalize(rij);
-    } else if (q >= 1.0 && q < 2.0) {
-        float coeff = -0.75 * alpha * (2.0 - q) * (2.0 - q);
-        return coeff * normalize(rij);
-    } else {
-        return vec2(0.0);
-    }
+    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
+    float scale = -12.f / (PI * pow(h, 4.f));
+    float slope = scale * (r - h);
+    return -dir * slope;
+    // float alpha = 15.f / (14.f * PI * h * h);
+    // float r = length(rij);
+    // float q = r / h;
+    // if(r < EPSILON){
+    //     return vec2(0.0);
+    // }
+    // if (q >= 0.0 && q < 1.0) {
+    //     float coeff = alpha * (-3.0 * q + 2.25 * q * q);
+    //     return coeff * normalize(rij);
+    // } else if (q >= 1.0 && q < 2.0) {
+    //     float beta = (2.f - q);
+    //     float coeff = -0.75 * alpha * beta * beta;
+    //     return coeff * normalize(rij);
+    // } else {
+    //     return vec2(0.0);
+    // }
 }
 
 vec2 gradW(float r, vec2 rij, float h){
-    // vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
-    // float scale = -12.f / (PI * pow(h, 4.f));
-    // float slope = scale * (r - h);
-    // return dir * slope;
-    float alpha = 1.5 / (PI * h * h);
-    float beta = 2.0 / 3.0;
-    float q = r / h;
-    if(r < EPSILON){
-        return vec2(0.0);
-    }
-    if (q >= 0.0 && q < 1.0) {
-        float coeff = alpha * (-3.0 * q + 2.25 * q * q);
-        return coeff * normalize(rij);
-    } else if (q >= 1.0 && q < 2.0) {
-        float coeff = -0.75 * alpha * (2.0 - q) * (2.0 - q);
-        return coeff * normalize(rij);
-    } else {
-        return vec2(0.0);
-    }
+    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
+    float scale = -12.f / (PI * pow(h, 4.f));
+    float slope = scale * (r - h);
+    return -dir * slope;
+    // float alpha = 15.f / (14.f * PI * h * h);
+    // float q = r / h;
+    // if(r < EPSILON){
+    //     return vec2(0.0);
+    // }
+    // if (q >= 0.0 && q < 1.0) {
+    //     float coeff = alpha * (-3.0 * q + 2.25 * q * q);
+    //     return coeff * normalize(rij);
+    // } else if (q >= 1.0 && q < 2.0) {
+    //     float beta = (2.f - q);
+    //     float coeff = -0.75 * alpha * beta * beta;
+    //     return coeff * normalize(rij);
+    // } else {
+    //     return vec2(0.0);
+    // }
 }
 
 void main(){
