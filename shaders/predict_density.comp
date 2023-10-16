@@ -189,7 +189,7 @@ void main(){
     }
     
     //* tait's equation
-    p.rho = max(p.rho, settings.rho0); 
+    // p.rho = max(p.rho, settings.rho0); 
     // float exponent = 7.f;
     // float B = settings.stiffness;// (settings.rho0 * c * c) / exponent;
     // p.p = B * (pow(max(p.rho, settings.rho0) / settings.rho0, exponent) - 1.f); 
@@ -199,6 +199,7 @@ void main(){
     
     p.p = max(p.p, 0.f);     //? required?
     p.V = settings.mass / p.rho;
+    p.pad0 = p.rho / settings.rho0;
 
     writeCurrentParticle(p);
 }

@@ -17,8 +17,8 @@ extern bool simulationRunning;
 
 struct SPHSettings{
     glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
-    float rho0 = 1.5f; 
-    float kernelRadius = 0.3f; 
+    float rho0 = 10.f;  // 10
+    float kernelRadius = 0.3f;  //0.3
 
     float mass = 1.f;
     float stiffness = 20.f;	  

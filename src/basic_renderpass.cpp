@@ -128,7 +128,7 @@ using namespace gpu;
         vk::PipelineShaderStageCreateInfo geomShaderStageInfo({}, vk::ShaderStageFlagBits::eGeometry, geomShaderModule, "main");
         vk::PipelineShaderStageCreateInfo fragShaderStageInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main");
 
-        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, geomShaderStageInfo, fragShaderStageInfo};
+        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo}; // geomShaderStageInfo
 
         // auto bindingDescription = Vertex::getBindingDescription();
         // auto attributeDescriptions = Vertex::getAttributeDescriptions();

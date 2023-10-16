@@ -200,7 +200,7 @@ void main(){
     mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
     mat2 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
     
-    float alpha = sqrt(2.f) * sin(settings.theta); //* frictional coefficient // sqrt(2.f / 3.f)
+    float alpha = sqrt(2.0 / 3.f) * sin(settings.theta); //* frictional coefficient // sqrt(2.f / 3.f)
     float yield = alpha * p.p; // sqrt(3) *
     if(p.p > EPSILON && frobenius(deviatoricStressTensor) > EPSILON){
         p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
@@ -208,7 +208,7 @@ void main(){
     else{
         p.stress = mat2(0);
     }
-
+    p.pad1 = alpha;
     // p.cohesion = min(frobenius(stressTensor), settings.beta * settings.beta * settings.C);
 
     writeCurrentParticle(p);
