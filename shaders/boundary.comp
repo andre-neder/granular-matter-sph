@@ -128,7 +128,7 @@ vec2 gradW(float r, vec2 rij, float h){
 
 void main(){
     BoundaryParticle p_b = readCurrentParticle();
-    float delta_b = 0.f;
+    float sum_W_b = 0.f;
     for (int i = 0; i< boundary.particles.length();i++)
     {
         BoundaryParticle pi = boundary.particles[i];
@@ -137,12 +137,12 @@ void main(){
 
         if (r < settings.kernelRadius)
         {
-            delta_b += W(r, settings.kernelRadius);
+            sum_W_b += W(r, settings.kernelRadius);
         }
     }
-
+    float delta_b = 1.f / sum_W_b;
     p_b.V = 1.f / delta_b;
-    p_b.psi_rho0 = settings.rho0 / p_b.V;
+    p_b.psi_rho0 = settings.rho0 / delta_b;
     p_b.rho = settings.rho0;
     
     writeCurrentParticle(p_b);

@@ -204,6 +204,6 @@ void main(){
         }
     }
     
-    p.pressureAcceleration = pressureAcceleration;// + frictionalAcceleration;
+    p.pressureAcceleration = pressureAcceleration + frictionalAcceleration;
     writeCurrentParticle(p);
 }

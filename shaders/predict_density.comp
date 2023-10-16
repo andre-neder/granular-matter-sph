@@ -184,7 +184,7 @@ void main(){
         if (r < settings.kernelRadius)
         {
             //* Density
-            p.rho += p.psi_rho0 * W(r, settings.kernelRadius);
+            p.rho += pb.psi_rho0 * W(r, settings.kernelRadius);
         }
     }
     
