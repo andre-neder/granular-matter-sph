@@ -8,12 +8,20 @@ GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
     
-    particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
-    std::generate(particles.begin(), particles.end(), [this]() {
-        return Particle(((static_cast<float>(std::rand()) / RAND_MAX) / 4.f + 0.375f) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX  / 2.f )) * settings.DOMAIN_HEIGHT);
-    });
+    // particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
+    // std::generate(particles.begin(), particles.end(), [this]() {
+    //     return Particle(((static_cast<float>(std::rand()) / RAND_MAX) / 4.f + 0.375f) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX  / 2.f )) * settings.DOMAIN_HEIGHT);
+    // });
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
+
+    float initialDistance = 0.5 * settings.kernelRadius;
+
+    for(int i = 0;i < computeSpace.x ; i++){
+        for(int j = 0;j < computeSpace.y ; j++){
+            particles.push_back(Particle(i * initialDistance + 0.5 * settings.DOMAIN_WIDTH  ,j * initialDistance + 0.5));
+        }
+    }
     
     for(float i = 0.f;i < settings.DOMAIN_HEIGHT; i+=r0){
         boundaryParticles.push_back(BoundaryParticle(0.f, i, 1.f, 0.f));

@@ -200,8 +200,8 @@ void main(){
     mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
     mat2 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
     
-    float alpha = sqrt(2.0 / 3.f) * sin(settings.theta); //* frictional coefficient // sqrt(2.f / 3.f)
-    float yield = alpha * p.p; // sqrt(3) *
+    float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
+    float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
     if(p.p > EPSILON && frobenius(deviatoricStressTensor) > EPSILON){
         p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
     }
