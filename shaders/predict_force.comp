@@ -197,10 +197,10 @@ void main(){
             pressureAcceleration -= pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
             vec2 a_f = -settings.mass * pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
 
-            // float v = (settings.sigma * settings.kernelRadius * c) / (2.f* p.rho); //* viscousity constant 
-            // float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
-            // vec2 a_v = pb.psi_rho0 * omicron * gradient;
-            frictionalAcceleration += a_f;// + a_v; //max(a_f, a_v);  a_v +
+            float v = (settings.sigma * settings.kernelRadius * c) / (2.f* p.rho); //* viscousity constant 
+            float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+            vec2 a_v = pb.psi_rho0 * omicron * gradient;
+            frictionalAcceleration += a_f + a_v; //max(a_f, a_v);  a_v +
         }
     }
     
