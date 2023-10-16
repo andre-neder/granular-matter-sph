@@ -187,7 +187,7 @@ void main(){
         if (r < settings.kernelRadius)
         {
             //* Strain & Stress 
-            vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
+            vec2 gradient = gradW(p_pb, settings.kernelRadius);
             velocityGradient += pb.V * outerProduct(gradient, p.predVelocity - pb.predVelocity);
             D += (1.f / pb.rho) * outerProduct(gradient, gradient);
         }
