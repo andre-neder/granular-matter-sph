@@ -65,9 +65,29 @@ void writeCurrentParticle(in Particle p){
 void main(){
     Particle p = readCurrentParticle();
 
-    // Semi-implicit euler
+    p.velocity += p.pressureAcceleration * settings.dt;
+    p.position += p.velocity * settings.dt;
+
     p.position += p.velocity * settings.dt;
     p.velocity = p.predVelocity + p.pressureAcceleration * settings.dt;
+
+    // float dampening = 0.5;
+    // if(p.position.x <= 0.f){
+    //     p.position.x = 0.f + 0.01;
+    //     p.velocity.x *= -1.f * dampening;
+    // }
+    // if(p.position.x >= settings.DOMAIN_WIDTH){
+    //     p.position.x = settings.DOMAIN_WIDTH - 0.01;
+    //     p.velocity.x *= -1.f * dampening;
+    // }
+    //  if(p.position.y <= 0.f){
+    //     p.position.y = 0.f + 0.01;
+    //     p.velocity.y *= -1.f * dampening;
+    // }
+    // if(p.position.y >= settings.DOMAIN_HEIGHT){
+    //     p.position.y = settings.DOMAIN_HEIGHT - 0.01;
+    //     p.velocity.y *= -1.f * dampening;
+    // }
 
     writeCurrentParticle(p);
 }

@@ -8,19 +8,27 @@ GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
     
-    particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
-    std::generate(particles.begin(), particles.end(), [this]() {
-        return Particle(((static_cast<float>(std::rand()) / RAND_MAX) / 4.f + 0.375f) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX  / 2.f )) * settings.DOMAIN_HEIGHT);
-    });
+    // particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
+    // std::generate(particles.begin(), particles.end(), [this]() {
+    //     return Particle(((static_cast<float>(std::rand()) / RAND_MAX) / 4.f + 0.375f) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX  / 2.f )) * settings.DOMAIN_HEIGHT);
+    // });
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
+    float initialDistance = 0.5 * settings.kernelRadius;
+
+    for(int i = 0;i < computeSpace.x ; i++){
+        for(int j = 0;j < computeSpace.y ; j++){
+            particles.push_back(Particle(i * initialDistance + 0.5,j * initialDistance + 0.5));
+        }
+    }
     
-    for(float i = 0.f;i < settings.DOMAIN_HEIGHT; i+=r0){
+    for(float i = 0.f;i <= settings.DOMAIN_HEIGHT; i+=r0){
         boundaryParticles.push_back(BoundaryParticle(0.f, i, 1.f, 0.f));
         boundaryParticles.push_back(BoundaryParticle(settings.DOMAIN_WIDTH, i, -1.f, 0.f));
+        
     }
 
-    for(float i = 0.f;i < settings.DOMAIN_WIDTH; i+=r0){
+    for(float i = 0.f;i <= settings.DOMAIN_WIDTH; i+=r0){
         boundaryParticles.push_back(BoundaryParticle(i, 0.f, 0.f, 1.f));
         boundaryParticles.push_back(BoundaryParticle(i, settings.DOMAIN_HEIGHT, 0.f, -1.f));
     }
@@ -141,7 +149,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
 
     if(simulationRunning){
-        //* init pass
+        //* init pass A -> B
         {
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, initPass.m_pipeline);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, initPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
@@ -150,43 +158,32 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         //* wait for compute pass
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
         
-        //? maybe add dynamic loop here
-        //* Do 3 iterations
-        for (size_t i = 0; i < 1; i++)
+        //* predict density B -> A
         {
-            //* predict density
-            {
-                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-            }
-            //* wait for compute pass
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-            //* predict stress
-            {
-                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipeline);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-            }
-            //* wait for compute pass
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-            //* predict force
-            {
-                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
-            }
-            //* wait for compute pass
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, nullptr);      
-            //* Copy data from A to B 
-            {
-                vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
-                commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
-            }
-            //* Wait for copy action
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
         }
-        //* apply force
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+        //* predict stress A -> B
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+        }
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+        //* predict force B -> A
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].dispatch(computeSpace.x, computeSpace.y, computeSpace.z);
+        }
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);      
+        
+        //* apply force A -> B
         {
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, applyPass.m_pipeline);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, applyPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);

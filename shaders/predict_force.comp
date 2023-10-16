@@ -84,19 +84,22 @@ float rand(){
 float W(float r, float h){
     float volume = PI * pow(h, 4.f) / 6.f;
     return (h - r) * (h - r) / volume;
-    // float alpha = 15.f / (14.f * PI * h * h);
+    // float hSq = h * h;
+    // float k = 40.f /(7.f * PI * hSq);
+    // float l = 240.f /(7.f * PI * hSq);
     // float q = r / h;
-    // if(r < EPSILON){
-    //     return 0;
+    // float res = 0.f;
+    // if(q <= 1.f){
+    //     if(q <= 0.5f){
+    //         float qSq = q * q;
+    //         float qPow3 = qSq * q;
+    //         res = k * (6.f * qPow3 - 6.f * qSq + 1.f);
+    //     }
+    //     else{
+    //         res = k * (2.f * pow(1.f - q, 3.f));
+    //     }
     // }
-    // if (q >= 0.0 && q < 1.0) {
-    //     return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
-    // } else if (q >= 1.f && q < 2.f) {
-    //     float beta = (2.f - q);
-    //     return alpha * 0.25f * beta * beta * beta;
-    // } else {
-    //     return 0.f;
-    // }
+    // return res;
 }
 vec2 gradW(vec2 rij, float h){
     float r = length(rij);
@@ -104,46 +107,26 @@ vec2 gradW(vec2 rij, float h){
     float scale = -12.f / (PI * pow(h, 4.f));
     float slope = scale * (r - h);
     return -dir * slope;
-    // float alpha = 15.f / (14.f * PI * h * h);
-    // float r = length(rij);
-    // float q = r / h;
-    // if(r < EPSILON){
-    //     return vec2(0.0);
+    // float hSq = h * h;
+    // float k = 40.f /(7.f * PI * hSq);
+    // float l = 240.f /(7.f * PI * hSq);
+    // float rl = length(rij);
+    // float q = rl / h;
+    // vec2 res = vec2(0.f);
+    // if(q <= 1.f){
+    //     if(rl > EPSILON){
+    //         vec2 gradQ = rij / rl / h;
+    //         if(q <= 0.5f){
+    //             res = l * q * (3 * q - 2.f) * gradQ;   
+    //         }
+    //         else{
+    //             float fac = 1.f - q;
+    //             res = l * (-fac * fac) * gradQ;
+    //         }
+    //     }
     // }
-    // if (q >= 0.0 && q < 1.0) {
-    //     float coeff = alpha * (-3.0 * q + 2.25 * q * q);
-    //     return coeff * normalize(rij);
-    // } else if (q >= 1.0 && q < 2.0) {
-    //     float beta = (2.f - q);
-    //     float coeff = -0.75 * alpha * beta * beta;
-    //     return coeff * normalize(rij);
-    // } else {
-    //     return vec2(0.0);
-    // }
+    // return res;
 }
-
-vec2 gradW(float r, vec2 rij, float h){
-    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
-    float scale = -12.f / (PI * pow(h, 4.f));
-    float slope = scale * (r - h);
-    return -dir * slope;
-    // float alpha = 15.f / (14.f * PI * h * h);
-    // float q = r / h;
-    // if(r < EPSILON){
-    //     return vec2(0.0);
-    // }
-    // if (q >= 0.0 && q < 1.0) {
-    //     float coeff = alpha * (-3.0 * q + 2.25 * q * q);
-    //     return coeff * normalize(rij);
-    // } else if (q >= 1.0 && q < 2.0) {
-    //     float beta = (2.f - q);
-    //     float coeff = -0.75 * alpha * beta * beta;
-    //     return coeff * normalize(rij);
-    // } else {
-    //     return vec2(0.0);
-    // }
-}
-
 void main(){
     Particle p = readCurrentParticle();
     //* Init pressure pressureAcceleration
