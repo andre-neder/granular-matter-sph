@@ -12,6 +12,7 @@ using namespace gpu;
 
         vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.vert");
         fragShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.frag");
+        geomShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.geom");
         // createTextureImage();
         // textureImageView = m_core->createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
         // textureSampler = m_core->createTextureSampler();
@@ -124,9 +125,10 @@ using namespace gpu;
     
     void BasicRenderPass::createGraphicsPipeline(){
         vk::PipelineShaderStageCreateInfo vertShaderStageInfo({}, vk::ShaderStageFlagBits::eVertex, vertShaderModule, "main");
+        vk::PipelineShaderStageCreateInfo geomShaderStageInfo({}, vk::ShaderStageFlagBits::eGeometry, geomShaderModule, "main");
         vk::PipelineShaderStageCreateInfo fragShaderStageInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main");
 
-        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
+        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, geomShaderStageInfo, fragShaderStageInfo};
 
         // auto bindingDescription = Vertex::getBindingDescription();
         // auto attributeDescriptions = Vertex::getAttributeDescriptions();
@@ -250,6 +252,7 @@ using namespace gpu;
 
         device.destroyShaderModule(fragShaderModule);
         device.destroyShaderModule(vertShaderModule);
+        device.destroyShaderModule(geomShaderModule);
 
         // m_core->destroySampler(textureSampler);
         // m_core->destroyImageView(textureImageView);

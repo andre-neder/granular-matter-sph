@@ -35,7 +35,8 @@ struct Particle{
   static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
       std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
           vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, position)),
-          vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(Particle, rho)),
+          vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, velocity)),
+        //   vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(Particle, rho)),
           // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, texCoord))
       };
       return attributeDescriptions;

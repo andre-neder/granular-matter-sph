@@ -154,7 +154,7 @@ void main(){
 
     float pRhoSq = p.rho * p.rho;
     float eps = 0.01f;
-
+    
     //* Sum up pressure forces and strain
     for (int i = 0; i < inStorage.particles.length();i++)
     {
@@ -172,8 +172,8 @@ void main(){
             //* Pressure calculation
             float piRhoSq = pi.rho * pi.rho;
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
-            pressureAcceleration -= settings.mass * (p.p / pRhoSq + pi.p / piRhoSq) * gradient;
-            vec2 a_f = settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+            pressureAcceleration -= settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+            vec2 a_f = -settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
             // float v = (2.f * settings.alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
             // float omicron = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
@@ -193,10 +193,10 @@ void main(){
         if (r < settings.kernelRadius)
         {
             //* using normal instead of direction to boundary
-            vec2 gradient = gradW(r, p_pb, settings.kernelRadius);
+            vec2 gradient = gradW(p_pb, settings.kernelRadius);
             pressureAcceleration -= pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
-            vec2 a_f = settings.mass * pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
-            
+            vec2 a_f = -settings.mass * pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
+
             // float v = (settings.sigma * settings.kernelRadius * c) / (2.f* p.rho); //* viscousity constant 
             // float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
             // vec2 a_v = pb.psi_rho0 * omicron * gradient;
@@ -204,7 +204,6 @@ void main(){
         }
     }
     
-    p.pressureAcceleration = pressureAcceleration;// + frictionalAcceleration;
-
+    p.pressureAcceleration = pressureAcceleration + frictionalAcceleration;
     writeCurrentParticle(p);
 }

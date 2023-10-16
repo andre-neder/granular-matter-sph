@@ -79,6 +79,7 @@ namespace gpu{
             vk::DescriptorSetLayout descriptorSetLayout;
             vk::ShaderModule vertShaderModule;
             vk::ShaderModule fragShaderModule;
+            vk::ShaderModule geomShaderModule;
 
             void createRenderPass();
             void createDescriptorSets();

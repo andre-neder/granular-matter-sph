@@ -474,7 +474,9 @@ vk::ShaderModule Core::loadShaderModule(std::string src) {
     else if (fileExtension == ".comp"){
         stage = vk::ShaderStageFlagBits::eCompute;
     }
-
+    else if (fileExtension == ".geom"){
+        stage = vk::ShaderStageFlagBits::eGeometry;
+    }
     SpirvHelper::GLSLtoSPV(stage, src, shaderCodeSPIRV);
     try{
         shaderModule = createShaderModule(shaderCodeSPIRV);

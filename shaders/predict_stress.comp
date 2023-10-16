@@ -172,7 +172,7 @@ void main(){
             //* Strain & Stress 
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
             velocityGradient += pi.V * outerProduct(gradient, p.predVelocity - pi.predVelocity);
-            D += 1.f / pi.rho * outerProduct(gradient, gradient);
+            D += (1.f / pi.rho) * outerProduct(gradient, gradient);
         }
     }
 
@@ -189,10 +189,9 @@ void main(){
             //* Strain & Stress 
             vec2 gradient = gradW(r, pb.normal, settings.kernelRadius);
             velocityGradient += pb.V * outerProduct(gradient, p.predVelocity - pb.predVelocity);
-            D += 1.f / pb.rho * outerProduct(gradient, gradient);
+            D += (1.f / pb.rho) * outerProduct(gradient, gradient);
         }
     }
-         
     //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
     //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
     D *= (2.f * settings.mass * settings.mass * settings.dt) / (p.rho * p.rho);
@@ -200,12 +199,16 @@ void main(){
     mat2 stressTensor = inverse(D) * strainTensor;
     mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
     mat2 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
-
+    
     float alpha = sqrt(2.f) * sin(settings.theta); //* frictional coefficient // sqrt(2.f / 3.f)
     float yield = alpha * p.p; // sqrt(3) *
-    p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
-    p.pad0 = frobenius(deviatoricStressTensor);
-    p.pad1 = yield;
+    if(p.p > EPSILON && frobenius(deviatoricStressTensor) > EPSILON){
+        p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
+    }
+    else{
+        p.stress = mat2(0);
+    }
+
     // p.cohesion = min(frobenius(stressTensor), settings.beta * settings.beta * settings.C);
 
     writeCurrentParticle(p);

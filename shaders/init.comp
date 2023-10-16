@@ -66,10 +66,11 @@ void writeCurrentParticle(in Particle p){
 void main(){
     Particle p = readCurrentParticle();
     //* Reset pressure & pressureAcceleration
+
     p.predVelocity = p.velocity;
     p.predVelocity += settings.G * settings.dt;
     p.predPosition = p.position;
     p.predPosition += p.velocity * 1.f/120.f;
-    
+
     writeCurrentParticle(p);
 }
