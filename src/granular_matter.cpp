@@ -3,6 +3,7 @@
 #include "iostream"
 #include "global.h"
 
+BitonicSortParameters params;
 
 GranularMatter::GranularMatter(gpu::Core* core)
 {
@@ -36,6 +37,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     particleCells.resize(particles.size());
     std::fill(particleCells.begin(), particleCells.end(), 0);
 
+    bitonicSortParameterBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     settingsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
@@ -46,7 +48,8 @@ GranularMatter::GranularMatter(gpu::Core* core)
         particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         settingsBuffer[i]   = m_core->bufferFromData(&settings, sizeof(SPHSettings), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU);
         boundaryParticlesBuffer[i] = m_core->bufferFromData(boundaryParticles.data(),sizeof(Particle) * boundaryParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
-        particleCellBuffer[i] = m_core->bufferFromData(particleCells.data(),sizeof(uint32_t) * boundaryParticles.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        particleCellBuffer[i] = m_core->bufferFromData(particleCells.data(), sizeof(uint32_t) * particles.size(),vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        bitonicSortParameterBuffers[i] = m_core->bufferFromData(&params, sizeof(BitonicSortParameters), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU);
     }
     initFrameResources();
     createDescriptorPool();
@@ -64,7 +67,20 @@ GranularMatter::GranularMatter(gpu::Core* core)
         descriptorSetLayoutCell
     };
 
+    //* Sorting stuff
+    const vk::PhysicalDeviceLimits limits = m_core->getPhysicalDevice().getProperties().limits;
+    const uint32_t n = (uint32_t)particles.size();
+    uint32_t workgroup_size_x = 1;
+    if(n < limits.maxComputeWorkGroupInvocations * 2){
+        workgroup_size_x = n / 2;
+    }
+    else{
+        workgroup_size_x = limits.maxComputeWorkGroupInvocations;
+    }
+
+
     neighborhoodUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/neighborhood_update.comp", descriptorSetLayoutsParticleCell);
+    bitonicSortPass = gpu::ComputePass(m_core, SHADER_PATH"/bitonic_sort.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workgroup_size_x) });
     boundaryUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/boundary.comp", descriptorSetLayoutsParticle);
     initPass = gpu::ComputePass(m_core, SHADER_PATH"/init.comp", descriptorSetLayoutsParticle);
     predictDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_density.comp", descriptorSetLayoutsParticle);
@@ -94,6 +110,7 @@ void GranularMatter::destroy(){
     vk::Device device = m_core->getDevice();
 
     neighborhoodUpdatePass.destroy();
+    bitonicSortPass.destroy();
     boundaryUpdatePass.destroy();
     initPass.destroy();
     predictStressPass.destroy();
@@ -107,6 +124,7 @@ void GranularMatter::destroy(){
         m_core->destroyBuffer(settingsBuffer[i]);
         m_core->destroyBuffer(boundaryParticlesBuffer[i]);
         m_core->destroyBuffer(particleCellBuffer[i]);
+        m_core->destroyBuffer(bitonicSortParameterBuffers[i]);
     }
     device.destroyDescriptorSetLayout(descriptorSetLayoutCell);
     device.destroyDescriptorPool(descriptorPoolCell);
@@ -122,7 +140,7 @@ std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_res
 
 void GranularMatter::updateSettings(float dt, int currentFrame){
 
-    settings.dt = 1.f / 120.f;//dt; 
+    settings.dt = dt; 
                         
     void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
     memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
@@ -154,6 +172,9 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         // Todo: try with mutiple descriptor sets
         vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
         commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
+
+        vk::BufferCopy copyRegion2(0, 0, sizeof(uint32_t) * particles.size());
+        commandBuffers[currentFrame].copyBuffer(particleCellBuffer[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particleCellBuffer[currentFrame], 1, &copyRegion2);
     }
     //* Wait for copy action
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
@@ -164,6 +185,84 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, neighborhoodUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, neighborhoodUpdatePass.m_pipelineLayout, 1, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
         commandBuffers[currentFrame].dispatch((uint32_t)particleCells.size(), 1, 1);
+    }
+    //* Sort cell hashes
+    {   
+        //? https://poniesandlight.co.uk/reflect/bitonic_merge_sort/
+        //? https://github.com/tgfrerer/island/blob/wip/apps/examples/bitonic_merge_sort_example/bitonic_merge_sort_example_app/bitonic_merge_sort_example_app.cpp
+        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipeline);
+        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipelineLayout, 0, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
+            
+        const vk::PhysicalDeviceLimits limits = m_core->getPhysicalDevice().getProperties().limits;
+        const uint32_t n = (uint32_t)particles.size();
+        uint32_t workgroup_size_x = 1;
+        if(n < limits.maxComputeWorkGroupInvocations * 2){
+            workgroup_size_x = n / 2;
+        }
+        else{
+            workgroup_size_x = limits.maxComputeWorkGroupInvocations;
+        }
+        const uint32_t workgroup_count = n / ( workgroup_size_x * 2 );
+
+        auto dispatch = [ & ]( uint32_t h ) {
+		    params.h = h;
+
+            void* mappedData = m_core->mapBuffer(bitonicSortParameterBuffers[currentFrame]);
+            memcpy(mappedData, &params, (size_t) sizeof(BitonicSortParameters));
+            m_core->flushBuffer(bitonicSortParameterBuffers[currentFrame], 0, (size_t) sizeof(BitonicSortParameters));
+            m_core->unmapBuffer(bitonicSortParameterBuffers[currentFrame]);
+
+            commandBuffers[currentFrame].dispatch( workgroup_count, 1, 1 );
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+
+        };
+
+        auto local_bitonic_merge_sort_example = [ & ]( uint32_t h ) {
+            params.algorithm = BitonicSortParameters::eAlgorithmVariant::eLocalBitonicMergeSortExample;
+            dispatch( h );
+        };
+
+        auto big_flip = [ & ]( uint32_t h ) {
+            params.algorithm = BitonicSortParameters::eAlgorithmVariant::eBigFlip;
+            dispatch( h );
+        };
+
+        auto local_disperse = [ & ]( uint32_t h ) {
+            params.algorithm = BitonicSortParameters::eAlgorithmVariant::eLocalDisperse;
+            dispatch( h );
+        };
+
+        auto big_disperse = [ & ]( uint32_t h ) {
+            params.algorithm = BitonicSortParameters::eAlgorithmVariant::eBigDisperse;
+            dispatch( h );
+        };
+
+
+        uint32_t h = workgroup_size_x * 2;
+		assert( h <= n );
+		assert( h % 2 == 0 );
+
+		local_bitonic_merge_sort_example( h );
+		// we must now double h, as this happens before every flip
+		h *= 2;
+
+		for ( ; h <= n; h *= 2 ) {
+			big_flip( h );
+
+			for ( uint32_t hh = h / 2; hh > 1; hh /= 2 ) {
+
+				if ( hh <= workgroup_size_x * 2 ) {
+					// We can fit all elements for a disperse operation into continuous shader
+					// workgroup local memory, which means we can complete the rest of the
+					// cascade using a single shader invocation.
+					local_disperse( hh );
+					break;
+				} else {
+					big_disperse( hh );
+				}
+			}
+		}
+
     }
 
     //* compute boundary densities
@@ -244,8 +343,10 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 void GranularMatter::createDescriptorSetLayout() {
     {
         vk::DescriptorSetLayoutBinding buffer(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
-        std::array<vk::DescriptorSetLayoutBinding, 1> bindings = {
-            buffer
+        vk::DescriptorSetLayoutBinding buffer2(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
+        std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {
+            buffer,
+            buffer2
         };
         vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
         try{
@@ -289,11 +390,15 @@ void GranularMatter::createDescriptorSets() {
         
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
 
-            vk::DescriptorBufferInfo bufferInfoA(particleCellBuffer[i], 0, sizeof(uint32_t) * particleCells.size());
-            vk::WriteDescriptorSet descriptorWriteA(descriptorSetsCell[i], 0, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoA);
+            vk::DescriptorBufferInfo bufferInfo1(particleCellBuffer[i], 0, sizeof(uint32_t) * particleCells.size());
+            vk::WriteDescriptorSet descriptorWrite1(descriptorSetsCell[i], 0, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfo1);
 
-            std::array<vk::WriteDescriptorSet, 1> descriptorWrites{
-                descriptorWriteA
+            vk::DescriptorBufferInfo bufferInfo2(bitonicSortParameterBuffers[i], 0, sizeof(BitonicSortParameters));
+            vk::WriteDescriptorSet descriptorWrite2(descriptorSetsCell[i], 1, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfo2);
+
+            std::array<vk::WriteDescriptorSet, 2> descriptorWrites{
+                descriptorWrite1,
+                descriptorWrite2
             };
             
             m_core->getDevice().updateDescriptorSets(descriptorWrites, nullptr);
@@ -336,8 +441,10 @@ void GranularMatter::createDescriptorSets() {
 void GranularMatter::createDescriptorPool() {
     {
         vk::DescriptorPoolSize bufferSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
-        std::array<vk::DescriptorPoolSize, 1> poolSizes{
-            bufferSize
+        vk::DescriptorPoolSize bufferSize2(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        std::array<vk::DescriptorPoolSize, 2> poolSizes{
+            bufferSize,
+            bufferSize2
         };
 
         vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), poolSizes);

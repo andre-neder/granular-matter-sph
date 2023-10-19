@@ -2,19 +2,59 @@
 
 using namespace gpu;
 
-ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts)
+
+ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts) : 
+    ComputePass::ComputePass(core, shaderFile, descriptorSetLayouts, std::vector<gpu::SpecializationConstant>())
+{
+    // ComputePass(core, shaderFile, descriptorSetLayouts, std::vector<gpu::SpecializationConstant>());
+}
+ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations)
 {
     m_core = core;
     m_shaderModule = core->loadShaderModule(shaderFile);
 
     vk::Result result;
 
-    vk::PipelineShaderStageCreateInfo stageInfo{
-        {},
-        vk::ShaderStageFlagBits::eCompute,
-        m_shaderModule,
-        "main"
-    };
+    std::vector<vk::SpecializationMapEntry> entries;
+    std::vector<vk::SpecializationMapEntry> data;
+    uint32_t offset = 0;
+    uint32_t sizeOfConstant = sizeof(int32_t);
+    for (auto spec : specializations)
+    {
+        vk::SpecializationMapEntry entry = { spec.id, offset, sizeOfConstant };
+        entries.push_back(entry);
+        data.push_back(spec.value);
+        offset += sizeOfConstant;
+    }
+
+    // vk::SpecializationMapEntry entry = { 0, 0, sizeof(int32_t) };
+
+    vk::PipelineShaderStageCreateInfo stageInfo;
+    if(entries.size() > 0){
+        std::cout << "Spezialisation constant" << std::endl;
+        vk::SpecializationInfo spec_info = {
+            (uint32_t)entries.size(),
+            entries.data(),
+            sizeOfConstant * data.size(),
+            data.data()
+        };
+        stageInfo = {
+            {},
+            vk::ShaderStageFlagBits::eCompute,
+            m_shaderModule,
+            "main",
+            &spec_info
+        };
+    }
+    else{
+        stageInfo = {
+            {},
+            vk::ShaderStageFlagBits::eCompute,
+            m_shaderModule,
+            "main"
+        };
+    }
+    
 
     vk::PipelineLayoutCreateInfo layoutInfo{
         {},

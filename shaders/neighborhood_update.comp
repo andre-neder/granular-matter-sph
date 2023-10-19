@@ -68,7 +68,7 @@ void writeCurrentParticle(in Particle p){
 }
 
 uint hash(ivec2 cell){
-    return (cell.x * 3079 + cell.y * 1543) % inStorage.particles.length();
+    return (cell.x * 3079 + cell.y * 1543) % cellOut.particles.length();
 }
 
 void main(){

@@ -5,6 +5,17 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "compute_pass.h"
 
+struct BitonicSortParameters {
+    enum eAlgorithmVariant : uint32_t {
+        eLocalBitonicMergeSortExample = 0,
+        eLocalDisperse                = 1,
+        eBigFlip                      = 2,
+        eBigDisperse                  = 3,
+    };
+    uint32_t          h;
+    eAlgorithmVariant algorithm;
+};
+
 struct Particle{
   glm::vec2 position = glm::vec2(0,0);
   glm::vec2 predPosition = glm::vec2(0,0);
@@ -63,6 +74,7 @@ private:
 
     std::vector<uint32_t> particleCells; // particle (index) is in cell (value)
     std::vector<vk::Buffer> particleCellBuffer;
+    std::vector<vk::Buffer> bitonicSortParameterBuffers;
     vk::DescriptorSetLayout descriptorSetLayoutCell;
     std::vector<vk::DescriptorSet> descriptorSetsCell;
     vk::DescriptorPool descriptorPoolCell;
@@ -72,6 +84,7 @@ private:
     vk::DescriptorPool descriptorPool;
  
     gpu::ComputePass neighborhoodUpdatePass;
+    gpu::ComputePass bitonicSortPass;
     gpu::ComputePass boundaryUpdatePass;
     gpu::ComputePass initPass;
     gpu::ComputePass predictDensityPass;

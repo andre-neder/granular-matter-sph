@@ -1,5 +1,3 @@
-// https://poniesandlight.co.uk/reflect/bitonic_merge_sort/
-
 #version 450 core
 
 // This shader implements a sorting network for 1024 elements.
@@ -16,12 +14,12 @@
 
 
 // ENUM for uniform::Parameters.algorithm:
-#define eLocalBitonicMergeSortExample   0
-#define eLocalDisperse                  1
-#define eBigFlip                        2
-#define eBigDisperse                    3
+#define eLocalBitonicMergeSortExample      0
+#define eLocalDisperse 1
+#define eBigFlip       2
+#define eBigDisperse   3
 
-layout(local_size_x = 1) in; // Set value for local_size_x via specialization constant with id 1
+layout(local_size_x_id = 1) in; // Set value for local_size_x via specialization constant with id 1
 
 layout (set=0, binding = 0) buffer SortData 
 {
@@ -30,6 +28,7 @@ layout (set=0, binding = 0) buffer SortData
 	uint value[];
 };
 
+// Note: These parameters are currently unused.
 layout (set=0, binding=1) uniform Parameters {
 	uint h;
 	uint algorithm;
@@ -40,13 +39,13 @@ layout (set=0, binding=1) uniform Parameters {
 shared uint local_value[gl_WorkGroupSize.x * 2];
 
 // naive comparison
-bool is_smaller(in const uint left, in const uint right){
-	return left < right;
+bool lesser_than(in const uint left, in const uint right){
+	return left > right;
 }
 
-// Pick comparison funtion: for colors we might want to compare perceptual brightness
+// Pick comparison funtion: for colors we want to compare perceptual brightness
 // instead of a naive straight integer value comparison.
-#define COMPARE is_smaller
+#define COMPARE lesser_than
 
 void global_compare_and_swap(ivec2 idx){
 	if (COMPARE(value[idx.x], value[idx.y])) {
@@ -56,8 +55,6 @@ void global_compare_and_swap(ivec2 idx){
 	}
 }
 
-// Performs compare-and-swap over elements held in shared,
-// workgroup-local memory
 void local_compare_and_swap(ivec2 idx){
 	if (COMPARE(local_value[idx.x], local_value[idx.y])) {
 		uint tmp = local_value[idx.x];
@@ -126,8 +123,6 @@ void local_disperse(in uint h){
 	}
 }
 
-// Perform binary merge sort for local elements, up to a maximum number 
-// of elements h.
 void local_bms(uint h){
 	uint t = gl_LocalInvocationID.x;
 	for ( uint hh = 2; hh <= h; hh <<= 1 ) {  // note:  h <<= 1 is same as h *= 2
@@ -137,20 +132,11 @@ void local_bms(uint h){
 }
 
 void main(){
-	
-	uint t = gl_LocalInvocationID.x;
- 
- 	// Calculate global offset for local workgroup
-	uint offset = gl_WorkGroupSize.x * 2 * gl_WorkGroupID.x;
 
-	// This shader can be called in four different modes:
-    // 
-	//  1. local flip+disperse (up to n == local_size_x * 2) 
-	//  2. big flip
-	//  3. big disperse
-	//  4. local disperse 
-    //
-    // Which one to choose is communicated via parameters.algorithm
+	uint t = gl_LocalInvocationID.x;
+
+    // We can use offset if we have more than one invocation.
+	uint offset = gl_WorkGroupSize.x * 2 * gl_WorkGroupID.x; 
 
 	if (parameters.algorithm <= eLocalDisperse){
 		// In case this shader executes a `local_` algorithm, we must 
@@ -176,13 +162,12 @@ void main(){
 	}
 
 	// Write local memory back to buffer in case we pulled in the first place.
-	//
+
 	if (parameters.algorithm <= eLocalDisperse){
 		barrier();
 		// push to global memory
 		value[offset+t*2]   = local_value[t*2];
 		value[offset+t*2+1] = local_value[t*2+1];
 	}
-
 
 }
