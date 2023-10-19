@@ -61,10 +61,17 @@ private:
     std::vector<vk::Buffer> settingsBuffer;
     glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
 
+    std::vector<uint32_t> particleCells; // particle (index) is in cell (value)
+    std::vector<vk::Buffer> particleCellBuffer;
+    vk::DescriptorSetLayout descriptorSetLayoutCell;
+    std::vector<vk::DescriptorSet> descriptorSetsCell;
+    vk::DescriptorPool descriptorPoolCell;
+
     vk::DescriptorSetLayout descriptorSetLayout;
     std::vector<vk::DescriptorSet> descriptorSets;
     vk::DescriptorPool descriptorPool;
  
+    gpu::ComputePass neighborhoodUpdatePass;
     gpu::ComputePass boundaryUpdatePass;
     gpu::ComputePass initPass;
     gpu::ComputePass predictDensityPass;

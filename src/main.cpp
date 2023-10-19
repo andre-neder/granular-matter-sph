@@ -226,6 +226,9 @@ private:
     }
 
     void cleanup(){
+        core.getDevice().waitIdle();
+
+        
         basicRenderPass.destroy();
         imguiRenderPass.destroy();
 

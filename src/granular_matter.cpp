@@ -33,28 +33,44 @@ GranularMatter::GranularMatter(gpu::Core* core)
         boundaryParticles.push_back(BoundaryParticle(i, settings.DOMAIN_HEIGHT, 0.f, -1.f));
     }
     
+    particleCells.resize(particles.size());
+    std::fill(particleCells.begin(), particleCells.end(), 0);
 
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     settingsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     boundaryParticlesBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         particlesBufferA[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         settingsBuffer[i]   = m_core->bufferFromData(&settings, sizeof(SPHSettings), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU);
         boundaryParticlesBuffer[i] = m_core->bufferFromData(boundaryParticles.data(),sizeof(Particle) * boundaryParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        particleCellBuffer[i] = m_core->bufferFromData(particleCells.data(),sizeof(uint32_t) * boundaryParticles.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
     }
     initFrameResources();
     createDescriptorPool();
     createDescriptorSetLayout();
     createDescriptorSets();
     
-    boundaryUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/boundary.comp", descriptorSetLayout);
-    initPass = gpu::ComputePass(m_core, SHADER_PATH"/init.comp", descriptorSetLayout);
-    predictDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_density.comp", descriptorSetLayout);
-    predictStressPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_stress.comp", descriptorSetLayout);
-    predictForcePass = gpu::ComputePass(m_core, SHADER_PATH"/predict_force.comp", descriptorSetLayout);
-    applyPass = gpu::ComputePass(m_core, SHADER_PATH"/apply.comp", descriptorSetLayout);
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayoutsParticle{
+        descriptorSetLayout
+    };
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayoutsParticleCell{
+        descriptorSetLayout,
+        descriptorSetLayoutCell
+    };
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayoutsCell{
+        descriptorSetLayoutCell
+    };
+
+    neighborhoodUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/neighborhood_update.comp", descriptorSetLayoutsParticleCell);
+    boundaryUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/boundary.comp", descriptorSetLayoutsParticle);
+    initPass = gpu::ComputePass(m_core, SHADER_PATH"/init.comp", descriptorSetLayoutsParticle);
+    predictDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_density.comp", descriptorSetLayoutsParticle);
+    predictStressPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_stress.comp", descriptorSetLayoutsParticle);
+    predictForcePass = gpu::ComputePass(m_core, SHADER_PATH"/predict_force.comp", descriptorSetLayoutsParticle);
+    applyPass = gpu::ComputePass(m_core, SHADER_PATH"/apply.comp", descriptorSetLayoutsParticle);
 }
 
 GranularMatter::~GranularMatter()
@@ -77,6 +93,7 @@ void GranularMatter::destroy(){
     destroyFrameResources();
     vk::Device device = m_core->getDevice();
 
+    neighborhoodUpdatePass.destroy();
     boundaryUpdatePass.destroy();
     initPass.destroy();
     predictStressPass.destroy();
@@ -89,8 +106,10 @@ void GranularMatter::destroy(){
         m_core->destroyBuffer(particlesBufferB[i]);
         m_core->destroyBuffer(settingsBuffer[i]);
         m_core->destroyBuffer(boundaryParticlesBuffer[i]);
+        m_core->destroyBuffer(particleCellBuffer[i]);
     }
-    
+    device.destroyDescriptorSetLayout(descriptorSetLayoutCell);
+    device.destroyDescriptorPool(descriptorPoolCell);
     device.destroyDescriptorSetLayout(descriptorSetLayout);
     device.destroyDescriptorPool(descriptorPool);
 }
@@ -103,7 +122,7 @@ std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_res
 
 void GranularMatter::updateSettings(float dt, int currentFrame){
 
-    settings.dt = dt; 
+    settings.dt = 1.f / 120.f;//dt; 
                         
     void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
     memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
@@ -139,6 +158,14 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     //* Wait for copy action
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
     
+    //* compute cell hashes
+    {
+        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, neighborhoodUpdatePass.m_pipeline);
+        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, neighborhoodUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, neighborhoodUpdatePass.m_pipelineLayout, 1, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
+        commandBuffers[currentFrame].dispatch((uint32_t)particleCells.size(), 1, 1);
+    }
+
     //* compute boundary densities
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
@@ -215,73 +242,128 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 }
 
 void GranularMatter::createDescriptorSetLayout() {
-    vk::DescriptorSetLayoutBinding particlesLayoutBindingIn(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
-    vk::DescriptorSetLayoutBinding particlesLayoutBindingOut(1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
-    vk::DescriptorSetLayoutBinding settingsLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
-    vk::DescriptorSetLayoutBinding boundaryLayoutBinding(3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
+    {
+        vk::DescriptorSetLayoutBinding buffer(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
+        std::array<vk::DescriptorSetLayoutBinding, 1> bindings = {
+            buffer
+        };
+        vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
+        try{
+            descriptorSetLayoutCell = m_core->getDevice().createDescriptorSetLayout(layoutInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    {
+        vk::DescriptorSetLayoutBinding particlesLayoutBindingIn(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
+        vk::DescriptorSetLayoutBinding particlesLayoutBindingOut(1, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
+        vk::DescriptorSetLayoutBinding settingsLayoutBinding(2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
+        vk::DescriptorSetLayoutBinding boundaryLayoutBinding(3, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
 
-    std::array<vk::DescriptorSetLayoutBinding, 4> bindings = {
-        particlesLayoutBindingIn, 
-        particlesLayoutBindingOut,
-        settingsLayoutBinding,
-        boundaryLayoutBinding
-    };
-    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
+        std::array<vk::DescriptorSetLayoutBinding, 4> bindings = {
+            particlesLayoutBindingIn, 
+            particlesLayoutBindingOut,
+            settingsLayoutBinding,
+            boundaryLayoutBinding
+        };
+        vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
 
-    try{
-        descriptorSetLayout = m_core->getDevice().createDescriptorSetLayout(layoutInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
+        try{
+            descriptorSetLayout = m_core->getDevice().createDescriptorSetLayout(layoutInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
     }
 }
 // Todo: connect all simulation frames
 void GranularMatter::createDescriptorSets() {
-    std::vector<vk::DescriptorSetLayout> layouts(gpu::MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
-    vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), layouts.data());
-    descriptorSets.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-    try{
-        descriptorSets = m_core->getDevice().allocateDescriptorSets(allocInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-    
-    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-
-        vk::DescriptorBufferInfo bufferInfoA(particlesBufferA[i], 0, sizeof(Particle) * particles.size());
-        vk::DescriptorBufferInfo bufferInfoB(particlesBufferB[i], 0, sizeof(Particle) * particles.size());
-        vk::DescriptorBufferInfo bufferInfoSettings(settingsBuffer[i], 0, sizeof(SPHSettings));
-        vk::DescriptorBufferInfo bufferInfoBoundary(boundaryParticlesBuffer[i], 0, sizeof(Particle) * boundaryParticles.size());
-    
-        vk::WriteDescriptorSet descriptorWriteA(descriptorSets[i], 0, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoA);
-        vk::WriteDescriptorSet descriptorWriteB(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoB);
-        vk::WriteDescriptorSet descriptorWriteSettings(descriptorSets[i], 2, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfoSettings);
-        vk::WriteDescriptorSet descriptorWriteBoundary(descriptorSets[i], 3, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoBoundary);
-
-        std::array<vk::WriteDescriptorSet, 4> descriptorWrites{
-            descriptorWriteA, 
-            descriptorWriteB,
-            descriptorWriteSettings,
-            descriptorWriteBoundary
-        };
+    {
+        std::vector<vk::DescriptorSetLayout> layouts(gpu::MAX_FRAMES_IN_FLIGHT, descriptorSetLayoutCell);
+        vk::DescriptorSetAllocateInfo allocInfo(descriptorPoolCell, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), layouts.data());
+        descriptorSetsCell.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        try{
+            descriptorSetsCell = m_core->getDevice().allocateDescriptorSets(allocInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
         
-        m_core->getDevice().updateDescriptorSets(descriptorWrites, nullptr);
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+
+            vk::DescriptorBufferInfo bufferInfoA(particleCellBuffer[i], 0, sizeof(uint32_t) * particleCells.size());
+            vk::WriteDescriptorSet descriptorWriteA(descriptorSetsCell[i], 0, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoA);
+
+            std::array<vk::WriteDescriptorSet, 1> descriptorWrites{
+                descriptorWriteA
+            };
+            
+            m_core->getDevice().updateDescriptorSets(descriptorWrites, nullptr);
+        }
+    }
+    {
+        std::vector<vk::DescriptorSetLayout> layouts(gpu::MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
+        vk::DescriptorSetAllocateInfo allocInfo(descriptorPool, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), layouts.data());
+        descriptorSets.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        try{
+            descriptorSets = m_core->getDevice().allocateDescriptorSets(allocInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+        
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+
+            vk::DescriptorBufferInfo bufferInfoA(particlesBufferA[i], 0, sizeof(Particle) * particles.size());
+            vk::DescriptorBufferInfo bufferInfoB(particlesBufferB[i], 0, sizeof(Particle) * particles.size());
+            vk::DescriptorBufferInfo bufferInfoSettings(settingsBuffer[i], 0, sizeof(SPHSettings));
+            vk::DescriptorBufferInfo bufferInfoBoundary(boundaryParticlesBuffer[i], 0, sizeof(Particle) * boundaryParticles.size());
+        
+            vk::WriteDescriptorSet descriptorWriteA(descriptorSets[i], 0, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoA);
+            vk::WriteDescriptorSet descriptorWriteB(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoB);
+            vk::WriteDescriptorSet descriptorWriteSettings(descriptorSets[i], 2, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfoSettings);
+            vk::WriteDescriptorSet descriptorWriteBoundary(descriptorSets[i], 3, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfoBoundary);
+
+            std::array<vk::WriteDescriptorSet, 4> descriptorWrites{
+                descriptorWriteA, 
+                descriptorWriteB,
+                descriptorWriteSettings,
+                descriptorWriteBoundary
+            };
+            
+            m_core->getDevice().updateDescriptorSets(descriptorWrites, nullptr);
+        }
     }
 }
 
 void GranularMatter::createDescriptorPool() {
-    vk::DescriptorPoolSize particlesInSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
-    vk::DescriptorPoolSize particlesOutSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
-    vk::DescriptorPoolSize settingsSize(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
-    std::array<vk::DescriptorPoolSize, 3> poolSizes{
-        particlesInSize, 
-        particlesOutSize,
-        settingsSize
-    };
+    {
+        vk::DescriptorPoolSize bufferSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        std::array<vk::DescriptorPoolSize, 1> poolSizes{
+            bufferSize
+        };
 
-    vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), poolSizes);
-    try{
-        descriptorPool = m_core->getDevice().createDescriptorPool(poolInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
+        vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), poolSizes);
+        try{
+            descriptorPoolCell = m_core->getDevice().createDescriptorPool(poolInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
+    }
+    {
+        vk::DescriptorPoolSize particlesInSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        vk::DescriptorPoolSize particlesOutSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        vk::DescriptorPoolSize settingsSize(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        vk::DescriptorPoolSize boundarySize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        std::array<vk::DescriptorPoolSize, 4> poolSizes{
+            particlesInSize, 
+            particlesOutSize,
+            settingsSize,
+            boundarySize
+        };
+
+        vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), poolSizes);
+        try{
+            descriptorPool = m_core->getDevice().createDescriptorPool(poolInfo);
+        }catch(std::exception& e) {
+            std::cerr << "Exception Thrown: " << e.what();
+        }
     }
 }

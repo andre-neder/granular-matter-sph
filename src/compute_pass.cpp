@@ -2,7 +2,7 @@
 
 using namespace gpu;
 
-ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, vk::DescriptorSetLayout descriptorSetLayout)
+ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts)
 {
     m_core = core;
     m_shaderModule = core->loadShaderModule(shaderFile);
@@ -18,8 +18,11 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, vk::Descriptor
 
     vk::PipelineLayoutCreateInfo layoutInfo{
         {},
-        descriptorSetLayout,
-        {}
+        (uint32_t)descriptorSetLayouts.size(),
+        descriptorSetLayouts.data(),
+        0,
+        {},
+        nullptr
     };
 
     try{

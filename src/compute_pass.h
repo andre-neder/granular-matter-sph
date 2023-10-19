@@ -3,7 +3,7 @@ namespace gpu {
     class ComputePass{
         public:
             inline ComputePass(){};
-            ComputePass(gpu::Core* core, std::string shaderFile, vk::DescriptorSetLayout descriptorSetLayout);
+            ComputePass(gpu::Core* core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts);
             inline ~ComputePass(){};
 
             void destroy();
