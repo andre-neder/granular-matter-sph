@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 extern bool simulationRunning;
+extern bool simulationStepForward;
 
 //? sphere Volume in dm^3 * density
 //   float MASS = (4.f / 3.f * (float) M_PI * (particleRadius * particleRadius * particleRadius)) * rho0; 
@@ -21,11 +22,11 @@ struct SPHSettings{
     float kernelRadius = 0.3f; 
 
     float mass = 1.f;
-    float stiffness = 50.f;	  
-    float dt = 0.000f;	  
-    float DOMAIN_WIDTH = 120.f; 
+    float stiffness = 1000.f;	  
+    float dt = 0.0006f;	  
+    float DOMAIN_WIDTH = 30.f; 
 
-    float DOMAIN_HEIGHT = 60.f; 
+    float DOMAIN_HEIGHT = 15.f; 
     float theta = 30.f * (float)M_PI / 180.f;     //* angle of repose
     float sigma = 0.25f;    //* viscosity coefficient
     float beta = 0.f;       //* cohesion intensity

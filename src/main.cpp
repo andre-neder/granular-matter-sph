@@ -89,6 +89,7 @@ private:
     }
 
     void createSyncObjects() {
+        std::cout << "MAX_FRAMES_IN_FLIGHT: " << gpu::MAX_FRAMES_IN_FLIGHT << std::endl;
         computeInFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         computeFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         imageAvailableSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);

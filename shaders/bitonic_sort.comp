@@ -21,11 +21,17 @@
 
 layout(local_size_x_id = 1) in; // Set value for local_size_x via specialization constant with id 1
 
+
+struct ParticleGridEntry{
+    uint particleIndex;
+    uint cellKey;
+};
+
 layout (set=0, binding = 0) buffer SortData 
 {
 	// This is our unsorted input buffer - tightly packed, 
 	// an array of N_GLOBAL_ELEMENTS elements.
-	uint value[];
+	ParticleGridEntry value[];
 };
 
 // Note: These parameters are currently unused.
@@ -36,20 +42,26 @@ layout (set=0, binding=1) uniform Parameters {
 
 // Workgroup local memory. We use this to minimise round-trips to global memory.
 // It allows us to evaluate a sorting network of up to 1024 with one shader invocation.
-shared uint local_value[gl_WorkGroupSize.x * 2];
+shared ParticleGridEntry local_value[gl_WorkGroupSize.x * 2];
 
 // naive comparison
 bool lesser_than(in const uint left, in const uint right){
 	return left > right;
 }
 
+
+bool cell_compare(in const ParticleGridEntry left, in const ParticleGridEntry right){
+	return left.cellKey > right.cellKey;
+}
+
+
 // Pick comparison funtion: for colors we want to compare perceptual brightness
 // instead of a naive straight integer value comparison.
-#define COMPARE lesser_than
+#define COMPARE cell_compare
 
 void global_compare_and_swap(ivec2 idx){
 	if (COMPARE(value[idx.x], value[idx.y])) {
-		uint tmp = value[idx.x];
+		ParticleGridEntry tmp = value[idx.x];
 		value[idx.x] = value[idx.y];
 		value[idx.y] = tmp;
 	}
@@ -57,7 +69,7 @@ void global_compare_and_swap(ivec2 idx){
 
 void local_compare_and_swap(ivec2 idx){
 	if (COMPARE(local_value[idx.x], local_value[idx.y])) {
-		uint tmp = local_value[idx.x];
+		ParticleGridEntry tmp = local_value[idx.x];
 		local_value[idx.x] = local_value[idx.y];
 		local_value[idx.y] = tmp;
 	}

@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "compute_pass.h"
+#include "global.h"
 
 struct BitonicSortParameters {
     enum eAlgorithmVariant : uint32_t {
@@ -16,6 +17,11 @@ struct BitonicSortParameters {
     eAlgorithmVariant algorithm;
 };
 
+struct ParticleGridEntry{
+    uint32_t particleIndex = 0;
+    uint32_t cellKey = UINT32_MAX;
+};
+
 struct Particle{
   glm::vec2 position = glm::vec2(0,0);
   glm::vec2 predPosition = glm::vec2(0,0);
@@ -24,7 +30,7 @@ struct Particle{
   glm::vec2 predVelocity = glm::vec2(0,0);
   // 8
   glm::vec2 pressureAcceleration = glm::vec2(0,0);
-  float rho = 0.0;
+  float rho = settings.rho0;
   float p = 0.0;
   // 12
   float V = 0.0;
@@ -72,8 +78,10 @@ private:
     std::vector<vk::Buffer> settingsBuffer;
     glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
 
-    std::vector<uint32_t> particleCells; // particle (index) is in cell (value)
+    std::vector<ParticleGridEntry> particleCells; // particle (index) is in cell (value)
     std::vector<vk::Buffer> particleCellBuffer;
+    std::vector<uint32_t> startingIndices; 
+    std::vector<vk::Buffer> startingIndicesBuffers;
     std::vector<vk::Buffer> bitonicSortParameterBuffers;
     vk::DescriptorSetLayout descriptorSetLayoutCell;
     std::vector<vk::DescriptorSet> descriptorSetsCell;
@@ -85,6 +93,7 @@ private:
  
     gpu::ComputePass neighborhoodUpdatePass;
     gpu::ComputePass bitonicSortPass;
+    gpu::ComputePass startingIndicesPass;
     gpu::ComputePass boundaryUpdatePass;
     gpu::ComputePass initPass;
     gpu::ComputePass predictDensityPass;

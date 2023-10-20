@@ -52,14 +52,6 @@ layout(set = 0, binding = 2) uniform Settings{
   float pad2;
 } settings;
 
-BoundaryParticle readCurrentParticle(){
-    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-    return boundary.particles[particleID];
-}
-void writeCurrentParticle(in BoundaryParticle p){
-    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-    boundary.particles[particleID] = p;
-}
 float rand(){
     return fract(sin(dot(vec2(settings.dt * 25165843.f, settings.dt * 786433), vec2(12.9898, 78.233))) * 43758.5453);
 }
@@ -127,12 +119,15 @@ vec2 gradW(float r, vec2 rij, float h){
 }
 
 void main(){
-    BoundaryParticle p_b = readCurrentParticle();
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    BoundaryParticle p_in = boundary.particles[particleID];
+    BoundaryParticle p_out = p_in;
+
     float sum_W_b = 0.f;
     for (int i = 0; i< boundary.particles.length();i++)
     {
         BoundaryParticle pi = boundary.particles[i];
-        vec2 p_pi = p_b.position - pi.position;
+        vec2 p_pi = p_in.position - pi.position;
         float r = length(p_pi);
 
         if (r < settings.kernelRadius)
@@ -141,9 +136,9 @@ void main(){
         }
     }
     float delta_b = 1.f / sum_W_b;
-    p_b.V = 1.f / delta_b;
-    p_b.psi_rho0 = settings.rho0 / delta_b;
-    p_b.rho = settings.rho0;
-    
-    writeCurrentParticle(p_b);
+    p_out.V = 1.f / delta_b;
+    p_out.psi_rho0 = settings.rho0 / delta_b;
+    p_out.rho = settings.rho0;
+
+    boundary.particles[particleID] = p_out;
 }

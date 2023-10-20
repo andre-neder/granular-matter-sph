@@ -53,21 +53,18 @@ layout(set = 0, binding = 2) uniform Settings{
   float pad2;
 } settings;
 
-uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-
-Particle readCurrentParticle(){
-    return inStorage.particles[particleID];
-}
-void writeCurrentParticle(in Particle p){
-    outStorage.particles[particleID] = p;
-}
 
 void main(){
-    Particle p = readCurrentParticle();
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    Particle p_in = inStorage.particles[particleID];
+    Particle p_out = p_in;
 
     // Semi-implicit euler
-    p.position += p.velocity * settings.dt;
-    p.velocity = p.predVelocity + p.pressureAcceleration * settings.dt;
+    p_out.position += p_in.velocity * settings.dt;
+    p_out.velocity = p_in.predVelocity + p_in.pressureAcceleration * settings.dt;
+    // Forward Euler
+    // p_out.velocity = p_in.predVelocity + p_in.pressureAcceleration * settings.dt;
+    // p_out.position += p_in.velocity * settings.dt;
 
-    writeCurrentParticle(p);
+    outStorage.particles[particleID] = p_out;
 }

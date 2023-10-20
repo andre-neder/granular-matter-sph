@@ -68,15 +68,6 @@ layout(set = 0, binding = 2) uniform Settings{
   float pad2;
 } settings;
 
-uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-
-Particle readCurrentParticle(){
-    return inStorage.particles[particleID];
-}
-void writeCurrentParticle(in Particle p){
-    outStorage.particles[particleID] = p;
-}
-
 float rand(){
     return fract(sin(dot(vec2(settings.dt * 25165843.f, settings.dt * 786433), vec2(12.9898, 78.233))) * 43758.5453);
 }
@@ -145,14 +136,16 @@ vec2 gradW(float r, vec2 rij, float h){
 }
 
 void main(){
-    Particle p = readCurrentParticle();
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    Particle p_in = inStorage.particles[particleID];
+    Particle p_out = p_in;
     //* Init pressure pressureAcceleration
     vec2 pressureAcceleration = vec2(0.f);
     vec2 frictionalAcceleration = vec2(0.f);
 
     float c = sqrt(2.f * length(settings.G) * settings.DOMAIN_HEIGHT); //* maximum velocity
 
-    float pRhoSq = p.rho * p.rho;
+    float pRhoSq = p_in.rho * p_in.rho;
     float eps = 0.01f;
     
     //* Sum up pressure forces and strain
@@ -164,7 +157,7 @@ void main(){
             continue;
         }
 
-        vec2 p_pi = p.predPosition - pi.predPosition;
+        vec2 p_pi = p_in.predPosition - pi.predPosition;
         float r = length(p_pi);
         
         if (r < settings.kernelRadius)
@@ -172,8 +165,8 @@ void main(){
             //* Pressure calculation
             float piRhoSq = pi.rho * pi.rho;
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
-            pressureAcceleration -= settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
-            vec2 a_f = -settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+            pressureAcceleration -= settings.mass * ((p_in.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+            vec2 a_f = -settings.mass * ((p_in.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
             // float v = (2.f * settings.alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
             // float omicron = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
@@ -182,28 +175,31 @@ void main(){
         }
     }
     
+
+
     //* For all boundary particles
     for (int i = 0; i < boundary.particles.length();i++)
     {
         BoundaryParticle pb = boundary.particles[i];
        
-        vec2 p_pb = p.predPosition - pb.position;
+        vec2 p_pb = p_in.predPosition - pb.position;
         float r = length(p_pb);
         
         if (r < settings.kernelRadius)
         {
             //* using normal instead of direction to boundary
             vec2 gradient = gradW(p_pb, settings.kernelRadius);
-            pressureAcceleration -= pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
-            vec2 a_f = -settings.mass * pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
-
-            float v = (settings.sigma * settings.kernelRadius * c) / (2.f* p.rho); //* viscousity constant 
-            float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+            pressureAcceleration -= pb.psi_rho0 * (p_in.p / pRhoSq) * gradient; 
+            vec2 a_f = -settings.mass * pb.psi_rho0 * (p_in.stress / pRhoSq) * gradient; 
+            //Todo: vel / predvel ???
+            float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p_in.rho); //* viscousity constant 
+            float omicron = -v * (min(dot((p_in.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
             vec2 a_v = pb.psi_rho0 * omicron * gradient;
             frictionalAcceleration += a_f + a_v; //max(a_f, a_v);  a_v +
         }
     }
     
-    p.pressureAcceleration = pressureAcceleration + frictionalAcceleration;
-    writeCurrentParticle(p);
+    p_out.pressureAcceleration = pressureAcceleration;// + frictionalAcceleration;
+
+    outStorage.particles[particleID] = p_out;
 }

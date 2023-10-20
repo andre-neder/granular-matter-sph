@@ -1,5 +1,5 @@
 #version 450
-#define VULKAN 100
+#define UINT_MAX (0xffffffff)
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
 #define BUFFER_A 0
@@ -54,29 +54,44 @@ layout(set = 0, binding = 2) uniform Settings{
   float pad2;
 } settings;
 
-layout(set = 1, binding = 0) buffer CellOutput{
-    uint particles[];
-} cellOut;
+struct ParticleGridEntry{
+    uint particleIndex;
+    uint cellKey;
+};
 
-uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+layout(set = 1, binding = 0) buffer GridLookUpStorage{
+    ParticleGridEntry entries[];
+} gridLookup;
 
-Particle readCurrentParticle(){
-    return inStorage.particles[particleID];
-}
-void writeCurrentParticle(in Particle p){
-    outStorage.particles[particleID] = p;
-}
+layout(set = 1, binding = 2) buffer StartringIndicesStorage{
+    uint startingIndices[];
+};
 
-uint hash(ivec2 cell){
-    return (cell.x * 3079 + cell.y * 1543) % cellOut.particles.length();
+uint calculateCellKey(uvec2 cell){
+    return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
 }
 
 void main(){
-    Particle p = readCurrentParticle();
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    Particle p_in = inStorage.particles[particleID];
+    Particle p_out = p_in;
+
+    //* Same as init 
+    vec2 predVelocity = p_in.velocity + settings.G * settings.dt;
+    vec2 predPosition = p_in.position + predVelocity * 1.f/120.f;
+
     
-    ivec2 gridCell = ivec2(floor(p.position / settings.kernelRadius));
+    //Todo: position or predposition for grid stuff ??
+    uvec2 gridCell = uvec2(predPosition.x / settings.kernelRadius, predPosition.y / settings.kernelRadius);
+    
+    uint cellKey = calculateCellKey(gridCell);
 
-    uint hash = hash(gridCell);
+    gridLookup.entries[particleID].particleIndex = particleID;
+    gridLookup.entries[particleID].cellKey = cellKey;
+    startingIndices[particleID] = UINT_MAX;
 
-    cellOut.particles[particleID] = hash;
+    // p_out.psi_rho0 = gridCell.x;
+    // p_out.pad0 = gridCell.y;
+    // p_out.pad1 = cellKey;
+    // inStorage.particles[particleID] = p_out;
 }

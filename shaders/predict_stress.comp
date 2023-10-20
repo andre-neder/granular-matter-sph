@@ -48,34 +48,25 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 } boundary;
 
 layout(set = 0, binding = 2) uniform Settings{
- vec2 G;       
-  float rho0;
-  float kernelRadius;		   
+    vec2 G;       
+    float rho0;
+    float kernelRadius;		   
 
-  float mass;		 
-  float stiffness;
-  float dt;	  
-  float DOMAIN_WIDTH;
+    float mass;		 
+    float stiffness;
+    float dt;	  
+    float DOMAIN_WIDTH;
 
-  float DOMAIN_HEIGHT;
-  float theta;
-  float sigma;
-  float beta;
+    float DOMAIN_HEIGHT;
+    float theta;
+    float sigma;
+    float beta;
 
-  float C;
-  float alpha;
-  float pad1;
-  float pad2;
+    float C;
+    float alpha;
+    float pad1;
+    float pad2;
 } settings;
-
-uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-
-Particle readCurrentParticle(){
-    return inStorage.particles[particleID];
-}
-void writeCurrentParticle(in Particle p){
-    outStorage.particles[particleID] = p;
-}
 
 //* https://github.com/glslify/glsl-frobenius/blob/master/index.glsl
 float frobenius(mat2 m) {
@@ -154,7 +145,9 @@ vec2 gradW(float r, vec2 rij, float h){
 }
 
 void main(){
-    Particle p = readCurrentParticle();
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    Particle p_in = inStorage.particles[particleID];
+    Particle p_out = p_in;
 
     //* Strain & Stress 
     mat2 velocityGradient = mat2(0.f);
@@ -164,14 +157,14 @@ void main(){
     for (int i = 0; i< inStorage.particles.length();i++)
     {
         Particle pi = inStorage.particles[i];
-        vec2 p_pi = p.predPosition - pi.predPosition;
+        vec2 p_pi = p_in.predPosition - pi.predPosition;
         float r = length(p_pi);
         
         if (r < settings.kernelRadius)
         {
             //* Strain & Stress 
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
-            velocityGradient += pi.V * outerProduct(gradient, p.predVelocity - pi.predVelocity);
+            velocityGradient += pi.V * outerProduct(gradient, p_in.predVelocity - pi.predVelocity);
             D += (1.f / pi.rho) * outerProduct(gradient, gradient);
         }
     }
@@ -181,37 +174,37 @@ void main(){
     for (int i = 0; i < boundary.particles.length();i++)
     {
         BoundaryParticle pb = boundary.particles[i];
-        vec2 p_pb = p.predPosition - pb.position;
+        vec2 p_pb = p_in.predPosition - pb.position;
         float r = length(p_pb);
        
         if (r < settings.kernelRadius)
         {
             //* Strain & Stress 
             vec2 gradient = gradW(p_pb, settings.kernelRadius);
-            velocityGradient += pb.V * outerProduct(gradient, p.predVelocity - pb.predVelocity);
+            //Todo: predvel ??
+            velocityGradient += pb.V * outerProduct(gradient, p_in.predVelocity - pb.predVelocity);
             D += (1.f / pb.rho) * outerProduct(gradient, gradient);
         }
     }
     //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
     //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
-    D *= (2.f * settings.mass * settings.mass * settings.dt) / (p.rho * p.rho);
+    D *= (2.f * settings.mass * settings.mass * settings.dt) / (p_in.rho * p_in.rho);
     mat2 strainTensor = 0.5f * (velocityGradient + transpose(velocityGradient));
     mat2 stressTensor = inverse(D) * strainTensor;
     mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
     mat2 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
     
     float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
-    float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
-    if(p.p > EPSILON && frobenius(deviatoricStressTensor) > EPSILON){
-        p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
+    float yield = sqrt(3.f) * alpha * p_in.p; //* Drucker-Prager yield criterion
+    if(p_in.p > EPSILON && frobenius(deviatoricStressTensor) > EPSILON){
+        p_out.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
     }
     else{
-        p.stress = mat2(0);
+        p_out.stress = mat2(0);
     }
-    p.pad1 = alpha;
     // p.cohesion = min(frobenius(stressTensor), settings.beta * settings.beta * settings.C);
 
-    writeCurrentParticle(p);
+    outStorage.particles[particleID] = p_out;
 }
 
 // volume = mass / density

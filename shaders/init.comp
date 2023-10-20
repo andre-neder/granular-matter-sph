@@ -54,23 +54,16 @@ layout(set = 0, binding = 2) uniform Settings{
   float pad2;
 } settings;
 
-uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
-
-Particle readCurrentParticle(){
-    return inStorage.particles[particleID];
-}
-void writeCurrentParticle(in Particle p){
-    outStorage.particles[particleID] = p;
-}
 
 void main(){
-    Particle p = readCurrentParticle();
-    //* Reset pressure & pressureAcceleration
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    Particle p_in = inStorage.particles[particleID];
+    Particle p_out = p_in;
 
-    p.predVelocity = p.velocity;
-    p.predVelocity += settings.G * settings.dt;
-    p.predPosition = p.position;
-    p.predPosition += p.velocity * 1.f/120.f;
+    vec2 predVelocity = p_in.velocity + settings.G * settings.dt;
+    p_out.predVelocity = predVelocity;
+    vec2 predPosition = p_in.position + predVelocity * 1.f/120.f;
+    p_out.predPosition = predPosition;
 
-    writeCurrentParticle(p);
+    outStorage.particles[particleID] = p_out;
 }

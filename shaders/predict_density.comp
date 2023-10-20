@@ -1,5 +1,5 @@
 #version 450
-#define VULKAN 100
+#define UINT_MAX (0xffffffff)
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
 #define BUFFER_A 0
@@ -68,14 +68,18 @@ layout(set = 0, binding = 2) uniform Settings{
   float pad2;
 } settings;
 
-uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+struct ParticleGridEntry{
+    uint particleIndex;
+    uint cellKey;
+};
 
-Particle readCurrentParticle(){
-    return inStorage.particles[particleID];
-}
-void writeCurrentParticle(in Particle p){
-    outStorage.particles[particleID] = p;
-}
+layout(set = 1, binding = 0) buffer GridLookUpStorage{
+    ParticleGridEntry entries[];
+} gridLookup;
+
+layout(set = 1, binding = 2) buffer StartringIndicesStorage{
+    uint startingIndices[];
+};
 
 //* https://github.com/glslify/glsl-frobenius/blob/master/index.glsl
 float frobenius(mat2 m) {
@@ -89,7 +93,6 @@ float frobenius(mat3 m) {
 float rand(){
     return fract(sin(dot(vec2(settings.dt * 25165843.f, settings.dt * 786433), vec2(12.9898, 78.233))) * 43758.5453);
 }
-
 
 float W(float r, float h){
     float volume = PI * pow(h, 4.f) / 6.f;
@@ -154,40 +157,91 @@ vec2 gradW(float r, vec2 rij, float h){
     // }
 }
 
+uint calculateCellKey(uvec2 cell){
+    return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
+}
+
 void main(){
-    Particle p = readCurrentParticle();
+    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    Particle p_in = inStorage.particles[particleID];
+    Particle p_out = p_in;
     //* Density
-    p.rho = 0.f;
+    float rho = 0.f;
 
     //* For all fluid particles
     for (int i = 0; i< inStorage.particles.length();i++)
     {
         Particle pi = inStorage.particles[i];
-        vec2 p_pi = p.predPosition - pi.predPosition;
+        vec2 p_pi = p_in.predPosition - pi.predPosition;
         float r = length(p_pi);
        
         if (r < settings.kernelRadius)
         {
             //* Density
-            p.rho += W(r, settings.kernelRadius);
+            rho += W(r, settings.kernelRadius);
         }
     }
-    p.rho *= settings.mass;
+    rho *= settings.mass;
+
+    // uvec2 particleCell = uvec2(uint(p_in.predPosition.x / settings.kernelRadius), uint(p_in.predPosition.y / settings.kernelRadius));
+
+    // for (int k = -1; k <= 1; k++){
+    //     for (int l = -1; l <= 1; l++){
+    //         // current cell coordinate
+    //         uvec2 cell = uvec2(particleCell.x + k, particleCell.y + l);
+    //         if(cell.x == UINT_MAX || cell.y == UINT_MAX || cell.x > (settings.DOMAIN_WIDTH / settings.kernelRadius) || cell.y >= (settings.DOMAIN_HEIGHT / settings.kernelRadius)){
+    //             continue;
+    //         }
+    //         // current cell key
+    //         uint cellKey = calculateCellKey(cell);
+            
+    //         // index of current entry for cell
+    //         uint startIndex = startingIndices[cellKey];
+
+    //         if(startIndex == UINT_MAX){
+    //             continue;
+    //         }
+    //         // While particle is in the same cell
+    //         for(uint i = startIndex; i < gridLookup.entries.length(); i++)
+    //         {
+    //             if(gridLookup.entries[i].cellKey != cellKey){
+    //                 break;
+    //             }
+    //             // index of particle of current index
+    //             uint particleIndex = gridLookup.entries[i].particleIndex;
+    //             Particle pi = inStorage.particles[particleIndex];
+
+    //             vec2 p_pi = p_in.predPosition - pi.predPosition;
+    //             float r = length(p_pi);
+            
+    //             if (r < settings.kernelRadius)
+    //             {
+    //                 //* Density
+    //                 rho += W(r, settings.kernelRadius);
+    //             }
+    //         }
+    //     } 
+    // }
+
+    // rho *= settings.mass;
+
   
     //* For all boundary particles
     for (int i = 0; i < boundary.particles.length();i++)
     {
         BoundaryParticle pb = boundary.particles[i];
-        vec2 p_pb = p.predPosition - pb.position;
+        vec2 p_pb = p_in.predPosition - pb.position;
         float r = length(p_pb);
        
         if (r < settings.kernelRadius)
         {
             //* Density
-            p.rho += pb.psi_rho0 * W(r, settings.kernelRadius);
+            rho += pb.psi_rho0 * W(r, settings.kernelRadius);
         }
     }
     
+    p_out.rho = rho;
+
     //* tait's equation
     // p.rho = max(p.rho, settings.rho0); 
     // float exponent = 7.f;
@@ -195,13 +249,12 @@ void main(){
     // p.p = B * (pow(max(p.rho, settings.rho0) / settings.rho0, exponent) - 1.f); 
 
     //* Ideal gas equation
-    p.p = settings.stiffness * (p.rho - settings.rho0); 
+    float p = settings.stiffness * (rho - settings.rho0); 
     
-    p.p = max(p.p, 0.f);     //? required?
-    p.V = settings.mass / p.rho;
-    p.pad0 = p.rho / settings.rho0;
+    p_out.p = max(p, 0.f);     //? required?
+    p_out.V = settings.mass / rho;
 
-    writeCurrentParticle(p);
+    outStorage.particles[particleID] = p_out;
 }
 
 // volume = mass / density
