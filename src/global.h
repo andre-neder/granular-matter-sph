@@ -17,7 +17,8 @@ extern bool simulationStepForward;
 #define volume (float) M_PI * (particleRadius * particleRadius)
 
 struct SPHSettings{
-    glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
+    // glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
+    glm::vec2 G = glm::vec2(0.f, 0.f); //* m/s^2
     float rho0 = 1.5f; 
     float kernelRadius = 0.3f; 
 

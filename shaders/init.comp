@@ -19,6 +19,7 @@ struct Particle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
+    float pad[32];
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
@@ -64,6 +65,11 @@ void main(){
     p_out.predVelocity = predVelocity;
     vec2 predPosition = p_in.position + predVelocity * 1.f/120.f;
     p_out.predPosition = predPosition;
+
+    
+    for (int i = 0; i < 32; i++){
+        p_out.pad[i] = 11111;
+    }
 
     outStorage.particles[particleID] = p_out;
 }

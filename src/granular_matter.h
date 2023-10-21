@@ -40,6 +40,7 @@ struct Particle{
   // 16
   glm::mat2 stress = glm::mat2(1.0);
   // 20
+  float pad[32];
   Particle(){};
   inline Particle(float x, float y) { position = glm::vec2(x, y); }
 
