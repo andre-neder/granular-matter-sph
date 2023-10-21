@@ -4,6 +4,7 @@
 #include "global.h"
 
 BitonicSortParameters params;
+uint32_t workgroup_size_x;
 
 GranularMatter::GranularMatter(gpu::Core* core)
 {
@@ -16,7 +17,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
 
-    float initialDistance = 0.9f * settings.kernelRadius;
+    float initialDistance = 0.5f * settings.kernelRadius;
 
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
@@ -39,7 +40,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     startingIndices.resize(particles.size());
     std::fill(startingIndices.begin(), startingIndices.end(), UINT32_MAX);
 
-    bitonicSortParameterBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    // bitonicSortParameterBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     settingsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
@@ -52,7 +53,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
         settingsBuffer[i]   = m_core->bufferFromData(&settings, sizeof(SPHSettings), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU);
         boundaryParticlesBuffer[i] = m_core->bufferFromData(boundaryParticles.data(),sizeof(Particle) * boundaryParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particleCellBuffer[i] = m_core->bufferFromData(particleCells.data(), sizeof(ParticleGridEntry) * particleCells.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
-        bitonicSortParameterBuffers[i] = m_core->bufferFromData(&params, sizeof(BitonicSortParameters), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU);
+        // bitonicSortParameterBuffers[i] = m_core->bufferFromData(&params, sizeof(BitonicSortParameters), vk::BufferUsageFlagBits::eUniformBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_CPU_TO_GPU);
         startingIndicesBuffers [i] = m_core->bufferFromData(startingIndices.data(), sizeof(uint32_t) * startingIndices.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
     }
     initFrameResources();
@@ -70,21 +71,21 @@ GranularMatter::GranularMatter(gpu::Core* core)
     std::vector<vk::DescriptorSetLayout> descriptorSetLayoutsCell{
         descriptorSetLayoutCell
     };
-
+    
     //* Sorting stuff
-    const vk::PhysicalDeviceLimits limits = m_core->getPhysicalDevice().getProperties().limits;
-    const uint32_t n = (uint32_t)particles.size();
-    uint32_t workgroup_size_x = 1;
-    if(n < limits.maxComputeWorkGroupInvocations * 2){
+    vk::PhysicalDeviceLimits limits = m_core->getPhysicalDevice().getProperties().limits;
+    uint32_t n = (uint32_t)particleCells.size();
+    workgroup_size_x = 1;
+    auto maxWorkGroupInvocations = (uint32_t)32;
+    if(n < maxWorkGroupInvocations * 2){
         workgroup_size_x = n / 2;
     }
     else{
-        workgroup_size_x = limits.maxComputeWorkGroupInvocations;
+        workgroup_size_x = maxWorkGroupInvocations;
     }
 
-
     neighborhoodUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/neighborhood_update.comp", descriptorSetLayoutsParticleCell);
-    bitonicSortPass = gpu::ComputePass(m_core, SHADER_PATH"/bitonic_sort.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workgroup_size_x) });
+    bitonicSortPass = gpu::ComputePass(m_core, SHADER_PATH"/bitonic_sort.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(BitonicSortParameters));
     startingIndicesPass = gpu::ComputePass(m_core, SHADER_PATH"/start_indices.comp", descriptorSetLayoutsCell); // , { gpu::SpecializationConstant(1, workgroup_size_x) }
 
     boundaryUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/boundary.comp", descriptorSetLayoutsParticle);
@@ -132,7 +133,7 @@ void GranularMatter::destroy(){
         m_core->destroyBuffer(settingsBuffer[i]);
         m_core->destroyBuffer(boundaryParticlesBuffer[i]);
         m_core->destroyBuffer(particleCellBuffer[i]);
-        m_core->destroyBuffer(bitonicSortParameterBuffers[i]);
+        // m_core->destroyBuffer(bitonicSortParameterBuffers[i]);
         m_core->destroyBuffer(startingIndicesBuffers[i]);
     }
     device.destroyDescriptorSetLayout(descriptorSetLayoutCell);
@@ -162,11 +163,16 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
     startTime = std::chrono::high_resolution_clock::now();
-    std::cout << dt << std::endl;
+    // std::cout << dt << std::endl;
     // float accumulator = dt;
     // float stepSize = 1.f/120.f;
     
     updateSettings(dt, currentFrame);
+
+    vk::MemoryBarrier writeReadBarrier{
+        vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eMemoryRead,
+        vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite
+    };
 
     // while( accumulator >= dt ){
     vk::CommandBufferBeginInfo beginInfo;
@@ -185,7 +191,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     }
 
     //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
 
 
     //* Copy data from last frame B to current frame A 
@@ -195,7 +201,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
     }
     //* Wait for copy action
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
     
     //* compute cell hashes
     {
@@ -205,7 +211,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].dispatch((uint32_t)particleCells.size(), 1, 1);
     }
     //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
 
     //* Sort cell hashes
     {   
@@ -213,32 +219,20 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         //? https://github.com/tgfrerer/island/blob/wip/apps/examples/bitonic_merge_sort_example/bitonic_merge_sort_example_app/bitonic_merge_sort_example_app.cpp
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipeline);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipelineLayout, 0, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
-            
-        const vk::PhysicalDeviceLimits limits = m_core->getPhysicalDevice().getProperties().limits;
-        const uint32_t n = (uint32_t)particles.size();
-        uint32_t workgroup_size_x = 1;
-        if(n < limits.maxComputeWorkGroupInvocations * 2){
-            workgroup_size_x = n / 2;
-        }
-        else{
-            workgroup_size_x = limits.maxComputeWorkGroupInvocations;
-        }
-        const uint32_t workgroup_count = n / ( workgroup_size_x * 2 );
+
+        uint32_t n = (uint32_t)particleCells.size();
+        uint32_t workgroup_count = n / ( workgroup_size_x * 2 );
 
         auto dispatch = [ & ]( uint32_t h ) {
 		    params.h = h;
 
-            void* mappedData = m_core->mapBuffer(bitonicSortParameterBuffers[currentFrame]);
-            memcpy(mappedData, &params, (size_t) sizeof(BitonicSortParameters));
-            m_core->flushBuffer(bitonicSortParameterBuffers[currentFrame], 0, (size_t) sizeof(BitonicSortParameters));
-            m_core->unmapBuffer(bitonicSortParameterBuffers[currentFrame]);
-
+            commandBuffers[currentFrame].pushConstants(bitonicSortPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(BitonicSortParameters), &params);
             commandBuffers[currentFrame].dispatch( workgroup_count, 1, 1 );
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
-
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+            
         };
 
-        auto local_bitonic_merge_sort_example = [ & ]( uint32_t h ) {
+        auto local_bms = [ & ]( uint32_t h ) {
             params.algorithm = BitonicSortParameters::eAlgorithmVariant::eLocalBitonicMergeSortExample;
             dispatch( h );
         };
@@ -262,8 +256,9 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         uint32_t h = workgroup_size_x * 2;
 		assert( h <= n );
 		assert( h % 2 == 0 );
+		assert( (h != 0) && ((h & (h - 1)) == 0) );
 
-		local_bitonic_merge_sort_example( h );
+		local_bms( h );
 		// we must now double h, as this happens before every flip
 		h *= 2;
 
@@ -294,7 +289,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     }
 
     //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
 
 
     //* init pass A -> B
@@ -304,7 +299,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].dispatch((uint32_t)particles.size(), 1, 1);
     }
     //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
 
     //* predict density B -> A
     {
@@ -314,7 +309,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].dispatch((uint32_t)particles.size(), 1, 1);
     }
     //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
     //* predict stress A -> B
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipeline);
@@ -323,7 +318,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].dispatch((uint32_t)particles.size(), 1, 1);
     }
     //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);
+    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
     //* predict force B -> A
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
@@ -335,7 +330,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     //* When simulation is running or should proceed one step apply calculated forces
     if(simulationRunning || simulationStepForward){
         //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, nullptr, nullptr);      
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
 
         //* apply force A -> B
         {
@@ -346,12 +341,12 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         simulationStepForward = false;
 
         //* Wait for copy action
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTopOfPipe, {}, nullptr, nullptr, nullptr);
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTopOfPipe, {}, writeReadBarrier, nullptr, nullptr);
 
     }
     else{
         //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer , {}, nullptr, nullptr, nullptr);
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer , {}, writeReadBarrier, nullptr, nullptr);
 
         //* copy A -> B
         {
@@ -360,7 +355,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
             commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
         }
         //* Wait for copy action
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTopOfPipe, {}, nullptr, nullptr, nullptr);
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTopOfPipe, {}, writeReadBarrier, nullptr, nullptr);
 
     }
     
@@ -377,11 +372,11 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 void GranularMatter::createDescriptorSetLayout() {
     {
         vk::DescriptorSetLayoutBinding buffer(0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
-        vk::DescriptorSetLayoutBinding buffer2(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
+        // vk::DescriptorSetLayoutBinding buffer2(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
         vk::DescriptorSetLayoutBinding buffer3(2, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute, nullptr);
-        std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {
+        std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {
             buffer,
-            buffer2,
+            // buffer2,
             buffer3
         };
         vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
@@ -429,15 +424,15 @@ void GranularMatter::createDescriptorSets() {
             vk::DescriptorBufferInfo bufferInfo1(particleCellBuffer[i], 0, sizeof(ParticleGridEntry) * particleCells.size());
             vk::WriteDescriptorSet descriptorWrite1(descriptorSetsCell[i], 0, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfo1);
 
-            vk::DescriptorBufferInfo bufferInfo2(bitonicSortParameterBuffers[i], 0, sizeof(BitonicSortParameters));
-            vk::WriteDescriptorSet descriptorWrite2(descriptorSetsCell[i], 1, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfo2);
+            // vk::DescriptorBufferInfo bufferInfo2(bitonicSortParameterBuffers[i], 0, sizeof(BitonicSortParameters));
+            // vk::WriteDescriptorSet descriptorWrite2(descriptorSetsCell[i], 1, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfo2);
 
             vk::DescriptorBufferInfo bufferInfo3(startingIndicesBuffers[i], 0, sizeof(uint32_t) * startingIndices.size());
             vk::WriteDescriptorSet descriptorWrite3(descriptorSetsCell[i], 2, 0, 1, vk::DescriptorType::eStorageBuffer, {}, &bufferInfo3);
 
-            std::array<vk::WriteDescriptorSet, 3> descriptorWrites{
+            std::array<vk::WriteDescriptorSet, 2> descriptorWrites{
                 descriptorWrite1,
-                descriptorWrite2,
+                // descriptorWrite2,
                 descriptorWrite3
             };
             
@@ -481,11 +476,11 @@ void GranularMatter::createDescriptorSets() {
 void GranularMatter::createDescriptorPool() {
     {
         vk::DescriptorPoolSize bufferSize(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
-        vk::DescriptorPoolSize bufferSize2(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        // vk::DescriptorPoolSize bufferSize2(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
         vk::DescriptorPoolSize bufferSize3(vk::DescriptorType::eStorageBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
-        std::array<vk::DescriptorPoolSize, 3> poolSizes{
+        std::array<vk::DescriptorPoolSize, 2> poolSizes{
             bufferSize,
-            bufferSize2,
+            // bufferSize2,
             bufferSize3
         };
 

@@ -4,11 +4,11 @@ using namespace gpu;
 
 
 ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts) : 
-    ComputePass::ComputePass(core, shaderFile, descriptorSetLayouts, std::vector<gpu::SpecializationConstant>())
+    ComputePass::ComputePass(core, shaderFile, descriptorSetLayouts, std::vector<gpu::SpecializationConstant>(), 0)
 {
     // ComputePass(core, shaderFile, descriptorSetLayouts, std::vector<gpu::SpecializationConstant>());
 }
-ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations)
+ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations, uint32_t pushConstantSize)
 {
     m_core = core;
     m_shaderModule = core->loadShaderModule(shaderFile);
@@ -31,7 +31,6 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
 
     vk::PipelineShaderStageCreateInfo stageInfo;
     if(entries.size() > 0){
-        std::cout << "Spezialisation constant" << std::endl;
         vk::SpecializationInfo spec_info = {
             (uint32_t)entries.size(),
             entries.data(),
@@ -54,16 +53,34 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
             "main"
         };
     }
-    
+    vk::PipelineLayoutCreateInfo layoutInfo;
+    // uint32_t pushConstantSize = sizeof(float) * 2;
+    if(pushConstantSize > 0){
+        vk::PushConstantRange pushConstantRange{
+            vk::ShaderStageFlagBits::eCompute,
+            0,
+            pushConstantSize
+        };
 
-    vk::PipelineLayoutCreateInfo layoutInfo{
-        {},
-        (uint32_t)descriptorSetLayouts.size(),
-        descriptorSetLayouts.data(),
-        0,
-        {},
-        nullptr
-    };
+        layoutInfo = {
+            {},
+            (uint32_t)descriptorSetLayouts.size(),
+            descriptorSetLayouts.data(),
+            1,
+            &pushConstantRange,
+            nullptr
+        };
+    }
+    else{
+        layoutInfo = {
+            {},
+            (uint32_t)descriptorSetLayouts.size(),
+            descriptorSetLayouts.data(),
+            0,
+            {},
+            nullptr
+        };
+    }
 
     try{
         m_pipelineLayout = core->getDevice().createPipelineLayout(layoutInfo, nullptr);

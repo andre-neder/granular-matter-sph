@@ -25,9 +25,10 @@ struct SPHSettings{
     float mass = 1.f;
     float stiffness = 1000.f;	  
     float dt = 0.0006f;	  
-    float DOMAIN_WIDTH = 30.f; 
-
-    float DOMAIN_HEIGHT = 15.f; 
+    // float DOMAIN_WIDTH = 30.f; 
+    float DOMAIN_WIDTH = 4.f;
+    // float DOMAIN_HEIGHT = 15.f; 
+    float DOMAIN_HEIGHT = 3.f; 
     float theta = 30.f * (float)M_PI / 180.f;     //* angle of repose
     float sigma = 0.25f;    //* viscosity coefficient
     float beta = 0.f;       //* cohesion intensity

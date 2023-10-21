@@ -13,7 +13,7 @@ struct BitonicSortParameters {
         eBigFlip                      = 2,
         eBigDisperse                  = 3,
     };
-    uint32_t          h;
+    uint32_t          h = 0;
     eAlgorithmVariant algorithm;
 };
 
@@ -77,7 +77,7 @@ private:
     
     std::vector<vk::Buffer> particlesBufferA;
     std::vector<vk::Buffer> settingsBuffer;
-    glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
+    glm::ivec3 computeSpace = glm::ivec3(16, 8, 1);
 
     std::vector<ParticleGridEntry> particleCells; // particle (index) is in cell (value)
     std::vector<vk::Buffer> particleCellBuffer;

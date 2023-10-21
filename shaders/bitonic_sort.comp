@@ -5,8 +5,8 @@
 // It is follows the alternative notation for bitonic sorting networks, as given at:
 // https://en.m.wikipedia.org/wiki/Bitonic_sorter#Alternative_representation
 
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
+// #extension GL_ARB_separate_shader_objects : enable
+// #extension GL_ARB_shading_language_420pack : enable
 
 // Note that there exist hardware limits - look these up for your GPU via https://vulkan.gpuinfo.org/
 // sizeof(local_value[]) : Must be <= maxComputeSharedMemorySize
@@ -35,7 +35,8 @@ layout (set=0, binding = 0) buffer SortData
 };
 
 // Note: These parameters are currently unused.
-layout (set=0, binding=1) uniform Parameters {
+// layout (set=0, binding=1) uniform Parameters {
+layout ( push_constant ) uniform Parameters {
 	uint h;
 	uint algorithm;
 } parameters;
@@ -55,8 +56,6 @@ bool cell_compare(in const ParticleGridEntry left, in const ParticleGridEntry ri
 }
 
 
-// Pick comparison funtion: for colors we want to compare perceptual brightness
-// instead of a naive straight integer value comparison.
 #define COMPARE cell_compare
 
 void global_compare_and_swap(ivec2 idx){
@@ -154,6 +153,7 @@ void main(){
 		// In case this shader executes a `local_` algorithm, we must 
 		// first populate the workgroup's local memory.
 		//
+		t = gl_LocalInvocationID.x;
 		local_value[t*2]   = value[offset+t*2];
 		local_value[t*2+1] = value[offset+t*2+1];
 	}
@@ -161,16 +161,16 @@ void main(){
 	switch (parameters.algorithm){
 		case eLocalBitonicMergeSortExample:
 			local_bms(parameters.h);
-		break;
+			break;
 		case eLocalDisperse:
 			local_disperse(parameters.h);
-		break;
+			break;
 		case eBigFlip:
 			big_flip(parameters.h);
-		break;
+			break;
 		case eBigDisperse:
 			big_disperse(parameters.h);
-		break;
+			break;
 	}
 
 	// Write local memory back to buffer in case we pulled in the first place.
