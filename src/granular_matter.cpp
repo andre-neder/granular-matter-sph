@@ -6,6 +6,8 @@
 BitonicSortParameters params;
 uint32_t workgroup_size_x;
 
+glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
+
 GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
@@ -17,7 +19,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
 
-    float initialDistance = 0.5f * settings.kernelRadius;
+    float initialDistance = 0.7f * settings.kernelRadius;
 
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){

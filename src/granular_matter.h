@@ -77,8 +77,7 @@ private:
     
     std::vector<vk::Buffer> particlesBufferA;
     std::vector<vk::Buffer> settingsBuffer;
-    glm::ivec3 computeSpace = glm::ivec3(16, 8, 1);
-
+    
     std::vector<ParticleGridEntry> particleCells; // particle (index) is in cell (value)
     std::vector<vk::Buffer> particleCellBuffer;
     std::vector<uint32_t> startingIndices; 
