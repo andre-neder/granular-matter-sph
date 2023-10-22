@@ -82,7 +82,7 @@ layout(set = 1, binding = 2) buffer StartringIndicesStorage{
 };
 
 uint calculateCellKey(uvec2 cell){
-    return (cell.x + cell.y * cell.x);
+    return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
 }
 
 float rand(){

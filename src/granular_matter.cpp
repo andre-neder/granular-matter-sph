@@ -9,7 +9,7 @@ uint32_t n;
 uint32_t workGroupCountSort;
 uint32_t workGroupCount;
 
-glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
+glm::ivec3 computeSpace = glm::ivec3(32, 16, 1);
 
 #define TIMESTAMP_QUERY_COUNT 9
 
@@ -56,7 +56,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
 
-    float initialDistance = 0.7f * settings.kernelRadius;
+    float initialDistance = 0.9f * settings.kernelRadius;
 
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
