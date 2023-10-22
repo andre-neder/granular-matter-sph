@@ -5,17 +5,54 @@
 
 BitonicSortParameters params;
 uint32_t workgroup_size_x;
+uint32_t n;
+uint32_t workGroupCountSort;
+uint32_t workGroupCount;
 
-glm::ivec3 computeSpace = glm::ivec3(32, 32, 1);
+glm::ivec3 computeSpace = glm::ivec3(256, 256, 1);
+
+#define TIMESTAMP_QUERY_COUNT 10
+
+uint32_t nextQueryIndex = 0;
+uint32_t nextQuery(){
+    nextQueryIndex++;
+    return nextQueryIndex - 1;
+}
+
+std::vector<vk::QueryPool> timeQueryPools;
+std::vector<std::string> passLabels = {
+    // "Boundary               ",
+    "Copy last frame data   ",
+    "Grid quantification    ",
+    "Sorting                ",
+    "Start indices          ",
+    "Init                   ",
+    "Density                ",
+    "Stress                 ",
+    "Force                  ",
+    "Integration            "
+};
 
 GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
-    
-    // particles = std::vector<Particle>(computeSpace.x * computeSpace.y * computeSpace.z);
-    // std::generate(particles.begin(), particles.end(), [this]() {
-    //     return Particle(((static_cast<float>(std::rand()) / RAND_MAX) / 4.f + 0.375f) * settings.DOMAIN_WIDTH, ((static_cast<float>(std::rand()) / RAND_MAX  / 2.f )) * settings.DOMAIN_HEIGHT);
-    // });
+
+    timeQueryPools.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        vk::QueryPoolCreateInfo createInfo{
+            {},
+            vk::QueryType::eTimestamp,
+            TIMESTAMP_QUERY_COUNT, // start time & end time
+            {}
+        };
+        
+        vk::Result result = m_core->getDevice().createQueryPool(&createInfo, nullptr, &timeQueryPools[i]);
+        if (result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error("Failed to create time query pool!");
+        }
+    }
+   
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
 
@@ -76,7 +113,11 @@ GranularMatter::GranularMatter(gpu::Core* core)
     
     //* Sorting stuff
     vk::PhysicalDeviceLimits limits = m_core->getPhysicalDevice().getProperties().limits;
-    uint32_t n = (uint32_t)particleCells.size();
+    std::cout << "timestampComputeAndGraphics: " << limits.timestampComputeAndGraphics << std::endl;
+    std::cout << "timestampComputeAndGraphics: " << limits.timestampPeriod << " 1 = nanoseconds" << std::endl;
+
+    n = (uint32_t)particleCells.size();
+    std::cout << "Particle count: " << n << std::endl;
     workgroup_size_x = 1;
     auto maxWorkGroupInvocations = (uint32_t)32;
     if(n < maxWorkGroupInvocations * 2){
@@ -86,17 +127,31 @@ GranularMatter::GranularMatter(gpu::Core* core)
         workgroup_size_x = maxWorkGroupInvocations;
     }
 
-    neighborhoodUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/neighborhood_update.comp", descriptorSetLayoutsParticleCell);
+    workGroupCountSort = n / ( workgroup_size_x * 2 );
+    workGroupCount = n / workgroup_size_x;
+
+    neighborhoodUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/neighborhood_update.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) });
     bitonicSortPass = gpu::ComputePass(m_core, SHADER_PATH"/bitonic_sort.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(BitonicSortParameters));
-    startingIndicesPass = gpu::ComputePass(m_core, SHADER_PATH"/start_indices.comp", descriptorSetLayoutsCell); // , { gpu::SpecializationConstant(1, workgroup_size_x) }
+    startingIndicesPass = gpu::ComputePass(m_core, SHADER_PATH"/start_indices.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workgroup_size_x) }); // , { gpu::SpecializationConstant(1, workgroup_size_x) }
+
+    initPass = gpu::ComputePass(m_core, SHADER_PATH"/init.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workgroup_size_x) });
+    predictDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_density.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) });
+    predictStressPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_stress.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) });
+    predictForcePass = gpu::ComputePass(m_core, SHADER_PATH"/predict_force.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) });
+    applyPass = gpu::ComputePass(m_core, SHADER_PATH"/apply.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workgroup_size_x) });
 
     boundaryUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/boundary.comp", descriptorSetLayoutsParticle);
 
-    initPass = gpu::ComputePass(m_core, SHADER_PATH"/init.comp", descriptorSetLayoutsParticle);
-    predictDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_density.comp", descriptorSetLayoutsParticleCell);
-    predictStressPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_stress.comp", descriptorSetLayoutsParticleCell);
-    predictForcePass = gpu::ComputePass(m_core, SHADER_PATH"/predict_force.comp", descriptorSetLayoutsParticleCell);
-    applyPass = gpu::ComputePass(m_core, SHADER_PATH"/apply.comp", descriptorSetLayoutsParticle);
+    auto boundaryUpdateCommandBuffer = m_core->beginSingleTimeCommands();
+     //* compute boundary densities
+    {
+        boundaryUpdateCommandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
+        boundaryUpdateCommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[0], 0, nullptr);
+        boundaryUpdateCommandBuffer.dispatch((uint32_t)boundaryParticles.size(), 1, 1);
+        boundaryUpdateCommandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTopOfPipe, {}, {}, nullptr, nullptr);
+
+    }
+    core->endSingleTimeCommands(boundaryUpdateCommandBuffer);
 }
 
 GranularMatter::~GranularMatter()
@@ -128,6 +183,10 @@ void GranularMatter::destroy(){
     predictDensityPass.destroy();
     predictForcePass.destroy();
     applyPass.destroy();
+    
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_core->getDevice().destroyQueryPool(timeQueryPools[i]);
+    }
 
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->destroyBuffer(particlesBufferA[i]);
@@ -152,8 +211,8 @@ std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_res
 
 void GranularMatter::updateSettings(float dt, int currentFrame){
 
-    // settings.dt = dt; 
-                        
+    settings.dt = dt; 
+    // Todo: replace with push constant                        
     void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
     memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
     m_core->flushBuffer(settingsBuffer[currentFrame], 0, (size_t) sizeof(SPHSettings));
@@ -161,7 +220,27 @@ void GranularMatter::updateSettings(float dt, int currentFrame){
 
 }
 
-void GranularMatter::update(int currentFrame, int imageIndex){
+void GranularMatter::update(int currentFrame, int imageIndex){ 
+
+    uint64_t buffer[TIMESTAMP_QUERY_COUNT];
+
+    vk::Result result = m_core->getDevice().getQueryPoolResults(timeQueryPools[currentFrame], 0, TIMESTAMP_QUERY_COUNT, sizeof(uint64_t) * TIMESTAMP_QUERY_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
+    if (result == vk::Result::eNotReady)
+    {
+        
+    }
+    else if (result == vk::Result::eSuccess)
+    {
+         std::cout << "################# Timimgs ##################" << std::endl;
+        for (size_t i = 0; i < TIMESTAMP_QUERY_COUNT -1; i++) {
+            std::cout << passLabels[i] << (buffer[i + 1] - buffer[i]) / (float)1000000 << " ms" << std::endl;
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Failed to receive query results!");
+    }
+        
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
     startTime = std::chrono::high_resolution_clock::now();
@@ -172,8 +251,8 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     updateSettings(dt, currentFrame);
 
     vk::MemoryBarrier writeReadBarrier{
-        vk::AccessFlagBits::eMemoryWrite | vk::AccessFlagBits::eMemoryRead,
-        vk::AccessFlagBits::eMemoryRead | vk::AccessFlagBits::eMemoryWrite
+        vk::AccessFlagBits::eMemoryWrite,
+        vk::AccessFlagBits::eMemoryRead
     };
 
     // while( accumulator >= dt ){
@@ -184,37 +263,44 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         std::cerr << "Exception Thrown: " << e.what();
     }
 
+     // Queries must be reset after each individual use.
+    commandBuffers[currentFrame].resetQueryPool(timeQueryPools[currentFrame], 0, TIMESTAMP_QUERY_COUNT);
+    nextQueryIndex = 0;
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, timeQueryPools[currentFrame], nextQuery());
     //Todo: Do this only once before loop 
     //* compute boundary densities
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch((uint32_t)boundaryParticles.size(), 1, 1);
-    }
-
-    //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-
-
+    // {
+    //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
+    //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    //     commandBuffers[currentFrame].dispatch((uint32_t)boundaryParticles.size(), 1, 1);
+    // }
+    
+    // //* wait for compute pass
+    // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+    // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
+    
     //* Copy data from last frame B to current frame A 
     {
         // Todo: try with mutiple descriptor sets
         vk::BufferCopy copyRegion(0, 0, sizeof(Particle) * particles.size());
         commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
     }
+    
     //* Wait for copy action
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-    
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
     //* compute cell hashes
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, neighborhoodUpdatePass.m_pipeline);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, neighborhoodUpdatePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, neighborhoodUpdatePass.m_pipelineLayout, 1, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch((uint32_t)particleCells.size(), 1, 1);
+        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
     }
+    
     //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
+    
     //* Sort cell hashes
     {   
         //? https://poniesandlight.co.uk/reflect/bitonic_merge_sort/
@@ -222,14 +308,11 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipeline);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipelineLayout, 0, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
 
-        uint32_t n = (uint32_t)particleCells.size();
-        uint32_t workgroup_count = n / ( workgroup_size_x * 2 );
-
         auto dispatch = [ & ]( uint32_t h ) {
 		    params.h = h;
 
             commandBuffers[currentFrame].pushConstants(bitonicSortPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(BitonicSortParameters), &params);
-            commandBuffers[currentFrame].dispatch( workgroup_count, 1, 1 );
+            commandBuffers[currentFrame].dispatch( workGroupCountSort, 1, 1 );
             commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
             
         };
@@ -282,74 +365,82 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 		}
 
     }
-
+    
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
+    
     //* get starting indices
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, startingIndicesPass.m_pipeline);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, startingIndicesPass.m_pipelineLayout, 0, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch((uint32_t)startingIndices.size(), 1, 1);
+        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
     }
 
     //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-
-
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
+    
     //* init pass A -> B
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, initPass.m_pipeline);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, initPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch((uint32_t)particles.size(), 1, 1);
+        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
     }
     //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
+    
     //* predict density B -> A
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 1, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch((uint32_t)particles.size(), 1, 1);
+        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
     }
     //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
+    
     //* predict stress A -> B
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipeline);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 1, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch((uint32_t)particles.size(), 1, 1);
+        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
     }
     //* wait for compute pass
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
+    
     //* predict force B -> A
     {
         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 1, 1, &descriptorSetsCell[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch((uint32_t)particles.size(), 1, 1);
+        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
     }
+    
+    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
     
     //* When simulation is running or should proceed one step apply calculated forces
     if(simulationRunning || simulationStepForward){
         //* wait for compute pass
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
-
         //* apply force A -> B
         {
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, applyPass.m_pipeline);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, applyPass.m_pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].dispatch((uint32_t)particles.size(), 1, 1);
+            commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
         }
         simulationStepForward = false;
 
         //* Wait for copy action
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTopOfPipe, {}, writeReadBarrier, nullptr, nullptr);
-
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
+    
     }
     else{
         //* wait for compute pass
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer , {}, writeReadBarrier, nullptr, nullptr);
-
         //* copy A -> B
         {
             // Todo: try with mutiple descriptor sets
@@ -358,9 +449,11 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         }
         //* Wait for copy action
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTopOfPipe, {}, writeReadBarrier, nullptr, nullptr);
-
-    }
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, timeQueryPools[currentFrame], nextQuery());
     
+    }
+
+    assert(nextQuery() == TIMESTAMP_QUERY_COUNT);
     //* submit calls
     try{
         commandBuffers[currentFrame].end();
@@ -369,6 +462,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     }
     //     accumulator -= stepSize;
     // }
+
 }
 
 void GranularMatter::createDescriptorSetLayout() {

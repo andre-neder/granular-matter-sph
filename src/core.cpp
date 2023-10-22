@@ -65,10 +65,10 @@ QueueFamilyIndices Core::findQueueFamilies(vk::PhysicalDevice pDevice) {
     QueueFamilyIndices indices;
     std::vector<vk::QueueFamilyProperties> queueFamilies = pDevice.getQueueFamilyProperties();
     for (uint32_t i = 0; i < queueFamilies.size(); i++){
-        if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics) {
+        if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eGraphics && queueFamilies[i].timestampValidBits > 0) {
             indices.graphicsFamily = i;
         }
-        if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eCompute) {
+        if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eCompute && queueFamilies[i].timestampValidBits > 0) {
             indices.computeFamily = i;
         }
         if (pDevice.getSurfaceSupportKHR(i, surface)) {
@@ -119,10 +119,12 @@ void Core::createLogicalDevice(){
     }
 
     vk::DeviceCreateInfo createInfo;
+    vk::PhysicalDeviceHostQueryResetFeatures resetFeatures{};
     if (m_enableValidation) {
-        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, &deviceFeatures);
-    }else{
-        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, &deviceFeatures);
+        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, &deviceFeatures, &resetFeatures);
+    }
+    else{
+        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, &deviceFeatures, &resetFeatures);
     }
     try{
         device = physicalDevice.createDevice(createInfo);

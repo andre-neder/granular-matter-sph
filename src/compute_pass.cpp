@@ -6,7 +6,10 @@ using namespace gpu;
 ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts) : 
     ComputePass::ComputePass(core, shaderFile, descriptorSetLayouts, std::vector<gpu::SpecializationConstant>(), 0)
 {
-    // ComputePass(core, shaderFile, descriptorSetLayouts, std::vector<gpu::SpecializationConstant>());
+}
+ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations) : 
+    ComputePass::ComputePass(core, shaderFile, descriptorSetLayouts, specializations, 0)
+{
 }
 ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations, uint32_t pushConstantSize)
 {

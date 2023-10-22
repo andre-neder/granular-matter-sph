@@ -4,7 +4,7 @@
 #define BUFFER_A 0
 #define BUFFER_B 1
 
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
 struct Particle{
     vec2 position;
@@ -18,7 +18,6 @@ struct Particle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
-    float pad[32];
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
@@ -56,7 +55,7 @@ layout(set = 0, binding = 2) uniform Settings{
 
 
 void main(){
-    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    uint particleID = gl_GlobalInvocationID.x;;
     Particle p_in = inStorage.particles[particleID];
     Particle p_out = p_in;
 

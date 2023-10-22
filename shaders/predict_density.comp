@@ -4,9 +4,8 @@
 #define PI      3.1415926f
 #define BUFFER_A 0
 #define BUFFER_B 1
-#define USE_GRID false
 
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
 struct Particle{
     vec2 position;
@@ -20,7 +19,6 @@ struct Particle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
-    float pad[32];
 };
 
 struct BoundaryParticle{
@@ -35,7 +33,6 @@ struct BoundaryParticle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
-    float pad[32];
 };
 
 layout(set = 0, binding = BUFFER_B) buffer StorageInput{
@@ -123,30 +120,26 @@ vec2 gradW(float r, vec2 rij, float h){
 
 
 void main(){
-    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    uint particleID = gl_GlobalInvocationID.x;;
     Particle p_in = inStorage.particles[particleID];
     Particle p_out = p_in;
     //* Density
     float rho = 0.f;
-    uint counter = 0;
-if(USE_GRID) {
-    //* For all fluid particles
-    for (int i = 0; i< inStorage.particles.length();i++)
-    {
-        Particle pi = inStorage.particles[i];
-        vec2 p_pi = p_in.predPosition - pi.predPosition;
-        float r = length(p_pi);
-       
-        if (r < settings.kernelRadius)
-        {
-            //* Density
-            rho += W(r, settings.kernelRadius);
 
-            p_out.pad[counter] = i;
-            counter++;    
-        }
-    }
-} else {
+    //* For all fluid particles
+    // for (int i = 0; i< inStorage.particles.length();i++)
+    // {
+    //     Particle pi = inStorage.particles[i];
+    //     vec2 p_pi = p_in.predPosition - pi.predPosition;
+    //     float r = length(p_pi);
+       
+    //     if (r < settings.kernelRadius)
+    //     {
+    //         //* Density
+    //         rho += W(r, settings.kernelRadius);
+    //     }
+    // }
+
     ivec2 particleCell = ivec2(floor(vec2(p_in.predPosition / settings.kernelRadius)));
 
     for (int k = -1; k <= 1; k++){
@@ -175,18 +168,15 @@ if(USE_GRID) {
             
                 if (r < settings.kernelRadius)
                 {
-                    p_out.pad[counter] = particleIndex;
-                    counter++;      
                     //* Density
                     rho += W(r, settings.kernelRadius); 
                 }
             }
         } 
     }
-}
+
     rho *= settings.mass;
 
-    p_out.pad[counter] = 9999;
   
     //* For all boundary particles
     for (int i = 0; i < boundary.particles.length();i++)

@@ -3,7 +3,7 @@
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
 
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
 struct BoundaryParticle{
     vec2 position;
@@ -17,7 +17,6 @@ struct BoundaryParticle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
-    float pad[32];
 };
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
@@ -69,7 +68,7 @@ vec2 gradW(float r, vec2 rij, float h){
 }
 
 void main(){
-    uint particleID = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x;
+    uint particleID = gl_GlobalInvocationID.x;;
     BoundaryParticle p_in = boundary.particles[particleID];
     BoundaryParticle p_out = p_in;
 
