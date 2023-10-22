@@ -1,4 +1,4 @@
-#version 450 core
+#version 460 core
 
 // This shader implements a sorting network for 1024 elements.
 //
