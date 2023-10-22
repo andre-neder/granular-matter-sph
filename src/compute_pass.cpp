@@ -11,6 +11,10 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
     ComputePass::ComputePass(core, shaderFile, descriptorSetLayouts, specializations, 0)
 {
 }
+ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, uint32_t pushConstantSize) : 
+    ComputePass::ComputePass(core, shaderFile, descriptorSetLayouts, std::vector<gpu::SpecializationConstant>(), pushConstantSize)
+{
+}
 ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations, uint32_t pushConstantSize)
 {
     m_core = core;

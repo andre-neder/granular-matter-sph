@@ -91,11 +91,10 @@ private:
     std::vector<vk::DescriptorSet> descriptorSets;
     vk::DescriptorPool descriptorPool;
  
-    gpu::ComputePass neighborhoodUpdatePass;
+    gpu::ComputePass initPass;
     gpu::ComputePass bitonicSortPass;
     gpu::ComputePass startingIndicesPass;
     gpu::ComputePass boundaryUpdatePass;
-    gpu::ComputePass initPass;
     gpu::ComputePass predictDensityPass;
     gpu::ComputePass predictStressPass;
     gpu::ComputePass predictForcePass;

@@ -11,6 +11,7 @@ namespace gpu {
             inline ComputePass(){};
             ComputePass(gpu::Core* core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts);
             ComputePass(gpu::Core* core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations);
+            ComputePass(gpu::Core* core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, uint32_t pushConstantSize);
             ComputePass(gpu::Core* core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations, uint32_t pushConstantSize);
             inline ~ComputePass(){};
 

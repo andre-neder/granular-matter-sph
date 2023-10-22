@@ -4,6 +4,7 @@
 #define PI      3.1415926f
 #define BUFFER_A 0
 #define BUFFER_B 1
+#define UINT_MAX (0xffffffff)
 
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -33,7 +34,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
     Particle particles[];
 } boundary;
 
-layout(set = 0, binding = 2) uniform Settings{
+layout( push_constant ) uniform Settings{
   vec2 G;       
   float rho0;
   float kernelRadius;		   
@@ -55,6 +56,23 @@ layout(set = 0, binding = 2) uniform Settings{
 } settings;
 
 
+struct ParticleGridEntry{
+    uint particleIndex;
+    uint cellKey;
+};
+
+layout(set = 1, binding = 0) buffer GridLookUpStorage{
+    ParticleGridEntry entries[];
+} gridLookup;
+
+layout(set = 1, binding = 2) buffer StartringIndicesStorage{
+    uint startingIndices[];
+};
+
+uint calculateCellKey(uvec2 cell){
+    return (cell.x + cell.y * cell.x);
+}
+
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     Particle p_in = inStorage.particles[particleID];
@@ -66,4 +84,12 @@ void main(){
     p_out.predPosition = predPosition;
 
     outStorage.particles[particleID] = p_out;
+
+    ivec2 gridCell = ivec2(floor(vec2(p_in.predPosition / settings.kernelRadius)));
+    
+    uint cellKey = calculateCellKey(gridCell);
+
+    gridLookup.entries[particleID].particleIndex = particleID;
+    gridLookup.entries[particleID].cellKey = cellKey;
+    startingIndices[particleID] = UINT_MAX;
 }

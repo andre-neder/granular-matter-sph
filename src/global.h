@@ -25,10 +25,10 @@ struct SPHSettings{
     float mass = 1.f;
     float stiffness = 1000.f;	  
     float dt = 0.0006f;	  
-    float DOMAIN_WIDTH = 240.f; // 4096
-    float DOMAIN_HEIGHT = 120.f;  // 4096
-    // float DOMAIN_WIDTH = 30.f; // 1024
-    // float DOMAIN_HEIGHT = 15.f;  //1024
+    // float DOMAIN_WIDTH = 240.f; // 4096
+    // float DOMAIN_HEIGHT = 120.f;  // 4096
+    float DOMAIN_WIDTH = 30.f; // 1024
+    float DOMAIN_HEIGHT = 15.f;  //1024
     // float DOMAIN_WIDTH = 4.f; // 128 particles
     // float DOMAIN_HEIGHT = 3.f;  // 128 particles
     float theta = 30.f * (float)M_PI / 180.f;     //* angle of repose

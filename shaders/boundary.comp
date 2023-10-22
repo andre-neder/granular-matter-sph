@@ -23,7 +23,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
     BoundaryParticle particles[];
 } boundary;
 
-layout(set = 0, binding = 2) uniform Settings{
+layout( push_constant ) uniform Settings{
   vec2 G;       
   float rho0;
   float kernelRadius;		   

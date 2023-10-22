@@ -21,11 +21,11 @@ struct Particle{
     mat2 stress;
 };
 
-layout(set = 0, binding = BUFFER_A) buffer StorageInput{
+layout(set = 0, binding = BUFFER_B) buffer StorageInput{
     Particle particles[];
 } inStorage;
 
-layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
+layout(set = 0, binding = BUFFER_A) buffer StorageOutput{
     Particle particles[];
 } outStorage;
 
@@ -33,7 +33,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
     Particle particles[];
 } boundary;
 
-layout(set = 0, binding = 2) uniform Settings{
+layout( push_constant ) uniform Settings{
   vec2 G;       
   float rho0;
   float kernelRadius;		   
@@ -77,10 +77,10 @@ void main(){
     Particle p_out = p_in;
 
     //* Same as init 
-    vec2 predVelocity = p_in.velocity + settings.G * settings.dt;
-    vec2 predPosition = p_in.position + predVelocity * 1.f/120.f;
+    // vec2 predVelocity = p_in.velocity + settings.G * settings.dt;
+    // vec2 predPosition = p_in.position + predVelocity * 1.f/120.f;
 
-    ivec2 gridCell = ivec2(floor(vec2(predPosition / settings.kernelRadius)));
+    ivec2 gridCell = ivec2(floor(vec2(p_in.predPosition / settings.kernelRadius)));
     
     uint cellKey = calculateCellKey(gridCell);
 
