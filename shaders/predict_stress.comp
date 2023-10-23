@@ -19,21 +19,12 @@ struct Particle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
+    uint fluidNeighbors[16];
+    uint boundaryNeighbors[14];
+    uint fluidNeighborCount;
+    uint boundaryNeighborCount;
 };
 
-struct BoundaryParticle{
-    vec2 position;
-    vec2 normal;
-    vec2 velocity;
-    vec2 predVelocity;
-    vec2 pressureAcceleration;
-    float rho;
-    float p;
-    float V;
-    float psi_rho0; 
-    float pad0, pad1;
-    mat2 stress;
-};
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
     Particle particles[];
@@ -44,7 +35,7 @@ layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    BoundaryParticle particles[];
+    Particle particles[];
 } boundary;
 
 layout( push_constant ) uniform Settings{
@@ -86,7 +77,6 @@ layout(set = 1, binding = 2) buffer StartringIndicesStorage{
     uint startingIndices[];
 };
 
-
 uint calculateCellKey(uvec2 cell){
     return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
 }
@@ -125,73 +115,37 @@ vec2 gradW(float r, vec2 rij, float h){
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
-    Particle p_in = inStorage.particles[particleID];
-    Particle p_out = p_in;
+    Particle p = inStorage.particles[particleID];
 
     //* Strain & Stress 
     mat2 velocityGradient = mat2(0.f);
     mat2 D = mat2(0.f);
 
-    //* For all fluid particles
-    // for (int i = 0; i< inStorage.particles.length();i++)
-    // {
-    //     Particle pi = inStorage.particles[i];
-    //     vec2 p_pi = p_in.predPosition - pi.predPosition;
-    //     float r = length(p_pi);
+    // For all previously stored fluid neighbors
+    for(uint i = 0; i < p.fluidNeighborCount; i++)
+    {
+        uint particleIndex = p.fluidNeighbors[i];
+        Particle pi = inStorage.particles[particleIndex];
+
         
-    //     if (r < settings.kernelRadius)
-    //     {
-    //         //* Strain & Stress 
-    //         vec2 gradient = gradW(p_pi, settings.kernelRadius);
-    //         velocityGradient += pi.V * outerProduct(gradient, p_in.predVelocity - pi.predVelocity);
-    //         D += (1.f / pi.rho) * outerProduct(gradient, gradient);
-    //     }
-    // }
-
-    ivec2 particleCell = ivec2(floor(vec2(p_in.predPosition / settings.kernelRadius)));
-
-    for (int k = -1; k <= 1; k++){
-        for (int l = -1; l <= 1; l++){
-            // current cell coordinate
-            ivec2 cell = ivec2(particleCell.x + k, particleCell.y + l);
-
-            // current cell key
-            uint cellKey = calculateCellKey(uvec2(cell));
-            
-            // index of current entry for cell
-            uint startIndex = startingIndices[cellKey];
-
-            // While particle is in the same cell
-            for(uint i = startIndex; i < gridLookup.entries.length(); i++)
-            {
-                if(gridLookup.entries[i].cellKey != cellKey){
-                    break;
-                }
-                // index of particle of current index
-                uint particleIndex = gridLookup.entries[i].particleIndex;
-                Particle pi = inStorage.particles[particleIndex];
-
-                
-                vec2 p_pi = p_in.predPosition - pi.predPosition;
-                float r = length(p_pi);
-            
-                if (r < settings.kernelRadius)
-                {
-                    //* Strain & Stress 
-                    vec2 gradient = gradW(p_pi, settings.kernelRadius);
-                    velocityGradient += pi.V * outerProduct(gradient, p_in.predVelocity - pi.predVelocity);
-                    D += (1.f / pi.rho) * outerProduct(gradient, gradient);
-                }
-            }
-        } 
+        vec2 p_pi = p.predPosition - pi.predPosition;
+        float r = length(p_pi);
+    
+        if (r < settings.kernelRadius)
+        {
+            //* Strain & Stress 
+            vec2 gradient = gradW(p_pi, settings.kernelRadius);
+            velocityGradient += pi.V * outerProduct(gradient, p.predVelocity - pi.predVelocity);
+            D += (1.f / pi.rho) * outerProduct(gradient, gradient);
+        }
     }
 
-  
     //* For all boundary particles
-    for (int i = 0; i < boundary.particles.length();i++)
+    for (int i = 0; i < p.boundaryNeighborCount; i++)
     {
-        BoundaryParticle pb = boundary.particles[i];
-        vec2 p_pb = p_in.predPosition - pb.position;
+        uint particleIndex = p.boundaryNeighbors[i];
+        Particle pb = boundary.particles[particleIndex];
+        vec2 p_pb = p.predPosition - pb.position;
         float r = length(p_pb);
        
         if (r < settings.kernelRadius)
@@ -199,30 +153,31 @@ void main(){
             //* Strain & Stress 
             vec2 gradient = gradW(p_pb, settings.kernelRadius);
             //Todo: predvel ??
-            velocityGradient += pb.V * outerProduct(gradient, p_in.predVelocity - pb.predVelocity);
+            velocityGradient += pb.V * outerProduct(gradient, p.predVelocity - pb.predVelocity);
             D += (1.f / pb.rho) * outerProduct(gradient, gradient);
         }
     }
+
     //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
     //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
-    D *= (2.f * settings.mass * settings.mass * settings.dt) / (p_in.rho * p_in.rho);
+    D *= (2.f * settings.mass * settings.mass * settings.dt) / (p.rho * p.rho);
     mat2 strainTensor = 0.5f * (velocityGradient + transpose(velocityGradient));
     mat2 stressTensor = inverse(D) * strainTensor;
     mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
     mat2 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
     
     float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
-    float yield = sqrt(3.f) * alpha * p_in.p; //* Drucker-Prager yield criterion
-    if(p_in.p > EPSILON && frobenius(deviatoricStressTensor) > EPSILON){
-        p_out.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
+    float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
+    if(p.p > EPSILON && frobenius(deviatoricStressTensor) > EPSILON){
+        p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
     }
     else{
-        p_out.stress = mat2(0);
+        p.stress = mat2(0);
     }
     // p.cohesion = min(frobenius(stressTensor), settings.beta * settings.beta * settings.C);
 
 
-    outStorage.particles[particleID] = p_out;
+    outStorage.particles[particleID] = p;
 }
 
 // volume = mass / density

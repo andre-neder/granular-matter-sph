@@ -18,6 +18,10 @@ struct Particle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
+    uint fluidNeighbors[16];
+    uint boundaryNeighbors[14];
+    uint fluidNeighborCount;
+    uint boundaryNeighborCount;
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
@@ -61,15 +65,14 @@ layout( push_constant ) uniform Settings{
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
-    Particle p_in = inStorage.particles[particleID];
-    Particle p_out = p_in;
+    Particle p = inStorage.particles[particleID];
 
     // Semi-implicit euler
-    p_out.position += p_in.velocity * settings.dt;
-    p_out.velocity = p_in.predVelocity + p_in.pressureAcceleration * settings.dt;
+    p.position += p.velocity * settings.dt;
+    p.velocity = p.predVelocity + p.pressureAcceleration * settings.dt;
     // Forward Euler
-    // p_out.velocity = p_in.predVelocity + p_in.pressureAcceleration * settings.dt;
-    // p_out.position += p_in.velocity * settings.dt;
+    // p.velocity = p.predVelocity + p.pressureAcceleration * settings.dt;
+    // p.position += p.velocity * settings.dt;
 
-    outStorage.particles[particleID] = p_out;
+    outStorage.particles[particleID] = p;
 }

@@ -12,7 +12,7 @@ extern bool simulationStepForward;
 
 struct SPHSettings{
     glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
-    float particleRadius = 0.1;                     //* m
+    float particleRadius = 0.1f;                     //* m
     float kernelRadius = particleRadius * 4; 
 
     float rho0 = 1950.f; 

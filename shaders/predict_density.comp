@@ -19,21 +19,12 @@ struct Particle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
+    uint fluidNeighbors[16];
+    uint boundaryNeighbors[14];
+    uint fluidNeighborCount;
+    uint boundaryNeighborCount;
 };
 
-struct BoundaryParticle{
-    vec2 position;
-    vec2 normal;
-    vec2 velocity;
-    vec2 predVelocity;
-    vec2 pressureAcceleration;
-    float rho;
-    float p;
-    float V;
-    float psi_rho0; 
-    float pad0, pad1;
-    mat2 stress;
-};
 
 layout(set = 0, binding = BUFFER_B) buffer StorageInput{
     Particle particles[];
@@ -44,7 +35,7 @@ layout(set = 0, binding = BUFFER_A) buffer StorageOutput{
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    BoundaryParticle particles[];
+    Particle particles[];
 } boundary;
 
 layout( push_constant ) uniform Settings{
@@ -72,6 +63,7 @@ layout( push_constant ) uniform Settings{
     float rhoAir;                             
     float pad3;
 } settings;
+
 struct ParticleGridEntry{
     uint particleIndex;
     uint cellKey;
@@ -125,27 +117,12 @@ vec2 gradW(float r, vec2 rij, float h){
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
-    Particle p_in = inStorage.particles[particleID];
-    Particle p_out = p_in;
+    Particle p = inStorage.particles[particleID];
     //* Density
     float rho = 0.f;
 
-    //* For all fluid particles
-    // for (int i = 0; i< inStorage.particles.length();i++)
-    // {
-    //     Particle pi = inStorage.particles[i];
-    //     vec2 p_pi = p_in.predPosition - pi.predPosition;
-    //     float r = length(p_pi);
-       
-    //     if (r < settings.kernelRadius)
-    //     {
-    //         //* Density
-    //         rho += W(r, settings.kernelRadius);
-    //     }
-    // }
-
-    ivec2 particleCell = ivec2(floor(vec2(p_in.predPosition / settings.kernelRadius)));
-
+    ivec2 particleCell = ivec2(floor(vec2(p.predPosition / settings.kernelRadius)));
+    uint fluidNeighborCount = 0;
     for (int k = -1; k <= 1; k++){
         for (int l = -1; l <= 1; l++){
             // current cell coordinate
@@ -167,36 +144,45 @@ void main(){
                 uint particleIndex = gridLookup.entries[i].particleIndex;
                 Particle pi = inStorage.particles[particleIndex];
 
-                vec2 p_pi = p_in.predPosition - pi.predPosition;
+                vec2 p_pi = p.predPosition - pi.predPosition;
                 float r = length(p_pi);
             
                 if (r < settings.kernelRadius)
                 {
                     //* Density
                     rho += W(r, settings.kernelRadius); 
+                    //* Put all fluid neighbors in a list to access them later
+                    if (particleIndex != particleID){
+                        p.fluidNeighbors[fluidNeighborCount] = particleIndex;
+                        fluidNeighborCount++;
+                    }
                 }
             }
         } 
     }
-
     rho *= settings.mass;
+    p.fluidNeighborCount = fluidNeighborCount;
 
   
     //* For all boundary particles
+    uint boundaryNeighborCount = 0;
     for (int i = 0; i < boundary.particles.length();i++)
     {
-        BoundaryParticle pb = boundary.particles[i];
-        vec2 p_pb = p_in.predPosition - pb.position;
+        Particle pb = boundary.particles[i];
+        vec2 p_pb = p.predPosition - pb.position;
         float r = length(p_pb);
        
         if (r < settings.kernelRadius)
         {
             //* Density
             rho += pb.psi_rho0 * W(r, settings.kernelRadius);
+            //* Put all boundary neighbors in a list to access them later
+            p.boundaryNeighbors[boundaryNeighborCount] = i;
+            boundaryNeighborCount++;
         }
     }
-    
-    p_out.rho = rho;
+    p.boundaryNeighborCount = boundaryNeighborCount;
+    p.rho = rho;
 
     //* tait's equation
     // p.rho = max(p.rho, settings.rho0); 
@@ -205,12 +191,12 @@ void main(){
     // p.p = B * (pow(max(p.rho, settings.rho0) / settings.rho0, exponent) - 1.f); 
 
     //* Ideal gas equation
-    float p = settings.stiffness * (rho - settings.rho0); 
+    float pressure = settings.stiffness * (rho - settings.rho0); 
     
-    p_out.p = max(p, 0.f);     //? required?
-    p_out.V = settings.mass / rho;
-    p_out.pad0 += 1;
-    outStorage.particles[particleID] = p_out;
+    p.p = max(pressure, 0.f);     //? required?
+    p.V = settings.mass / rho;
+    p.pad0 += 1;
+    outStorage.particles[particleID] = p;
 }
 
 // volume = mass / density
