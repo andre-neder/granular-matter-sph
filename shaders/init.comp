@@ -35,25 +35,32 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 } boundary;
 
 layout( push_constant ) uniform Settings{
-  vec2 G;       
-  float rho0;
-  float kernelRadius;		   
+    vec2 G; 
+    float particleRadius;                 
+    float kernelRadius; 
 
-  float mass;		 
-  float stiffness;
-  float dt;	  
-  float DOMAIN_WIDTH;
+    float rho0; 
+    float mass;
+    float stiffness;	  
+    float dt;	 
 
-  float DOMAIN_HEIGHT;
-  float theta;
-  float sigma;
-  float beta;
+    float DOMAIN_WIDTH; 
+    float DOMAIN_HEIGHT;  
+    float pad1;
+    float pad2;
 
-  float C;
-  float alpha;
-  float pad1;
-  float pad2;
+    float theta;       
+    float sigma;                           
+    float alpha;                             
+    float beta;                              
+    
+    float C;                                
+    float dragCoefficient;                
+    float rhoAir;                             
+    float pad3;
 } settings;
+
+
 
 
 struct ParticleGridEntry{

@@ -58,10 +58,10 @@ using namespace gpu;
     void BasicRenderPass::update(int currentFrame, int imageIndex){
         updateUniformBuffer(currentFrame);
 
-        void* mappedData = m_core->mapBuffer(uniformBuffersSettings[currentFrame]);
-        memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
-        m_core->flushBuffer(uniformBuffersSettings[currentFrame], 0, (size_t) sizeof(SPHSettings));
-        m_core->unmapBuffer(uniformBuffersSettings[currentFrame]);
+        // void* mappedData = m_core->mapBuffer(uniformBuffersSettings[currentFrame]);
+        // memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
+        // m_core->flushBuffer(uniformBuffersSettings[currentFrame], 0, (size_t) sizeof(SPHSettings));
+        // m_core->unmapBuffer(uniformBuffersSettings[currentFrame]);
 
 
         vk::CommandBufferBeginInfo beginInfo;
@@ -89,7 +89,10 @@ using namespace gpu;
             // commandBuffers[currentFrame].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            
+            commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings), &settings);
             commandBuffers[currentFrame].draw(vertexCount1, 1, 0, 0);
+
         commandBuffers[currentFrame].endRenderPass();
         try{
             commandBuffers[currentFrame].end();
@@ -111,13 +114,16 @@ using namespace gpu;
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
 
             vk::DescriptorBufferInfo bufferInfo(uniformBuffers[i], 0, sizeof(UniformBufferObject));
-            vk::DescriptorBufferInfo bufferInfo2(uniformBuffersSettings[i], 0, sizeof(SPHSettings));
+            // vk::DescriptorBufferInfo bufferInfo2(uniformBuffersSettings[i], 0, sizeof(SPHSettings));
             // vk::DescriptorImageInfo imageInfo(textureSampler, textureImageView, vk::ImageLayout::eShaderReadOnlyOptimal);
             vk::WriteDescriptorSet descriptorWriteUbo(descriptorSets[i], 0, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfo);
-            vk::WriteDescriptorSet descriptorWriteUbo2(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfo2);
+            // vk::WriteDescriptorSet descriptorWriteUbo2(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eUniformBuffer, {}, &bufferInfo2);
             // vk::WriteDescriptorSet descriptorWriteSampler(descriptorSets[i], 1, 0, 1, vk::DescriptorType::eCombinedImageSampler, &imageInfo);
 
-            std::array<vk::WriteDescriptorSet, 2> descriptorWrites{descriptorWriteUbo, descriptorWriteUbo2};
+            std::array<vk::WriteDescriptorSet, 1> descriptorWrites{
+                descriptorWriteUbo, 
+                // descriptorWriteUbo2
+            };
             
             m_core->getDevice().updateDescriptorSets(descriptorWrites, nullptr);
         }
@@ -142,7 +148,8 @@ using namespace gpu;
         vk::PipelineMultisampleStateCreateInfo multisampling({}, vk::SampleCountFlagBits::e1, VK_FALSE);
         vk::PipelineColorBlendAttachmentState colorBlendAttachment(VK_FALSE, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
         vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
-        vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout);
+        vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings)};
+        vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout, 1, &pushConstantRange, nullptr);
 
         try{
             pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
@@ -193,19 +200,22 @@ using namespace gpu;
             uniformBuffers[i] = m_core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
         }
 
-        vk::DeviceSize bufferSize2 = sizeof(SPHSettings);
+        // vk::DeviceSize bufferSize2 = sizeof(SPHSettings);
 
-        uniformBuffersSettings.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            uniformBuffersSettings[i] = m_core->createBuffer(bufferSize2, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
-        }
+        // uniformBuffersSettings.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        //     uniformBuffersSettings[i] = m_core->createBuffer(bufferSize2, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+        // }
     }
 
     void BasicRenderPass::createDescriptorPool() {
         vk::DescriptorPoolSize poolSizeUbo(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
-        vk::DescriptorPoolSize poolSizeSettings(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
+        // vk::DescriptorPoolSize poolSizeSettings(vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
         // vk::DescriptorPoolSize poolSizeSampler(vk::DescriptorType::eCombinedImageSampler, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT));
-        std::array<vk::DescriptorPoolSize, 2> poolSizes{poolSizeUbo, poolSizeSettings};
+        std::array<vk::DescriptorPoolSize, 1> poolSizes{
+            poolSizeUbo, 
+            // poolSizeSettings
+        };
 
         vk::DescriptorPoolCreateInfo poolInfo({}, static_cast<uint32_t>(gpu::MAX_FRAMES_IN_FLIGHT), poolSizes);
         try{
@@ -217,10 +227,13 @@ using namespace gpu;
 
     void BasicRenderPass::createDescriptorSetLayout() {
         vk::DescriptorSetLayoutBinding uboLayoutBinding(0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex, nullptr);
-        vk::DescriptorSetLayoutBinding settingsLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, nullptr);
+        // vk::DescriptorSetLayoutBinding settingsLayoutBinding(1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, nullptr);
         // vk::DescriptorSetLayoutBinding samplerLayoutBinding(1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment, nullptr);
 
-        std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, settingsLayoutBinding};
+        std::array<vk::DescriptorSetLayoutBinding, 1> bindings = {
+            uboLayoutBinding, 
+            // settingsLayoutBinding
+        };
         vk::DescriptorSetLayoutCreateInfo layoutInfo({}, bindings);
 
         try{
@@ -240,7 +253,7 @@ using namespace gpu;
         device.destroyPipelineLayout(pipelineLayout);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             m_core->destroyBuffer(uniformBuffers[i]);
-            m_core->destroyBuffer(uniformBuffersSettings[i]);
+            // m_core->destroyBuffer(uniformBuffersSettings[i]);
         }
         device.destroyDescriptorPool(descriptorPool);
         device.destroyRenderPass(renderPass);

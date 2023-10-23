@@ -9,7 +9,7 @@ uint32_t n;
 uint32_t workGroupCountSort;
 uint32_t workGroupCount;
 
-glm::ivec3 computeSpace = glm::ivec3(32, 16, 1);
+glm::ivec3 computeSpace = glm::ivec3(16, 16, 1);
 
 #define TIMESTAMP_QUERY_COUNT 9
 
@@ -56,7 +56,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
 
-    float initialDistance = 0.9f * settings.kernelRadius;
+    float initialDistance = 0.7f * settings.kernelRadius;
 
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
@@ -203,17 +203,6 @@ void GranularMatter::initFrameResources(){
 std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 
 
-void GranularMatter::updateSettings(float dt, int currentFrame){
-
-    // settings.dt = dt; 
-    // // Todo: replace with push constant                        
-    // void* mappedData = m_core->mapBuffer(settingsBuffer[currentFrame]);
-    // memcpy(mappedData, &settings, (size_t) sizeof(SPHSettings));
-    // m_core->flushBuffer(settingsBuffer[currentFrame], 0, (size_t) sizeof(SPHSettings));
-    // m_core->unmapBuffer(settingsBuffer[currentFrame]);
-
-}
-
 void GranularMatter::update(int currentFrame, int imageIndex){ 
 
     // uint64_t buffer[TIMESTAMP_QUERY_COUNT];
@@ -244,6 +233,11 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     
     // updateSettings(dt, currentFrame);
     settings.dt = dt;
+
+    // Courant-Friedrichs–Lewy (CFL) condition
+    // float v_max = 0.0;
+    // float C_courant = 0.5;
+    // settings.dt = C_courant * settings.kernelRadius / v_max;
 
     vk::MemoryBarrier writeReadBarrier{
         vk::AccessFlagBits::eMemoryWrite,

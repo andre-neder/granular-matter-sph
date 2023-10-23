@@ -48,24 +48,29 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 } boundary;
 
 layout( push_constant ) uniform Settings{
-  vec2 G;       
-  float rho0;
-  float kernelRadius;		   
+    vec2 G; 
+    float particleRadius;                 
+    float kernelRadius; 
 
-  float mass;		 
-  float stiffness;
-  float dt;	  
-  float DOMAIN_WIDTH;
+    float rho0; 
+    float mass;
+    float stiffness;	  
+    float dt;	 
 
-  float DOMAIN_HEIGHT;
-  float theta;
-  float sigma;
-  float beta;
+    float DOMAIN_WIDTH; 
+    float DOMAIN_HEIGHT;  
+    float pad1;
+    float pad2;
 
-  float C;
-  float alpha;
-  float pad1;
-  float pad2;
+    float theta;       
+    float sigma;                           
+    float alpha;                             
+    float beta;                              
+    
+    float C;                                
+    float dragCoefficient;                
+    float rhoAir;                             
+    float pad3;
 } settings;
 
 struct ParticleGridEntry{
@@ -116,7 +121,11 @@ void main(){
     vec2 pressureAcceleration = vec2(0.f);
     vec2 frictionalAcceleration = vec2(0.f);
 
+    vec2 relativeVelocity = vec2(0) - p_in.velocity;
+    float occluded = 0.866; //* 30° cone
+    // Todo: calculate this globally for adative timestepping
     float c = sqrt(2.f * length(settings.G) * settings.DOMAIN_HEIGHT); //* maximum velocity
+    
 
     float pRhoSq = p_in.rho * p_in.rho;
     float eps = 0.01f;
@@ -191,6 +200,8 @@ void main(){
                     // float omicron = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
                     // vec2 a_v = settings.mass * omicron * gradient;
                     frictionalAcceleration += a_f;// + a_v;//a_v +
+
+                    occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
                 }
             }
         } 
@@ -219,8 +230,13 @@ void main(){
             frictionalAcceleration += a_f + a_v; //max(a_f, a_v);  a_v +
         }
     }
+
+    //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
+    float dragWeight = max(0, min(1, 1 - occluded)); 
+    float crossSectionalArea = dragWeight * sqrt((settings.mass / p_in.rho) / PI) * 2.f; 
+    vec2 dragAcceleration  = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea) / settings.mass;
     
-    p_out.pressureAcceleration = pressureAcceleration;// + frictionalAcceleration;
+    p_out.pressureAcceleration = pressureAcceleration + dragAcceleration;// + frictionalAcceleration;
 
     outStorage.particles[particleID] = p_out;
 }
