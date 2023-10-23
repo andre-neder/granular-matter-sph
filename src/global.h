@@ -3,25 +3,29 @@
 #define HEADER_H
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <vector>
+#include <string>
 #include <glm/glm.hpp>
 
 extern bool simulationRunning;
 extern bool simulationStepForward;
 
-#define volume (float) M_PI * (particleRadius * particleRadius)
+extern std::vector<std::string> passTimeings;
+#define PARTICLE_RADIUS 0.1f
+#define PARTICLE_VOLUME (float) M_PI * (PARTICLE_RADIUS * PARTICLE_RADIUS)
 
 struct SPHSettings{
-    glm::vec2 G = glm::vec2(0.f, -9.81f); //* m/s^2
-    float particleRadius = 0.1f;                     //* m
+    glm::vec2 g = glm::vec2(0.f, -9.81f); //* m/s^2
+    float particleRadius = PARTICLE_RADIUS;                     //* m
     float kernelRadius = particleRadius * 4; 
 
     float rho0 = 1950.f; 
-    float mass = volume * rho0;
-    float stiffness = 1000.f;	  
+    float mass = PARTICLE_VOLUME * rho0;
+    float stiffness = 800.f;	  
     float dt = 0.0006f;	 
 
-    float DOMAIN_WIDTH = 20.f; // 1024
-    float DOMAIN_HEIGHT = 10.f;  //1024
+    float DOMAIN_WIDTH = 24.f; // 1024
+    float DOMAIN_HEIGHT = 12.f;  //1024
     float pad1;
     float pad2;
 

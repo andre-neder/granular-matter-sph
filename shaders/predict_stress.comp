@@ -19,7 +19,7 @@ struct Particle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
-    uint fluidNeighbors[16];
+    uint fluidNeighbors[32];
     uint boundaryNeighbors[14];
     uint fluidNeighborCount;
     uint boundaryNeighborCount;
@@ -39,7 +39,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 } boundary;
 
 layout( push_constant ) uniform Settings{
-    vec2 G; 
+    vec2 g; 
     float particleRadius;                 
     float kernelRadius; 
 
@@ -151,7 +151,7 @@ void main(){
         if (r < settings.kernelRadius)
         {
             //* Strain & Stress 
-            vec2 gradient = gradW(p_pb, settings.kernelRadius);
+            vec2 gradient = gradW(r, pb.predPosition, settings.kernelRadius);
             //Todo: predvel ??
             velocityGradient += pb.V * outerProduct(gradient, p.predVelocity - pb.predVelocity);
             D += (1.f / pb.rho) * outerProduct(gradient, gradient);

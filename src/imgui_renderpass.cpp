@@ -104,17 +104,25 @@ using namespace gpu;
         ImGui::Text(m_deviceProperties.deviceName);
         ImGui::End();
 
+        ImGui::Begin("Timings", &showGPUInfo);
+        for (size_t i = 0; i < passTimeings.size(); i++) {
+            ImGui::Text(passTimeings[i].c_str());
+        }
+        passTimeings = std::vector<std::string>();
+        ImGui::End();
+
         ImGui::Begin("Simulation", &showSimulationSettings);
         ImGui::Checkbox("Simulation running", &simulationRunning);
-        ImGui::DragFloat("Rest Density", &settings.rho0, 1.f, 0.1f, 2000.f);
-        ImGui::DragFloat("Stiffness", &settings.stiffness, 1.f, 0.1f, 1000.f);
-        ImGui::DragFloat("Mass", &settings.mass, 1.f, 0.1f, 100.f);
-        ImGui::DragFloat("Kernel Radius", &settings.kernelRadius, 1.f, 0.1f, 100.f);
-        ImGui::DragFloat("Angle of repose", &settings.theta, 1.f, 0.001f, (float)M_PI);
+        ImGui::DragFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 0.1f, 2000.f);
+        ImGui::DragFloat("Pressure stiffness", &settings.stiffness, 1.f, 1000.f, 50000.f);
+        ImGui::DragFloat("Mass (kg)", &settings.mass, 1.f, 0.1f, 100.f);
+        ImGui::DragFloat("Kernel Radius (m)", &settings.kernelRadius, 1.f, 0.1f, 100.f);
+        ImGui::DragFloat("Angle of repose (rad)", &settings.theta, 1.f, 0.001f, (float)M_PI);
         ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);
         // ImGui::DragFloat("Cohesion intensity", &settings.beta, 1.f, 0.01f, 10.f);
         // ImGui::DragFloat("Maximum Cohesion", &settings.C, 1.f, 0.01f, 10.f);
-        ImGui::DragFloat2("Gravity", glm::value_ptr(settings.G));
+        ImGui::DragFloat2("Gravity (m/s^2)", glm::value_ptr(settings.g));
+
         ImGui::End();
 
         ImGui::ShowDemoWindow(&show_demo_window);

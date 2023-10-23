@@ -9,7 +9,7 @@ uint32_t n;
 uint32_t workGroupCountSort;
 uint32_t workGroupCount;
 
-glm::ivec3 computeSpace = glm::ivec3(16, 16, 1);
+glm::ivec3 computeSpace = glm::ivec3(64, 32, 1);
 
 #define TIMESTAMP_QUERY_COUNT 9
 
@@ -56,11 +56,11 @@ GranularMatter::GranularMatter(gpu::Core* core)
     // equilibrium distance
     float r0 = 0.5f * settings.kernelRadius;
 
-    float initialDistance = 0.7f * settings.kernelRadius;
+    float initialDistance = 0.5f * settings.kernelRadius;
 
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
-            particles.push_back(Particle(i * initialDistance + r0  ,j * initialDistance + r0 ));
+            particles.push_back(Particle(i * initialDistance + settings.kernelRadius  ,j * initialDistance + settings.kernelRadius ));
         }
     }
     
@@ -205,24 +205,26 @@ std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_res
 
 void GranularMatter::update(int currentFrame, int imageIndex){ 
 
-    // uint64_t buffer[TIMESTAMP_QUERY_COUNT];
+    uint64_t buffer[TIMESTAMP_QUERY_COUNT];
 
-    // vk::Result result = m_core->getDevice().getQueryPoolResults(timeQueryPools[currentFrame], 0, TIMESTAMP_QUERY_COUNT, sizeof(uint64_t) * TIMESTAMP_QUERY_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
-    // if (result == vk::Result::eNotReady)
-    // {
+    vk::Result result = m_core->getDevice().getQueryPoolResults(timeQueryPools[currentFrame], 0, TIMESTAMP_QUERY_COUNT, sizeof(uint64_t) * TIMESTAMP_QUERY_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
+    if (result == vk::Result::eNotReady)
+    {
         
-    // }
-    // else if (result == vk::Result::eSuccess)
-    // {
-    //      std::cout << "################# Timimgs ##################" << std::endl;
-    //     for (size_t i = 0; i < TIMESTAMP_QUERY_COUNT -1; i++) {
-    //         std::cout << passLabels[i] << (buffer[i + 1] - buffer[i]) / (float)1000000 << " ms" << std::endl;
-    //     }
-    // }
-    // else
-    // {
-    //     throw std::runtime_error("Failed to receive query results!");
-    // }
+    }
+    else if (result == vk::Result::eSuccess)
+    {
+        //  std::cout << "################# Timimgs ##################" << std::endl;
+        for (size_t i = 0; i < TIMESTAMP_QUERY_COUNT -1; i++) {
+            // std::cout << passLabels[i] << (buffer[i + 1] - buffer[i]) / (float)1000000 << " ms" << std::endl;
+            passTimeings.push_back(passLabels[i] + std::to_string((buffer[i + 1] - buffer[i]) / (float)1000000) + " ms");
+        }
+        passTimeings.push_back("Total                  " + std::to_string((buffer[TIMESTAMP_QUERY_COUNT -1] - buffer[0]) / (float)1000000) + " ms");
+    }
+    else
+    {
+        throw std::runtime_error("Failed to receive query results!");
+    }
         
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
@@ -231,13 +233,16 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     // float accumulator = dt;
     // float stepSize = 1.f/120.f;
     
-    // updateSettings(dt, currentFrame);
-    settings.dt = dt;
+ 
+    // settings.dt = dt;
 
     // Courant-Friedrichs–Lewy (CFL) condition
-    // float v_max = 0.0;
-    // float C_courant = 0.5;
-    // settings.dt = C_courant * settings.kernelRadius / v_max;
+    float area = settings.particleRadius * 2.f;
+    float v_max = sqrt((2 * settings.mass * settings.g.length()) / (settings.rhoAir * area * settings.dragCoefficient));
+    float C_courant = 0.5f;
+    float dt_max = C_courant * (settings.kernelRadius / v_max);
+    // std::cout << dt << " " << 1.f / 60.f << " " <<  1.f/120.f << " " << dt_max << std::endl;
+    settings.dt = std::min(dt, dt_max);
 
     vk::MemoryBarrier writeReadBarrier{
         vk::AccessFlagBits::eMemoryWrite,

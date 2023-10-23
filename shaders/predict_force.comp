@@ -19,7 +19,7 @@ struct Particle{
     float psi_rho0; 
     float pad0, pad1;
     mat2 stress;
-    uint fluidNeighbors[16];
+    uint fluidNeighbors[32];
     uint boundaryNeighbors[14];
     uint fluidNeighborCount;
     uint boundaryNeighborCount;
@@ -39,7 +39,7 @@ layout(set = 0, binding = 3) buffer BoundaryStorage{
 } boundary;
 
 layout( push_constant ) uniform Settings{
-    vec2 G; 
+    vec2 g; 
     float particleRadius;                 
     float kernelRadius; 
 
@@ -114,7 +114,7 @@ void main(){
     vec2 relativeVelocity = vec2(0) - p.velocity;
     float occluded = 0.866; //* 30° cone
     // Todo: calculate this globally for adative timestepping
-    float c = sqrt(2.f * length(settings.G) * settings.DOMAIN_HEIGHT); //* maximum velocity
+    float c = sqrt(2.f * length(settings.g) * settings.DOMAIN_HEIGHT); //* maximum velocity
     
 
     float pRhoSq = p.rho * p.rho;
@@ -135,12 +135,12 @@ void main(){
             float piRhoSq = pi.rho * pi.rho;
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
             pressureAcceleration -= settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
-            vec2 a_f = -settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+            // vec2 a_f = -settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
             // float v = (2.f * settings.alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
             // float omicron = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
             // vec2 a_v = settings.mass * omicron * gradient;
-            frictionalAcceleration += a_f;// + a_v;//a_v +
+            // frictionalAcceleration += a_f;// + a_v;//a_v +
 
             occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
         }
@@ -159,15 +159,15 @@ void main(){
         if (r < settings.kernelRadius)
         {
             //* using normal instead of direction to boundary
-            vec2 gradient = gradW(p_pb, settings.kernelRadius);
+            vec2 gradient = gradW(r, pb.predPosition, settings.kernelRadius);
             pressureAcceleration -= pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
             
-            vec2 a_f = -settings.mass * pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
-            //Todo: vel / predvel ???
-            float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
-            float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
-            vec2 a_v = pb.psi_rho0 * omicron * gradient;
-            frictionalAcceleration += a_f + a_v; //max(a_f, a_v);  a_v +
+            // vec2 a_f = -settings.mass * pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
+            // //Todo: vel / predvel ???
+            // float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
+            // float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+            // vec2 a_v = pb.psi_rho0 * omicron * gradient;
+            // frictionalAcceleration += a_f + a_v; //max(a_f, a_v);  a_v +
         }
     }
 
@@ -180,3 +180,5 @@ void main(){
 
     outStorage.particles[particleID] = p;
 }
+
+//! tensile instability

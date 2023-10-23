@@ -40,7 +40,7 @@ struct Particle{
   // 16
   glm::mat2 stress = glm::mat2(1.0);
   // 20
-  uint32_t fluidNeighbors[16]; // 16 particles can fit inside the area/volume of the kernel by area/volume
+  uint32_t fluidNeighbors[32]; // 16 particles can fit inside the area/volume of the kernel by area/volume
   uint32_t boundaryNeighbors[14]; // should be enough
   uint32_t fluidNeighborCount;
   uint32_t boundaryNeighborCount;

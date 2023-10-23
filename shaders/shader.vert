@@ -10,7 +10,7 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 layout( push_constant ) uniform Settings{
-    vec2 G; 
+    vec2 g; 
     float particleRadius;                 
     float kernelRadius; 
 

@@ -21,6 +21,9 @@
 #include "imgui_renderpass.h"
 #include "granular_matter.h"
 
+#include "global.h"
+
+std::vector<std::string> passTimeings = std::vector<std::string>();
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -203,8 +206,6 @@ private:
     void mainLoop(){
         double time = glfwGetTime();
         uint32_t fps = 0;
-
-
         while (!window.shouldClose()) {
             glfwPollEvents();
 

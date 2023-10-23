@@ -7,7 +7,7 @@
 // layout(location = 1) in vec2 fragTexCoord;
 
 layout( push_constant ) uniform Settings{
-    vec2 G; 
+    vec2 g; 
     float particleRadius;                 
     float kernelRadius; 
 
@@ -36,5 +36,5 @@ layout(location = 0) out vec4 outColor;
 layout(location = 0) in float inRho;
 void main() {
     // outColor = vec4(246.f / 255.f,215.f / 255.f,176.f / 255.f, 1.0);
-    outColor = vec4(inRho / settings.rho0, 1.0, 0, 1);
+    outColor = vec4(inRho / settings.rho0 - 1, 1.0, 0, 1);
 }
