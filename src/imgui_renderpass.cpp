@@ -114,7 +114,7 @@ using namespace gpu;
         ImGui::Begin("Simulation", &showSimulationSettings);
         ImGui::Checkbox("Simulation running", &simulationRunning);
         ImGui::DragFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 0.1f, 2000.f);
-        ImGui::DragFloat("Pressure stiffness", &settings.stiffness, 1.f, 1000.f, 50000.f);
+        ImGui::DragFloat("Pressure stiffness", &settings.stiffness, 1.f, 100.f, 50000.f);
         ImGui::DragFloat("Mass (kg)", &settings.mass, 1.f, 0.1f, 100.f);
         ImGui::DragFloat("Kernel Radius (m)", &settings.kernelRadius, 1.f, 0.1f, 100.f);
         ImGui::DragFloat("Angle of repose (rad)", &settings.theta, 1.f, 0.001f, (float)M_PI);

@@ -21,7 +21,7 @@ struct SPHSettings{
 
     float rho0 = 1950.f; 
     float mass = PARTICLE_VOLUME * rho0;
-    float stiffness = 800.f;	  
+    float stiffness = 2000.f;	  
     float dt = 0.0006f;	 
 
     float DOMAIN_WIDTH = 24.f; // 1024

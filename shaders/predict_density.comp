@@ -184,13 +184,18 @@ void main(){
     p.boundaryNeighborCount = boundaryNeighborCount;
     p.rho = rho;
 
-    //* tait's equation
+    
     p.rho = max(p.rho, settings.rho0); 
     float exponent = 7.f;
     float B = settings.stiffness;// (settings.rho0 * c * c) / exponent;
+    //? https://forums.dual.sphysics.org/discussion/1804/theory-tait-equation-of-state ???
+    //* coles equation
     // float pressure = B * (pow(max(p.rho, settings.rho0) / settings.rho0, exponent) - 1.f); 
     //? https://www.politesi.polimi.it/bitstream/10589/33101/1/2011_12_Pirovano.pdf (3.2)
+    //* tait's equation
     float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
+
+    //? Murnaghan equation of state ???
 
     //* Ideal gas equation
     // float pressure = settings.stiffness * (rho - settings.rho0); 
@@ -202,5 +207,9 @@ void main(){
 }
 
 // volume = mass / density
+
+// Todo: file:///C:/Users/andre/Downloads/pcisph%20(2).pdf try this
+
+// Todo: https://cg.informatik.uni-freiburg.de/publications/2013_TVCG_IISPH.pdf try this
 
 // Todo: https://www.politesi.polimi.it/bitstream/10589/33101/1/2011_12_Pirovano.pdf (try pressure corrected sph?)
