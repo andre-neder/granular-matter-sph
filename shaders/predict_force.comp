@@ -161,7 +161,7 @@ void main(){
             vec2 gradient = gradW(p_pb, settings.kernelRadius);
             pressureForce += pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
             
-            frictionalForce += pb.psi_rho0 * (p.stress / pRhoSq) * gradient;  // ! problem
+            frictionalForce += pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
 
             // float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
             // float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
