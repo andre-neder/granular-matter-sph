@@ -29,7 +29,7 @@ struct Particle{
   glm::vec2 velocity = glm::vec2(0,0);
   glm::vec2 predVelocity = glm::vec2(0,0);
   // 8
-  glm::vec2 pressureAcceleration = glm::vec2(0,0);
+  glm::vec2 pressureForce = glm::vec2(0,0);
   float rho = settings.rho0;
   float p = 0.0;
   // 12

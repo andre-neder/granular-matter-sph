@@ -11,7 +11,7 @@ struct Particle{
     vec2 predPosition;
     vec2 velocity;
     vec2 predVelocity;
-    vec2 pressureAcceleration;
+    vec2 pressureForce;
     float rho;
     float p;
     float V;
@@ -69,9 +69,9 @@ void main(){
 
     // Semi-implicit euler
     p.position += p.velocity * settings.dt;
-    p.velocity = p.predVelocity + p.pressureAcceleration * settings.dt;
+    p.velocity = p.predVelocity + (p.pressureForce / settings.mass) * settings.dt;
     // Forward Euler
-    // p.velocity = p.predVelocity + p.pressureAcceleration * settings.dt;
+    // p.velocity = p.predVelocity + p.pressureForce * settings.dt;
     // p.position += p.velocity * settings.dt;
 
     outStorage.particles[particleID] = p;

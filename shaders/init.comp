@@ -13,7 +13,7 @@ struct Particle{
     vec2 predPosition;
     vec2 velocity;
     vec2 predVelocity;
-    vec2 pressureAcceleration;
+    vec2 pressureForce;
     float rho;
     float p;
     float V;

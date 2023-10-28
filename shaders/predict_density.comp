@@ -12,7 +12,7 @@ struct Particle{
     vec2 predPosition;
     vec2 velocity;
     vec2 predVelocity;
-    vec2 pressureAcceleration;
+    vec2 pressureForce;
     float rho;
     float p;
     float V;
@@ -185,7 +185,7 @@ void main(){
     p.rho = rho;
 
     
-    p.rho = max(p.rho, settings.rho0); 
+    // p.rho = max(p.rho, settings.rho0); 
     float exponent = 7.f;
     float B = settings.stiffness;// (settings.rho0 * c * c) / exponent;
     //? https://forums.dual.sphysics.org/discussion/1804/theory-tait-equation-of-state ???
