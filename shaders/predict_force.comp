@@ -136,11 +136,13 @@ void main(){
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
             pressureForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
 
-            frictionalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+            vec2 F_f = settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
             // float v = (2.f * settings.alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
-            // float omicron = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
-            // vec2 a_v = settings.mass * omicron * gradient;
+            // float pi = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+            // vec2 F_v = settings.mass * pi * gradient;
+
+            frictionalForce += F_f;
 
             occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
         }
@@ -161,11 +163,13 @@ void main(){
             vec2 gradient = gradW(p_pb, settings.kernelRadius);
             pressureForce += pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
             
-            frictionalForce += pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
+            vec2 F_f = pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
 
-            // float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
-            // float omicron = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
-            // vec2 a_v = pb.psi_rho0 * omicron * gradient;
+            float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
+            float pi = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+            vec2 F_v = pb.psi_rho0 * pi * gradient;
+
+            frictionalForce += max(F_f, F_v); 
         }
     }
 
