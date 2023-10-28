@@ -60,7 +60,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
-            particles.push_back(Particle(i * initialDistance + settings.kernelRadius  ,j * initialDistance + settings.kernelRadius ));
+            particles.push_back(Particle(i * initialDistance + settings.kernelRadius  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2) ,j * initialDistance + settings.kernelRadius ));
         }
     }
     

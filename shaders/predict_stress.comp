@@ -167,13 +167,25 @@ void main(){
     
     float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
     float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
-    if(p.p > EPSILON && frobenius(deviatoricStressTensor) > EPSILON){
-        p.stress = frobenius(deviatoricStressTensor) <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / frobenius(deviatoricStressTensor));
+
+    mat2 stress = mat2(0);
+    mat2 cohesion = mat2(0);
+
+    float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);
+    if(p.p > EPSILON && normDeviatoricStressTensor > EPSILON){
+        stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
     }
-    else{
-        p.stress = mat2(0);
-    }
-    // p.cohesion = min(frobenius(stressTensor), settings.beta * settings.beta * settings.C);
+
+    p.stress = stress;
+    
+    // float maxCohesion = settings.beta * settings.beta * settings.C;
+    // float normStressTensor = frobenius(stressTensor);
+    // if(p.p > EPSILON && normStressTensor > EPSILON){
+    //     cohesion = normStressTensor <= maxCohesion ? stressTensor : stressTensor * (maxCohesion / normStressTensor);
+    // }
+    // p.pad0 = normStressTensor;
+    // p.stress = frobenius(stress) > frobenius(cohesion) ? stress : cohesion;
+
 
 
     outStorage.particles[particleID] = p;

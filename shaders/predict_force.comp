@@ -114,7 +114,7 @@ void main(){
     vec2 relativeVelocity = vec2(0) - p.velocity;
     float occluded = 0.866; //* 30° cone
     // Todo: calculate this globally for adative timestepping
-    float c = sqrt(2.f * length(settings.g) * settings.DOMAIN_HEIGHT); //* maximum velocity
+    // float c = sqrt(2.f * length(settings.g) * settings.DOMAIN_HEIGHT); //* maximum velocity
     
 
     float pRhoSq = p.rho * p.rho;
@@ -165,11 +165,11 @@ void main(){
             
             vec2 F_f = pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
 
-            float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
-            float pi = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
-            vec2 F_v = pb.psi_rho0 * pi * gradient;
+            // float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
+            // float pi = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+            // vec2 F_v = pb.psi_rho0 * pi * gradient;
 
-            frictionalForce += max(F_f, F_v); 
+            frictionalForce += F_f;// max(F_f, F_v); 
         }
     }
 
