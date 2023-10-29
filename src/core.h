@@ -7,7 +7,20 @@
 #include <map>
 
 namespace gpu
-{
+{   
+    struct DescriptorSetBinding{
+        uint32_t binding;
+        vk::DescriptorType type;
+        vk::ShaderStageFlags stages;
+    };
+
+    struct DescriptorWrite{
+        uint32_t binding;
+        vk::DescriptorType type;
+        vk::Buffer buffer;
+        size_t size;
+    };
+
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     class Core{
         public:
@@ -61,10 +74,20 @@ namespace gpu
             vk::Sampler createTextureSampler();
             void destroySampler(vk::Sampler sampler);
             
+            //* Commands
             void createCommandPool();
             vk::CommandBuffer beginSingleTimeCommands();
             void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
+            
+            //* Descriptors
+            std::vector<vk::DescriptorSet> allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count = gpu::MAX_FRAMES_IN_FLIGHT);
+            void updateDescriptorSet(vk::DescriptorSet set, std::vector<gpu::DescriptorWrite> writes);
+            vk::DescriptorSetLayout createDescriptorSetLayout(std::vector<DescriptorSetBinding> bindings);
+            vk::DescriptorPool createDescriptorPool(std::vector<vk::DescriptorPoolSize> sizes, uint32_t maxSets = 1 * gpu::MAX_FRAMES_IN_FLIGHT );
+            void destroyDescriptorPool(vk::DescriptorPool pool);
+            void destroyDescriptorSetLayout(vk::DescriptorSetLayout layout);
 
+            //* Swapchain
             void createSwapChain(Window* window);
             void createSwapChainImageViews();
             void destroySwapChainImageViews();

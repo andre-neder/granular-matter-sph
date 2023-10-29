@@ -193,12 +193,12 @@ void main(){
     // float pressure = B * (pow(max(p.rho, settings.rho0) / settings.rho0, exponent) - 1.f); 
     //? https://www.politesi.polimi.it/bitstream/10589/33101/1/2011_12_Pirovano.pdf (3.2)
     //* tait's equation
-    float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
+    // float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
 
     //? Murnaghan equation of state ???
 
     //* Ideal gas equation
-    // float pressure = settings.stiffness * (rho - settings.rho0); 
+    float pressure = settings.stiffness * (rho - settings.rho0); 
     
     p.p = max(pressure, 0.f);     //? required?
     p.V = settings.mass / rho;

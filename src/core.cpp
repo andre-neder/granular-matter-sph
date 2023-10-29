@@ -245,7 +245,65 @@ void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
     device.freeCommandBuffers(commandPool, 1, &commandBuffer);
 }
 
-    void Core::createCommandPool() {
+std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count)
+{
+    std::vector<vk::DescriptorSetLayout> layouts(count, layout);
+    vk::DescriptorSetAllocateInfo allocInfo(pool, count, layouts.data());
+    try{
+        return device.allocateDescriptorSets(allocInfo);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+}
+
+void gpu::Core::updateDescriptorSet(vk::DescriptorSet set, std::vector<gpu::DescriptorWrite> writes)
+{
+    std::vector<vk::WriteDescriptorSet> descriptorWrites;
+
+    for (auto &w : writes){
+        vk::DescriptorBufferInfo* bufferInfo = new vk::DescriptorBufferInfo(w.buffer, 0, w.size);
+        vk::WriteDescriptorSet descriptorWrite(set, w.binding, 0, 1, w.type, {}, bufferInfo);
+        descriptorWrites.push_back(descriptorWrite);
+    }
+
+    device.updateDescriptorSets(descriptorWrites, nullptr);
+}
+
+vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<DescriptorSetBinding> bindings)
+{
+    std::vector<vk::DescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+    for(auto b : bindings){
+        descriptorSetLayoutBindings.push_back(vk::DescriptorSetLayoutBinding(b.binding, b.type, 1, b.stages, nullptr));
+    }
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, descriptorSetLayoutBindings);
+    try{
+        return device.createDescriptorSetLayout(layoutInfo);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+}
+
+vk::DescriptorPool gpu::Core::createDescriptorPool(std::vector<vk::DescriptorPoolSize> sizes, uint32_t maxSets)
+{
+    vk::DescriptorPoolCreateInfo poolInfo({}, maxSets, sizes);
+    try{
+        return device.createDescriptorPool(poolInfo);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+}
+
+void gpu::Core::destroyDescriptorPool(vk::DescriptorPool pool)
+{
+    device.destroyDescriptorPool(pool);
+}
+
+void gpu::Core::destroyDescriptorSetLayout(vk::DescriptorSetLayout layout)
+{
+    device.destroyDescriptorSetLayout(layout);
+}
+
+void Core::createCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
     vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());
     try{

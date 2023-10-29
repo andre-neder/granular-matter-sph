@@ -6,6 +6,7 @@
 #include "compute_pass.h"
 #include "global.h"
 
+
 struct BitonicSortParameters {
     enum eAlgorithmVariant : uint32_t {
         eLocalBitonicMergeSortExample = 0,
@@ -86,13 +87,17 @@ private:
     std::vector<vk::Buffer> particleCellBuffer;
     std::vector<uint32_t> startingIndices; 
     std::vector<vk::Buffer> startingIndicesBuffers;
-    std::vector<vk::Buffer> bitonicSortParameterBuffers;
-    vk::DescriptorSetLayout descriptorSetLayoutCell;
-    std::vector<vk::DescriptorSet> descriptorSetsCell;
-    vk::DescriptorPool descriptorPoolCell;
+    // vk::DescriptorSetLayout descriptorSetLayoutCell;
+    std::vector<vk::DescriptorSet> descriptorSetsGrid;
+    // vk::DescriptorPool descriptorPoolCell;
 
-    vk::DescriptorSetLayout descriptorSetLayout;
-    std::vector<vk::DescriptorSet> descriptorSets;
+    // vk::DescriptorSetLayout descriptorSetLayout;
+    std::vector<vk::DescriptorSet> descriptorSetsParticles;
+    // vk::DescriptorPool descriptorPool;
+
+    vk::DescriptorSetLayout descriptorSetLayoutGrid;
+    vk::DescriptorSetLayout descriptorSetLayoutParticles;
+
     vk::DescriptorPool descriptorPool;
  
     gpu::ComputePass initPass;
