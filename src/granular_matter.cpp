@@ -3,6 +3,7 @@
 #include "iostream"
 #include "global.h"
 
+#include <Discregrid/All>
 
 BitonicSortParameters params;
 uint32_t workgroup_size_x;
@@ -34,9 +35,36 @@ std::vector<std::string> passLabels = {
     "Integration            "
 };
 
+double bottomBorderFn(Eigen::Vector3d const& wtf){
+    return 0.0;
+}
+
 GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
+
+    
+    Eigen::AlignedBox3d domain;
+    domain.extend(Eigen::AlignedBox3d(Eigen::Vector3d(0,0,0), Eigen::Vector3d(settings.DOMAIN_WIDTH,settings.DOMAIN_HEIGHT,1)));
+    std::array<unsigned int, 3> resolution = {{10, 10, 10}};
+    Discregrid::CubicLagrangeDiscreteGrid sdf(domain, resolution);
+
+    Discregrid::DiscreteGrid::ContinuousFunction func1 = bottomBorderFn;
+    auto df_index1 = sdf.addFunction(func1);
+
+    auto val1 = sdf.interpolate(df_index1, {0.1, 0.2, 0.0});
+    // Eigen::Vector3d grad2;
+    // auto val2 = sdf->interpolate(df_index2, {0.3, 0.2, 0.1}, &grad2);
+
+    // sdf.reduce_field(df_index1, [](Eigen::Vector3d const& x, double v)
+    // {
+    // 	return x.x() < 0.0 && v > 0.0;
+    // });
+
+    // sdf.save("filename.sdf");
+    // sdf.load(filename.sdf); 
+    // sdf = Discregrid::CubicLagrangeDiscreteGrid(filename.sdf);
+
 
     timeQueryPools.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {

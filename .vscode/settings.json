@@ -84,6 +84,7 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "complex": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "all": "cpp"
     }
 }

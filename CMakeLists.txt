@@ -70,3 +70,9 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/imgui)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE vendor/imgui)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE imgui)
 
+#add discregrid
+set(_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS ON)
+include_directories(${PROJECT_SOURCE_DIR}/vendor/Discregrid/extern)
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/Discregrid/discregrid)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Discregrid)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE vendor/Discregrid/discregrid/include)
