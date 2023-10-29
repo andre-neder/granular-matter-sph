@@ -456,33 +456,28 @@ void GranularMatter::createDescriptorSetLayout() {
 }
 
 void GranularMatter::createDescriptorSets() {
-    {
 
-        descriptorSetsGrid.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-
-        descriptorSetsGrid = m_core->allocateDescriptorSets(descriptorSetLayoutGrid, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
-        
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            m_core->updateDescriptorSet(descriptorSetsGrid[i], {
-                { 0, vk::DescriptorType::eStorageBuffer, particleCellBuffer[i], sizeof(ParticleGridEntry) * particleCells.size() },
-                { 2, vk::DescriptorType::eStorageBuffer, startingIndicesBuffers[i], sizeof(uint32_t) * startingIndices.size() }
-            });
-        }
+    descriptorSetsGrid = m_core->allocateDescriptorSets(descriptorSetLayoutGrid, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
+    
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_core->updateDescriptorSet(descriptorSetsGrid[i], {
+            { 0, vk::DescriptorType::eStorageBuffer, particleCellBuffer[i], sizeof(ParticleGridEntry) * particleCells.size() },
+            { 2, vk::DescriptorType::eStorageBuffer, startingIndicesBuffers[i], sizeof(uint32_t) * startingIndices.size() }
+        });
     }
-    {
-       
-        descriptorSetsParticles.resize(gpu::MAX_FRAMES_IN_FLIGHT);
 
-        descriptorSetsParticles = m_core->allocateDescriptorSets(descriptorSetLayoutParticles, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
-        
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            m_core->updateDescriptorSet(descriptorSetsParticles[i], {
-                { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(Particle) * particles.size() },
-                { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(Particle) * particles.size() },
-                { 3, vk::DescriptorType::eStorageBuffer, boundaryParticlesBuffer[i], sizeof(Particle) * boundaryParticles.size() }
-            });
-        }
+
+
+    descriptorSetsParticles = m_core->allocateDescriptorSets(descriptorSetLayoutParticles, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
+    
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_core->updateDescriptorSet(descriptorSetsParticles[i], {
+            { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(Particle) * particles.size() },
+            { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(Particle) * particles.size() },
+            { 3, vk::DescriptorType::eStorageBuffer, boundaryParticlesBuffer[i], sizeof(Particle) * boundaryParticles.size() }
+        });
     }
+
 }
 
 void GranularMatter::createDescriptorPool() {
