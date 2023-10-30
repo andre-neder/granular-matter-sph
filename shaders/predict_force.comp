@@ -149,30 +149,37 @@ void main(){
     }
 
     //* For all boundary particles
-    for (int i = 0; i < p.boundaryNeighborCount; i++)
-    {
-        uint particleIndex = p.boundaryNeighbors[i];
-        Particle pb = boundary.particles[particleIndex];
+    // for (int i = 0; i < p.boundaryNeighborCount; i++)
+    // {
+    //     uint particleIndex = p.boundaryNeighbors[i];
+    //     Particle pb = boundary.particles[particleIndex];
        
-        vec2 p_pb = p.predPosition - pb.position;
-        float r = length(p_pb);
+    //     vec2 p_pb = p.predPosition - pb.position;
+    //     float r = length(p_pb);
         
-        if (r < settings.kernelRadius)
-        {
-            //* using normal instead of direction to boundary
-            vec2 gradient = gradW(p_pb, settings.kernelRadius);
-            pressureForce += pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
+    //     if (r < settings.kernelRadius)
+    //     {
+    //         //* using normal instead of direction to boundary
+    //         vec2 gradient = gradW(p_pb, settings.kernelRadius);
+    //         pressureForce += pb.psi_rho0 * (p.p / pRhoSq) * gradient; 
             
-            vec2 F_f = pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
+    //         vec2 F_f = pb.psi_rho0 * (p.stress / pRhoSq) * gradient; 
 
-            // float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
-            // float pi = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
-            // vec2 F_v = pb.psi_rho0 * pi * gradient;
+    //         // float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
+    //         // float pi = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+    //         // vec2 F_v = pb.psi_rho0 * pi * gradient;
 
-            frictionalForce += F_f;// max(F_f, F_v); 
-        }
+    //         frictionalForce += F_f;// max(F_f, F_v); 
+    //     }
+    // }
+    {
+        vec2 gradient = gradW(vec2(0,p.pad0), settings.kernelRadius);
+        pressureForce += p.pad1 * settings.rho0 * (p.p / pRhoSq) * gradient; 
+        
+        vec2 F_f = p.pad1 * settings.rho0 * (p.stress / pRhoSq) * gradient; 
+
+        frictionalForce += F_f;
     }
-
     frictionalForce *= -settings.mass;
     pressureForce *= -settings.mass;
 

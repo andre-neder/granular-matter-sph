@@ -19,6 +19,7 @@
 
 #include "basic_renderpass.h"
 #include "imgui_renderpass.h"
+#include "screenquad_renderpass.h"
 #include "granular_matter.h"
 
 #include "global.h"
@@ -45,6 +46,7 @@ private:
     gpu::Window window;
 
     gpu::BasicRenderPass basicRenderPass;
+    gpu::ScreenQuadRenderPass screenQuadRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
 
     GranularMatter simulation;
@@ -68,6 +70,7 @@ private:
         device = core.getDevice();
 
         basicRenderPass = gpu::BasicRenderPass(&core);
+        screenQuadRenderPass = gpu::ScreenQuadRenderPass(&core);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
 
         simulation = GranularMatter(&core);
@@ -80,13 +83,14 @@ private:
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             basicRenderPass.vertexBuffer1[i] = simulation.boundaryParticlesBuffer[i];
         }
-        basicRenderPass.vertexCount = simulation.particles.size();
-        basicRenderPass.vertexCount1 = simulation.boundaryParticles.size();
+        basicRenderPass.vertexCount = (uint32_t)simulation.particles.size();
+        basicRenderPass.vertexCount1 = (uint32_t)simulation.boundaryParticles.size();
 
         basicRenderPass.attributeDescriptions = Particle::getAttributeDescriptions();
         basicRenderPass.bindingDescription = Particle::getBindingDescription();
 
         basicRenderPass.init();
+        screenQuadRenderPass.init();
 
         createSyncObjects();
     }
@@ -156,8 +160,9 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        imguiRenderPass.update((int) currentFrame, imageIndex);
         basicRenderPass.update((int) currentFrame, imageIndex);
+        screenQuadRenderPass.update((int) currentFrame, imageIndex);
+        imguiRenderPass.update((int) currentFrame, imageIndex);
 
 
         if ((VkFence) imagesInFlight[currentFrame] != VK_NULL_HANDLE){
@@ -178,6 +183,7 @@ private:
         };
         std::array<vk::CommandBuffer, 2> submitCommandBuffers = { 
             basicRenderPass.getCommandBuffer((int) currentFrame), 
+            // screenQuadRenderPass.getCommandBuffer((int) currentFrame), 
             imguiRenderPass.getCommandBuffer((int) currentFrame)
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
@@ -232,6 +238,7 @@ private:
 
         
         basicRenderPass.destroy();
+        screenQuadRenderPass.destroy();
         imguiRenderPass.destroy();
 
         simulation.destroy();
@@ -261,6 +268,7 @@ private:
         device.waitIdle();
 
         basicRenderPass.destroyFrameResources();
+        screenQuadRenderPass.destroyFrameResources();
         imguiRenderPass.destroyFrameResources();
         cleanupSwapchain();
 
@@ -268,6 +276,7 @@ private:
         core.createSwapChainImageViews();
    
         basicRenderPass.initFrameResources();
+        screenQuadRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
 
         imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);

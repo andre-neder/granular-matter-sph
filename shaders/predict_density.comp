@@ -114,8 +114,46 @@ vec2 gradW(float r, vec2 rij, float h){
     return -dir * slope;
 }
 
+float sdPlane( vec3 p, vec3 n, float h )
+{
+  // n must be normalized
+  return dot(p,n) + h;
+}
+
+float sdPlane( vec2 p, vec2 n, float h )
+{
+  // n must be normalized
+  return dot(p,n) + h;
+}
+
+float cubicExtension(float r){
+    float h = settings.kernelRadius;
+    if(r < 0){
+        return 1;
+    }
+    else if(r < h){
+        float alpha = 15.f / (14.f * PI * h * h);
+        float q = r / h;
+        if(r < EPSILON){
+            return 0;
+        }
+        if (q >= 0.0 && q < 1.0) {
+            return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
+        } else if (q >= 1.f && q < 2.f) {
+            float beta = (2.f - q);
+            return alpha * 0.25f * beta * beta * beta;
+        } else {
+            return 0.f;
+        }
+    }
+    else{
+        return 0;
+    }
+}
 
 void main(){
+
+
     uint particleID = gl_GlobalInvocationID.x;;
     Particle p = inStorage.particles[particleID];
     //* Density
@@ -165,26 +203,33 @@ void main(){
 
   
     //* For all boundary particles
-    uint boundaryNeighborCount = 0;
-    for (int i = 0; i < boundary.particles.length();i++)
-    {
-        Particle pb = boundary.particles[i];
-        vec2 p_pb = p.predPosition - pb.position;
-        float r = length(p_pb);
+    // uint boundaryNeighborCount = 0;
+    // for (int i = 0; i < boundary.particles.length();i++)
+    // {
+    //     Particle pb = boundary.particles[i];
+    //     vec2 p_pb = p.predPosition - pb.position;
+    //     float r = length(p_pb);
        
-        if (r < settings.kernelRadius)
-        {
-            //* Density
-            rho += pb.psi_rho0 * W(r, settings.kernelRadius);
-            //* Put all boundary neighbors in a list to access them later
-            p.boundaryNeighbors[boundaryNeighborCount] = i;
-            boundaryNeighborCount++;
-        }
+    //     if (r < settings.kernelRadius)
+    //     {
+    //         //* Density
+    //         rho += pb.psi_rho0 * W(r, settings.kernelRadius);
+    //         //* Put all boundary neighbors in a list to access them later
+    //         p.boundaryNeighbors[boundaryNeighborCount] = i;
+    //         boundaryNeighborCount++;
+    //     }
+    // }
+    // p.boundaryNeighborCount = boundaryNeighborCount;
+    {
+        float sd = sdPlane(p.predPosition, vec2(0,1), 0);
+        float boundaryVolume = cubicExtension(sd);
+        p.pad0 = sd;
+        p.pad1 = boundaryVolume;
+        rho += boundaryVolume * settings.rho0 * W(sd, settings.kernelRadius);
     }
-    p.boundaryNeighborCount = boundaryNeighborCount;
     p.rho = rho;
 
-    
+   
     p.rho = max(p.rho, settings.rho0); 
     float exponent = 7.f;
     float B = settings.stiffness;// (settings.rho0 * c * c) / exponent;
