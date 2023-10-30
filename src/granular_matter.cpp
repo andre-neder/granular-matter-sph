@@ -23,7 +23,6 @@ uint32_t nextQuery(){
 
 std::vector<vk::QueryPool> timeQueryPools;
 std::vector<std::string> passLabels = {
-    // "Boundary               ",
     "Copy last frame data   ",
     "Init                   ",
     // "Grid quantification    ",
@@ -44,15 +43,15 @@ GranularMatter::GranularMatter(gpu::Core* core)
     m_core = core;
 
     
-    Eigen::AlignedBox3d domain;
-    domain.extend(Eigen::AlignedBox3d(Eigen::Vector3d(0,0,0), Eigen::Vector3d(settings.DOMAIN_WIDTH,settings.DOMAIN_HEIGHT,1)));
-    std::array<unsigned int, 3> resolution = {{10, 10, 10}};
-    Discregrid::CubicLagrangeDiscreteGrid sdf(domain, resolution);
+    // Eigen::AlignedBox3d domain;
+    // domain.extend(Eigen::AlignedBox3d(Eigen::Vector3d(0,0,0), Eigen::Vector3d(settings.DOMAIN_WIDTH,settings.DOMAIN_HEIGHT,1)));
+    // std::array<unsigned int, 3> resolution = {{10, 10, 10}};
+    // Discregrid::CubicLagrangeDiscreteGrid sdf(domain, resolution);
 
-    Discregrid::DiscreteGrid::ContinuousFunction func1 = bottomBorderFn;
-    auto df_index1 = sdf.addFunction(func1);
+    // Discregrid::DiscreteGrid::ContinuousFunction func1 = bottomBorderFn;
+    // auto df_index1 = sdf.addFunction(func1);
 
-    auto val1 = sdf.interpolate(df_index1, {0.1, 0.2, 0.0});
+    // auto val1 = sdf.interpolate(df_index1, {0.1, 0.2, 0.0});
     // Eigen::Vector3d grad2;
     // auto val2 = sdf->interpolate(df_index2, {0.3, 0.2, 0.1}, &grad2);
 
@@ -93,16 +92,6 @@ GranularMatter::GranularMatter(gpu::Core* core)
         }
     }
     
-    for(float i = 0.f;i < settings.DOMAIN_HEIGHT; i+=r0){
-        boundaryParticles.push_back(BoundaryParticle(0.f, i, 1.f, 0.f));
-        boundaryParticles.push_back(BoundaryParticle(settings.DOMAIN_WIDTH, i, -1.f, 0.f));
-    }
-
-    for(float i = 0.f;i < settings.DOMAIN_WIDTH; i+=r0){
-        boundaryParticles.push_back(BoundaryParticle(i, 0.f, 0.f, 1.f));
-        // boundaryParticles.push_back(BoundaryParticle(i, settings.DOMAIN_HEIGHT, 0.f, -1.f));
-    }
-    
     particleCells.resize(particles.size());
     std::fill(particleCells.begin(), particleCells.end(), ParticleGridEntry());
     startingIndices.resize(particles.size());
@@ -110,14 +99,11 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-    // settingsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-    boundaryParticlesBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     startingIndicesBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         particlesBufferA[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(Particle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
-        boundaryParticlesBuffer[i] = m_core->bufferFromData(boundaryParticles.data(),sizeof(Particle) * boundaryParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particleCellBuffer[i] = m_core->bufferFromData(particleCells.data(), sizeof(ParticleGridEntry) * particleCells.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         startingIndicesBuffers [i] = m_core->bufferFromData(startingIndices.data(), sizeof(uint32_t) * startingIndices.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
     }
@@ -162,20 +148,6 @@ GranularMatter::GranularMatter(gpu::Core* core)
     predictStressPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_stress.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     predictForcePass = gpu::ComputePass(m_core, SHADER_PATH"/predict_force.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     applyPass = gpu::ComputePass(m_core, SHADER_PATH"/apply.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
-
-    boundaryUpdatePass = gpu::ComputePass(m_core, SHADER_PATH"/boundary.comp", descriptorSetLayoutsParticle, sizeof(SPHSettings));
-
-    auto boundaryUpdateCommandBuffer = m_core->beginSingleTimeCommands();
-     //* compute boundary densities
-    {
-        boundaryUpdateCommandBuffer.bindPipeline(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipeline);
-        boundaryUpdateCommandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eCompute, boundaryUpdatePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[0], 0, nullptr);
-        boundaryUpdateCommandBuffer.pushConstants(boundaryUpdatePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        boundaryUpdateCommandBuffer.dispatch((uint32_t)boundaryParticles.size(), 1, 1);
-        boundaryUpdateCommandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTopOfPipe, {}, {}, nullptr, nullptr);
-
-    }
-    core->endSingleTimeCommands(boundaryUpdateCommandBuffer);
 }
 
 GranularMatter::~GranularMatter()
@@ -200,7 +172,6 @@ void GranularMatter::destroy(){
 
     bitonicSortPass.destroy();
     startingIndicesPass.destroy();
-    boundaryUpdatePass.destroy();
     initPass.destroy();
     predictStressPass.destroy();
     predictDensityPass.destroy();
@@ -214,7 +185,6 @@ void GranularMatter::destroy(){
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->destroyBuffer(particlesBufferA[i]);
         m_core->destroyBuffer(particlesBufferB[i]);
-        m_core->destroyBuffer(boundaryParticlesBuffer[i]);
         m_core->destroyBuffer(particleCellBuffer[i]);
         m_core->destroyBuffer(startingIndicesBuffers[i]);
     }
@@ -501,8 +471,7 @@ void GranularMatter::createDescriptorSets() {
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->updateDescriptorSet(descriptorSetsParticles[i], {
             { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(Particle) * particles.size() },
-            { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(Particle) * particles.size() },
-            { 3, vk::DescriptorType::eStorageBuffer, boundaryParticlesBuffer[i], sizeof(Particle) * boundaryParticles.size() }
+            { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(Particle) * particles.size() }
         });
     }
 

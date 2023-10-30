@@ -26,9 +26,8 @@ namespace gpu{
             void init();
 
             std::vector<vk::Buffer> vertexBuffer;
-            std::vector<vk::Buffer> vertexBuffer1;
             uint32_t vertexCount;
-            uint32_t vertexCount1;
+            
             std::array<vk::VertexInputBindingDescription, 1> bindingDescription;
             std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions;
 

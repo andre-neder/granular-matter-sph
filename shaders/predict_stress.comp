@@ -16,13 +16,11 @@ struct Particle{
     float rho;
     float p;
     float V;
-    float psi_rho0; 
-    float pad0, pad1;
+    float boundaryVolume;
+    vec2 boundaryNormal;
     mat2 stress;
-    uint fluidNeighbors[32];
-    uint boundaryNeighbors[14];
+    uint fluidNeighbors[31];
     uint fluidNeighborCount;
-    uint boundaryNeighborCount;
 };
 
 
@@ -156,10 +154,10 @@ void main(){
     //         D += (1.f / pb.rho) * outerProduct(gradient, gradient);
     //     }
     // }
-    
+
     {
-        vec2 gradient = gradW(vec2(0,p.pad0), settings.kernelRadius);
-        velocityGradient += p.pad1 * outerProduct(gradient, p.predVelocity - vec2(0,0));
+        vec2 gradient = gradW(p.boundaryNormal, settings.kernelRadius);
+        velocityGradient += p.boundaryVolume * outerProduct(gradient, p.predVelocity - vec2(0,0));
         D += (1.f / settings.rho0) * outerProduct(gradient, gradient);
     }
 

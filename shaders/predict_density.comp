@@ -16,13 +16,11 @@ struct Particle{
     float rho;
     float p;
     float V;
-    float psi_rho0; 
-    float pad0, pad1;
+    float boundaryVolume;
+    vec2 boundaryNormal;
     mat2 stress;
-    uint fluidNeighbors[32];
-    uint boundaryNeighbors[14];
+    uint fluidNeighbors[31];
     uint fluidNeighborCount;
-    uint boundaryNeighborCount;
 };
 
 
@@ -202,29 +200,11 @@ void main(){
     p.fluidNeighborCount = fluidNeighborCount;
 
   
-    //* For all boundary particles
-    // uint boundaryNeighborCount = 0;
-    // for (int i = 0; i < boundary.particles.length();i++)
-    // {
-    //     Particle pb = boundary.particles[i];
-    //     vec2 p_pb = p.predPosition - pb.position;
-    //     float r = length(p_pb);
-       
-    //     if (r < settings.kernelRadius)
-    //     {
-    //         //* Density
-    //         rho += pb.psi_rho0 * W(r, settings.kernelRadius);
-    //         //* Put all boundary neighbors in a list to access them later
-    //         p.boundaryNeighbors[boundaryNeighborCount] = i;
-    //         boundaryNeighborCount++;
-    //     }
-    // }
-    // p.boundaryNeighborCount = boundaryNeighborCount;
     {
         float sd = sdPlane(p.predPosition, vec2(0,1), 0);
         float boundaryVolume = cubicExtension(sd);
-        p.pad0 = sd;
-        p.pad1 = boundaryVolume;
+        p.boundaryVolume = boundaryVolume;
+        p.boundaryNormal = vec2(0,1) * sd;
         rho += boundaryVolume * settings.rho0 * W(sd, settings.kernelRadius);
     }
     p.rho = rho;

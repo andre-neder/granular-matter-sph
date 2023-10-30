@@ -35,16 +35,13 @@ struct Particle{
   float p = 0.0;
   // 12
   float V = 0.0;
-  float psi_rho0 = 0.0;
-  float pad0 = 0.f;
-  float pad1 = 0.f;
+  float boundaryVolume = 0.0;
+  glm::vec2 boundaryNormal = glm::vec2(0,0);
   // 16
   glm::mat2 stress = glm::mat2(1.0);
   // 20
-  uint32_t fluidNeighbors[32]; // 16 particles can fit inside the area/volume of the kernel by area/volume
-  uint32_t boundaryNeighbors[14]; // should be enough
+  uint32_t fluidNeighbors[31]; // 16 particles can fit inside the area/volume of the kernel by area/volume
   uint32_t fluidNeighborCount;
-  uint32_t boundaryNeighborCount;
   Particle(){};
   inline Particle(float x, float y) { position = glm::vec2(x, y); }
 
@@ -57,19 +54,12 @@ struct Particle{
   static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
       std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
           vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, position)),
-          vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32Sfloat, offsetof(Particle, pad0)),
+          vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32Sfloat, offsetof(Particle, rho)),
         //   vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(Particle, rho)),
           // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Particle, texCoord))
       };
       return attributeDescriptions;
   }
-};
-
-struct BoundaryParticle : public Particle
-{
-    BoundaryParticle(float x, float y, float n_x, float n_y) : Particle(x, y){
-        predPosition = glm::vec2(n_x, n_y);
-    };
 };
 
 class GranularMatter
@@ -103,7 +93,6 @@ private:
     gpu::ComputePass initPass;
     gpu::ComputePass bitonicSortPass;
     gpu::ComputePass startingIndicesPass;
-    gpu::ComputePass boundaryUpdatePass;
     gpu::ComputePass predictDensityPass;
     gpu::ComputePass predictStressPass;
     gpu::ComputePass predictForcePass;
@@ -119,9 +108,7 @@ public:
     ~GranularMatter();
 
     std::vector<Particle> particles;
-    std::vector<Particle> boundaryParticles;
     std::vector<vk::Buffer> particlesBufferB;
-    std::vector<vk::Buffer> boundaryParticlesBuffer;
 
     inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
     void initFrameResources();

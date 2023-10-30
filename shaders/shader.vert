@@ -36,13 +36,13 @@ layout( push_constant ) uniform Settings{
 } settings;
 
 layout(location = 0) in vec2 inPosition;
-layout(location = 1) in float inPad0;
+layout(location = 1) in float inRho;
 // layout(location = 1) in vec3 inColor;
 // layout(location = 2) in vec2 inTexCoord;
 
 // layout(location = 0) out vec3 fragColor;
 // layout(location = 0) out vec4 outVelocity;
-layout(location = 0) out float outPad0;
+layout(location = 0) out float outRho;
 layout(location = 1) out vec2 outPos;
 //
 void main() {
@@ -50,7 +50,7 @@ void main() {
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (inPosition.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (inPosition.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
     outPos = (ubo.proj * ubo.view * ubo.model * vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (inPosition.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (inPosition.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0)).xy;
     // gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
-    outPad0 = inPad0;
+    outRho = inRho;
     // fragTexCoord = inTexCoord;
     // outVelocity = ubo.proj * ubo.view * ubo.model * vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (inVelocity.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (inVelocity.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
 }
