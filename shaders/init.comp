@@ -8,7 +8,7 @@
 
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
-struct Particle{
+struct HRParticle{
     vec2 position;
     vec2 predPosition;
     vec2 velocity;
@@ -25,15 +25,15 @@ struct Particle{
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
-    Particle particles[];
+    HRParticle particles[];
 } inStorage;
 
 layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
-    Particle particles[];
+    HRParticle particles[];
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    Particle particles[];
+    HRParticle particles[];
 } boundary;
 
 layout( push_constant ) uniform Settings{
@@ -84,7 +84,7 @@ uint calculateCellKey(uvec2 cell){
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
-    Particle p = inStorage.particles[particleID];
+    HRParticle p = inStorage.particles[particleID];
 
     vec2 predVelocity = p.velocity + settings.g * settings.dt;
     p.predVelocity = predVelocity;

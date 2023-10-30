@@ -7,7 +7,7 @@
 
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
-struct Particle{
+struct HRParticle{
     vec2 position;
     vec2 predPosition;
     vec2 velocity;
@@ -25,15 +25,15 @@ struct Particle{
 
 
 layout(set = 0, binding = BUFFER_B) buffer StorageInput{
-    Particle particles[];
+    HRParticle particles[];
 } inStorage;
 
 layout(set = 0, binding = BUFFER_A) buffer StorageOutput{
-    Particle particles[];
+    HRParticle particles[];
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    Particle particles[];
+    HRParticle particles[];
 } boundary;
 
 layout( push_constant ) uniform Settings{
@@ -104,7 +104,7 @@ vec2 gradW(float r, vec2 rij, float h){
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
-    Particle p = inStorage.particles[particleID];
+    HRParticle p = inStorage.particles[particleID];
     //* Init pressure pressureForce
     vec2 pressureForce = vec2(0.f);
     vec2 frictionalForce = vec2(0.f);
@@ -122,7 +122,7 @@ void main(){
     for(uint i = 0; i < p.fluidNeighborCount; i++)
     {
         uint particleIndex = p.fluidNeighbors[i];
-        Particle pi = inStorage.particles[particleIndex];
+        HRParticle pi = inStorage.particles[particleIndex];
     
         vec2 p_pi = p.predPosition - pi.predPosition;
         float r = length(p_pi);
@@ -158,7 +158,7 @@ void main(){
 
         frictionalForce += F_f;
     }
-    
+
     frictionalForce *= -settings.mass;
     pressureForce *= -settings.mass;
 

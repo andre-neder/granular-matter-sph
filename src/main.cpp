@@ -82,8 +82,8 @@ private:
         
         basicRenderPass.vertexCount = (uint32_t)simulation.particles.size();
 
-        basicRenderPass.attributeDescriptions = Particle::getAttributeDescriptions();
-        basicRenderPass.bindingDescription = Particle::getBindingDescription();
+        basicRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
+        basicRenderPass.bindingDescription = HRParticle::getBindingDescription();
 
         basicRenderPass.init();
         lineRenderPass.init();
