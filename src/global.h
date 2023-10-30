@@ -24,8 +24,8 @@ struct SPHSettings{
     float stiffness = 1000.f;	  
     float dt = 0.0006f;	 
 
-    float DOMAIN_WIDTH = 50.f; // 1024
-    float DOMAIN_HEIGHT = 20.f;  //1024
+    float DOMAIN_WIDTH = 50.f; 
+    float DOMAIN_HEIGHT = 20.f;  
     float pad1;
     float pad2;
 
@@ -40,7 +40,12 @@ struct SPHSettings{
     float pad3;
 };
 
-
 extern SPHSettings settings;
+
+struct UniformBufferObject {
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    glm::mat4 proj = glm::mat4(1.0f);
+};
 
 #endif

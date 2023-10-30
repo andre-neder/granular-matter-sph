@@ -6,11 +6,6 @@
 #include <tiny_gltf.h>
 #include "renderpass.h"
 
-struct UniformBufferObject {
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 proj = glm::mat4(1.0f);
-};
 
 namespace gpu{
     class BasicRenderPass : public RenderPass{
@@ -27,7 +22,7 @@ namespace gpu{
 
             std::vector<vk::Buffer> vertexBuffer;
             uint32_t vertexCount;
-            
+
             std::array<vk::VertexInputBindingDescription, 1> bindingDescription;
             std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions;
 
