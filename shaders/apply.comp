@@ -11,7 +11,7 @@ struct HRParticle{
     vec2 predPosition;
     vec2 velocity;
     vec2 predVelocity;
-    vec2 pressureForce;
+    vec2 internalForce;
     float rho;
     float p;
     float V;
@@ -46,7 +46,7 @@ layout( push_constant ) uniform Settings{
 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
-    float pad1;
+    float sleepingSpeed;
     float pad2;
 
     float theta;       
@@ -67,9 +67,10 @@ void main(){
 
     // Semi-implicit euler
     p.position += p.velocity * settings.dt;
-    p.velocity = p.predVelocity + (p.pressureForce / settings.mass) * settings.dt;
+    p.velocity += (p.internalForce / settings.mass) * settings.dt;
+
     // Forward Euler
-    // p.velocity = p.predVelocity + p.pressureForce * settings.dt;
+    // p.velocity += p.internalForce * settings.dt;
     // p.position += p.velocity * settings.dt;
 
     outStorage.particles[particleID] = p;

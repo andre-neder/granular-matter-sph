@@ -12,7 +12,7 @@ struct HRParticle{
     vec2 predPosition;
     vec2 velocity;
     vec2 predVelocity;
-    vec2 pressureForce;
+    vec2 internalForce;
     float rho;
     float p;
     float V;
@@ -48,7 +48,7 @@ layout( push_constant ) uniform Settings{
 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
-    float pad1;
+    float sleepingSpeed;
     float pad2;
 
     float theta;       
@@ -105,8 +105,8 @@ vec2 gradW(float r, vec2 rij, float h){
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     HRParticle p = inStorage.particles[particleID];
-    //* Init pressure pressureForce
-    vec2 pressureForce = vec2(0.f);
+    //* Init pressure internalForce
+    vec2 internalForce = vec2(0.f);
     vec2 frictionalForce = vec2(0.f);
 
     vec2 relativeVelocity = vec2(0) - p.velocity;
@@ -132,7 +132,7 @@ void main(){
             //* Pressure calculation
             float piRhoSq = pi.rho * pi.rho;
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
-            pressureForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+            internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
 
             vec2 F_f = settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
@@ -149,7 +149,7 @@ void main(){
     //* For each implicit boundary
     {
         vec2 gradient = gradW(p.boundaryNormal, settings.kernelRadius);
-        pressureForce += p.boundaryVolume * settings.rho0 * (p.p / pRhoSq) * gradient; 
+        internalForce += p.boundaryVolume * settings.rho0 * (p.p / pRhoSq) * gradient; 
         
         vec2 F_f = p.boundaryVolume * settings.rho0 * (p.stress / pRhoSq) * gradient;
         // float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
@@ -160,7 +160,7 @@ void main(){
     }
 
     frictionalForce *= -settings.mass;
-    pressureForce *= -settings.mass;
+    internalForce *= -settings.mass;
 
     //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
     float dragWeight = max(0, min(1, 1 - occluded)); 
@@ -168,7 +168,7 @@ void main(){
     vec2 dragForce  = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
     
 
-    p.pressureForce = pressureForce + dragForce + frictionalForce;
+    p.internalForce = internalForce + dragForce + frictionalForce;
 
     outStorage.particles[particleID] = p;
 }

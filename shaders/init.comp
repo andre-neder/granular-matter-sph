@@ -13,7 +13,7 @@ struct HRParticle{
     vec2 predPosition;
     vec2 velocity;
     vec2 predVelocity;
-    vec2 pressureForce;
+    vec2 internalForce;
     float rho;
     float p;
     float V;
@@ -48,7 +48,7 @@ layout( push_constant ) uniform Settings{
 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
-    float pad1;
+    float sleepingSpeed;
     float pad2;
 
     float theta;       
@@ -86,10 +86,8 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     HRParticle p = inStorage.particles[particleID];
 
-    vec2 predVelocity = p.velocity + settings.g * settings.dt;
-    p.predVelocity = predVelocity;
-    vec2 predPosition = p.position + predVelocity * 1.f/120.f;
-    p.predPosition = predPosition;
+    p.velocity += settings.g * settings.dt;
+    p.predPosition = p.position + p.velocity * 1.f/120.f;
 
     outStorage.particles[particleID] = p;
 

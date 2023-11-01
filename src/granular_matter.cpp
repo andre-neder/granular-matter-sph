@@ -234,10 +234,11 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 
     // Courant-Friedrichs–Lewy (CFL) condition
     float area = settings.particleRadius * 2.f;
-    float v_max = sqrt((2 * settings.mass * settings.g.length()) / (settings.rhoAir * area * settings.dragCoefficient));
-    float C_courant = 0.5f;
+    // float v_max = sqrt((2 * settings.mass * settings.g.length()) / (settings.rhoAir * area * settings.dragCoefficient));
+    float v_max = sqrt(settings.stiffness);
+    float C_courant = 0.4f;
     float dt_max = C_courant * (settings.kernelRadius / v_max);
-    // std::cout << dt << " " << 1.f / 60.f << " " <<  1.f/120.f << " " << dt_max << std::endl;
+    std::cout << dt << " " << 1.f / 60.f << " " <<  1.f/120.f << " " << dt_max << std::endl;
     settings.dt = std::min(dt, dt_max);
 
     vk::MemoryBarrier writeReadBarrier{
@@ -268,133 +269,134 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
     commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
     
-    //* init pass A -> B
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, initPass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, initPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, initPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].pushConstants(initPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
-    }
-    //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
- 
-    //* Sort cell hashes
-    {   
-        //? https://poniesandlight.co.uk/reflect/bitonic_merge_sort/
-        //? https://github.com/tgfrerer/island/blob/wip/apps/examples/bitonic_merge_sort_example/bitonic_merge_sort_example_app/bitonic_merge_sort_example_app.cpp
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipelineLayout, 0, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-
-        auto dispatch = [ & ]( uint32_t h ) {
-		    params.h = h;
-
-            commandBuffers[currentFrame].pushConstants(bitonicSortPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(BitonicSortParameters), &params);
-            commandBuffers[currentFrame].dispatch( workGroupCountSort, 1, 1 );
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-            
-        };
-
-        auto local_bms = [ & ]( uint32_t h ) {
-            params.algorithm = BitonicSortParameters::eAlgorithmVariant::eLocalBitonicMergeSortExample;
-            dispatch( h );
-        };
-
-        auto big_flip = [ & ]( uint32_t h ) {
-            params.algorithm = BitonicSortParameters::eAlgorithmVariant::eBigFlip;
-            dispatch( h );
-        };
-
-        auto local_disperse = [ & ]( uint32_t h ) {
-            params.algorithm = BitonicSortParameters::eAlgorithmVariant::eLocalDisperse;
-            dispatch( h );
-        };
-
-        auto big_disperse = [ & ]( uint32_t h ) {
-            params.algorithm = BitonicSortParameters::eAlgorithmVariant::eBigDisperse;
-            dispatch( h );
-        };
-
-
-        uint32_t h = workgroup_size_x * 2;
-		assert( h <= n );
-		assert( h % 2 == 0 );
-		assert( (h != 0) && ((h & (h - 1)) == 0) );
-
-		local_bms( h );
-		// we must now double h, as this happens before every flip
-		h *= 2;
-
-		for ( ; h <= n; h *= 2 ) {
-			big_flip( h );
-
-			for ( uint32_t hh = h / 2; hh > 1; hh /= 2 ) {
-
-				if ( hh <= workgroup_size_x * 2 ) {
-					// We can fit all elements for a disperse operation into continuous shader
-					// workgroup local memory, which means we can complete the rest of the
-					// cascade using a single shader invocation.
-					local_disperse( hh );
-					break;
-				} else {
-					big_disperse( hh );
-				}
-			}
-		}
-
-    }
-    
-    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-    
-    //* get starting indices
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, startingIndicesPass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, startingIndicesPass.m_pipelineLayout, 0, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
-    }
-
-    //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-    
-    //* predict density B -> A
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].pushConstants(predictDensityPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
-    }
-    //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-    
-    //* predict stress A -> B
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].pushConstants(predictStressPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
-    }
-    //* wait for compute pass
-    commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-    
-    //* predict force B -> A
-    {
-        commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        commandBuffers[currentFrame].pushConstants(predictForcePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
-    }
-    
-    commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-    
     //* When simulation is running or should proceed one step apply calculated forces
     if(simulationRunning || simulationStepForward){
+        //* init pass A -> B
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, initPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, initPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, initPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(initPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
+        }
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
+    
+        //* Sort cell hashes
+        {   
+            //? https://poniesandlight.co.uk/reflect/bitonic_merge_sort/
+            //? https://github.com/tgfrerer/island/blob/wip/apps/examples/bitonic_merge_sort_example/bitonic_merge_sort_example_app/bitonic_merge_sort_example_app.cpp
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, bitonicSortPass.m_pipelineLayout, 0, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+
+            auto dispatch = [ & ]( uint32_t h ) {
+                params.h = h;
+
+                commandBuffers[currentFrame].pushConstants(bitonicSortPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(BitonicSortParameters), &params);
+                commandBuffers[currentFrame].dispatch( workGroupCountSort, 1, 1 );
+                commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+                
+            };
+
+            auto local_bms = [ & ]( uint32_t h ) {
+                params.algorithm = BitonicSortParameters::eAlgorithmVariant::eLocalBitonicMergeSortExample;
+                dispatch( h );
+            };
+
+            auto big_flip = [ & ]( uint32_t h ) {
+                params.algorithm = BitonicSortParameters::eAlgorithmVariant::eBigFlip;
+                dispatch( h );
+            };
+
+            auto local_disperse = [ & ]( uint32_t h ) {
+                params.algorithm = BitonicSortParameters::eAlgorithmVariant::eLocalDisperse;
+                dispatch( h );
+            };
+
+            auto big_disperse = [ & ]( uint32_t h ) {
+                params.algorithm = BitonicSortParameters::eAlgorithmVariant::eBigDisperse;
+                dispatch( h );
+            };
+
+
+            uint32_t h = workgroup_size_x * 2;
+            assert( h <= n );
+            assert( h % 2 == 0 );
+            assert( (h != 0) && ((h & (h - 1)) == 0) );
+
+            local_bms( h );
+            // we must now double h, as this happens before every flip
+            h *= 2;
+
+            for ( ; h <= n; h *= 2 ) {
+                big_flip( h );
+
+                for ( uint32_t hh = h / 2; hh > 1; hh /= 2 ) {
+
+                    if ( hh <= workgroup_size_x * 2 ) {
+                        // We can fit all elements for a disperse operation into continuous shader
+                        // workgroup local memory, which means we can complete the rest of the
+                        // cascade using a single shader invocation.
+                        local_disperse( hh );
+                        break;
+                    } else {
+                        big_disperse( hh );
+                    }
+                }
+            }
+
+        }
+        
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
+        
+        //* get starting indices
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, startingIndicesPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, startingIndicesPass.m_pipelineLayout, 0, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
+        }
+
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
+        
+        //* predict density B -> A
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(predictDensityPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
+        }
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
+        
+        //* predict stress A -> B
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(predictStressPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
+        }
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
+        
+        //* predict force B -> A
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(predictForcePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
+        }
+        
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
+    
+
         //* wait for compute pass
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
         //* apply force A -> B
@@ -413,7 +415,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     }
     else{
         //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer , {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer , {}, writeReadBarrier, nullptr, nullptr);
         //* copy A -> B
         {
             // Todo: try with mutiple descriptor sets
@@ -426,7 +428,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     
     }
 
-    assert(nextQuery() == TIMESTAMP_QUERY_COUNT);
+    assert(nextQuery() <= TIMESTAMP_QUERY_COUNT);
     //* submit calls
     try{
         commandBuffers[currentFrame].end();

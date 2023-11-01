@@ -11,32 +11,32 @@ extern bool simulationRunning;
 extern bool simulationStepForward;
 
 extern std::vector<std::string> passTimeings;
-#define PARTICLE_RADIUS 0.1f
+#define PARTICLE_RADIUS 0.2f                            //* m
 #define PARTICLE_VOLUME (float) M_PI * (PARTICLE_RADIUS * PARTICLE_RADIUS)
 
 struct SPHSettings{
-    glm::vec2 g = glm::vec2(0.f, -9.81f); //* m/s^2
-    float particleRadius = PARTICLE_RADIUS;                     //* m
-    float kernelRadius = particleRadius * 4; 
+    glm::vec2 g = glm::vec2(0.f, -9.81f);               //* m/s^2
+    float particleRadius = PARTICLE_RADIUS;             //* m
+    float kernelRadius = particleRadius * 4;            //* m
 
-    float rho0 = 1950.f; 
-    float mass = PARTICLE_VOLUME * rho0;
-    float stiffness = 1000.f;	  
-    float dt = 0.0006f;	 
+    float rho0 = 1950.f;                                //* kg/m^3
+    float mass = PARTICLE_VOLUME * rho0;                //* kg
+    float stiffness = 1000.f;	                        
+    float dt = 0.0006f;	                                //* s
 
-    float DOMAIN_WIDTH = 50.f; 
-    float DOMAIN_HEIGHT = 20.f;  
-    float pad1;
+    float DOMAIN_WIDTH = 50.f;                          //* m
+    float DOMAIN_HEIGHT = 20.f;                         //* m
+    float sleepingSpeed = 0.4f;                        //* m/s
     float pad2;
 
-    float theta = 45.f * (float)M_PI / 180.f;       //* angle of repose
-    float sigma = 0.25f;                            //* viscosity coefficient
-    float alpha = 0.5f;                             //* viscosity constant
-    float beta = 1.0f;                               //* cohesion intensity
+    float theta = 45.f * (float)M_PI / 180.f;           //* rad (angle of repose)
+    float sigma = 0.25f;                                //* viscosity coefficient
+    float alpha = 0.5f;                                 //* viscosity constant
+    float beta = 1.0f;                                  //* cohesion intensity
     
-    float C = 10000.0f;                                  //* maximum cohesion
-    float dragCoefficient = 0.47f;                  // Sphere Reynoldsnumber 10^6
-    float rhoAir = 1293.f;                             //* Air density
+    float C = 10000.0f;                                 //* maximum cohesion
+    float dragCoefficient = 0.47f;                      //* Sphere Reynoldsnumber 10^6
+    float rhoAir = 1293.f;                              //* Air density
     float pad3;
 };
 

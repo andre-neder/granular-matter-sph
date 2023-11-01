@@ -6,6 +6,7 @@
 // layout(location = 0) in vec3 fragColor;
 // layout(location = 1) in vec2 fragTexCoord;
 
+
 layout( push_constant ) uniform Settings{
     vec2 g; 
     float particleRadius;                 
@@ -18,7 +19,7 @@ layout( push_constant ) uniform Settings{
 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
-    float pad1;
+    float sleepingSpeed;
     float pad2;
 
     float theta;       
@@ -34,7 +35,6 @@ layout( push_constant ) uniform Settings{
 
 layout(location = 0) out vec4 outColor;
 layout(location = 0) in float inRho;
-layout(location = 1) in vec2 inPos;
 
 void main() {
     // outColor = vec4(246.f / 255.f,215.f / 255.f,176.f / 255.f, 1.0);

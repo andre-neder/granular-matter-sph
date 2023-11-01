@@ -12,7 +12,7 @@ struct HRParticle{
     vec2 predPosition;
     vec2 velocity;
     vec2 predVelocity;
-    vec2 pressureForce;
+    vec2 internalForce;
     float rho;
     float p;
     float V;
@@ -48,7 +48,7 @@ layout( push_constant ) uniform Settings{
 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
-    float pad1;
+    float sleepingSpeed;
     float pad2;
 
     float theta;       
@@ -124,6 +124,23 @@ float sdPlane( vec2 p, vec2 n, float h )
   return dot(p,n) + h;
 }
 
+float sdBox( vec3 p, vec3 b )
+{
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+float sdBox( vec2 p, vec2 b )
+{
+  return sdBox(vec3(p, 1), vec3(b, 1));
+}
+
+vec2 normalBox( vec2 p, vec2 b ){
+    vec2 q = abs(p) - b;
+    return q.x > q.y ? sign(p.x) * vec2(1, 0) : sign(p.y) * vec2(0, 1);
+}
+
+
+
 float cubicExtension(float r){
     float h = settings.kernelRadius;
     if(r < 0){
@@ -147,6 +164,9 @@ float cubicExtension(float r){
     else{
         return 0;
     }
+}
+float mergeSDF(float shape1, float shape2){
+    return min(shape1, shape2);
 }
 
 void main(){
@@ -207,6 +227,15 @@ void main(){
         p.boundaryNormal = vec2(0,1) * sd;
         rho += boundaryVolume * settings.rho0 * W(sd, settings.kernelRadius);
     }
+
+    // {
+    //     float sd = mergeSDF(sdPlane(p.predPosition, vec2(0,1), 0), sdBox(p.predPosition, vec2(settings.DOMAIN_HEIGHT / 8)));
+    //     float boundaryVolume = cubicExtension(sd);
+    //     p.boundaryVolume = boundaryVolume;
+    //     p.boundaryNormal = normalize(vec2(0,1) + normalBox(p.predPosition, vec2(settings.DOMAIN_HEIGHT / 4))) * sd;
+    //     rho = boundaryVolume * settings.rho0 * W(sd, settings.kernelRadius);
+    // }
+
     p.rho = rho;
 
    

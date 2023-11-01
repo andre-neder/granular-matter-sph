@@ -12,7 +12,7 @@ struct HRParticle{
     vec2 predPosition;
     vec2 velocity;
     vec2 predVelocity;
-    vec2 pressureForce;
+    vec2 internalForce;
     float rho;
     float p;
     float V;
@@ -48,7 +48,7 @@ layout( push_constant ) uniform Settings{
 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
-    float pad1;
+    float sleepingSpeed;
     float pad2;
 
     float theta;       
@@ -133,31 +133,14 @@ void main(){
         {
             //* Strain & Stress 
             vec2 gradient = gradW(p_pi, settings.kernelRadius);
-            velocityGradient += pi.V * outerProduct(gradient, p.predVelocity - pi.predVelocity);
+            velocityGradient += pi.V * outerProduct(gradient, p.velocity - pi.velocity);
             D += (1.f / pi.rho) * outerProduct(gradient, gradient);
         }
     }
 
-    //* For all boundary particles
-    // for (int i = 0; i < p.boundaryNeighborCount; i++)
-    // {
-    //     uint particleIndex = p.boundaryNeighbors[i];
-    //     HRParticle pb = boundary.particles[particleIndex];
-    //     vec2 p_pb = p.predPosition - pb.position;
-    //     float r = length(p_pb);
-       
-    //     if (r < settings.kernelRadius)
-    //     {
-    //         //* Strain & Stress 
-    //         vec2 gradient = gradW(p_pb, settings.kernelRadius);
-    //         velocityGradient += pb.V * outerProduct(gradient, p.predVelocity - pb.predVelocity);
-    //         D += (1.f / pb.rho) * outerProduct(gradient, gradient);
-    //     }
-    // }
-
     {
         vec2 gradient = gradW(p.boundaryNormal, settings.kernelRadius);
-        velocityGradient += p.boundaryVolume * outerProduct(gradient, p.predVelocity - vec2(0,0));
+        velocityGradient += p.boundaryVolume * outerProduct(gradient, p.velocity - vec2(0,0));
         D += (1.f / settings.rho0) * outerProduct(gradient, gradient);
     }
 
