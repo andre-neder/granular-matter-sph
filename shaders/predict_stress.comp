@@ -7,7 +7,7 @@
 
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
-struct HRParticle{
+struct LRParticle{
     vec2 position;
     vec2 predPosition;
     vec2 velocity;
@@ -25,15 +25,15 @@ struct HRParticle{
 
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
-    HRParticle particles[];
+    LRParticle particles[];
 } inStorage;
 
 layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
-    HRParticle particles[];
+    LRParticle particles[];
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    HRParticle particles[];
+    LRParticle particles[];
 } boundary;
 
 layout( push_constant ) uniform Settings{
@@ -113,7 +113,7 @@ vec2 gradW(float r, vec2 rij, float h){
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
-    HRParticle p = inStorage.particles[particleID];
+    LRParticle p = inStorage.particles[particleID];
 
     //* Strain & Stress 
     mat2 velocityGradient = mat2(0.f);
@@ -123,7 +123,7 @@ void main(){
     for(uint i = 0; i < p.fluidNeighborCount; i++)
     {
         uint particleIndex = p.fluidNeighbors[i];
-        HRParticle pi = inStorage.particles[particleIndex];
+        LRParticle pi = inStorage.particles[particleIndex];
 
         
         vec2 p_pi = p.predPosition - pi.predPosition;

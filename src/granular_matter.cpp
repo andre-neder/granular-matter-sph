@@ -88,7 +88,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
-            particles.push_back(HRParticle(i * initialDistance + settings.kernelRadius  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2) ,j * initialDistance + settings.kernelRadius ));
+            particles.push_back(LRParticle(i * initialDistance + settings.kernelRadius  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2) ,j * initialDistance + settings.kernelRadius ));
         }
     }
     
@@ -102,8 +102,8 @@ GranularMatter::GranularMatter(gpu::Core* core)
     particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     startingIndicesBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        particlesBufferA[i] = m_core->bufferFromData(particles.data(),sizeof(HRParticle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
-        particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(HRParticle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        particlesBufferA[i] = m_core->bufferFromData(particles.data(),sizeof(LRParticle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(LRParticle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         particleCellBuffer[i] = m_core->bufferFromData(particleCells.data(), sizeof(ParticleGridEntry) * particleCells.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         startingIndicesBuffers [i] = m_core->bufferFromData(startingIndices.data(), sizeof(uint32_t) * startingIndices.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
     }
@@ -127,7 +127,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     vk::PhysicalDeviceLimits limits = m_core->getPhysicalDevice().getProperties().limits;
 
     n = (uint32_t)particleCells.size();
-    std::cout << "HRParticle count: " << n << std::endl;
+    std::cout << "LRParticle count: " << n << std::endl;
     workgroup_size_x = 1;
     auto maxWorkGroupInvocations = (uint32_t)32;
     if(n < maxWorkGroupInvocations * 2){
@@ -261,7 +261,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 
     //* Copy data from last frame B to current frame A 
     {
-        vk::BufferCopy copyRegion(0, 0, sizeof(HRParticle) * particles.size());
+        vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * particles.size());
         commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
     }
     
@@ -419,7 +419,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         //* copy A -> B
         {
             // Todo: try with mutiple descriptor sets
-            vk::BufferCopy copyRegion(0, 0, sizeof(HRParticle) * particles.size());
+            vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * particles.size());
             commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
         }
         //* Wait for copy action
@@ -472,8 +472,8 @@ void GranularMatter::createDescriptorSets() {
     
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->updateDescriptorSet(descriptorSetsParticles[i], {
-            { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(HRParticle) * particles.size() },
-            { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(HRParticle) * particles.size() }
+            { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(LRParticle) * particles.size() },
+            { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(LRParticle) * particles.size() }
         });
     }
 

@@ -23,7 +23,7 @@ struct ParticleGridEntry{
     uint32_t cellKey = UINT32_MAX;
 };
 
-struct HRParticle{
+struct LRParticle{
     glm::vec2 position = glm::vec2(0,0);
     glm::vec2 predPosition = glm::vec2(0,0);
     // 4
@@ -44,21 +44,21 @@ struct HRParticle{
     uint32_t fluidNeighborCount;
     //52
 
-    HRParticle(){};
-    inline HRParticle(float x, float y) { position = glm::vec2(x, y); }
+    LRParticle(){};
+    inline LRParticle(float x, float y) { position = glm::vec2(x, y); }
 
     static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
         std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
-            vk::VertexInputBindingDescription(0, sizeof(HRParticle), vk::VertexInputRate::eVertex)
+            vk::VertexInputBindingDescription(0, sizeof(LRParticle), vk::VertexInputRate::eVertex)
         };
         return bindingDescriptions;
     }
     static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, position)),
-            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32Sfloat, offsetof(HRParticle, rho)),
-            //   vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(HRParticle, rho)),
-            // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, texCoord))
+            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, position)),
+            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32Sfloat, offsetof(LRParticle, rho)),
+            //   vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
+            // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, texCoord))
         };
         return attributeDescriptions;
     }
@@ -109,7 +109,7 @@ public:
     GranularMatter(gpu::Core* core);
     ~GranularMatter();
 
-    std::vector<HRParticle> particles;
+    std::vector<LRParticle> particles;
     std::vector<vk::Buffer> particlesBufferB;
 
     inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };

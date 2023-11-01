@@ -6,7 +6,7 @@
 
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
-struct HRParticle{
+struct LRParticle{
     vec2 position;
     vec2 predPosition;
     vec2 velocity;
@@ -23,15 +23,15 @@ struct HRParticle{
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
-    HRParticle particles[];
+    LRParticle particles[];
 } inStorage;
 
 layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
-    HRParticle particles[];
+    LRParticle particles[];
 } outStorage;
 
 layout(set = 0, binding = 3) buffer BoundaryStorage{
-    HRParticle particles[];
+    LRParticle particles[];
 } boundary;
 
 layout( push_constant ) uniform Settings{
@@ -63,7 +63,7 @@ layout( push_constant ) uniform Settings{
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
-    HRParticle p = inStorage.particles[particleID];
+    LRParticle p = inStorage.particles[particleID];
 
     // Semi-implicit euler
     p.position += p.velocity * settings.dt;
