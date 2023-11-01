@@ -13,7 +13,9 @@ using namespace gpu;
     ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
         m_core = core;
         m_deviceProperties = m_core->getPhysicalDevice().getProperties();
-        // Setup Dear ImGui context
+
+        createDescriptorPool();
+
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -23,13 +25,12 @@ using namespace gpu;
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-        // Setup Dear ImGui style
+
         ImGui::StyleColorsDark();
-        //ImGui::StyleColorsClassic();
+
         ImGui_ImplGlfw_InitForVulkan(window->getGLFWWindow(), true);
 
-        createDescriptorPool();
-        createRenderPass();      
+        initFrameResources();
 
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance = m_core->getInstance();
@@ -49,13 +50,11 @@ using namespace gpu;
         ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
         m_core->endSingleTimeCommands(command_buffer);    
 
-        initFrameResources(); // Todo: fix cleanup error
+        createCommandBuffers();
     }
     void ImguiRenderPass::initFrameResources(){
         createRenderPass();
         createFramebuffers();
-        createDescriptorPool();
-        createCommandBuffers();
     }
     void ImguiRenderPass::createRenderPass(){
        vk::AttachmentDescription attachment(
@@ -153,32 +152,32 @@ using namespace gpu;
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
         }
 
-            ImGui::Begin("GPU Info", &showGPUInfo);
-                ImGui::Text(m_deviceProperties.deviceName);
-            ImGui::End();
+        ImGui::Begin("GPU Info", &showGPUInfo);
+            ImGui::Text(m_deviceProperties.deviceName);
+        ImGui::End();
 
-            ImGui::Begin("Timings", &showGPUInfo);
-                for (size_t i = 0; i < passTimeings.size(); i++) {
-                    ImGui::Text(passTimeings[i].c_str());
-                }
-                passTimeings = std::vector<std::string>();
-            ImGui::End();
+        ImGui::Begin("Timings", &showGPUInfo);
+            for (size_t i = 0; i < passTimeings.size(); i++) {
+                ImGui::Text(passTimeings[i].c_str());
+            }
+            passTimeings = std::vector<std::string>();
+        ImGui::End();
 
-            ImGui::Begin("Simulation", &showSimulationSettings);
-                ImGui::Checkbox("Simulation running", &simulationRunning);
-                ImGui::DragFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 0.1f, 2000.f);
-                ImGui::DragFloat("Pressure stiffness", &settings.stiffness, 1.f, 100.f, 50000.f);
-                ImGui::DragFloat("Mass (kg)", &settings.mass, 1.f, 0.1f, 100.f);
-                ImGui::DragFloat("Kernel Radius (m)", &settings.kernelRadius, 1.f, 0.1f, 100.f);
-                // ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);
-                ImGui::DragFloat("Angle of repose (rad)", &settings.theta, 1.f, 0.001f, (float)M_PI);
-                ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);
-                // ImGui::DragFloat("Cohesion intensity", &settings.beta, 1.f, 0.01f, 10.f);
-                // ImGui::DragFloat("Maximum Cohesion", &settings.C, 1.f, 0.01f, 10.f);
-                ImGui::DragFloat2("Gravity (m/s^2)", glm::value_ptr(settings.g));
-            ImGui::End();
+        ImGui::Begin("Simulation", &showSimulationSettings);
+            ImGui::Checkbox("Simulation running", &simulationRunning);
+            ImGui::DragFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 0.1f, 2000.f);
+            ImGui::DragFloat("Pressure stiffness", &settings.stiffness, 1.f, 100.f, 50000.f);
+            ImGui::DragFloat("Mass (kg)", &settings.mass, 1.f, 0.1f, 100.f);
+            ImGui::DragFloat("Kernel Radius (m)", &settings.kernelRadius, 1.f, 0.1f, 100.f);
+            // ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);
+            ImGui::DragFloat("Angle of repose (rad)", &settings.theta, 1.f, 0.001f, (float)M_PI);
+            ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);
+            // ImGui::DragFloat("Cohesion intensity", &settings.beta, 1.f, 0.01f, 10.f);
+            // ImGui::DragFloat("Maximum Cohesion", &settings.C, 1.f, 0.01f, 10.f);
+            ImGui::DragFloat2("Gravity (m/s^2)", glm::value_ptr(settings.g));
+        ImGui::End();
 
-            ImGui::ShowDemoWindow(&show_demo_window);
+        ImGui::ShowDemoWindow(&show_demo_window);
 
         ImGui::End();
 
@@ -220,7 +219,7 @@ using namespace gpu;
             { vk::DescriptorType::eUniformBufferDynamic, 1000 },
             { vk::DescriptorType::eStorageBufferDynamic, 1000 },
             { vk::DescriptorType::eInputAttachment, 1000 }
-        });
+        }, 1000);
     }
     
     void ImguiRenderPass::destroyFrameResources(){
@@ -228,12 +227,15 @@ using namespace gpu;
         for (auto framebuffer : framebuffers) {
             device.destroyFramebuffer(framebuffer);
         }
-        device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
-        m_core->destroyDescriptorPool(descriptorPool);
         m_core->getDevice().destroyRenderPass(renderPass);
     }
     void ImguiRenderPass::destroy(){
         destroyFrameResources();
+        
+        vk::Device device = m_core->getDevice();
+       
+        device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
+        m_core->destroyDescriptorPool(descriptorPool);
 
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
