@@ -24,12 +24,16 @@ namespace gpu{
             void update(int currentFrame, int imageIndex);
             void destroyFrameResources();
             void destroy(); 
+
+            void additionalWindows();
+
         private:
             vk::DescriptorPool descriptorPool;
+            gpu::Window* m_window;
             
-            void createRenderPass();
             void createDescriptorPool();
-        
+            void createRenderPass();
+
             vk::PhysicalDeviceProperties m_deviceProperties;
     };
 }

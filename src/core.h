@@ -32,6 +32,7 @@ namespace gpu
 
             inline vk::Instance getInstance(){ return instance; };
             inline vk::SurfaceKHR getSurface(){ return surface; };
+            inline vk::SurfaceFormatKHR getSurfaceFormat(){ return surfaceFormat; };
             inline vk::PhysicalDevice getPhysicalDevice(){ return physicalDevice; };
             inline vk::Device getDevice(){ return device; };
             //* Queues
@@ -104,6 +105,7 @@ namespace gpu
             vk::Instance instance;
             vk::DebugUtilsMessengerEXT m_debugMessenger;
             vk::SurfaceKHR surface;
+            vk::SurfaceFormatKHR surfaceFormat;
             vk::PhysicalDevice physicalDevice;
             vk::Device device;
             vk::Queue graphicsQueue;

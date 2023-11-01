@@ -415,7 +415,7 @@ void Core::destroySampler(vk::Sampler sampler){
 
 vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
-        if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+        if (availableFormat.format == vk::Format::eR8G8B8A8Unorm && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
             return availableFormat;
         }
     }
@@ -450,7 +450,7 @@ vk::Extent2D Core::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabiliti
 void Core::createSwapChain(Window* window) {
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
 
-    vk::SurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+    surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window);
 

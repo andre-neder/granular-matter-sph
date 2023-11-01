@@ -238,7 +238,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     float v_max = sqrt(settings.stiffness);
     float C_courant = 0.4f;
     float dt_max = C_courant * (settings.kernelRadius / v_max);
-    std::cout << dt << " " << 1.f / 60.f << " " <<  1.f/120.f << " " << dt_max << std::endl;
+    // std::cout << dt << " " << 1.f / 60.f << " " <<  1.f/120.f << " " << dt_max << std::endl;
     settings.dt = std::min(dt, dt_max);
 
     vk::MemoryBarrier writeReadBarrier{

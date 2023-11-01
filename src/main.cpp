@@ -212,6 +212,7 @@ private:
             glfwPollEvents();
 
             drawFrame();
+            
             fps++;
             if((glfwGetTime() - time) >= 1.0){
                 time = glfwGetTime();
