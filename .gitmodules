@@ -16,3 +16,6 @@
 [submodule "vendor/imgui"]
 	path = vendor/imgui
 	url = https://github.com/andre-neder/imgui.git
+[submodule "vendor/Discregrid"]
+	path = vendor/Discregrid
+	url = https://github.com/andre-neder/Discregrid.git
