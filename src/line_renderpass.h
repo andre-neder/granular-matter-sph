@@ -25,14 +25,27 @@ struct LineVertex {
     }
 };
 
-
+const float halfBoxSize = settings.DOMAIN_HEIGHT / 4.f;
 const std::vector<LineVertex> vertices = {
     {{0.f, 0.f}},
-    {{settings.DOMAIN_WIDTH, 0.f}}
+    {{settings.DOMAIN_WIDTH, 0.f}},
+    {{0.f, settings.DOMAIN_HEIGHT}},
+    {{settings.DOMAIN_WIDTH, settings.DOMAIN_HEIGHT}},
+    {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , 0 }},
+    {{(settings.DOMAIN_WIDTH / 2 + halfBoxSize) , 0 }},
+    {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , halfBoxSize * 2 }},
+    {{(settings.DOMAIN_WIDTH / 2 + halfBoxSize) , halfBoxSize * 2 }},
 };
 
 const std::vector<uint32_t> indices = {
-    0, 1
+    0, 1, // floor
+    0, 2, // left
+    1, 3, // right
+
+    4, 5, //box
+    4, 6,
+    5, 7,
+    6, 7
 };
 
 namespace gpu{

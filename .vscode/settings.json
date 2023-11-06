@@ -85,6 +85,8 @@
         "xutility": "cpp",
         "complex": "cpp",
         "future": "cpp",
-        "all": "cpp"
+        "all": "cpp",
+        "*.inc": "cpp",
+        "variant": "cpp"
     }
 }

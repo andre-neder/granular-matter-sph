@@ -3,7 +3,7 @@ project("Vulkan_KHR_Dynamic_Rendering" VERSION 1.0.0)
 
 add_compile_definitions(
     SHADER_PATH="${PROJECT_SOURCE_DIR}/shaders" 
-    RESOURCE_PATH="${PROJECT_SOURCE_DIR}/resource" )
+    ASSETS_PATH="${PROJECT_SOURCE_DIR}/assets" )
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 IF(APPLE)
@@ -58,6 +58,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
 #add tinygltf & stb_image
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/tinygltf)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE tinygltf)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/vendor/tinygltf)
 
 #add glslang
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/glslang)

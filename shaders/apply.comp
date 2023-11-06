@@ -30,10 +30,6 @@ layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
     LRParticle particles[];
 } outStorage;
 
-layout(set = 0, binding = 3) buffer BoundaryStorage{
-    LRParticle particles[];
-} boundary;
-
 layout( push_constant ) uniform Settings{
     vec2 g; 
     float particleRadius;                 
@@ -47,7 +43,7 @@ layout( push_constant ) uniform Settings{
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
     float sleepingSpeed;
-    float pad2;
+    bool upsamplingEnabled;
 
     float theta;       
     float sigma;                           
@@ -66,9 +62,11 @@ void main(){
     LRParticle p = inStorage.particles[particleID];
 
     // Semi-implicit euler
-    p.position += p.velocity * settings.dt;
-    p.velocity += (p.internalForce / settings.mass) * settings.dt;
-
+    if(length(p.velocity) > settings.sleepingSpeed){
+        p.position += p.velocity * settings.dt;
+        p.velocity += (p.internalForce / settings.mass) * settings.dt;
+    }
+    p.predVelocity = vec2(length(p.velocity), settings.sleepingSpeed);
     // Forward Euler
     // p.velocity += p.internalForce * settings.dt;
     // p.position += p.velocity * settings.dt;

@@ -15,7 +15,7 @@ using namespace gpu;
         // geomShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.geom");
         // createTextureImage();
         // textureImageView = m_core->createImageView(textureImage, vk::Format::eR8G8B8A8Srgb);
-        // textureSampler = m_core->createTextureSampler();
+        // textureSampler = m_core->createSampler();
         vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(vertices[0]) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_ONLY);
@@ -169,7 +169,7 @@ using namespace gpu;
 
     void ScreenQuadRenderPass::createTextureImage() {
         // int texWidth, texHeight, texChannels;
-        // stbi_uc* pixels = stbi_load(RESOURCE_PATH "/checker.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        // stbi_uc* pixels = stbi_load(ASSETS_PATH "/checker.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         // vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
         // if (!pixels) {
@@ -183,7 +183,7 @@ using namespace gpu;
 
         // stbi_image_free(pixels);
 
-        // textureImage = m_core->createImage(vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, VMA_MEMORY_USAGE_GPU_ONLY, texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal);
+        // textureImage = m_core->createImage2D(vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, VMA_MEMORY_USAGE_GPU_ONLY, texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal);
         
         // m_core->transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
         // m_core->copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));

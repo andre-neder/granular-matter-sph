@@ -21,13 +21,13 @@ struct SPHSettings{
 
     float rho0 = 1950.f;                                //* kg/m^3
     float mass = PARTICLE_VOLUME * rho0;                //* kg
-    float stiffness = 1000.f;	                        
+    float stiffness = 5000.f;	                        
     float dt = 0.0006f;	                                //* s
 
     float DOMAIN_WIDTH = 50.f;                          //* m
-    float DOMAIN_HEIGHT = 20.f;                         //* m
-    float sleepingSpeed = 0.4f;                        //* m/s
-    float pad2;
+    float DOMAIN_HEIGHT = 25.f;                         //* m
+    float sleepingSpeed = 0.1f;                         //* m/s
+    bool upsamplingEnabled = true;
 
     float theta = 45.f * (float)M_PI / 180.f;           //* rad (angle of repose)
     float sigma = 0.25f;                                //* viscosity coefficient

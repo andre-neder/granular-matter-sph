@@ -38,10 +38,6 @@ Window::~Window(){
     
 }
 
-// void Window::bindResizeCallback(std::function<void(uint16_t, uint16_t)> fn){
-//     onResize = std::bind(fn, std::placeholders::_1, std::placeholders::_2);
-// }
-
 void Window::setTitle(std::string title){
     glfwSetWindowTitle(m_window, title.c_str());
 }

@@ -3,8 +3,6 @@
 #include "iostream"
 #include "global.h"
 
-#include <Discregrid/All>
-
 BitonicSortParameters params;
 uint32_t workgroup_size_x;
 uint32_t n;
@@ -34,36 +32,12 @@ std::vector<std::string> passLabels = {
     "Integration            "
 };
 
-double bottomBorderFn(Eigen::Vector3d const& wtf){
-    return 0.0;
-}
 
 GranularMatter::GranularMatter(gpu::Core* core)
 {
     m_core = core;
 
-    
-    // Eigen::AlignedBox3d domain;
-    // domain.extend(Eigen::AlignedBox3d(Eigen::Vector3d(0,0,0), Eigen::Vector3d(settings.DOMAIN_WIDTH,settings.DOMAIN_HEIGHT,1)));
-    // std::array<unsigned int, 3> resolution = {{10, 10, 10}};
-    // Discregrid::CubicLagrangeDiscreteGrid sdf(domain, resolution);
-
-    // Discregrid::DiscreteGrid::ContinuousFunction func1 = bottomBorderFn;
-    // auto df_index1 = sdf.addFunction(func1);
-
-    // auto val1 = sdf.interpolate(df_index1, {0.1, 0.2, 0.0});
-    // Eigen::Vector3d grad2;
-    // auto val2 = sdf->interpolate(df_index2, {0.3, 0.2, 0.1}, &grad2);
-
-    // sdf.reduce_field(df_index1, [](Eigen::Vector3d const& x, double v)
-    // {
-    // 	return x.x() < 0.0 && v > 0.0;
-    // });
-
-    // sdf.save("filename.sdf");
-    // sdf.load(filename.sdf); 
-    // sdf = Discregrid::CubicLagrangeDiscreteGrid(filename.sdf);
-
+    createSignedDistanceFields();
 
     timeQueryPools.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -88,7 +62,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
-            particles.push_back(LRParticle(i * initialDistance + settings.kernelRadius  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2) ,j * initialDistance + settings.kernelRadius ));
+            particles.push_back(LRParticle(i * initialDistance + settings.kernelRadius  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2) ,j * initialDistance + settings.kernelRadius + (settings.DOMAIN_HEIGHT / 2) ));
         }
     }
     
@@ -166,34 +140,7 @@ void GranularMatter::destroyFrameResources(){
     vk::Device device = m_core->getDevice();
     device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
 }
-void GranularMatter::destroy(){
-    destroyFrameResources();
-    vk::Device device = m_core->getDevice();
 
-    bitonicSortPass.destroy();
-    startingIndicesPass.destroy();
-    initPass.destroy();
-    predictStressPass.destroy();
-    predictDensityPass.destroy();
-    predictForcePass.destroy();
-    applyPass.destroy();
-    
-    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        m_core->getDevice().destroyQueryPool(timeQueryPools[i]);
-    }
-
-    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        m_core->destroyBuffer(particlesBufferA[i]);
-        m_core->destroyBuffer(particlesBufferB[i]);
-        m_core->destroyBuffer(particleCellBuffer[i]);
-        m_core->destroyBuffer(startingIndicesBuffers[i]);
-    }
-
-    m_core->destroyDescriptorSetLayout(descriptorSetLayoutGrid);
-    m_core->destroyDescriptorSetLayout(descriptorSetLayoutParticles);
-    
-    m_core->destroyDescriptorPool(descriptorPool);
-}
 void GranularMatter::initFrameResources(){
     createCommandBuffers();
 }
@@ -450,7 +397,8 @@ void GranularMatter::createDescriptorSetLayout() {
     descriptorSetLayoutParticles = m_core->createDescriptorSetLayout({
         {0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
         {1, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
-        {3, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute}
+        {2, vk::DescriptorType::eSampler, vk::ShaderStageFlagBits::eCompute},
+        {3, vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size(), vk::ShaderStageFlagBits::eCompute, vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound }
     });
  
 }
@@ -458,30 +406,144 @@ void GranularMatter::createDescriptorSetLayout() {
 void GranularMatter::createDescriptorSets() {
 
     descriptorSetsGrid = m_core->allocateDescriptorSets(descriptorSetLayoutGrid, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
-    
-    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        m_core->updateDescriptorSet(descriptorSetsGrid[i], {
-            { 0, vk::DescriptorType::eStorageBuffer, particleCellBuffer[i], sizeof(ParticleGridEntry) * particleCells.size() },
-            { 2, vk::DescriptorType::eStorageBuffer, startingIndicesBuffers[i], sizeof(uint32_t) * startingIndices.size() }
-        });
-    }
-
-
-
     descriptorSetsParticles = m_core->allocateDescriptorSets(descriptorSetLayoutParticles, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
     
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        m_core->updateDescriptorSet(descriptorSetsParticles[i], {
-            { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(LRParticle) * particles.size() },
-            { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(LRParticle) * particles.size() }
-        });
+        m_core->addDescriptorWrite(descriptorSetsGrid[i], { 0, vk::DescriptorType::eStorageBuffer, particleCellBuffer[i], sizeof(ParticleGridEntry) * particleCells.size() });
+        m_core->addDescriptorWrite(descriptorSetsGrid[i], { 2, vk::DescriptorType::eStorageBuffer, startingIndicesBuffers[i], sizeof(uint32_t) * startingIndices.size() });
+        m_core->updateDescriptorSet(descriptorSetsGrid[i]);
+
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(LRParticle) * particles.size() });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(LRParticle) * particles.size() });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 2, vk::DescriptorType::eSampler, volumeMapSampler, {}, {} });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 3, vk::DescriptorType::eSampledImage, {}, signedDistanceFieldViews, vk::ImageLayout::eShaderReadOnlyOptimal });
+
+        m_core->updateDescriptorSet(descriptorSetsParticles[i]);
     }
+
+}
+#define EPSILON 0.0000001f
+float cubicExtension(float r){
+    float h = settings.kernelRadius;
+    if(r < 0){
+        return 1;
+    }
+    else if(r < h){
+        float alpha = 15.f / (14.f * M_PI * h * h);
+        float q = r / h;
+        if(r < EPSILON){
+            return 0;
+        }
+        if (q >= 0.0 && q < 1.0) {
+            return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
+        } else if (q >= 1.f && q < 2.f) {
+            float beta = (2.f - q);
+            return alpha * 0.25f * beta * beta * beta;
+        } else {
+            return 0.f;
+        }
+    }
+    else{
+        return 0;
+    }
+}
+
+void GranularMatter::createSignedDistanceFields()
+{
+
+    //* Setup rigid bodies
+    float halfBoxSize = settings.DOMAIN_HEIGHT / 4;
+    Box2D box{ 
+        // glm::vec2(settings.DOMAIN_WIDTH / 2 - halfBoxSize / 2, halfBoxSize),
+        glm::vec2(halfBoxSize)
+    };
+
+    Line2D floor{ glm::vec2(0, 1), settings.kernelRadius};
+    rigidBodies.push_back(&floor);
+    Line2D wallLeft{ glm::vec2(1, 0), settings.kernelRadius};
+    rigidBodies.push_back(&wallLeft);
+    Line2D wallRight{ glm::vec2(-1, 0), 0};
+    rigidBodies.push_back(&wallRight);
+
+    rigidBodies.push_back(&box);
+
+    glm::vec2 kernelRadius(settings.kernelRadius);
+    glm::vec2 textureSize = { 40, 40 };
+
+    for(auto rb : rigidBodies){
+        //* Extend area by kernel radius
+        AABB aabb = rb->aabb;
+        aabb.min -= 2.f * kernelRadius;
+        aabb.max += 2.f * kernelRadius;
+        //* Get Sampling Step Size
+        glm::vec2 stepSize = (aabb.max - aabb.min) / (textureSize);
+        std::vector<glm::vec4> volumeMap;
+        for(int y = (int)-(textureSize.y / 2); y < (textureSize.y / 2); y++){
+            for(int x = (int)-(textureSize.x / 2); x < (textureSize.x / 2); x++){
+                glm::vec2 samplePoint = glm::vec2{x * stepSize.x + 0.5 * stepSize.x, y * stepSize.y + 0.5 * stepSize.y};
+                float sd = rb->signedDistance(samplePoint);
+                float volume = cubicExtension(sd);
+
+                glm::vec2 nearestPoint = rb->signedDistanceGradient(samplePoint);
+                volumeMap.push_back(glm::vec4(volume, nearestPoint.x, nearestPoint.y, 1.0));
+            }
+        }
+        //* create vulkan texture
+        auto image = m_core->image2DFromData(volumeMap.data(), vk::ImageUsageFlagBits::eSampled, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY,(uint32_t)textureSize.x, (uint32_t)textureSize.y, vk::Format::eR32G32B32A32Sfloat);
+        signedDistanceFields.push_back(image);
+        auto view = m_core->createImageView(image, vk::Format::eR32G32B32A32Sfloat); 
+        signedDistanceFieldViews.push_back(view);
+    }
+
+    volumeMapSampler = m_core->createSampler(vk::SamplerAddressMode::eClampToEdge); //, vk::BorderColor::eFloatOpaqueWhite
 
 }
 
 void GranularMatter::createDescriptorPool() {
 
     descriptorPool = m_core->createDescriptorPool({
-        { vk::DescriptorType::eStorageBuffer, 5 * gpu::MAX_FRAMES_IN_FLIGHT }
-    }, 2 * gpu::MAX_FRAMES_IN_FLIGHT );
+        { vk::DescriptorType::eStorageBuffer, (2 + 2) * gpu::MAX_FRAMES_IN_FLIGHT },
+        { vk::DescriptorType::eSampler, 1 * gpu::MAX_FRAMES_IN_FLIGHT },
+        { vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size() * gpu::MAX_FRAMES_IN_FLIGHT },
+    }, (1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT);
+}
+
+
+void GranularMatter::destroy(){
+    destroyFrameResources();
+    vk::Device device = m_core->getDevice();
+
+    bitonicSortPass.destroy();
+    startingIndicesPass.destroy();
+    initPass.destroy();
+    predictStressPass.destroy();
+    predictDensityPass.destroy();
+    predictForcePass.destroy();
+    applyPass.destroy();
+    
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_core->getDevice().destroyQueryPool(timeQueryPools[i]);
+    }
+
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_core->destroyBuffer(particlesBufferA[i]);
+        m_core->destroyBuffer(particlesBufferB[i]);
+        m_core->destroyBuffer(particleCellBuffer[i]);
+        m_core->destroyBuffer(startingIndicesBuffers[i]);
+    }
+
+    m_core->destroyDescriptorSetLayout(descriptorSetLayoutGrid);
+    m_core->destroyDescriptorSetLayout(descriptorSetLayoutParticles);
+    
+    m_core->destroyDescriptorPool(descriptorPool);
+
+    for(auto view : signedDistanceFieldViews){
+        m_core->destroyImageView(view);
+    }
+
+    for(auto image : signedDistanceFields){
+        m_core->destroyImage(image);
+    }
+
+    m_core->destroySampler(volumeMapSampler);
 }

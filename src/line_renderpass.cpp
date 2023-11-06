@@ -97,9 +97,8 @@ using namespace gpu;
 
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
 
-            m_core->updateDescriptorSet(descriptorSets[i], {
-                {0, vk::DescriptorType::eUniformBuffer, uniformBuffers[i], sizeof(UniformBufferObject)}
-            });
+            m_core->addDescriptorWrite(descriptorSets[i], {0, vk::DescriptorType::eUniformBuffer, uniformBuffers[i], sizeof(UniformBufferObject)});
+            m_core->updateDescriptorSet(descriptorSets[i]);
         }
     }
     

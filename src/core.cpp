@@ -1,5 +1,7 @@
 #include "core.h"
 
+#define MAX_VARIABLE_DESCRIPTOR_COUNT 32
+
 using namespace gpu;
 
 Core::Core(bool enableValidation, Window* window){
@@ -58,7 +60,16 @@ bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
 
     vk::PhysicalDeviceFeatures supportedFeatures = pDevice.getFeatures();
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    // Todo: Check support forindexing features?
+    // vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+
+    // Enable non-uniform indexing
+    // descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    // descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+    // descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+    // descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+
+    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy  && supportedFeatures.geometryShader;
 }
 
 QueueFamilyIndices Core::findQueueFamilies(vk::PhysicalDevice pDevice) {
@@ -107,9 +118,21 @@ void Core::createLogicalDevice(){
         vk::DeviceQueueCreateInfo queueCreateInfo({}, queueFamily, 1, &queuePriority);
         queueCreateInfos.push_back(queueCreateInfo);
     }
+    
 
+    //* Request features on device creation
     vk::PhysicalDeviceFeatures deviceFeatures;
     deviceFeatures.samplerAnisotropy = VK_TRUE;
+    deviceFeatures.geometryShader = VK_TRUE;
+    deviceFeatures.shaderSampledImageArrayDynamicIndexing = VK_TRUE;
+
+    vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
+
+    // Enable non-uniform indexing
+    descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
+    descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
+    descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 
     //MacOS portability extension
     std::vector<vk::ExtensionProperties> extensionProperties =  physicalDevice.enumerateDeviceExtensionProperties();
@@ -118,14 +141,21 @@ void Core::createLogicalDevice(){
             deviceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
     }
 
-    vk::DeviceCreateInfo createInfo;
     vk::PhysicalDeviceHostQueryResetFeatures resetFeatures{};
+
+    vk::DeviceCreateInfo createInfo;
+    
+    vk::PhysicalDeviceFeatures2 deviceFeatures2;
+    deviceFeatures2.features = deviceFeatures;
+    deviceFeatures2.pNext = &descriptorIndexingFeatures;
+
     if (m_enableValidation) {
-        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, &deviceFeatures, &resetFeatures);
+        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, nullptr, &deviceFeatures2);
     }
     else{
-        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, &deviceFeatures, &resetFeatures);
+        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, nullptr, &deviceFeatures2);
     }
+    
     try{
         device = physicalDevice.createDevice(createInfo);
     }catch(std::exception& e) {
@@ -247,37 +277,90 @@ void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
 
 std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count)
 {
+    //Duplicate layout for each set
     std::vector<vk::DescriptorSetLayout> layouts(count, layout);
+
+
     vk::DescriptorSetAllocateInfo allocInfo(pool, count, layouts.data());
+    // if the descriptor set layout has the flag
+    // auto flags = m_descriptorBindingFlags.at(layout);
+    // if((flags & (vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound)) == (vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound)){
+        auto descriptorCount = m_descriptorCount.at(layout);
+        std::vector<uint32_t> counts(count, descriptorCount);
+        vk::DescriptorSetVariableDescriptorCountAllocateInfo variableDescriptorCountAllocInfo{count, counts.data()};
+        allocInfo.pNext = &variableDescriptorCountAllocInfo;
+    // }
     try{
-        return device.allocateDescriptorSets(allocInfo);
+        auto& sets = device.allocateDescriptorSets(allocInfo);
+        for(auto& set : sets){
+            //* create a write queue for each set
+            m_descriptorWrites[set] = std::vector<vk::WriteDescriptorSet>();
+        }
+        return sets;
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
 }
 
-void gpu::Core::updateDescriptorSet(vk::DescriptorSet set, std::vector<gpu::DescriptorWrite> writes)
+void gpu::Core::updateDescriptorSet(vk::DescriptorSet set)
 {
-    std::vector<vk::WriteDescriptorSet> descriptorWrites;
-
-    for (auto &w : writes){
-        vk::DescriptorBufferInfo* bufferInfo = new vk::DescriptorBufferInfo(w.buffer, 0, w.size);
-        vk::WriteDescriptorSet descriptorWrite(set, w.binding, 0, 1, w.type, {}, bufferInfo);
-        descriptorWrites.push_back(descriptorWrite);
-    }
-
+    auto& descriptorWrites = m_descriptorWrites.at(set);
     device.updateDescriptorSets(descriptorWrites, nullptr);
+    descriptorWrites.clear();
 }
+
+
+void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::BufferDescriptorWrite write)
+{
+    //Todo: Cleanup
+    vk::DescriptorBufferInfo* bufferInfo = new vk::DescriptorBufferInfo(write.buffer, 0, write.size);
+    vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, 1, write.type, {}, bufferInfo);
+    m_descriptorWrites.at(set).push_back(descriptorWrite);
+}
+
+void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite write)
+{
+    //Todo: Cleanup
+    std::vector<vk::DescriptorImageInfo>* imageInfos = new std::vector<vk::DescriptorImageInfo>(); 
+    if(write.imageViews.size() == 0){
+        imageInfos->push_back(vk::DescriptorImageInfo(write.sampler, {}, {}));
+    }
+    else{
+        for(auto view : write.imageViews){
+            imageInfos->push_back(vk::DescriptorImageInfo(write.sampler, view, write.imageLayout));
+        }
+        
+    }
+    vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, (uint32_t)imageInfos->size(), write.type, imageInfos->data());
+    m_descriptorWrites.at(set).push_back(descriptorWrite);
+}
+
 
 vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<DescriptorSetBinding> bindings)
 {
     std::vector<vk::DescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+    std::vector<vk::DescriptorBindingFlags> flags;
+    vk::DescriptorBindingFlags layoutFlags;
+    // std::vector<uint32_t> descriptorCounts;
+    uint32_t descriptorCount = 0;
     for(auto b : bindings){
-        descriptorSetLayoutBindings.push_back(vk::DescriptorSetLayoutBinding(b.binding, b.type, 1, b.stages, nullptr));
+        descriptorSetLayoutBindings.push_back(vk::DescriptorSetLayoutBinding(b.binding, b.type, b.count, b.stages, nullptr));
+        flags.push_back(b.flags);
+        layoutFlags |= b.flags;
+        descriptorCount = std::max(descriptorCount, b.count);
     }
-    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, descriptorSetLayoutBindings);
+
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, (uint32_t)descriptorSetLayoutBindings.size(), descriptorSetLayoutBindings.data());
+
+    vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{(uint32_t)flags.size(), flags.data()};
+    layoutInfo.pNext = &bindingFlags;
+    
+
     try{
-        return device.createDescriptorSetLayout(layoutInfo);
+        auto& descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+        m_descriptorCount[descriptorSetLayout] = descriptorCount;
+        m_descriptorBindingFlags[descriptorSetLayout] = layoutFlags;
+        return descriptorSetLayout;
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
@@ -321,7 +404,38 @@ void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width,
 
     endSingleTimeCommands(commandBuffer);
 }
-void Core::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) {
+vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
+{
+    uint32_t formatSize = 0;
+    switch (format){
+        case vk::Format::eR32G32Sfloat:
+            formatSize = 2 * 4;
+            break;
+        case vk::Format::eR32G32B32Sfloat:
+            formatSize = 3 * 4;
+            break;
+        case vk::Format::eR32G32B32A32Sfloat:
+            formatSize = 4 * 4;
+            break;
+        default:
+            break;
+    }
+
+    vk::Buffer stagingBuffer = bufferFromData(data, width * height * formatSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+        
+    vk::Image image = createImage2D(vk::ImageUsageFlagBits::eTransferDst | imageUsage, memoryUsage, width, height, format, tiling);
+        
+    transitionImageLayout(image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+    copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+    //Todo: determine target image layout based on imput
+    transitionImageLayout(image, format, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    destroyBuffer(stagingBuffer);
+    
+    return image;
+}
+void Core::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+{
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
     vk::PipelineStageFlags sourceStage;
     vk::PipelineStageFlags destinationStage;
@@ -348,10 +462,22 @@ void Core::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLa
 
     endSingleTimeCommands(commandBuffer);
 }
-vk::Image Core::createImage(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
+vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
     vk::Image image;
     VmaAllocation imageAllocation;
     vk::ImageCreateInfo imageInfo({}, vk::ImageType::e2D, format, vk::Extent3D{{width, height}, 1}, 1, 1, vk::SampleCountFlagBits::e1, tiling, imageUsage, vk::SharingMode::eExclusive, {}, {}, vk::ImageLayout::eUndefined);
+    VmaAllocationCreateInfo allocInfoImage = {};
+    allocInfoImage.usage = memoryUsage;
+    if(vmaCreateImage(allocator, reinterpret_cast<VkImageCreateInfo*>(&imageInfo), &allocInfoImage, reinterpret_cast<VkImage*>(&image), &imageAllocation, nullptr) != VK_SUCCESS){
+        throw std::runtime_error("failed to create image!");
+    }
+    m_imageAllocations[image] = imageAllocation;
+    return image;
+}
+vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling) {
+    vk::Image image;
+    VmaAllocation imageAllocation;
+    vk::ImageCreateInfo imageInfo({}, vk::ImageType::e3D, format, vk::Extent3D{{width, height}, depth}, 1, 1, vk::SampleCountFlagBits::e1, tiling, imageUsage, vk::SharingMode::eExclusive, {}, {}, vk::ImageLayout::eUndefined);
     VmaAllocationCreateInfo allocInfoImage = {};
     allocInfoImage.usage = memoryUsage;
     if(vmaCreateImage(allocator, reinterpret_cast<VkImageCreateInfo*>(&imageInfo), &allocInfoImage, reinterpret_cast<VkImage*>(&image), &imageAllocation, nullptr) != VK_SUCCESS){
@@ -380,7 +506,7 @@ vk::ImageView Core::createImageView(vk::Image image, vk::Format format) {
     return imageView;
 }
 
-vk::Sampler Core::createTextureSampler() {
+vk::Sampler Core::createSampler(vk::SamplerAddressMode addressMode, vk::BorderColor borderColor, vk::Bool32 enableAnisotropy) {
     vk::Sampler sampler;
     vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
 
@@ -389,17 +515,17 @@ vk::Sampler Core::createTextureSampler() {
         vk::Filter::eLinear, 
         vk::Filter::eLinear, 
         vk::SamplerMipmapMode::eLinear, 
-        vk::SamplerAddressMode::eRepeat, 
-        vk::SamplerAddressMode::eRepeat, 
-        vk::SamplerAddressMode::eRepeat,
+        addressMode, 
+        addressMode, 
+        addressMode,
         0.0f, 
-        VK_TRUE, 
+        enableAnisotropy, 
         properties.limits.maxSamplerAnisotropy, 
         VK_FALSE,  
         vk::CompareOp::eAlways, 
         0.0f,
         0.0f, 
-        vk::BorderColor::eIntOpaqueBlack, 
+        borderColor, 
         VK_FALSE 
     );
     try{

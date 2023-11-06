@@ -57,11 +57,64 @@ struct LRParticle{
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
             vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, position)),
             vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32Sfloat, offsetof(LRParticle, rho)),
-            //   vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
+            // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
             // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, texCoord))
         };
         return attributeDescriptions;
     }
+};
+
+namespace std{
+    template <typename T> int sign(T val) {
+        return (T(0) < val) - (val < T(0));
+    }
+}
+
+struct AABB{
+    glm::vec2 min;
+    glm::vec2 max;
+};
+
+struct RigidBody2D{
+    bool active = false; // states if object is influenced by forces
+    bool invert = false; // states uf the sdf should be inverted
+    AABB aabb;
+    virtual glm::vec2 signedDistanceGradient(glm::vec2 position) = 0; // calculates the signed distance and direction 
+    virtual float signedDistance(glm::vec2 position) = 0; // calculates the signed distance 
+};
+
+struct Box2D : public RigidBody2D{
+    glm::vec2 halfSize;
+    inline Box2D(glm::vec2 halfSize) : halfSize(halfSize) {
+        aabb.min = -halfSize;
+        aabb.max = halfSize;
+    };
+    glm::vec2 signedDistanceGradient(glm::vec2 position) override {
+        glm::vec2 p = position;
+        glm::vec2 q = glm::abs(p) - halfSize;
+        glm::vec2 n = (q.x > q.y ?  glm::vec2(std::sign(p.x), 0) : glm::vec2(0, std::sign(p.y)));
+        return n * glm::length(glm::max(q,glm::vec2(0.0))) + std::min(std::max(q.x, q.y), 0.f);
+    };
+    float signedDistance(glm::vec2 position) override {
+        glm::vec2 p = position;
+        glm::vec2 q = glm::abs(p) - halfSize;
+        return glm::length(glm::max(q,glm::vec2(0.0))) + std::min(std::max(q.x, q.y), 0.f);
+    };
+};
+
+struct Line2D : public RigidBody2D{
+    glm::vec2 normal;
+    float h; 
+    inline Line2D(glm::vec2 normal, float h) : normal(normal), h(h) {
+        aabb.min = glm::vec2(0);
+        aabb.max = glm::vec2(0);
+    };
+    glm::vec2 signedDistanceGradient(glm::vec2 position) override {
+        return normal * (glm::dot(position, normal) + h);
+    };
+    float signedDistance(glm::vec2 position) override {
+        return (glm::dot(position, normal) + h);
+    };
 };
 
 class GranularMatter
@@ -79,13 +132,9 @@ private:
     std::vector<vk::Buffer> particleCellBuffer;
     std::vector<uint32_t> startingIndices; 
     std::vector<vk::Buffer> startingIndicesBuffers;
-    // vk::DescriptorSetLayout descriptorSetLayoutCell;
-    std::vector<vk::DescriptorSet> descriptorSetsGrid;
-    // vk::DescriptorPool descriptorPoolCell;
 
-    // vk::DescriptorSetLayout descriptorSetLayout;
+    std::vector<vk::DescriptorSet> descriptorSetsGrid;
     std::vector<vk::DescriptorSet> descriptorSetsParticles;
-    // vk::DescriptorPool descriptorPool;
 
     vk::DescriptorSetLayout descriptorSetLayoutGrid;
     vk::DescriptorSetLayout descriptorSetLayoutParticles;
@@ -100,10 +149,16 @@ private:
     gpu::ComputePass predictForcePass;
     gpu::ComputePass applyPass;
 
+    std::vector<RigidBody2D*> rigidBodies;
+    std::vector<vk::Image> signedDistanceFields;
+    std::vector<vk::ImageView> signedDistanceFieldViews;
+    vk::Sampler volumeMapSampler;
+
     void createCommandBuffers();
     void createDescriptorSetLayout();
     void createDescriptorPool();
     void createDescriptorSets();
+    void createSignedDistanceFields();
 public:
     GranularMatter(/* args */){};
     GranularMatter(gpu::Core* core);

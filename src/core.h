@@ -6,19 +6,35 @@
 #include <vk_mem_alloc.h>
 #include <map>
 
+
+#include <stb_image.h>
+#include <stb_image_write.h>
+
 namespace gpu
 {   
     struct DescriptorSetBinding{
         uint32_t binding;
         vk::DescriptorType type;
+        uint32_t count = 1;
         vk::ShaderStageFlags stages;
+        vk::DescriptorBindingFlags flags = {};
+        DescriptorSetBinding(uint32_t binding, vk::DescriptorType type, vk::ShaderStageFlags stages) : binding(binding), type(type), stages(stages), count(1){};
+        DescriptorSetBinding(uint32_t binding, vk::DescriptorType type, uint32_t count, vk::ShaderStageFlags stages) : binding(binding), type(type), stages(stages), count(count){};
+        DescriptorSetBinding(uint32_t binding, vk::DescriptorType type, uint32_t count, vk::ShaderStageFlags stages,  vk::DescriptorBindingFlags flags) : binding(binding), type(type), stages(stages), count(count), flags(flags){};
     };
 
-    struct DescriptorWrite{
+    struct BufferDescriptorWrite{
         uint32_t binding;
         vk::DescriptorType type;
         vk::Buffer buffer;
         size_t size;
+    };
+    struct ImageDescriptorWrite{
+        uint32_t binding;
+        vk::DescriptorType type;
+        vk::Sampler sampler;
+        std::vector<vk::ImageView> imageViews;
+        vk::ImageLayout imageLayout;
     };
 
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
@@ -66,13 +82,16 @@ namespace gpu
             void copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
             void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
             //* Images
-            vk::Image createImage(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling);
+            vk::Image image2DFromData(void* data, vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+                  
+            vk::Image createImage2D(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+            vk::Image createImage3D(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
             void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
             vk::ImageView createImageView(vk::Image image, vk::Format format);
             void destroyImage(vk::Image image);
             void destroyImageView(vk::ImageView view);
             //* Samplers
-            vk::Sampler createTextureSampler();
+            vk::Sampler createSampler(vk::SamplerAddressMode addressMode = vk::SamplerAddressMode::eRepeat, vk::BorderColor borderColor = vk::BorderColor::eIntOpaqueBlack, vk::Bool32 enableAnisotropy = VK_FALSE);
             void destroySampler(vk::Sampler sampler);
             
             //* Commands
@@ -82,7 +101,10 @@ namespace gpu
             
             //* Descriptors
             std::vector<vk::DescriptorSet> allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count = gpu::MAX_FRAMES_IN_FLIGHT);
-            void updateDescriptorSet(vk::DescriptorSet set, std::vector<gpu::DescriptorWrite> writes);
+            // void updateDescriptorSet(vk::DescriptorSet set, std::vector<gpu::BufferDescriptorWrite> writes);
+            void addDescriptorWrite(vk::DescriptorSet set, gpu::BufferDescriptorWrite write);
+            void addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite write);
+            void updateDescriptorSet(vk::DescriptorSet set);
             vk::DescriptorSetLayout createDescriptorSetLayout(std::vector<DescriptorSetBinding> bindings);
             vk::DescriptorPool createDescriptorPool(std::vector<vk::DescriptorPoolSize> sizes, uint32_t maxSets = 1 * gpu::MAX_FRAMES_IN_FLIGHT );
             void destroyDescriptorPool(vk::DescriptorPool pool);
@@ -100,7 +122,7 @@ namespace gpu
             
         private:
             bool m_enableValidation = true;
-            std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+            std::vector<const char*> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME}; 
 
             vk::Instance instance;
             vk::DebugUtilsMessengerEXT m_debugMessenger;
@@ -122,6 +144,9 @@ namespace gpu
 
             std::map<vk::Buffer, VmaAllocation> m_bufferAllocations;
             std::map<vk::Image, VmaAllocation> m_imageAllocations;
+            std::map<vk::DescriptorSet, std::vector<vk::WriteDescriptorSet>> m_descriptorWrites;
+            std::map<vk::DescriptorSetLayout, uint32_t> m_descriptorCount;
+            std::map<vk::DescriptorSetLayout, vk::DescriptorBindingFlags> m_descriptorBindingFlags;
 
             void pickPhysicalDevice();
             bool isDeviceSuitable(vk::PhysicalDevice pDevice);

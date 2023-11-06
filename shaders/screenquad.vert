@@ -13,7 +13,7 @@ layout( push_constant ) uniform Settings{
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
     float sleepingSpeed;
-    float pad2;
+    bool upsamplingEnabled;
 
     float theta;       
     float sigma;                           
