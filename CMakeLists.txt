@@ -61,6 +61,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE tinygltf)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/vendor/tinygltf)
 
 #add glslang
+set(ENABLE_OPT OFF)
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/glslang)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE glslang SPIRV)
 
