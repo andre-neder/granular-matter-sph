@@ -116,12 +116,9 @@ void main(){
 
     vec2 relativeVelocity = vec2(0) - p.velocity;
     float occluded = 0.866; //* 30° cone
-    // Todo: calculate this globally for adative timestepping
-    // float c = sqrt(2.f * length(settings.g) * settings.DOMAIN_HEIGHT); //* maximum velocity
     
 
     float pRhoSq = p.rho * p.rho;
-    float eps = 0.01f;
 
     // For all previously stored fluid neighbors
     for(uint i = 0; i < p.fluidNeighborCount; i++)
@@ -141,8 +138,8 @@ void main(){
 
             vec2 F_f = settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
-            // float v = (2.f * settings.alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
-            // float pi = -v * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+            // float ny = (2.f * settings.alpha * settings.kernelRadius * c) / (p.rho + pi.rho); //* viscousity constant
+            // float pi = -ny * (min(dot((p.velocity - pi.velocity), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
             // vec2 F_v = settings.mass * pi * gradient;
 
             frictionalForce += F_f;
@@ -177,11 +174,16 @@ void main(){
             internalForce += volume * settings.rho0 * (p.p / pRhoSq) * gradient; 
             
             vec2 F_f = volume * settings.rho0 * (p.stress / pRhoSq) * gradient;
-            // float v = (settings.sigma * settings.kernelRadius * c) / (2.f * p.rho); //* viscousity constant 
-            // float pi = -v * (min(dot((p.velocity - pb.velocity), p_pb), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
-            // vec2 F_v = pb.psi_rho0 * pi * gradient; 
 
-            frictionalForce += F_f;
+            float cs = sqrt(settings.stiffness);
+            float eps = 0.01f;
+            // float ny = (settings.sigma * settings.kernelRadius * cs) / (2.f * p.rho); //* viscousity constant 
+            // float ny = (2 * settings.sigma * settings.kernelRadius * cs) / (settings.rho0 + p.rho); //* viscousity constant 
+            // float pi = -ny * (min(dot((p.velocity - vec2(0)), p_pi), 0.f) / ((r * r) + (eps * settings.kernelRadius * settings.kernelRadius)));
+            // vec2 F_v = volume * settings.rho0 * pi * gradient; 
+
+            frictionalForce += F_f;//max(F_v, F_f);
+            // frictionalForce += F_v;
         }
     }
 
