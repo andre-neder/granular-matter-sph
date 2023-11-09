@@ -24,8 +24,8 @@ struct SPHSettings{
     float stiffness = 5000.f;	                        
     float dt = 0.0006f;	                                //* s
 
-    float DOMAIN_WIDTH = 50.f;                          //* m
-    float DOMAIN_HEIGHT = 25.f;                         //* m
+    float DOMAIN_WIDTH = 100.f;                          //* m
+    float DOMAIN_HEIGHT = 50.f;                         //* m
     float sleepingSpeed = 0.1f;                         //* m/s
     bool upsamplingEnabled = true;
 

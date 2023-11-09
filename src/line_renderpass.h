@@ -42,10 +42,10 @@ const std::vector<uint32_t> indices = {
     0, 2, // left
     1, 3, // right
 
-    4, 5, //box
-    4, 6,
-    5, 7,
-    6, 7
+    // 4, 5, //box
+    // 4, 6,
+    // 5, 7,
+    // 6, 7
 };
 
 namespace gpu{

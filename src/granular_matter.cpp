@@ -23,7 +23,6 @@ std::vector<vk::QueryPool> timeQueryPools;
 std::vector<std::string> passLabels = {
     "Copy last frame data   ",
     "Init                   ",
-    // "Grid quantification    ",
     "Sorting                ",
     "Start indices          ",
     "Density                ",
@@ -60,9 +59,9 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     float initialDistance = 0.5f * settings.kernelRadius;
 
-    for(int i = 0;i < computeSpace.x ; i++){
-        for(int j = 0;j < computeSpace.y ; j++){
-            particles.push_back(LRParticle(i * initialDistance + settings.kernelRadius  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2) ,j * initialDistance + settings.kernelRadius + (settings.DOMAIN_HEIGHT / 2) ));
+    for(int j = 0;j < computeSpace.y ; j++){
+        for(int i = 0;i < computeSpace.x ; i++){
+            particles.push_back(LRParticle(i * initialDistance + settings.kernelRadius  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2) ,j * initialDistance + settings.kernelRadius  ));
         }
     }
     
@@ -465,7 +464,7 @@ void GranularMatter::createSignedDistanceFields()
     Line2D wallRight{ glm::vec2(-1, 0), 0};
     rigidBodies.push_back(&wallRight);
 
-    rigidBodies.push_back(&box);
+    // rigidBodies.push_back(&box);
 
     glm::vec2 kernelRadius(settings.kernelRadius);
     glm::vec2 textureSize = { 40, 40 };

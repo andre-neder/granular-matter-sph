@@ -227,58 +227,6 @@ void main(){
     rho *= settings.mass;
     p.fluidNeighborCount = fluidNeighborCount;
 
-    
-
-    // vec2 boundaryNormals[3] = {
-    //     vec2( 0, 1), // Bottom
-    //     vec2( 1, 0), // Left
-    //     vec2(-1, 0), // Right
-    // };
-    // float boundaryOffset[3] = {
-    //     0,                      // Bottom
-    //     0,                      // Left
-    //     settings.DOMAIN_WIDTH,  // Right
-    // };
-   
-
-    // float boundarySD = FLOAT_MAX;
-    // p.boundaryVolume = 0;
-    // p.boundaryNormal = vec2(0);
-
-    //* Rigidbodies
-    // for (int i = 0; i < 3; i++){ // rigidBodyPositions.length()
-    //     // vec2 samplePosition = (p.predPosition - rigidBodyPositions[i]) / rigidBodyScale[i];
-    //     // vec2 sdg = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).rg; // 
-    //     float sd = sdPlane(p.predPosition, boundaryNormals[i], boundaryOffset[i]);
-    //     // float sd = length(sdg);
-    //     if(sd < boundarySD && sd < settings.kernelRadius){
-    //         boundarySD = sd;
-    //         p.boundaryNormal = boundaryNormals[i];
-    //         // p.boundaryNormal = sdg; 
-    //     }
-    // }
-    // vec2 sdg = texture(imageSampler[0], p.predPosition).rg;
-    // vec2 sdg = texture(sampler2D(sdfTexture[0], volumeMapSampler), p.predPosition).rg;
-    // boundarySD = length(sdg);
-    // p.boundaryNormal = sdg;
-
-    //* Box Boundaries
-    // {   
-    //     float halfBoxSize = settings.DOMAIN_HEIGHT / 4;
-    //     vec2 boxCenter = vec2(settings.DOMAIN_WIDTH / 2, halfBoxSize);
-    //     float sd = sdBox(p.predPosition - boxCenter, vec2(halfBoxSize));
-    //     if(sd < boundarySD && sd < settings.kernelRadius){
-    //         boundarySD = sd;
-    //         p.boundaryNormal = normalBox(p.predPosition - boxCenter, vec2(halfBoxSize));
-    //     }
-    // }
-    // boundarySD = boundarySD == FLOAT_MAX ? 0 : boundarySD;
-
-    // float sd = sdPlane(p.predPosition, vec2(0,1), 0);
-    // float boundarySD = length(p.boundaryNormal);
-    // p.boundaryVolume += cubicExtension(boundarySD);
-    // p.boundaryNormal *= boundarySD;
-
 
     float halfBoxSize = settings.DOMAIN_HEIGHT / 4;
     vec2 rigidBodyPositions[] = {
@@ -286,7 +234,7 @@ void main(){
         vec2( 0, 0), // Left
         vec2( settings.DOMAIN_WIDTH, 0), // Right
         // vec2( settings.DOMAIN_WIDTH / 2.0 - halfBoxSize - 2 * settings.kernelRadius, - 2 * settings.kernelRadius  ),//with offset
-        vec2( settings.DOMAIN_WIDTH / 2.0 - halfBoxSize, 0),
+        // vec2( settings.DOMAIN_WIDTH / 2.0 - halfBoxSize, 0),
     };
     vec2 rigidBodyScale[] = {
         vec2(1), vec2(1), vec2(1), 
