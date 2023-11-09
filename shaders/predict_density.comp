@@ -116,60 +116,6 @@ vec2 gradW(float r, vec2 rij, float h){
     return -dir * slope;
 }
 
-float sdPlane( vec3 p, vec3 n, float h )
-{
-  // n must be normalized
-  return dot(p,n) + h;
-}
-
-float sdPlane( vec2 p, vec2 n, float h )
-{
-  // n must be normalized
-  return dot(p,n) + h;
-}
-
-float sdBox( vec3 p, vec3 b )
-{
-  vec3 q = abs(p) - b;
-  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
-}
-float sdBox( vec2 p, vec2 b )
-{
-//   return sdBox(vec3(p, 1), vec3(b, 1));
-  vec2 q = abs(p) - b;
-  return length(max(q,0.0)) + min(max(q.x, q.y),0.0);
-}
-
-vec2 normalBox( vec2 p, vec2 b ){
-    vec2 q = abs(p);
-    return (q.x > q.y ?  vec2(sign(p.x), 0) : vec2(0, sign(p.y)));
-}
-// Todo: move to sdf texture to make it a volume map
-// float cubicExtension(float r){
-//     float h = settings.kernelRadius;
-//     if(r < 0){
-//         return 1;
-//     }
-//     else if(r < h){
-//         float alpha = 15.f / (14.f * PI * h * h);
-//         float q = r / h;
-//         if(r < EPSILON){
-//             return 0;
-//         }
-//         if (q >= 0.0 && q < 1.0) {
-//             return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
-//         } else if (q >= 1.f && q < 2.f) {
-//             float beta = (2.f - q);
-//             return alpha * 0.25f * beta * beta * beta;
-//         } else {
-//             return 0.f;
-//         }
-//     }
-//     else{
-//         return 0;
-//     }
-// }
-
 vec2 adjustKernelRadiusOffset(vec2 position){
     return vec2(position.x - 2 * settings.kernelRadius, position.y - 2 * settings.kernelRadius);
 }
@@ -266,12 +212,12 @@ void main(){
     // float pressure = B * (pow(max(p.rho, settings.rho0) / settings.rho0, exponent) - 1.f); 
     //? https://www.politesi.polimi.it/bitstream/10589/33101/1/2011_12_Pirovano.pdf (3.2)
     //* tait's equation
-    float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
+    // float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
 
     //? Murnaghan equation of state ???
 
     //* Ideal gas equation
-    // float pressure = settings.stiffness * (rho - settings.rho0); 
+    float pressure = settings.stiffness * (rho - settings.rho0); 
     
     p.p = max(pressure, 0.f);     //? required?
     p.V = settings.mass / rho;
@@ -279,10 +225,3 @@ void main(){
     outStorage.particles[particleID] = p;
 }
 
-// volume = mass / density
-
-// Todo: file:///C:/Users/andre/Downloads/pcisph%20(2).pdf try this
-
-// Todo: https://cg.informatik.uni-freiburg.de/publications/2013_TVCG_IISPH.pdf try this
-
-// Todo: https://www.politesi.polimi.it/bitstream/10589/33101/1/2011_12_Pirovano.pdf (try pressure corrected sph?)

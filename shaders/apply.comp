@@ -62,11 +62,12 @@ void main(){
     LRParticle p = inStorage.particles[particleID];
 
     // Semi-implicit euler
-    if(length(p.velocity) > settings.sleepingSpeed){
+    vec2 vel = (p.position + p.velocity * settings.dt) - (p.position);
+    if(length(vel) > settings.sleepingSpeed){
         p.position += p.velocity * settings.dt;
-        p.velocity += (p.internalForce / settings.mass) * settings.dt;
     }
-    p.predVelocity = vec2(length(p.velocity), settings.sleepingSpeed);
+    p.velocity += (p.internalForce / settings.mass) * settings.dt;
+    p.predVelocity = vec2(length(vel), settings.sleepingSpeed);
     // Forward Euler
     // p.velocity += p.internalForce * settings.dt;
     // p.position += p.velocity * settings.dt;

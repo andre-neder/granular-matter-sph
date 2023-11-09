@@ -149,7 +149,6 @@ void main(){
         vec2( 0, 0), // Bottom
         vec2( 0, 0), // Left
         vec2( settings.DOMAIN_WIDTH, 0), // Right
-        // vec2( settings.DOMAIN_WIDTH / 2.0 - halfBoxSize - 2 * settings.kernelRadius, - 2 * settings.kernelRadius  ),//with offset
         // vec2( settings.DOMAIN_WIDTH / 2.0 - halfBoxSize, 0),
     };
     vec2 rigidBodyScale[] = {
@@ -199,9 +198,5 @@ void main(){
     // p.pad0 = normStressTensor;
     // p.stress = frobenius(stress) > frobenius(cohesion) ? stress : cohesion;
 
-
-
     outStorage.particles[particleID] = p;
 }
-
-// volume = mass / density
