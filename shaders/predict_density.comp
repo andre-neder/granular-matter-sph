@@ -23,8 +23,6 @@ struct LRParticle{
     float boundaryVolume;
     vec2 boundaryNormal;
     mat2 stress;
-    uint fluidNeighbors[31];
-    uint fluidNeighborCount;
 };
 
 
@@ -150,7 +148,7 @@ void main(){
 
     //* Density
     float rho = 0.f;
-    
+
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {

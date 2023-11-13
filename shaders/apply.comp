@@ -18,8 +18,6 @@ struct LRParticle{
     float boundaryVolume;
     vec2 boundaryNormal;
     mat2 stress;
-    uint fluidNeighbors[31];
-    uint fluidNeighborCount;
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{

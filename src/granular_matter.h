@@ -40,9 +40,6 @@ struct LRParticle{
     // 16
     glm::mat2 stress = glm::mat2(1.0);
     // 20
-    uint32_t fluidNeighbors[31];
-    uint32_t fluidNeighborCount;
-    //52
 
     LRParticle(){};
     inline LRParticle(float x, float y) { position = glm::vec2(x, y); }

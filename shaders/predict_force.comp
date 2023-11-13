@@ -19,8 +19,6 @@ struct LRParticle{
     float boundaryVolume;
     vec2 boundaryNormal;
     mat2 stress;
-    uint fluidNeighbors[31];
-    uint fluidNeighborCount;
 };
 
 
