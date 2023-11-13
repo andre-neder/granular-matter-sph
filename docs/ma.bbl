@@ -1,0 +1,885 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global}
+    \entry{10.2312:PE:vriphys:vriphys12:053-060}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=6d8a96e06d334e1b81b365d17e231c81}{%
+           family={Ihmsen},
+           familyi={I\bibinitperiod},
+           given={Markus},
+           giveni={M\bibinitperiod}}}%
+        {{hash=93c7e9f2ab46ea222942a3c1b4ccd0e2}{%
+           family={Wahl},
+           familyi={W\bibinitperiod},
+           given={Arthur},
+           giveni={A\bibinitperiod}}}%
+        {{hash=f11935ee15f7a87cffdf63cabfe0954f}{%
+           family={Teschner},
+           familyi={T\bibinitperiod},
+           given={Matthias},
+           giveni={M\bibinitperiod}}}%
+      }
+      \name{editor}{4}{}{%
+        {{hash=97874e24e149ca0ddbd194fb257ea4c5}{%
+           family={Bender},
+           familyi={B\bibinitperiod},
+           given={Jan},
+           giveni={J\bibinitperiod}}}%
+        {{hash=cfa3d27979af68e8822a2079d34bff45}{%
+           family={Kuijper},
+           familyi={K\bibinitperiod},
+           given={Arjan},
+           giveni={A\bibinitperiod}}}%
+        {{hash=28fa57fc7d8d0e65bf876e885717e8cf}{%
+           family={Fellner},
+           familyi={F\bibinitperiod},
+           given={Dieter\bibnamedelima W.},
+           giveni={D\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+        {{hash=aceb292f71c7d086c283e8adac9495ce}{%
+           family={Guerin},
+           familyi={G\bibinitperiod},
+           given={Eric},
+           giveni={E\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {The Eurographics Association}%
+      }
+      \strng{namehash}{7ca697054e7ef28da7a9cd216725e99d}
+      \strng{fullhash}{7ca697054e7ef28da7a9cd216725e99d}
+      \strng{bibnamehash}{7ca697054e7ef28da7a9cd216725e99d}
+      \strng{authorbibnamehash}{7ca697054e7ef28da7a9cd216725e99d}
+      \strng{authornamehash}{7ca697054e7ef28da7a9cd216725e99d}
+      \strng{authorfullhash}{7ca697054e7ef28da7a9cd216725e99d}
+      \strng{editorbibnamehash}{1e6c7b81c55a4046eb4861235f7e3146}
+      \strng{editornamehash}{ad906bf6dd17012315aed408dfc588f6}
+      \strng{editorfullhash}{1e6c7b81c55a4046eb4861235f7e3146}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Workshop on Virtual Reality Interaction and Physical Simulation}
+      \field{isbn}{978-3-905673-96-8}
+      \field{title}{{High-Resolution Simulation of Granular Material with SPH}}
+      \field{year}{2012}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.2312/PE/vriphys/vriphys12/053-060
+      \endverb
+    \endentry
+    \entry{10.2312:LocalChapterEvents:CEIG:CEIG09:011-018}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=dbdb5b4cee5e77eed844eb6c5bb3801d}{%
+           family={Alduan},
+           familyi={A\bibinitperiod},
+           given={Iván},
+           giveni={I\bibinitperiod}}}%
+        {{hash=44eb081b5bd924851548e795bcc75a20}{%
+           family={Tena},
+           familyi={T\bibinitperiod},
+           given={Ángel},
+           giveni={Á\bibinitperiod}}}%
+        {{hash=c1e7f3613ed2f7c068e2ee93e110f260}{%
+           family={Otaduy},
+           familyi={O\bibinitperiod},
+           given={Miguel\bibnamedelima A.},
+           giveni={M\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \name{editor}{2}{}{%
+        {{hash=2d9bbaa3578619af4e431fcacbc06bc7}{%
+           family={Andujar},
+           familyi={A\bibinitperiod},
+           given={Carlos},
+           giveni={C\bibinitperiod}}}%
+        {{hash=d46bda6cdd196ce7c77be5e96d82c789}{%
+           family={Lluch},
+           familyi={L\bibinitperiod},
+           given={Javier},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {The Eurographics Association}%
+      }
+      \strng{namehash}{97b47a5be369d903680d90d4e83bd973}
+      \strng{fullhash}{97b47a5be369d903680d90d4e83bd973}
+      \strng{bibnamehash}{97b47a5be369d903680d90d4e83bd973}
+      \strng{authorbibnamehash}{97b47a5be369d903680d90d4e83bd973}
+      \strng{authornamehash}{97b47a5be369d903680d90d4e83bd973}
+      \strng{authorfullhash}{97b47a5be369d903680d90d4e83bd973}
+      \strng{editorbibnamehash}{e0fc0f539395013fe8ecff54c979c0b1}
+      \strng{editornamehash}{e0fc0f539395013fe8ecff54c979c0b1}
+      \strng{editorfullhash}{e0fc0f539395013fe8ecff54c979c0b1}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{CEIG 09 - Congreso Espanol de Informatica Grafica}
+      \field{isbn}{978-3-905673-72-2}
+      \field{title}{{Simulation of High-Resolution Granular Media}}
+      \field{year}{2009}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.2312/LocalChapterEvents/CEIG/CEIG09/011-018
+      \endverb
+    \endentry
+    \entry{inproceedings}{inproceedings}{}
+      \name{author}{4}{}{%
+        {{hash=6d8a96e06d334e1b81b365d17e231c81}{%
+           family={Ihmsen},
+           familyi={I\bibinitperiod},
+           given={Markus},
+           giveni={M\bibinitperiod}}}%
+        {{hash=424ea18033d75ffa4805ffdd50d6a7f7}{%
+           family={Akinci},
+           familyi={A\bibinitperiod},
+           given={Nadir},
+           giveni={N\bibinitperiod}}}%
+        {{hash=bd92269f40575b8dd26c9405e532c81d}{%
+           family={Gissler},
+           familyi={G\bibinitperiod},
+           given={Marc},
+           giveni={M\bibinitperiod}}}%
+        {{hash=f11935ee15f7a87cffdf63cabfe0954f}{%
+           family={Teschner},
+           familyi={T\bibinitperiod},
+           given={Matthias},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{358c93a5ebe1a30566f1383f12bb142d}
+      \strng{fullhash}{d96c4295eea5b9c369e8cec9e243067e}
+      \strng{bibnamehash}{d96c4295eea5b9c369e8cec9e243067e}
+      \strng{authorbibnamehash}{d96c4295eea5b9c369e8cec9e243067e}
+      \strng{authornamehash}{358c93a5ebe1a30566f1383f12bb142d}
+      \strng{authorfullhash}{d96c4295eea5b9c369e8cec9e243067e}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{VRIPHYS'10}
+      \field{month}{01}
+      \field{title}{Boundary Handling and Adaptive Time-stepping for PCISPH}
+      \field{year}{2010}
+      \true{nocite}
+      \field{pages}{79\bibrangedash 88}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.2312/PE/vriphys/vriphys10/079-088
+      \endverb
+    \endentry
+    \entry{10.1145/1073368.1073379}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=885939cb4f51359255a18150439b50f4}{%
+           family={Bell},
+           familyi={B\bibinitperiod},
+           given={Nathan},
+           giveni={N\bibinitperiod}}}%
+        {{hash=d7b46e3440bad0d84af1355b22aa8d9b}{%
+           family={Yu},
+           familyi={Y\bibinitperiod},
+           given={Yizhou},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=826de49de1569edb277da2b827acabb3}{%
+           family={Mucha},
+           familyi={M\bibinitperiod},
+           given={Peter\bibnamedelima J.},
+           giveni={P\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Los Angeles, California}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{4701af3e0eb200edddef5f2b9feb3130}
+      \strng{fullhash}{4701af3e0eb200edddef5f2b9feb3130}
+      \strng{bibnamehash}{4701af3e0eb200edddef5f2b9feb3130}
+      \strng{authorbibnamehash}{4701af3e0eb200edddef5f2b9feb3130}
+      \strng{authornamehash}{4701af3e0eb200edddef5f2b9feb3130}
+      \strng{authorfullhash}{4701af3e0eb200edddef5f2b9feb3130}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Granular materials, such as sand and grains, are ubiquitous. Simulating the 3D dynamic motion of such materials represents a challenging problem in graphics because of their unique physical properties. In this paper we present a simple and effective method for granular material simulation. By incorporating techniques from physical models, our approach describes granular phenomena more faithfully than previous methods. Granular material is represented by a large collection of non-spherical particles which may be in persistent contact. The particles represent discrete elements of the simulated material. One major advantage of using discrete elements is that the topology of particle interaction can evolve freely. As a result, highly dynamic phenomena, such as splashing and avalanches, can be conveniently generated by this meshless approach without sacrificing physical accuracy. We generalize this discrete model to rigid bodies by distributing particles over their surfaces. In this way, two-way coupling between granular materials and rigid bodies is achieved.}
+      \field{booktitle}{Proceedings of the 2005 ACM SIGGRAPH/Eurographics Symposium on Computer Animation}
+      \field{isbn}{1595931988}
+      \field{series}{SCA '05}
+      \field{title}{Particle-Based Simulation of Granular Materials}
+      \field{year}{2005}
+      \true{nocite}
+      \field{pages}{77\bibrangedash 86}
+      \range{pages}{10}
+      \verb{doi}
+      \verb 10.1145/1073368.1073379
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/1073368.1073379
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/1073368.1073379
+      \endverb
+    \endentry
+    \entry{10.1145/2019406.2019410}{inproceedings}{}
+      \name{author}{2}{}{%
+        {{hash=bad95a854c74cb014162c7f455835d4a}{%
+           family={Alduán},
+           familyi={A\bibinitperiod},
+           given={Iván},
+           giveni={I\bibinitperiod}}}%
+        {{hash=c1e7f3613ed2f7c068e2ee93e110f260}{%
+           family={Otaduy},
+           familyi={O\bibinitperiod},
+           given={Miguel\bibnamedelima A.},
+           giveni={M\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Vancouver, British Columbia, Canada}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{57a437a34976da064cfad6d06e7f8fd9}
+      \strng{fullhash}{57a437a34976da064cfad6d06e7f8fd9}
+      \strng{bibnamehash}{57a437a34976da064cfad6d06e7f8fd9}
+      \strng{authorbibnamehash}{57a437a34976da064cfad6d06e7f8fd9}
+      \strng{authornamehash}{57a437a34976da064cfad6d06e7f8fd9}
+      \strng{authorfullhash}{57a437a34976da064cfad6d06e7f8fd9}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Combining mechanical properties of solids and fluids, granular materials pose important challenges for the design of algorithms for realistic animation. In this paper, we present a simulation algorithm based on smoothed particle hydrodynamics (SPH) that succeeds in modeling important features of the behavior of granular materials. These features are unilateral incompressibility, friction and cohesion. We extend an existing unilateral incompressibility formulation to be added at almost no effort to an existing SPH-based algorithm for fluids. The main advantages of this extension are the ease of implementation, the lack of grid artifacts, and the simple two-way coupling with other objects. Our friction and cohesion models can also be incorporated in a seamless manner in the overall SPH simulation algorithm.}
+      \field{booktitle}{Proceedings of the 2011 ACM SIGGRAPH/Eurographics Symposium on Computer Animation}
+      \field{isbn}{9781450309233}
+      \field{series}{SCA '11}
+      \field{title}{SPH Granular Flow with Friction and Cohesion}
+      \field{year}{2011}
+      \true{nocite}
+      \field{pages}{25\bibrangedash 32}
+      \range{pages}{8}
+      \verb{doi}
+      \verb 10.1145/2019406.2019410
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/2019406.2019410
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/2019406.2019410
+      \endverb
+    \endentry
+    \entry{10.1145/1576246.1531346}{inproceedings}{}
+      \name{author}{2}{}{%
+        {{hash=4c8b66a7103feb7b35505079b5a882a6}{%
+           family={Solenthaler},
+           familyi={S\bibinitperiod},
+           given={B.},
+           giveni={B\bibinitperiod}}}%
+        {{hash=ba70ae93e1d4e4bdbdba98d26bcbd956}{%
+           family={Pajarola},
+           familyi={P\bibinitperiod},
+           given={R.},
+           giveni={R\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {New Orleans, Louisiana}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{5274c78f22b52b36f4e982cca136e931}
+      \strng{fullhash}{5274c78f22b52b36f4e982cca136e931}
+      \strng{bibnamehash}{5274c78f22b52b36f4e982cca136e931}
+      \strng{authorbibnamehash}{5274c78f22b52b36f4e982cca136e931}
+      \strng{authornamehash}{5274c78f22b52b36f4e982cca136e931}
+      \strng{authorfullhash}{5274c78f22b52b36f4e982cca136e931}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We present a novel, incompressible fluid simulation method based on the Lagrangian Smoothed Particle Hydrodynamics (SPH) model. In our method, incompressibility is enforced by using a prediction-correction scheme to determine the particle pressures. For this, the information about density fluctuations is actively propagated through the fluid and pressure values are updated until the targeted density is satisfied. With this approach, we avoid the computational expenses of solving a pressure Poisson equation, while still being able to use large time steps in the simulation. The achieved results show that our predictive-corrective incompressible SPH (PCISPH) method clearly outperforms the commonly used weakly compressible SPH (WCSPH) model by more than an order of magnitude while the computations are in good agreement with the WCSPH results.}
+      \field{booktitle}{ACM SIGGRAPH 2009 Papers}
+      \field{isbn}{9781605587264}
+      \field{series}{SIGGRAPH '09}
+      \field{title}{Predictive-Corrective Incompressible SPH}
+      \field{year}{2009}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1145/1576246.1531346
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/1576246.1531346
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/1576246.1531346
+      \endverb
+      \keyw{incompressibility,SPH,fluid simulation}
+    \endentry
+    \entry{10.1145/1866158.1866195}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=815e10fb2150b880d193377ca7adde85}{%
+           family={Narain},
+           familyi={N\bibinitperiod},
+           given={Rahul},
+           giveni={R\bibinitperiod}}}%
+        {{hash=bf2bfcb5591ef55c45983c25402e46e0}{%
+           family={Golas},
+           familyi={G\bibinitperiod},
+           given={Abhinav},
+           giveni={A\bibinitperiod}}}%
+        {{hash=4a1de7b2249528031164c5097e921925}{%
+           family={Lin},
+           familyi={L\bibinitperiod},
+           given={Ming\bibnamedelima C.},
+           giveni={M\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Seoul, South Korea}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{df961ab73dbb14f710c6c2f0c6952f76}
+      \strng{fullhash}{df961ab73dbb14f710c6c2f0c6952f76}
+      \strng{bibnamehash}{df961ab73dbb14f710c6c2f0c6952f76}
+      \strng{authorbibnamehash}{df961ab73dbb14f710c6c2f0c6952f76}
+      \strng{authornamehash}{df961ab73dbb14f710c6c2f0c6952f76}
+      \strng{authorfullhash}{df961ab73dbb14f710c6c2f0c6952f76}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We present a novel continuum-based model that enables efficient simulation of granular materials. Our approach fully solves the internal pressure and frictional stresses in a granular material, thereby allows visually noticeable behaviors of granular materials to be reproduced, including freely dispersing splashes without cohesion, and a global coupling between friction and pressure. The full treatment of internal forces in the material also enables two-way interaction with solid bodies. Our method achieves these results at only a very small fraction of computational costs of the comparable particle-based models for granular flows.}
+      \field{booktitle}{ACM SIGGRAPH Asia 2010 Papers}
+      \field{isbn}{9781450304399}
+      \field{series}{SIGGRAPH ASIA '10}
+      \field{title}{Free-Flowing Granular Materials with Two-Way Solid Coupling}
+      \field{year}{2010}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1145/1866158.1866195
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/1866158.1866195
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/1866158.1866195
+      \endverb
+      \keyw{sand,granular materials,simulation,animation}
+    \endentry
+    \entry{10.1016/j.cag.2017.09.002}{article}{}
+      \name{author}{5}{}{%
+        {{hash=759b38951fea067455b23c89fc8a3518}{%
+           family={Gissler},
+           familyi={G\bibinitperiod},
+           given={Christoph},
+           giveni={C\bibinitperiod}}}%
+        {{hash=d33ae330fb2b8f9ac186784bb203a654}{%
+           family={Band},
+           familyi={B\bibinitperiod},
+           given={Stefan},
+           giveni={S\bibinitperiod}}}%
+        {{hash=3444c5fc90a541302a507881549b852b}{%
+           family={Peer},
+           familyi={P\bibinitperiod},
+           given={Andreas},
+           giveni={A\bibinitperiod}}}%
+        {{hash=6d8a96e06d334e1b81b365d17e231c81}{%
+           family={Ihmsen},
+           familyi={I\bibinitperiod},
+           given={Markus},
+           giveni={M\bibinitperiod}}}%
+        {{hash=f11935ee15f7a87cffdf63cabfe0954f}{%
+           family={Teschner},
+           familyi={T\bibinitperiod},
+           given={Matthias},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {USA}%
+      }
+      \list{publisher}{1}{%
+        {Pergamon Press, Inc.}%
+      }
+      \strng{namehash}{afc1bf03eee441839315436277f2fa6c}
+      \strng{fullhash}{ee23136fe14b7fb62b2976c73171ec3b}
+      \strng{bibnamehash}{ee23136fe14b7fb62b2976c73171ec3b}
+      \strng{authorbibnamehash}{ee23136fe14b7fb62b2976c73171ec3b}
+      \strng{authornamehash}{afc1bf03eee441839315436277f2fa6c}
+      \strng{authorfullhash}{ee23136fe14b7fb62b2976c73171ec3b}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We propose a simple particle-based drag force to compute airfluid and airrigid interactions.We estimate the drag coefficient and exposed surface area per particle to approximate a drag equation.For fluid particles, we approximate their deformation to improve the drag coefficient and surface area estimation.We show a comparison to a full multiphase simulation and other scenarios where our proposed force improves plausibility of fluid and rigid behavior. Display Omitted Computing the forces acting from a surrounding air phase onto a particle-based fluid or rigid object is challenging. Simulating the air phase and modeling the interactions using a multiphase approach is computationally expensive. Furthermore, stability issues may arise in such multiphase simulations. In contrast, the effects from the air can be approximated efficiently by employing a drag equation. Here, for plausible effects, the parameterization is important but challenging. We present a drag force discretization based on the drag equation that acts on each particle separately. It is used to compute the effects of air onto particle-based fluids and rigid objects. Our presented approach calculates the exposed surface area and drag coefficient of each particle. For fluid particles, we approximate their deformation to improve the drag coefficient estimation. The resulting effects are validated by comparing them to the results of multiphase SPH simulations. We further show the practicality of our approach by combining it with different types of SPH fluid solvers and by simulating multiple, complex scenes.}
+      \field{issn}{0097-8493}
+      \field{journaltitle}{Comput. Graph.}
+      \field{month}{12}
+      \field{number}{C}
+      \field{title}{Generalized Drag Force for Particle-Based Simulations}
+      \field{volume}{69}
+      \field{year}{2017}
+      \true{nocite}
+      \field{pages}{1\bibrangedash 11}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1016/j.cag.2017.09.002
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1016/j.cag.2017.09.002
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1016/j.cag.2017.09.002
+      \endverb
+      \keyw{Fluid simulation,Smoothed Particle Hydrodynamics,Multiphase,Physically-based animation}
+    \endentry
+    \entry{article}{article}{}
+      \name{author}{2}{}{%
+        {{hash=2da087456e80b66028ec41ffaf3e0efd}{%
+           family={Probst},
+           familyi={P\bibinitperiod},
+           given={Timo},
+           giveni={T\bibinitperiod}}}%
+        {{hash=f11935ee15f7a87cffdf63cabfe0954f}{%
+           family={Teschner},
+           familyi={T\bibinitperiod},
+           given={Matthias},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{0275253a5915152048d8a9f80478c391}
+      \strng{fullhash}{0275253a5915152048d8a9f80478c391}
+      \strng{bibnamehash}{0275253a5915152048d8a9f80478c391}
+      \strng{authorbibnamehash}{0275253a5915152048d8a9f80478c391}
+      \strng{authornamehash}{0275253a5915152048d8a9f80478c391}
+      \strng{authorfullhash}{0275253a5915152048d8a9f80478c391}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Computer Graphics Forum}
+      \field{month}{01}
+      \field{title}{Monolithic Friction and Contact Handling for Rigid Bodies and Fluids Using SPH}
+      \field{volume}{42}
+      \field{year}{2023}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1111/cgf.14727
+      \endverb
+    \endentry
+    \entry{10.1145/3359566.3360077}{inproceedings}{}
+      \name{author}{4}{}{%
+        {{hash=97874e24e149ca0ddbd194fb257ea4c5}{%
+           family={Bender},
+           familyi={B\bibinitperiod},
+           given={Jan},
+           giveni={J\bibinitperiod}}}%
+        {{hash=7e4ef790aa26de911aeeb323eac1f674}{%
+           family={Kugelstadt},
+           familyi={K\bibinitperiod},
+           given={Tassilo},
+           giveni={T\bibinitperiod}}}%
+        {{hash=f5e9fb03de9a3dc7158b0bb22d5ee303}{%
+           family={Weiler},
+           familyi={W\bibinitperiod},
+           given={Marcel},
+           giveni={M\bibinitperiod}}}%
+        {{hash=7eeee4e139c191f894f671090763c1bf}{%
+           family={Koschier},
+           familyi={K\bibinitperiod},
+           given={Dan},
+           giveni={D\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Newcastle upon Tyne, United Kingdom}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{caa162124f28a8205d9d4e661b0ccb9e}
+      \strng{fullhash}{61b56c782e2b8fe4384809c85e393ccd}
+      \strng{bibnamehash}{61b56c782e2b8fe4384809c85e393ccd}
+      \strng{authorbibnamehash}{61b56c782e2b8fe4384809c85e393ccd}
+      \strng{authornamehash}{caa162124f28a8205d9d4e661b0ccb9e}
+      \strng{authorfullhash}{61b56c782e2b8fe4384809c85e393ccd}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{In this paper, we present a novel method for the robust handling of static and dynamic rigid boundaries in Smoothed Particle Hydrodynamics (SPH) simulations. We build upon the ideas of the density maps approach which has been introduced recently by Koschier and Bender. They precompute the density contributions of solid boundaries and store them on a spatial grid which can be efficiently queried during runtime. This alleviates the problems of commonly used boundary particles, like bumpy surfaces and inaccurate pressure forces near boundaries. Our method is based on a similar concept but we precompute the volume contribution of the boundary geometry and store it on a grid. This maintains all benefits of density maps but offers a variety of advantages which are demonstrated in several experiments. Firstly, in contrast to the density maps method we can compute derivatives in the standard SPH manner by differentiating the kernel function. This results in smooth pressure forces, even for lower map resolutions, such that precomputation times and memory requirements are reduced by more than two orders of magnitude compared to density maps. Furthermore, this directly fits into the SPH concept so that volume maps can be seamlessly combined with existing SPH methods. Finally, the kernel function is not baked into the map such that the same volume map can be used with different kernels. This is especially useful when we want to incorporate common surface tension or viscosity methods that use different kernels than the fluid simulation.}
+      \field{booktitle}{Proceedings of the 12th ACM SIGGRAPH Conference on Motion, Interaction and Games}
+      \field{isbn}{9781450369947}
+      \field{series}{MIG '19}
+      \field{title}{Volume Maps: An Implicit Boundary Representation for SPH}
+      \field{year}{2019}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1145/3359566.3360077
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/3359566.3360077
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/3359566.3360077
+      \endverb
+      \keyw{Smoothed Particle Hydrodynamics,fluid simulation,boundary handling}
+    \endentry
+    \entry{WANG20169625}{article}{}
+      \name{author}{6}{}{%
+        {{hash=c85d0e71b9afa939c6f2662fa2f69046}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Zhi-Bin},
+           giveni={Z\bibinithyphendelim B\bibinitperiod}}}%
+        {{hash=5bb19d0f142e7bd52543c9c4cf45c4c7}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Rong},
+           giveni={R\bibinitperiod}}}%
+        {{hash=6b170f4c37010a14987a849eab01fe7b}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Hong},
+           giveni={H\bibinitperiod}}}%
+        {{hash=afd265bd0bf6ad2886d7e7d1019475e4}{%
+           family={Liao},
+           familyi={L\bibinitperiod},
+           given={Qiang},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=0ad12ce20af8d651257acb99e237d7aa}{%
+           family={Zhu},
+           familyi={Z\bibinitperiod},
+           given={Xun},
+           giveni={X\bibinitperiod}}}%
+        {{hash=1a4b9f108be5933f4354cf8bea6c39b5}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Shu-Zhe},
+           giveni={S\bibinithyphendelim Z\bibinitperiod}}}%
+      }
+      \strng{namehash}{a8507637491345e2066e0eee0aad92f5}
+      \strng{fullhash}{be0df0d2530a10d0ac6bdf1413b53527}
+      \strng{bibnamehash}{be0df0d2530a10d0ac6bdf1413b53527}
+      \strng{authorbibnamehash}{be0df0d2530a10d0ac6bdf1413b53527}
+      \strng{authornamehash}{a8507637491345e2066e0eee0aad92f5}
+      \strng{authorfullhash}{be0df0d2530a10d0ac6bdf1413b53527}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Smoothed particle hydrodynamics (SPH), is a meshfree, Lagrangian, particle method, which is advantageous over conventional grid-based numerical methods in the aspect of interface treatment. Therefore, it has shown promising potential for simulating the multiphase flow problems. Over the past decades, numerous efforts have been devoted to the simulation of the multiphase flow by using the SPH method. In this review, recent advances in SPH for simulating the multiphase flow are reviewed. Firstly, the basic concept of SPH is briefly introduced. Attention is then paid to how to treat the pressure of incompressible flow, boundary condition and the surface tension in SPH. In addition, modeling free surface flow is briefly introduced. The modified interfacial models and their applications in handling high density ratio are addressed. Finally, a summary of SPH in the application of the multiphase flow is given.}
+      \field{issn}{0307-904X}
+      \field{journaltitle}{Applied Mathematical Modelling}
+      \field{number}{23}
+      \field{title}{An overview of smoothed particle hydrodynamics for simulating multiphase flow}
+      \field{volume}{40}
+      \field{year}{2016}
+      \true{nocite}
+      \field{pages}{9625\bibrangedash 9655}
+      \range{pages}{31}
+      \verb{doi}
+      \verb https://doi.org/10.1016/j.apm.2016.06.030
+      \endverb
+      \verb{urlraw}
+      \verb https://www.sciencedirect.com/science/article/pii/S0307904X16303419
+      \endverb
+      \verb{url}
+      \verb https://www.sciencedirect.com/science/article/pii/S0307904X16303419
+      \endverb
+      \keyw{Smoothed particle hydrodynamics,Multiphase flow,Surface tension,High density ratio}
+    \endentry
+    \entry{10.1145/3180486}{article}{}
+      \name{author}{6}{}{%
+        {{hash=d33ae330fb2b8f9ac186784bb203a654}{%
+           family={Band},
+           familyi={B\bibinitperiod},
+           given={Stefan},
+           giveni={S\bibinitperiod}}}%
+        {{hash=759b38951fea067455b23c89fc8a3518}{%
+           family={Gissler},
+           familyi={G\bibinitperiod},
+           given={Christoph},
+           giveni={C\bibinitperiod}}}%
+        {{hash=6d8a96e06d334e1b81b365d17e231c81}{%
+           family={Ihmsen},
+           familyi={I\bibinitperiod},
+           given={Markus},
+           giveni={M\bibinitperiod}}}%
+        {{hash=1ad9d987c68d148016f99cf21ab481fc}{%
+           family={Cornelis},
+           familyi={C\bibinitperiod},
+           given={Jens},
+           giveni={J\bibinitperiod}}}%
+        {{hash=3444c5fc90a541302a507881549b852b}{%
+           family={Peer},
+           familyi={P\bibinitperiod},
+           given={Andreas},
+           giveni={A\bibinitperiod}}}%
+        {{hash=f11935ee15f7a87cffdf63cabfe0954f}{%
+           family={Teschner},
+           familyi={T\bibinitperiod},
+           given={Matthias},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {New York, NY, USA}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{93c4b6f6acfb9e857317f2b7a8df1bfc}
+      \strng{fullhash}{678dd34ef215d7b3db7ba6d5053f83e9}
+      \strng{bibnamehash}{678dd34ef215d7b3db7ba6d5053f83e9}
+      \strng{authorbibnamehash}{678dd34ef215d7b3db7ba6d5053f83e9}
+      \strng{authornamehash}{93c4b6f6acfb9e857317f2b7a8df1bfc}
+      \strng{authorfullhash}{678dd34ef215d7b3db7ba6d5053f83e9}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Implicit incompressible SPH (IISPH) solves a pressure Poisson equation (PPE). While the solution of the PPE provides pressure at fluid samples, the embedded boundary handling does not compute pressure at boundary samples. Instead, IISPH uses various approximations to remedy this deficiency. In this article, we illustrate the issues of these IISPH approximations. We particularly derive Pressure Boundaries, a novel boundary handling that overcomes previous IISPH issues by the computation of physically meaningful pressure values at boundary samples. This is basically achieved with an extended PPE. We provide a detailed description of the approach that focuses on additional technical challenges due to the incorporation of boundary samples into the PPE. We therefore use volume-centric SPH discretizations instead of typically used density-centric ones. We further analyze the properties of the proposed boundary handling and compare it to the previous IISPH boundary handling. In addition to the fact that the proposed boundary handling provides physically meaningful pressure and pressure gradients at boundary samples, we show further benefits, such as reduced pressure oscillations, improved solver convergence, and larger possible time steps. The memory footprint of fluid samples is reduced and performance gain factors of up to five compared to IISPH are presented.}
+      \field{issn}{0730-0301}
+      \field{journaltitle}{ACM Trans. Graph.}
+      \field{month}{2}
+      \field{number}{2}
+      \field{title}{Pressure Boundaries for Implicit Incompressible SPH}
+      \field{volume}{37}
+      \field{year}{2018}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1145/3180486
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/3180486
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/3180486
+      \endverb
+      \keyw{boundary handling,smoothed particle hydrodynamics,Physically based animation,fluid animation}
+    \endentry
+    \entry{https://doi.org/10.1111/cgf.12754}{article}{}
+      \name{author}{2}{}{%
+        {{hash=d55c093f5fe544933ad77d8626b64d5e}{%
+           family={Fujisawa},
+           familyi={F\bibinitperiod},
+           given={Makoto},
+           giveni={M\bibinitperiod}}}%
+        {{hash=745c2695dbad0d161702c6a593b6a37a}{%
+           family={Miura},
+           familyi={M\bibinitperiod},
+           given={Kenjiro\bibnamedelima T.},
+           giveni={K\bibinitperiod\bibinitdelim T\bibinitperiod}}}%
+      }
+      \strng{namehash}{4ab55a42f313a25d922f62c564e48efd}
+      \strng{fullhash}{4ab55a42f313a25d922f62c564e48efd}
+      \strng{bibnamehash}{4ab55a42f313a25d922f62c564e48efd}
+      \strng{authorbibnamehash}{4ab55a42f313a25d922f62c564e48efd}
+      \strng{authornamehash}{4ab55a42f313a25d922f62c564e48efd}
+      \strng{authorfullhash}{4ab55a42f313a25d922f62c564e48efd}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Abstract We propose a new boundary handling method for smoothed particle hydrodynamics (SPH). Previous approaches required the use of boundary particles to prevent particles from sticking to the boundary. We address this issue by correcting the fundamental equations of SPH with the integration of a kernel function. Our approach is able to directly handle triangle mesh boundaries without the need for boundary particles. We also show how our approach can be integrated into a position-based fluid framework.}
+      \field{journaltitle}{Computer Graphics Forum}
+      \field{number}{7}
+      \field{title}{An Efficient Boundary Handling with a Modified Density Calculation for SPH}
+      \field{volume}{34}
+      \field{year}{2015}
+      \true{nocite}
+      \field{pages}{155\bibrangedash 162}
+      \range{pages}{8}
+      \verb{doi}
+      \verb https://doi.org/10.1111/cgf.12754
+      \endverb
+      \verb{eprint}
+      \verb https://onlinelibrary.wiley.com/doi/pdf/10.1111/cgf.12754
+      \endverb
+      \verb{urlraw}
+      \verb https://onlinelibrary.wiley.com/doi/abs/10.1111/cgf.12754
+      \endverb
+      \verb{url}
+      \verb https://onlinelibrary.wiley.com/doi/abs/10.1111/cgf.12754
+      \endverb
+      \keyw{Categories and Subject Descriptors (according to ACM CCS),I.3.7 Computer Graphics: Three-Dimensional Graphics and Realism—Animation}
+    \endentry
+    \entry{10.1111:cgf.13292}{article}{}
+      \name{author}{4}{}{%
+        {{hash=08817aec297494eb2c1d7ff29e04c97e}{%
+           family={Takahashi},
+           familyi={T\bibinitperiod},
+           given={Tetsuya},
+           giveni={T\bibinitperiod}}}%
+        {{hash=53c88943a4027d37f02c39f27c867e28}{%
+           family={Dobashi},
+           familyi={D\bibinitperiod},
+           given={Yoshinori},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=424156543b6b3d9eb2b9f0c77d34e875}{%
+           family={Nishita},
+           familyi={N\bibinitperiod},
+           given={Tomoyuki},
+           giveni={T\bibinitperiod}}}%
+        {{hash=4a1de7b2249528031164c5097e921925}{%
+           family={Lin},
+           familyi={L\bibinitperiod},
+           given={Ming\bibnamedelima C.},
+           giveni={M\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+      }
+      \list{publisher}{2}{%
+        {© 2018 The Eurographics Association}%
+        {John Wiley & Sons Ltd.}%
+      }
+      \strng{namehash}{98aa2ab967ae492ad9bc04abd7f7fbb9}
+      \strng{fullhash}{ac87ffff4ebdf03b96ccc0d2d542ed20}
+      \strng{bibnamehash}{ac87ffff4ebdf03b96ccc0d2d542ed20}
+      \strng{authorbibnamehash}{ac87ffff4ebdf03b96ccc0d2d542ed20}
+      \strng{authornamehash}{98aa2ab967ae492ad9bc04abd7f7fbb9}
+      \strng{authorfullhash}{ac87ffff4ebdf03b96ccc0d2d542ed20}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{1467-8659}
+      \field{journaltitle}{Computer Graphics Forum}
+      \field{title}{{An Efficient Hybrid Incompressible SPH Solver with Interface Handling for Boundary Conditions}}
+      \field{year}{2018}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1111/cgf.13292
+      \endverb
+    \endentry
+    \entry{10.1145/2601097.2601152}{article}{}
+      \name{author}{4}{}{%
+        {{hash=fb9fad16d2ae65ef730edb579c4636cf}{%
+           family={Macklin},
+           familyi={M\bibinitperiod},
+           given={Miles},
+           giveni={M\bibinitperiod}}}%
+        {{hash=81a3feeb579a36f8ed14c22d7264cf2c}{%
+           family={Müller},
+           familyi={M\bibinitperiod},
+           given={Matthias},
+           giveni={M\bibinitperiod}}}%
+        {{hash=d47ede25f528b578ea7d00270e9c2106}{%
+           family={Chentanez},
+           familyi={C\bibinitperiod},
+           given={Nuttapong},
+           giveni={N\bibinitperiod}}}%
+        {{hash=7c1cb664180e521622da37ceb002b3a1}{%
+           family={Kim},
+           familyi={K\bibinitperiod},
+           given={Tae-Yong},
+           giveni={T\bibinithyphendelim Y\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {New York, NY, USA}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{8a45502ccc2738f599c19254dffd308c}
+      \strng{fullhash}{da5b3eb9fa28a49229bf810a623df28b}
+      \strng{bibnamehash}{da5b3eb9fa28a49229bf810a623df28b}
+      \strng{authorbibnamehash}{da5b3eb9fa28a49229bf810a623df28b}
+      \strng{authornamehash}{8a45502ccc2738f599c19254dffd308c}
+      \strng{authorfullhash}{da5b3eb9fa28a49229bf810a623df28b}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We present a unified dynamics framework for real-time visual effects. Using particles connected by constraints as our fundamental building block allows us to treat contact and collisions in a unified manner, and we show how this representation is flexible enough to model gases, liquids, deformable solids, rigid bodies and cloth with two-way interactions. We address some common problems with traditional particle-based methods and describe a parallel constraint solver based on position-based dynamics that is efficient enough for real-time applications.}
+      \field{issn}{0730-0301}
+      \field{journaltitle}{ACM Trans. Graph.}
+      \field{month}{7}
+      \field{number}{4}
+      \field{title}{Unified Particle Physics for Real-Time Applications}
+      \field{volume}{33}
+      \field{year}{2014}
+      \true{nocite}
+      \verb{doi}
+      \verb 10.1145/2601097.2601152
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.1145/2601097.2601152
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.1145/2601097.2601152
+      \endverb
+      \keyw{two-way fluid coupling,simulation,fluid simulation,position-based dynamics,unified solver,cloth simulation}
+    \endentry
+    \entry{https://doi.org/10.1111/cgf.13349}{article}{}
+      \name{author}{4}{}{%
+        {{hash=f5e9fb03de9a3dc7158b0bb22d5ee303}{%
+           family={Weiler},
+           familyi={W\bibinitperiod},
+           given={Marcel},
+           giveni={M\bibinitperiod}}}%
+        {{hash=7eeee4e139c191f894f671090763c1bf}{%
+           family={Koschier},
+           familyi={K\bibinitperiod},
+           given={Dan},
+           giveni={D\bibinitperiod}}}%
+        {{hash=7f98eb160ab027a1347c3cfada975cac}{%
+           family={Brand},
+           familyi={B\bibinitperiod},
+           given={Magnus},
+           giveni={M\bibinitperiod}}}%
+        {{hash=97874e24e149ca0ddbd194fb257ea4c5}{%
+           family={Bender},
+           familyi={B\bibinitperiod},
+           given={Jan},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{13dd4ff882722cd7b3c281a050df9b02}
+      \strng{fullhash}{3bcf259cae23a65d38d665249a3e987a}
+      \strng{bibnamehash}{3bcf259cae23a65d38d665249a3e987a}
+      \strng{authorbibnamehash}{3bcf259cae23a65d38d665249a3e987a}
+      \strng{authornamehash}{13dd4ff882722cd7b3c281a050df9b02}
+      \strng{authorfullhash}{3bcf259cae23a65d38d665249a3e987a}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Abstract In this paper, we present a novel physically consistent implicit solver for the simulation of highly viscous fluids using the Smoothed Particle Hydrodynamics (SPH) formalism. Our method is the result of a theoretical and practical in-depth analysis of the most recent implicit SPH solvers for viscous materials. Based on our findings, we developed a list of requirements that are vital to produce a realistic motion of a viscous fluid. These essential requirements include momentum conservation, a physically meaningful behavior under temporal and spatial refinement, the absence of ghost forces induced by spurious viscosities and the ability to reproduce complex physical effects that can be observed in nature. On the basis of several theoretical analyses, quantitative academic comparisons and complex visual experiments we show that none of the recent approaches is able to satisfy all requirements. In contrast, our proposed method meets all demands and therefore produces realistic animations in highly complex scenarios. We demonstrate that our solver outperforms former approaches in terms of physical accuracy and memory consumption while it is comparable in terms of computational performance. In addition to the implicit viscosity solver, we present a method to simulate melting objects. Therefore, we generalize the viscosity model to a spatially varying viscosity field and provide an SPH discretization of the heat equation.}
+      \field{journaltitle}{Computer Graphics Forum}
+      \field{number}{2}
+      \field{title}{A Physically Consistent Implicit Viscosity Solver for SPH Fluids}
+      \field{volume}{37}
+      \field{year}{2018}
+      \true{nocite}
+      \field{pages}{145\bibrangedash 155}
+      \range{pages}{11}
+      \verb{doi}
+      \verb https://doi.org/10.1111/cgf.13349
+      \endverb
+      \verb{eprint}
+      \verb https://onlinelibrary.wiley.com/doi/pdf/10.1111/cgf.13349
+      \endverb
+      \verb{urlraw}
+      \verb https://onlinelibrary.wiley.com/doi/abs/10.1111/cgf.13349
+      \endverb
+      \verb{url}
+      \verb https://onlinelibrary.wiley.com/doi/abs/10.1111/cgf.13349
+      \endverb
+      \keyw{CCS Concepts,•Computing methodologies → Physical simulation}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+

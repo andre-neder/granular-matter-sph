@@ -1,0 +1,90 @@
+
+\documentclass[intern]{cgMA}
+
+\usepackage{csquotes} % Für \enquote
+% Dokumentation: https://www.namsu.de/Extra/pakete/Csquotes.html
+\usepackage{subcaption} % subfigure/subcaption Umgebungen und \subcaption Befehl
+\usepackage{hyperref} % Macht automatisch klickbare Links bei Referenzen etc.
+\usepackage{listings} % Für Code-listings o.ä.
+\usepackage{graphicx} % Für Graphiken
+\usepackage{amsmath,amssymb,amsfonts} % Mathe, Symbole....
+\usepackage{algorithmic}
+\usepackage{float}
+\usepackage{gensymb} % Mathe, Symbole....
+\usepackage{textcomp} % Symbole....
+\usepackage{bm} % \bm{x} Befehl um in Mathe fett zu setzen
+\usepackage{cleveref}
+\usepackage{blindtext}
+\usepackage{titlesec}
+\nocite{*}
+\usepackage[
+    backend=biber,
+    style=ieee,
+    dashed=false,
+    sortlocale=en_US,
+    natbib=true,
+    url=true, 
+    doi=true,
+    eprint=false
+]{biblatex}
+\addbibresource{sources.bib}
+
+\title{Echtzeitsimulation von granularer Materie mittels Smoothed Particle Hydrodynamics}
+\author{André Neder}
+\zweitgutachter{Alexander Maximilian Nilles, M.Sc.}
+\zweitgutachterInfo{(Institut für Computervisualistik, AG Computergraphik)}
+% \externLogo{7.46cm}{logos/ExternLogoPlaceholder}
+% \externName{DIN: NewTechnologies}
+
+\begin{document}
+    \maketitle
+    \newpage
+    \tableofcontents
+    \newpage
+    \section{Introduction}
+    \blindtext[1]
+    \section{Related Work}
+    \blindtext[1]
+    \section{Basics}
+    \subsection{Granular Matter}
+    \blindtext[1]
+    \section{Method}
+    \subsection{Smoothed Particle Hydrodynamics}
+    \blindtext[1]
+    \subsection{Vulkan}
+    \blindtext[1]
+    \section{Implementation}
+    \blindtext[1]
+    \subsection{Libraries \& NewTechnologies}
+    \blindtext[1]
+    \subsection{Datastructures}
+    \blindtext[1]
+    \subsection{Algorithm}
+    \blindtext[1]
+    \subsubsection{Neighborhood Search}
+    \blindtext[1]
+    \subsubsection{Density \& Pressure}
+    \blindtext[1]
+    \subsubsection{Stress \& Strain}
+    \blindtext[1]
+    \subsubsection{Force}
+    \blindtext[1]
+    \subsubsection{Rigidbody Interactions}
+    \blindtext[1]
+    \subsubsection{Integration}
+    \blindtext[1]
+    \subsubsection{Upscaling}
+    \blindtext[1]
+    \subsubsection{Visualization}
+    \blindtext[1]
+    \subsubsection{User Interface}
+    \blindtext[1]
+    \section{Evaluation}
+    \blindtext[1]
+    \subsection{Performance}
+    \blindtext[1]
+    \section{Conclusion \& Future Work}
+    \blindtext[1]
+    \newpage
+    \printbibliography
+\end{document}
