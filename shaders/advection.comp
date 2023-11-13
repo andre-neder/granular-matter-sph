@@ -166,13 +166,17 @@ void main(){
         }
     }
 
-    //Todo: fix disappearing particles
+    //Todo: fix raining error
+    overallWeight = max(EPSILON, overallWeight);
+    float nanFactor = overallWeight <= EPSILON ? 0.0 : 1.0;
 
-    vec2 velocity = (1.0 / overallWeight) * averageWeightedVelocity;
+    vec2 velocity = nanFactor * (1.0 / overallWeight) * averageWeightedVelocity;
 
-    float alpha = ((argMaxWeight / overallWeight >= 0.6) || (argMaxWeight <= w(settings.r_LR))) ? 1.0 - argMaxWeight : 0.0;
+    float alpha = ((nanFactor * argMaxWeight / overallWeight >= 0.6) || (argMaxWeight <= w(settings.r_LR))) ? 1.0 - argMaxWeight : 0.0;
 
-    p.velocity = (1 - alpha) * velocity + alpha * (p.velocity + settings.dt * settings.g);
+    vec2 externalForce = settings.g * settings.mass; // Todo: boundary force
+
+    p.velocity = (1 - alpha) * velocity + alpha * (p.velocity + settings.dt * (externalForce / settings.mass));
 
     p.position += settings.dt * p.velocity;
 
