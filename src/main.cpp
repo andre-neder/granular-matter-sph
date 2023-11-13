@@ -76,6 +76,7 @@ private:
         simulation = GranularMatter(&core);
 
         basicRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             basicRenderPass.vertexBuffer[i] = simulation.particlesBufferHR[i];
         }
