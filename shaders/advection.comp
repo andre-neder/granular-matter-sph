@@ -102,7 +102,7 @@ void main(){
     HRParticle p = outStorage.particles[particleID];
 
     vec2 averageWeightedVelocity = vec2(0);
-    float overallInverseWeight = 0.0;
+    float overallWeight = 0.0;
     float argMaxWeight = 0;
     float maxWeight = 0;
 
@@ -131,7 +131,7 @@ void main(){
                 if(d <= settings.h_HR){
                     float weight = w(d);
                     averageWeightedVelocity += weight * pi.velocity;
-                    overallInverseWeight += weight;   
+                    overallWeight += weight;   
                     if(weight > maxWeight){
                         maxWeight = weight;
                         argMaxWeight = d;
@@ -162,7 +162,7 @@ void main(){
          if(d <= settings.h_HR){
             float weight = w(d);
             averageWeightedVelocity += weight * vec2(0);
-            overallInverseWeight += weight;   
+            overallWeight += weight;   
             if(weight > maxWeight){
                 maxWeight = weight;
                 argMaxWeight = d;
@@ -171,11 +171,10 @@ void main(){
     }
 
     //Todo: fix disappearing particles
-    overallInverseWeight = 1.0 / overallInverseWeight;
 
-    vec2 velocity = overallInverseWeight * averageWeightedVelocity;
+    vec2 velocity = (1.0 / overallWeight) * averageWeightedVelocity;
 
-    float alpha = ((argMaxWeight / overallInverseWeight >= 0.6) || (argMaxWeight <= w(settings.r_LR))) ? 1.0 - argMaxWeight : 0.0;
+    float alpha = ((argMaxWeight / overallWeight >= 0.6) || (argMaxWeight <= w(settings.r_LR))) ? 1.0 - argMaxWeight : 0.0;
 
     p.velocity = (1 - alpha) * velocity + alpha * (p.velocity + settings.dt * settings.g);
 
