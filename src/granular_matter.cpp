@@ -2,16 +2,18 @@
 #include <chrono>
 #include "iostream"
 #include "global.h"
+#include <random>
 
 BitonicSortParameters params;
 uint32_t workgroup_size_x;
 uint32_t n;
 uint32_t workGroupCountSort;
 uint32_t workGroupCount;
+uint32_t workGroupCount2;
 
 glm::ivec3 computeSpace = glm::ivec3(64, 32, 1);
 
-#define TIMESTAMP_QUERY_COUNT 9
+#define TIMESTAMP_QUERY_COUNT 10
 
 uint32_t nextQueryIndex = 0;
 uint32_t nextQuery(){
@@ -28,9 +30,16 @@ std::vector<std::string> passLabels = {
     "Density                ",
     "Stress                 ",
     "Force                  ",
-    "Integration            "
+    "Integration            ",
+    "Advection              "
 };
 
+float RandomFloat(float a, float b) {
+    float random = ((float) rand()) / (float) RAND_MAX;
+    float diff = b - a;
+    float r = random * diff;
+    return a + r;
+}
 
 GranularMatter::GranularMatter(gpu::Core* core)
 {
@@ -55,28 +64,48 @@ GranularMatter::GranularMatter(gpu::Core* core)
     }
    
     // equilibrium distance
-    float r0 = 0.5f * settings.kernelRadius;
+    float r0 = 0.5f * settings.h_LR;
 
-    float initialDistance = 0.5f * settings.kernelRadius;
+    float initialDistance = 0.5f * settings.h_LR;
+    std::vector<glm::vec2> hrParticleOffsets = {
+        {0, 0},
+        {0, settings.r_LR},
+        {settings.r_LR, 0},
+        {0, -settings.r_LR},
+        {-settings.r_LR, 0},
+    };
 
-    for(int j = 0;j < computeSpace.y ; j++){
-        for(int i = 0;i < computeSpace.x ; i++){
-            particles.push_back(LRParticle(i * initialDistance + settings.kernelRadius  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2) ,j * initialDistance + settings.kernelRadius  ));
+    for(int i = 0;i < computeSpace.x ; i++){
+        for(int j = 0;j < computeSpace.y ; j++){
+            //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
+            glm::vec2 lrPosition = glm::vec2(j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2),i * initialDistance + settings.h_LR );
+            lrParticles.push_back(LRParticle(lrPosition.x, lrPosition.y));
+
+            for(uint32_t k = 0; k < settings.n_HR; k++){
+                glm::vec2 offset = hrParticleOffsets[k % hrParticleOffsets.size()];
+                hrParticles.push_back(HRParticle(
+                    lrPosition.x + offset.x + RandomFloat(-settings.r_LR, settings.r_LR), 
+                    lrPosition.y + offset.y + RandomFloat(-settings.r_LR, settings.r_LR)
+                ));
+            }
         }
     }
     
-    particleCells.resize(particles.size());
+    particleCells.resize(lrParticles.size());
     std::fill(particleCells.begin(), particleCells.end(), ParticleGridEntry());
-    startingIndices.resize(particles.size());
+    startingIndices.resize(lrParticles.size());
     std::fill(startingIndices.begin(), startingIndices.end(), UINT32_MAX);
 
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    particlesBufferHR.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     startingIndicesBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        particlesBufferA[i] = m_core->bufferFromData(particles.data(),sizeof(LRParticle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
-        particlesBufferB[i] = m_core->bufferFromData(particles.data(),sizeof(LRParticle) * particles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        particlesBufferA[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        particlesBufferB[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        particlesBufferHR[i] = m_core->bufferFromData(hrParticles.data(),sizeof(HRParticle) * hrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
+        
         particleCellBuffer[i] = m_core->bufferFromData(particleCells.data(), sizeof(ParticleGridEntry) * particleCells.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
         startingIndicesBuffers [i] = m_core->bufferFromData(startingIndices.data(), sizeof(uint32_t) * startingIndices.size(),vk::BufferUsageFlagBits::eStorageBuffer, VmaMemoryUsage::VMA_MEMORY_USAGE_GPU_ONLY);
     }
@@ -101,6 +130,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     n = (uint32_t)particleCells.size();
     std::cout << "LRParticle count: " << n << std::endl;
+    std::cout << "HRParticle count: " << n * settings.n_HR << std::endl;
     workgroup_size_x = 1;
     auto maxWorkGroupInvocations = (uint32_t)32;
     if(n < maxWorkGroupInvocations * 2){
@@ -112,6 +142,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     workGroupCountSort = n / ( workgroup_size_x * 2 );
     workGroupCount = n / workgroup_size_x;
+    workGroupCount2 = hrParticles.size() / workgroup_size_x;
 
     initPass = gpu::ComputePass(m_core, SHADER_PATH"/init.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     bitonicSortPass = gpu::ComputePass(m_core, SHADER_PATH"/bitonic_sort.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(BitonicSortParameters));
@@ -121,6 +152,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     predictStressPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_stress.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     predictForcePass = gpu::ComputePass(m_core, SHADER_PATH"/predict_force.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     applyPass = gpu::ComputePass(m_core, SHADER_PATH"/apply.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
+    advectionPass = gpu::ComputePass(m_core, SHADER_PATH"/advection.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
 }
 
 GranularMatter::~GranularMatter()
@@ -179,11 +211,11 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     // settings.dt = dt;
 
     // Courant-Friedrichs–Lewy (CFL) condition
-    float area = settings.particleRadius * 2.f;
+    float area = settings.r_LR * 2.f;
     // float v_max = sqrt((2 * settings.mass * settings.g.length()) / (settings.rhoAir * area * settings.dragCoefficient));
     float v_max = sqrt(settings.stiffness);
     float C_courant = 0.4f;
-    float dt_max = C_courant * (settings.kernelRadius / v_max);
+    float dt_max = C_courant * (settings.h_LR / v_max);
     // std::cout << dt << " " << 1.f / 60.f << " " <<  1.f/120.f << " " << dt_max << std::endl;
     settings.dt = std::min(dt, dt_max);
 
@@ -207,8 +239,13 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 
     //* Copy data from last frame B to current frame A 
     {
-        vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * particles.size());
+        vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * lrParticles.size());
         commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
+    }
+
+    {
+        vk::BufferCopy copyRegion(0, 0, sizeof(HRParticle) * hrParticles.size());
+        commandBuffers[currentFrame].copyBuffer(particlesBufferHR[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferHR[currentFrame], 1, &copyRegion);
     }
     
     //* Wait for copy action
@@ -352,6 +389,19 @@ void GranularMatter::update(int currentFrame, int imageIndex){
             commandBuffers[currentFrame].pushConstants(applyPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
             commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
         }
+
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
+        //* advect hr particles B -> HR
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCount2, 1, 1);
+        }
+
         simulationStepForward = false;
 
         //* Wait for copy action
@@ -365,7 +415,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         //* copy A -> B
         {
             // Todo: try with mutiple descriptor sets
-            vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * particles.size());
+            vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * lrParticles.size());
             commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
         }
         //* Wait for copy action
@@ -386,6 +436,16 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 
 }
 
+
+void GranularMatter::createDescriptorPool() {
+
+    descriptorPool = m_core->createDescriptorPool({
+        { vk::DescriptorType::eStorageBuffer, (2 + 2 + 1) * gpu::MAX_FRAMES_IN_FLIGHT },
+        { vk::DescriptorType::eSampler, 1 * gpu::MAX_FRAMES_IN_FLIGHT },
+        { vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size() * gpu::MAX_FRAMES_IN_FLIGHT },
+    }, (1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT);
+}
+
 void GranularMatter::createDescriptorSetLayout() {
     
     descriptorSetLayoutGrid = m_core->createDescriptorSetLayout({
@@ -396,8 +456,9 @@ void GranularMatter::createDescriptorSetLayout() {
     descriptorSetLayoutParticles = m_core->createDescriptorSetLayout({
         {0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
         {1, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
-        {2, vk::DescriptorType::eSampler, vk::ShaderStageFlagBits::eCompute},
-        {3, vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size(), vk::ShaderStageFlagBits::eCompute, vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound }
+        {2, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
+        {3, vk::DescriptorType::eSampler, vk::ShaderStageFlagBits::eCompute},
+        {4, vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size(), vk::ShaderStageFlagBits::eCompute, vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound }
     });
  
 }
@@ -412,10 +473,11 @@ void GranularMatter::createDescriptorSets() {
         m_core->addDescriptorWrite(descriptorSetsGrid[i], { 2, vk::DescriptorType::eStorageBuffer, startingIndicesBuffers[i], sizeof(uint32_t) * startingIndices.size() });
         m_core->updateDescriptorSet(descriptorSetsGrid[i]);
 
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(LRParticle) * particles.size() });
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(LRParticle) * particles.size() });
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 2, vk::DescriptorType::eSampler, volumeMapSampler, {}, {} });
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 3, vk::DescriptorType::eSampledImage, {}, signedDistanceFieldViews, vk::ImageLayout::eShaderReadOnlyOptimal });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(LRParticle) * lrParticles.size() });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(LRParticle) * lrParticles.size() });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 2, vk::DescriptorType::eStorageBuffer, particlesBufferHR[i], sizeof(HRParticle) * hrParticles.size() });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 3, vk::DescriptorType::eSampler, volumeMapSampler, {}, {} });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 4, vk::DescriptorType::eSampledImage, {}, signedDistanceFieldViews, vk::ImageLayout::eShaderReadOnlyOptimal });
 
         m_core->updateDescriptorSet(descriptorSetsParticles[i]);
     }
@@ -423,7 +485,7 @@ void GranularMatter::createDescriptorSets() {
 }
 #define EPSILON 0.0000001f
 float cubicExtension(float r){
-    float h = settings.kernelRadius;
+    float h = settings.h_LR;
     if(r < 0){
         return 1;
     }
@@ -436,8 +498,8 @@ float cubicExtension(float r){
         if (q >= 0.0 && q < 1.0) {
             return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
         } else if (q >= 1.f && q < 2.f) {
-            float beta = (2.f - q);
-            return alpha * 0.25f * beta * beta * beta;
+            float beta_ = (2.f - q);
+            return alpha * 0.25f * beta_ * beta_ * beta_;
         } else {
             return 0.f;
         }
@@ -457,23 +519,23 @@ void GranularMatter::createSignedDistanceFields()
         glm::vec2(halfBoxSize)
     };
 
-    Line2D floor{ glm::vec2(0, 1), settings.kernelRadius};
+    Line2D floor{ glm::vec2(0, 1), settings.h_LR};
     rigidBodies.push_back(&floor);
-    Line2D wallLeft{ glm::vec2(1, 0), settings.kernelRadius};
+    Line2D wallLeft{ glm::vec2(1, 0), settings.h_LR};
     rigidBodies.push_back(&wallLeft);
     Line2D wallRight{ glm::vec2(-1, 0), 0};
     rigidBodies.push_back(&wallRight);
 
     // rigidBodies.push_back(&box);
 
-    glm::vec2 kernelRadius(settings.kernelRadius);
+    glm::vec2 h_LR(settings.h_LR);
     glm::vec2 textureSize = { 40, 40 };
 
     for(auto rb : rigidBodies){
         //* Extend area by kernel radius
         AABB aabb = rb->aabb;
-        aabb.min -= 2.f * kernelRadius;
-        aabb.max += 2.f * kernelRadius;
+        aabb.min -= 2.f * h_LR;
+        aabb.max += 2.f * h_LR;
         //* Get Sampling Step Size
         glm::vec2 stepSize = (aabb.max - aabb.min) / (textureSize);
         std::vector<glm::vec4> volumeMap;
@@ -498,16 +560,6 @@ void GranularMatter::createSignedDistanceFields()
 
 }
 
-void GranularMatter::createDescriptorPool() {
-
-    descriptorPool = m_core->createDescriptorPool({
-        { vk::DescriptorType::eStorageBuffer, (2 + 2) * gpu::MAX_FRAMES_IN_FLIGHT },
-        { vk::DescriptorType::eSampler, 1 * gpu::MAX_FRAMES_IN_FLIGHT },
-        { vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size() * gpu::MAX_FRAMES_IN_FLIGHT },
-    }, (1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT);
-}
-
-
 void GranularMatter::destroy(){
     destroyFrameResources();
     vk::Device device = m_core->getDevice();
@@ -527,6 +579,7 @@ void GranularMatter::destroy(){
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->destroyBuffer(particlesBufferA[i]);
         m_core->destroyBuffer(particlesBufferB[i]);
+        m_core->destroyBuffer(particlesBufferHR[i]);
         m_core->destroyBuffer(particleCellBuffer[i]);
         m_core->destroyBuffer(startingIndicesBuffers[i]);
     }

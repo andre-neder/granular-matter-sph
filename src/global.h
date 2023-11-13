@@ -16,8 +16,8 @@ extern std::vector<std::string> passTimeings;
 
 struct SPHSettings{
     glm::vec2 g = glm::vec2(0.f, -9.81f);               //* m/s^2
-    float particleRadius = PARTICLE_RADIUS;             //* m
-    float kernelRadius = particleRadius * 4;            //* m
+    float r_LR = PARTICLE_RADIUS;             //* m
+    float h_LR = r_LR * 4;            //* m
 
     float rho0 = 1950.f;                                //* kg/m^3
     float mass = PARTICLE_VOLUME * rho0;                //* kg
@@ -27,14 +27,14 @@ struct SPHSettings{
     float DOMAIN_WIDTH = 100.f;                          //* m
     float DOMAIN_HEIGHT = 50.f;                         //* m
     float sleepingSpeed = 0.001f;                         //* m/s
-    bool upsamplingEnabled = true;
+    float h_HR = r_LR * 3;
 
     float theta = 45.f * (float)M_PI / 180.f;           //* rad (angle of repose)
     float sigma = 0.25f;                                //* viscosity coefficient
     float alpha = 0.5f;                                 //* viscosity constant
-    float beta = 1.0f;                                  //* cohesion intensity
+    uint32_t n_HR = 20;                               //* number of HR lrParticles per LR particle 2D: (/5) 3D: (/7)
     
-    float C = 10000.0f;                                 //* maximum cohesion
+    float pad2 = 0.0f;                                 //* 
     float dragCoefficient = 0.47f;                      //* Sphere Reynoldsnumber 10^6
     float rhoAir = 1293.f;                              //* Air density
     float pad3;

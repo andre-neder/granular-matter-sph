@@ -8,8 +8,8 @@ layout(binding = 0) uniform UniformBufferObject {
 
 layout( push_constant ) uniform Settings{
     vec2 g; 
-    float particleRadius;                 
-    float kernelRadius; 
+    float r_LR;                 
+    float h_LR; 
 
     float rho0; 
     float mass;
@@ -19,14 +19,14 @@ layout( push_constant ) uniform Settings{
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
     float sleepingSpeed;
-    bool upsamplingEnabled;
+    float h_HR;
 
     float theta;       
     float sigma;                           
     float alpha;                             
-    float beta;                              
+    uint n_HR;                              
     
-    float C;                                
+    float pad2;                                
     float dragCoefficient;                
     float rhoAir;                             
     float pad3;

@@ -10,7 +10,7 @@ struct LRParticle{
     vec2 position;
     vec2 predPosition;
     vec2 velocity;
-    vec2 predVelocity;
+    vec2 externalForce;
     vec2 internalForce;
     float rho;
     float p;
@@ -32,8 +32,8 @@ layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
 
 layout( push_constant ) uniform Settings{
     vec2 g; 
-    float particleRadius;                 
-    float kernelRadius; 
+    float r_LR;                 
+    float h_LR; 
 
     float rho0; 
     float mass;
@@ -43,18 +43,19 @@ layout( push_constant ) uniform Settings{
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
     float sleepingSpeed;
-    bool upsamplingEnabled;
+    float h_HR;
 
     float theta;       
     float sigma;                           
     float alpha;                             
-    float beta;                              
+    uint n_HR;                              
     
-    float C;                                
+    float pad2;                                
     float dragCoefficient;                
     float rhoAir;                             
     float pad3;
 } settings;
+
 
 
 void main(){
@@ -62,12 +63,11 @@ void main(){
     LRParticle p = inStorage.particles[particleID];
 
     // Semi-implicit euler
-    vec2 vel = (p.position + p.velocity * settings.dt) - (p.position);
-    if(length(vel) > settings.sleepingSpeed){
+    // vec2 vel = (p.position + p.velocity * settings.dt) - (p.position);
+    // if(length(vel) > settings.sleepingSpeed){
         p.position += p.velocity * settings.dt;
-    }
-    p.velocity += (p.internalForce / settings.mass) * settings.dt;
-    p.predVelocity = vec2(length(vel), settings.sleepingSpeed);
+    // }
+    p.velocity += ((p.internalForce + p.externalForce) / settings.mass) * settings.dt;
     // Forward Euler
     // p.velocity += p.internalForce * settings.dt;
     // p.position += p.velocity * settings.dt;

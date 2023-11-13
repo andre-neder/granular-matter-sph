@@ -9,8 +9,8 @@
 
 layout( push_constant ) uniform Settings{
     vec2 g; 
-    float particleRadius;                 
-    float kernelRadius; 
+    float r_LR;                 
+    float h_LR; 
 
     float rho0; 
     float mass;
@@ -20,25 +20,25 @@ layout( push_constant ) uniform Settings{
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
     float sleepingSpeed;
-    bool upsamplingEnabled;
+    float h_HR;
 
     float theta;       
     float sigma;                           
     float alpha;                             
-    float beta;                              
+    uint n_HR;                              
     
-    float C;                                
+    float pad2;                                
     float dragCoefficient;                
     float rhoAir;                             
     float pad3;
 } settings;
 
 layout(location = 0) out vec4 outColor;
-layout(location = 0) in float inRho;
+// layout(location = 0) in float inRho;
 
 void main() {
-    // outColor = vec4(246.f / 255.f,215.f / 255.f,176.f / 255.f, 1.0);
+    outColor = vec4(246.f / 255.f,215.f / 255.f,176.f / 255.f, 1.0);
 
-    outColor = vec4((inRho / settings.rho0 - 1) * 100, 1.0 - (inRho / settings.rho0 - 1) * 100, 0, 1);
+    // outColor = vec4((inRho / settings.rho0 - 1) * 100, 1.0 - (inRho / settings.rho0 - 1) * 100, 0, 1);
     // outColor = vec4(inPad0, 1, 1, 1);
 }

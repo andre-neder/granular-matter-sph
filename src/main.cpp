@@ -77,13 +77,18 @@ private:
 
         basicRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            basicRenderPass.vertexBuffer[i] = simulation.particlesBufferB[i];
+            basicRenderPass.vertexBuffer[i] = simulation.particlesBufferHR[i];
         }
-        
-        basicRenderPass.vertexCount = (uint32_t)simulation.particles.size();
+        basicRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
+        basicRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
+        basicRenderPass.bindingDescription = HRParticle::getBindingDescription();
 
-        basicRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
-        basicRenderPass.bindingDescription = LRParticle::getBindingDescription();
+        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        //     basicRenderPass.vertexBuffer[i] = simulation.particlesBufferB[i];
+        // }
+        // basicRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
+        // basicRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
+        // basicRenderPass.bindingDescription = LRParticle::getBindingDescription();
 
         basicRenderPass.init();
         lineRenderPass.init();
@@ -92,7 +97,7 @@ private:
     }
 
     void createSyncObjects() {
-        std::cout << "MAX_FRAMES_IN_FLIGHT: " << gpu::MAX_FRAMES_IN_FLIGHT << std::endl;
+        // std::cout << "MAX_FRAMES_IN_FLIGHT: " << gpu::MAX_FRAMES_IN_FLIGHT << std::endl;
         computeInFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         computeFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         imageAvailableSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);

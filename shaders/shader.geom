@@ -16,8 +16,8 @@ layout(location = 0) out float outRho;
 
 layout( push_constant ) uniform Settings{
     vec2 g; 
-    float particleRadius;                 
-    float kernelRadius; 
+    float r_LR;                 
+    float h_LR; 
 
     float rho0; 
     float mass;
@@ -27,14 +27,14 @@ layout( push_constant ) uniform Settings{
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
     float sleepingSpeed;
-    bool upsamplingEnabled;
+    float h_HR;
 
     float theta;       
     float sigma;                           
     float alpha;                             
-    float beta;                              
+    uint n_HR;                              
     
-    float C;                                
+    float pad2;                                
     float dragCoefficient;                
     float rhoAir;                             
     float pad3;
@@ -49,21 +49,4 @@ void main() {
     gl_Position = gl_in[0].gl_Position;
     EmitVertex();
     EndPrimitive();
-    if(settings.upsamplingEnabled){
-        gl_Position = transformScreenSpace(inPosition[0] + vec2(0, 1) * settings.particleRadius);
-        EmitVertex();
-        EndPrimitive();
-
-        gl_Position = transformScreenSpace(inPosition[0] + vec2(0, -1) * settings.particleRadius);
-        EmitVertex();
-        EndPrimitive();
-
-        gl_Position = transformScreenSpace(inPosition[0] + vec2(1, 0) * settings.particleRadius);
-        EmitVertex();
-        EndPrimitive();
-
-        gl_Position = transformScreenSpace(inPosition[0] + vec2(-1, 0) * settings.particleRadius);
-        EmitVertex();
-        EndPrimitive();
-    }
 } 

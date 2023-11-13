@@ -1,0 +1,185 @@
+#version 460
+#define VULKAN 100
+#define EPSILON 0.0000001f
+#define BUFFER_A 0
+#define BUFFER_B 1
+
+#extension GL_EXT_nonuniform_qualifier : require
+layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
+
+struct HRParticle{
+    vec2 position;
+    vec2 velocity;
+};
+
+struct LRParticle{
+    vec2 position;
+    vec2 predPosition;
+    vec2 velocity;
+    vec2 externalForce;
+    vec2 internalForce;
+    float rho;
+    float p;
+    float V;
+    float boundaryVolume;
+    vec2 boundaryNormal;
+    mat2 stress;
+    uint fluidNeighbors[31];
+    uint fluidNeighborCount;
+};
+
+layout(set = 0, binding = BUFFER_B) buffer StorageInput{
+    LRParticle particles[];
+} inStorage;
+
+layout(set = 0, binding = 2) buffer StorageOutput{
+    HRParticle particles[];
+} outStorage;
+
+layout( push_constant ) uniform Settings{
+    vec2 g; 
+    float r_LR;                 
+    float h_LR; 
+
+    float rho0; 
+    float mass;
+    float stiffness;	  
+    float dt;	 
+
+    float DOMAIN_WIDTH; 
+    float DOMAIN_HEIGHT;  
+    float sleepingSpeed;
+    float h_HR;
+
+    float theta;       
+    float sigma;                           
+    float alpha;                             
+    uint n_HR;                              
+    
+    float pad2;                                
+    float dragCoefficient;                
+    float rhoAir;                             
+    float pad3;
+} settings;
+
+struct ParticleGridEntry{
+    uint particleIndex;
+    uint cellKey;
+};
+
+layout(set = 1, binding = 0) buffer GridLookUpStorage{
+    ParticleGridEntry entries[];
+} gridLookup;
+
+layout(set = 1, binding = 2) buffer StartringIndicesStorage{
+    uint startingIndices[];
+};
+
+
+uint calculateCellKey(uvec2 cell){
+    return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
+}
+
+float w(float d){
+    return max(0, pow(1.0 - (d * d / settings.h_HR * settings.h_HR), 3));
+}
+
+
+vec2 adjustKernelRadiusOffset(vec2 position){
+    return vec2(position.x - 2 * settings.h_LR, position.y - 2 * settings.h_LR);
+}
+vec2 adjustKernelRadiusScale(vec2 scale){
+    return vec2(scale + 4 * settings.h_LR);
+}
+
+
+layout(set = 0, binding = 3) uniform sampler volumeMapSampler; 
+layout(set = 0, binding = 4) uniform texture2D sdfTexture[]; 
+ 
+
+void main(){
+    uint particleID = gl_GlobalInvocationID.x;;
+    HRParticle p = outStorage.particles[particleID];
+
+    vec2 averageWeightedVelocity = vec2(0);
+    float overallInverseWeight = 0.0;
+    float argMaxWeight = 0;
+    float maxWeight = 0;
+
+    ivec2 particleCell = ivec2(floor(vec2(p.position / settings.h_LR)));
+    for (int k = -1; k <= 1; k++){
+        for (int l = -1; l <= 1; l++){
+            // current cell coordinate
+            ivec2 cell = ivec2(particleCell.x + k, particleCell.y + l);
+
+            // current cell key
+            uint cellKey = calculateCellKey(uvec2(cell));
+            
+            // index of current entry for cell
+            uint startIndex = startingIndices[cellKey];
+
+            // While particle is in the same cell
+            for(uint i = startIndex; i < gridLookup.entries.length(); i++)
+            {
+                if(gridLookup.entries[i].cellKey != cellKey){
+                    break;
+                }
+                // index of particle of current index
+                uint particleIndex = gridLookup.entries[i].particleIndex;
+                LRParticle pi = inStorage.particles[particleIndex];
+                float d = length(p.position - pi.position);
+                if(d <= settings.h_HR){
+                    float weight = w(d);
+                    averageWeightedVelocity += weight * pi.velocity;
+                    overallInverseWeight += weight;   
+                    if(weight > maxWeight){
+                        maxWeight = weight;
+                        argMaxWeight = d;
+                    } 
+                }
+            }
+        } 
+    }
+
+    float halfBoxSize = settings.DOMAIN_HEIGHT / 4;
+    vec2 rigidBodyPositions[] = {
+        vec2( 0, 0), // Bottom
+        vec2( 0, 0), // Left
+        vec2( settings.DOMAIN_WIDTH, 0), // Right
+        // vec2( settings.DOMAIN_WIDTH / 2.0 - halfBoxSize, 0),
+    };
+    vec2 rigidBodyScale[] = {
+        vec2(1), vec2(1), vec2(1), 
+    //    halfBoxSize * 2 + 4 * settings.h_LR, //with offset
+        vec2(halfBoxSize * 2),
+    };
+
+    //Volume maps
+    for (int i = 0; i < rigidBodyPositions.length(); i++){ 
+        vec2 samplePosition = (p.position - adjustKernelRadiusOffset(rigidBodyPositions[i])) / adjustKernelRadiusScale(rigidBodyScale[i]);
+        vec2 p_pi = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).gb;
+        float d = length(p_pi);
+         if(d <= settings.h_HR){
+            float weight = w(d);
+            averageWeightedVelocity += weight * vec2(0);
+            overallInverseWeight += weight;   
+            if(weight > maxWeight){
+                maxWeight = weight;
+                argMaxWeight = d;
+            } 
+        }
+    }
+
+    //Todo: fix disappearing particles
+    overallInverseWeight = 1.0 / overallInverseWeight;
+
+    vec2 velocity = overallInverseWeight * averageWeightedVelocity;
+
+    float alpha = ((argMaxWeight / overallInverseWeight >= 0.6) || (argMaxWeight <= w(settings.r_LR))) ? 1.0 - argMaxWeight : 0.0;
+
+    p.velocity = (1 - alpha) * velocity + alpha * (p.velocity + settings.dt * settings.g);
+
+    p.position += settings.dt * p.velocity;
+
+    outStorage.particles[particleID] = p;
+}

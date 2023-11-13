@@ -28,7 +28,7 @@ struct LRParticle{
     glm::vec2 predPosition = glm::vec2(0,0);
     // 4
     glm::vec2 velocity = glm::vec2(0,0);
-    glm::vec2 predVelocity = glm::vec2(0,0);
+    glm::vec2 externalForce = glm::vec2(0,0);
     // 8
     glm::vec2 internalForce = glm::vec2(0,0);
     float rho = settings.rho0;
@@ -53,10 +53,32 @@ struct LRParticle{
         };
         return bindingDescriptions;
     }
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
-        std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
+    static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
             vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, position)),
-            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32Sfloat, offsetof(LRParticle, rho)),
+            // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32Sfloat, offsetof(LRParticle, rho)),
+            // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
+            // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, texCoord))
+        };
+        return attributeDescriptions;
+    }
+};
+
+struct HRParticle{
+    glm::vec2 position = glm::vec2(0,0);
+    glm::vec2 velocity = glm::vec2(0,0);  
+    HRParticle(){};
+    inline HRParticle(float x, float y) { position = glm::vec2(x, y); }
+
+     static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
+        std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
+            vk::VertexInputBindingDescription(0, sizeof(HRParticle), vk::VertexInputRate::eVertex)
+        };
+        return bindingDescriptions;
+    }
+    static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
+            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, position)),
             // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
             // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, texCoord))
         };
@@ -119,6 +141,22 @@ struct Line2D : public RigidBody2D{
 
 class GranularMatter
 {
+public:
+    GranularMatter(/* args */){};
+    GranularMatter(gpu::Core* core);
+    ~GranularMatter();
+
+    std::vector<LRParticle> lrParticles;
+    std::vector<HRParticle> hrParticles;
+    std::vector<vk::Buffer> particlesBufferB;
+    std::vector<vk::Buffer> particlesBufferHR;
+
+    inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
+    void initFrameResources();
+    void update(int currentFrame, int imageIndex);
+    void destroyFrameResources();
+    void destroy(); 
+
 private:
     gpu::Core* m_core;
     
@@ -148,6 +186,7 @@ private:
     gpu::ComputePass predictStressPass;
     gpu::ComputePass predictForcePass;
     gpu::ComputePass applyPass;
+    gpu::ComputePass advectionPass;
 
     std::vector<RigidBody2D*> rigidBodies;
     std::vector<vk::Image> signedDistanceFields;
@@ -159,18 +198,6 @@ private:
     void createDescriptorPool();
     void createDescriptorSets();
     void createSignedDistanceFields();
-public:
-    GranularMatter(/* args */){};
-    GranularMatter(gpu::Core* core);
-    ~GranularMatter();
 
-    std::vector<LRParticle> particles;
-    std::vector<vk::Buffer> particlesBufferB;
-
-    inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
-    void initFrameResources();
-    void update(int currentFrame, int imageIndex);
-    void destroyFrameResources();
-    void destroy(); 
 };
 
