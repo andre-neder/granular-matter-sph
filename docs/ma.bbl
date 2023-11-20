@@ -879,6 +879,56 @@
       \endverb
       \keyw{CCS Concepts,•Computing methodologies → Physical simulation}
     \endentry
+    \entry{Sommer_2022}{article}{}
+      \name{author}{3}{}{%
+        {{hash=5d15f668164d4240da966004352cdb7a}{%
+           family={Sommer},
+           familyi={S\bibinitperiod},
+           given={Alexander},
+           giveni={A\bibinitperiod}}}%
+        {{hash=9475385fa5ffcad5bd35fccc918c444b}{%
+           family={Schwanecke},
+           familyi={S\bibinitperiod},
+           given={Ulrich},
+           giveni={U\bibinitperiod}}}%
+        {{hash=235912069e66ce033256d92625dd80c8}{%
+           family={Schoemer},
+           familyi={S\bibinitperiod},
+           given={Elmar},
+           giveni={E\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {University of West Bohemia}%
+      }
+      \strng{namehash}{54c8ff20cee08a7c875688e9f5ded670}
+      \strng{fullhash}{54c8ff20cee08a7c875688e9f5ded670}
+      \strng{bibnamehash}{54c8ff20cee08a7c875688e9f5ded670}
+      \strng{authorbibnamehash}{54c8ff20cee08a7c875688e9f5ded670}
+      \strng{authornamehash}{54c8ff20cee08a7c875688e9f5ded670}
+      \strng{authorfullhash}{54c8ff20cee08a7c875688e9f5ded670}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{1213-6964}
+      \field{journaltitle}{Journal of WSCG}
+      \field{number}{1-2}
+      \field{title}{Interactive High-Resolution Simulation of Granular Material}
+      \field{volume}{30}
+      \field{year}{2022}
+      \true{nocite}
+      \field{pages}{9\bibrangedash 15}
+      \range{pages}{7}
+      \verb{doi}
+      \verb 10.24132/jwscg.2022.2
+      \endverb
+      \verb{urlraw}
+      \verb http://dx.doi.org/10.24132/JWSCG.2022.2
+      \endverb
+      \verb{url}
+      \verb http://dx.doi.org/10.24132/JWSCG.2022.2
+      \endverb
+    \endentry
   \enddatalist
 \endrefsection
 \endinput

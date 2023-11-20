@@ -1,12 +1,12 @@
 # Fdb version 4
-["biber ma"] 0 "ma.bcf" "ma.bbl" "ma" 1699888046 -1
-  "./sources.bib" 1699880708 21352 58f225bfe43f826ea6e614313b915be8 ""
-  "ma.bcf" 1699888046 107212 bccf7dc038c4ba22ab4e81da111ac510 "pdflatex"
+["biber ma"] 1700474889 "ma.bcf" "ma.bbl" "ma" 1700474911 0
+  "./sources.bib" 1700474888 21779 8c74c7d9745d4aa9a2f9684177057f4d ""
+  "ma.bcf" 1700474910 107212 bccf7dc038c4ba22ab4e81da111ac510 "pdflatex"
   (generated)
   "ma.bbl"
   "ma.blg"
   (rewritten before read)
-["pdflatex"] 1699888045 "c:/Users/andre/Documents/vulkan_khr_dynamic_rendering/docs/ma.tex" "ma.pdf" "ma" 1699888046 0
+["pdflatex"] 1700474909 "c:/Users/andre/Documents/vulkan_khr_dynamic_rendering/docs/ma.tex" "ma.pdf" "ma" 1700474911 0
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1699887166 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1095.pk" 1699881222 28976 c34833c39db940283120029e0f30ac59 ""
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1200.pk" 1699881116 31952 207bf74559838a2fb9e148adba2ec160 ""
@@ -170,12 +170,12 @@
   "c:/Users/andre/Documents/vulkan_khr_dynamic_rendering/docs/ma.tex" 1699888043 2564 0c72870c5d279e7ea99c1d0d9266b5be ""
   "cgMA.cls" 1699878676 7765 f86dc020406331fbb3238194226885ef ""
   "logos/UniLogoNeu.pdf" 1699878676 392138 4e35de66af7d6acc4cf42595fff19d29 ""
-  "ma.aux" 1699888046 4904 ff760a1ef07426f1161aa60512efcff6 "pdflatex"
-  "ma.bbl" 1699880710 45616 b00eefc52ea54ea2ee37de4a0cd4bb16 "biber ma"
-  "ma.out" 1699888046 2992 b1513ea328cfa70f29705d86c254cdec "pdflatex"
-  "ma.run.xml" 1699888046 2480 8ec515c28285954c9f4ffa52cef637a4 "pdflatex"
+  "ma.aux" 1700474910 4975 c42242c6df4cda23e7e7660322b3cde2 "pdflatex"
+  "ma.bbl" 1700474906 47460 adad1a3d3b295f77bb0b500d21048b5c "biber ma"
+  "ma.out" 1700474910 2992 b1513ea328cfa70f29705d86c254cdec "pdflatex"
+  "ma.run.xml" 1700474910 2480 8ec515c28285954c9f4ffa52cef637a4 "pdflatex"
   "ma.tex" 1699888043 2564 0c72870c5d279e7ea99c1d0d9266b5be ""
-  "ma.toc" 1699888046 1872 0755b53d236bf6045a61a204cf05e1a3 "pdflatex"
+  "ma.toc" 1700474910 1872 0755b53d236bf6045a61a204cf05e1a3 "pdflatex"
   (generated)
   "ma.aux"
   "ma.bcf"

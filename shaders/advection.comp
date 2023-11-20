@@ -79,7 +79,7 @@ uint calculateCellKey(uvec2 cell){
 }
 
 float w(float d){
-    return max(0, pow(1.0 - (d * d / settings.h_HR * settings.h_HR), 3));
+    return max(0, pow(1.0 - (d * d / (9.0 * settings.r_LR * settings.r_LR)), 3));
 }
 
 
@@ -166,15 +166,16 @@ void main(){
         }
     }
 
-    //Todo: fix raining error
     overallWeight = max(EPSILON, overallWeight);
     float nanFactor = overallWeight <= EPSILON ? 0.0 : 1.0;
 
     vec2 velocity = nanFactor * (1.0 / overallWeight) * averageWeightedVelocity;
 
-    float alpha = ((nanFactor * argMaxWeight / overallWeight >= 0.6) || (argMaxWeight <= w(settings.r_LR))) ? 1.0 - argMaxWeight : 0.0;
+    float c1 = w(settings.r_LR);
+    float c2 = 0.6;
+    float alpha = (maxWeight <= c1 || nanFactor * maxWeight / overallWeight >= c2) ? 1.0 - maxWeight : 0.0;
 
-    vec2 externalForce = settings.g * settings.mass; // Todo: boundary force
+    vec2 externalForce = settings.g * settings.mass;
 
     p.velocity = (1 - alpha) * velocity + alpha * (p.velocity + settings.dt * (externalForce / settings.mass));
 
