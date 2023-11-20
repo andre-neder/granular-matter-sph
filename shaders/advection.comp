@@ -1,6 +1,7 @@
 #version 460
 #define VULKAN 100
 #define EPSILON 0.0000001f
+#define PI      3.1415926f
 #define BUFFER_A 0
 #define BUFFER_B 1
 
@@ -54,10 +55,9 @@ layout( push_constant ) uniform Settings{
     float alpha;                             
     uint n_HR;                              
     
-    float pad2;                                
+    vec2 windDirection;                     
     float dragCoefficient;                
-    float rhoAir;                             
-    float pad3;
+    float rhoAir;          
 } settings;
 
 struct ParticleGridEntry{
@@ -125,11 +125,20 @@ void main(){
     float argMaxWeight = 0;
     float maxWeight = 0;
 
+    vec2 relativeVelocity = settings.windDirection - p.velocity;
+    float occluded = 0.866; //* 30° cone
+    
+
+    float rho = 0;
+
     for_all_fluid_neighbors(
         float d = r;
         if(d <= settings.h_HR){
             float weight = w(d);
             averageWeightedVelocity += weight * pi.velocity;
+            rho += weight * pi.rho;
+            occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
+
             overallWeight += weight;   
             if(weight > maxWeight){
                 maxWeight = weight;
@@ -170,16 +179,27 @@ void main(){
     float nanFactor = overallWeight <= EPSILON ? 0.0 : 1.0;
 
     vec2 velocity = nanFactor * (1.0 / overallWeight) * averageWeightedVelocity;
+    rho = nanFactor * (1.0 / overallWeight) * rho;
 
     float c1 = w(settings.r_LR);
     float c2 = 0.6;
     float alpha = (maxWeight <= c1 || nanFactor * maxWeight / overallWeight >= c2) ? 1.0 - maxWeight : 0.0;
 
-    vec2 externalForce = settings.g * settings.mass;
+    //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
+    float dragWeight = max(0, min(1, 1 - occluded)); 
+    float crossSectionalArea = dragWeight * sqrt((settings.mass / rho) / PI) * 2.f; 
+    vec2 dragForce  = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
+    
 
-    p.velocity = (1 - alpha) * velocity + alpha * (p.velocity + settings.dt * (externalForce / settings.mass));
+    vec2 externalForce = settings.g * settings.mass + dragForce;
 
-    p.position += settings.dt * p.velocity;
+
+    // vec2 vel = (p.position + p.velocity * settings.dt) - (p.position);
+    // if(length(vel) > settings.sleepingSpeed){
+        p.position += settings.dt * p.velocity;
+    // }
+
+    p.velocity = (1.0 - alpha) * velocity + alpha * (p.velocity + settings.dt * (externalForce / settings.mass));
 
     outStorage.particles[particleID] = p;
 }

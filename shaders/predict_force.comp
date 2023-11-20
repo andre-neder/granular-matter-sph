@@ -50,10 +50,9 @@ layout( push_constant ) uniform Settings{
     float alpha;                             
     uint n_HR;                              
     
-    float pad2;                                
+    vec2 windDirection;                     
     float dragCoefficient;                
-    float rhoAir;                             
-    float pad3;
+    float rhoAir;          
 } settings;
 
 struct ParticleGridEntry{
@@ -135,7 +134,7 @@ void main(){
     vec2 internalForce = vec2(0.f);
     vec2 frictionalForce = vec2(0.f);
 
-    vec2 relativeVelocity = vec2(0) - p.velocity;
+    vec2 relativeVelocity = settings.windDirection - p.velocity;
     float occluded = 0.866; //* 30° cone
     
 

@@ -50,10 +50,10 @@ struct LRParticle{
         };
         return bindingDescriptions;
     }
-    static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
-        std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
+    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
             vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, position)),
-            // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32Sfloat, offsetof(LRParticle, rho)),
+            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, velocity)),
             // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
             // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, texCoord))
         };
@@ -73,9 +73,10 @@ struct HRParticle{
         };
         return bindingDescriptions;
     }
-    static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
-        std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
+    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
             vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, position)),
+            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, velocity)),
             // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
             // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, texCoord))
         };

@@ -26,18 +26,17 @@ struct SPHSettings{
 
     float DOMAIN_WIDTH = 100.f;                          //* m
     float DOMAIN_HEIGHT = 50.f;                         //* m
-    float sleepingSpeed = 0.001f;                         //* m/s
+    float sleepingSpeed = 0.0005f;                         //* m/s
     float h_HR = r_LR * 3;
 
     float theta = 45.f * (float)M_PI / 180.f;           //* rad (angle of repose)
     float sigma = 0.25f;                                //* viscosity coefficient
     float alpha = 0.5f;                                 //* viscosity constant
-    uint32_t n_HR = 20;                               //* number of HR lrParticles per LR particle 2D: (/5) 3D: (/7)
+    uint32_t n_HR = 100;                               //* number of HR lrParticles per LR particle 2D: (/5) 3D: (/7)
     
-    float pad2 = 0.0f;                                 //* 
+    glm::vec2 windDirection = glm::vec2(0.0);           //* Wind Direction
     float dragCoefficient = 0.47f;                      //* Sphere Reynoldsnumber 10^6
     float rhoAir = 1293.f;                              //* Air density
-    float pad3;
 };
 
 extern SPHSettings settings;

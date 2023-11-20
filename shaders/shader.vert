@@ -36,6 +36,7 @@ layout( push_constant ) uniform Settings{
 } settings;
 
 layout(location = 0) in vec2 inPosition;
+layout(location = 1) in vec2 inVelocity;
 // layout(location = 1) in float inRho;
 // layout(location = 1) in vec3 inColor;
 // layout(location = 2) in vec2 inTexCoord;
@@ -43,7 +44,8 @@ layout(location = 0) in vec2 inPosition;
 // layout(location = 0) out vec3 fragColor;
 // layout(location = 0) out vec4 outVelocity;
 // layout(location = 0) out float outRho;
-layout(location = 1) out vec2 outPosition;
+layout(location = 0) out vec2 outPosition;
+layout(location = 1) out vec2 outVelocity;
 
 vec4 transformScreenSpace(vec2 v){
     return vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (v.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
@@ -54,5 +56,6 @@ void main() {
     // gl_Position = vec4(inPosition, 0, 1);
     gl_Position = ubo.proj * ubo.view * ubo.model * transformScreenSpace(inPosition) ;
     outPosition = inPosition;
+    outVelocity = inVelocity;
     // outRho = inRho;
 }

@@ -78,7 +78,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
             //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
-            glm::vec2 lrPosition = glm::vec2(j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2),i * initialDistance + settings.h_LR );
+            glm::vec2 lrPosition = glm::vec2(j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.y / 2),i * initialDistance + settings.h_LR + 30.f);
             lrParticles.push_back(LRParticle(lrPosition.x, lrPosition.y));
 
             for(uint32_t k = 0; k < settings.n_HR; k++){
@@ -571,6 +571,7 @@ void GranularMatter::destroy(){
     predictDensityPass.destroy();
     predictForcePass.destroy();
     applyPass.destroy();
+    advectionPass.destroy();
     
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->getDevice().destroyQueryPool(timeQueryPools[i]);

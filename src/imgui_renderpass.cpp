@@ -259,9 +259,14 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex){
         ImGui::DragFloat("Mass (kg)", &settings.mass, 1.f, 0.1f, 100.f);
         // ImGui::DragFloat("Kernel Radius (m)", &settings.h_LR, 1.f, 0.1f, 100.f);
         ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);
+        ImGui::Text("Friction");
         ImGui::DragFloat("Angle of repose (rad)", &settings.theta, 1.f, 0.001f, (float)M_PI);
-        ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);
+        // ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);
         ImGui::DragFloat2("Gravity (m/s^2)", glm::value_ptr(settings.g));
+        ImGui::Text("Wind/Air");
+        ImGui::DragFloat2("Wind (m/s)", glm::value_ptr(settings.windDirection));
+        ImGui::DragFloat("Air Density", &settings.rhoAir, 1.f, 0.01f, 10.f);
+        ImGui::DragFloat("Drag Coefficient", &settings.dragCoefficient, 1.f, 0.01f, 10.f);
     ImGui::End();
 
     ImGui::ShowDemoWindow(&show_demo_window);
