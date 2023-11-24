@@ -24,7 +24,7 @@ struct LRParticle{
     float a;
     vec2 d;
     mat2 stress;
-    vec2 dijpj;
+    vec2 dp;
     float dpi;
     float lastP;
     float densityAdv;
@@ -168,16 +168,15 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    float density = p.rho / settings.rho0;
+    float density = p.rho;// / settings.rho0;
     float densitySq = density  * density;
     float sum = 0.0;
 
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            vec2 dji = p.dpi * gradW(p_pi, settings.h_LR);
-            vec2 dji_pi = dji * p.lastP;
-            sum += pi.V * dot(p.dijpj - pi.d * pi.lastP - (pi.dijpj - dji_pi), gradW(p_pi, settings.h_LR));
+            vec2 dji_pi = (settings.mass / densitySq) * p.lastP * gradW(p_pi, settings.h_LR);
+            sum += settings.mass * dot(p.dp - pi.d * pi.lastP - (pi.dp - dji_pi), gradW(p_pi, settings.h_LR));
         }
     )
 
@@ -188,16 +187,16 @@ void main(){
         float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
         float r = length(p_pi);
         if(r < settings.h_LR){
-            sum += volume * dot(p.dijpj, gradW(p_pi, settings.h_LR));
+            sum += (volume * settings.rho0) * dot(p.dp, gradW(p_pi, settings.h_LR)); 
         }
     }
-    float b = 1.0 - p.densityAdv;
+    // float b = 1.0 - p.densityAdv;
     float dtSq = settings.dt * settings.dt;
     float omega = 0.5;
-    float denom = p.a * dtSq;
+    // float denom = p.a * dtSq;
     p.p = 0.0;
-    if(abs(denom) > EPSILON){
-        p.p = max((1.0 - omega) * p.lastP + omega / denom * (b - dtSq * sum), 0.0);
+    if(abs(p.a) > EPSILON){
+        p.p = max((1.0 - omega) * p.lastP + omega * (1.0 / p.a) * (settings.rho0 - p.densityAdv - sum), 0.0);
     }
 
     // if(p.p != 0.0){

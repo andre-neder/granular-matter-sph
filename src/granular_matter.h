@@ -40,7 +40,7 @@ struct LRParticle{
     // 16
     glm::mat2 stress = glm::mat2(1.0);
     // 20
-    glm::vec2 dijpj = glm::vec2(0,0);
+    glm::vec2 dp = glm::vec2(0,0);
     float dpi = 0.0;
     float lastP = 0.0;
     //24

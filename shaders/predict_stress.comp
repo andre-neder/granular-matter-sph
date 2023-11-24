@@ -20,7 +20,7 @@ struct LRParticle{
     float a;
     vec2 d;
     mat2 stress;
-    vec2 dijpj;
+    vec2 dp;
     float dpi;
     float lastP;
     float densityAdv;

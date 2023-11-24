@@ -392,7 +392,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 
         for (int i = 0; i < 2; i++)
         {
-            //* dijpj solve A -> B
+            //* dp solve A -> B
             {
                 commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipeline);
                 commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);

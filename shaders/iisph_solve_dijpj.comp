@@ -23,7 +23,7 @@ struct LRParticle{
     float a;
     vec2 d;
     mat2 stress;
-    vec2 dijpj;
+    vec2 dp;
     float dpi;
     float lastP;
     float densityAdv;
@@ -167,18 +167,18 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    vec2 dij_pj = vec2(0.0); 
-
+    vec2 dp = vec2(0.0); 
+    float dtSq = settings.dt * settings.dt;
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            float densityj = pi.rho / settings.rho0;
+            float densityj = pi.rho;// / settings.rho0;
             float densityjSq = densityj  * densityj;
-            dij_pj -= pi.V / densityjSq * pi.lastP * gradW(p_pi, settings.h_LR);
+            dp -= (settings.mass / densityjSq) * pi.lastP * gradW(p_pi, settings.h_LR);
         }
     )
 
-    p.dijpj = dij_pj;
+    p.dp = dtSq * dp;
 
     outStorage.particles[particleID] = p;
 }

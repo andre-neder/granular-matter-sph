@@ -23,7 +23,7 @@ struct LRParticle{
     float a;
     vec2 d;
     mat2 stress;
-    vec2 dijpj;
+    vec2 dp;
     float dpi;
     float lastP;
     float densityAdv;
@@ -167,14 +167,13 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    float density = p.rho / settings.rho0;
+    float density = p.rho;// / settings.rho0;
     float densitySq = density  * density;
-    float densityAdv = density;
-
+    float sum = 0.0;
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            densityAdv += settings.dt * pi.V * dot((p.velocity - pi.velocity), gradW(p_pi, settings.h_LR));
+            sum += settings.mass * dot((p.velocity - pi.velocity), gradW(p_pi, settings.h_LR));
         }
     )
 
@@ -185,23 +184,23 @@ void main(){
         float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
         float r = length(p_pi);
         if(r < settings.h_LR){
-            densityAdv += settings.dt * volume * dot((p.velocity - vec2(0)), gradW(p_pi, settings.h_LR));
+            sum += (volume * settings.rho0) * dot((p.velocity - vec2(0)), gradW(p_pi, settings.h_LR));
         }
     }
 
     p.lastP = 0.5 * p.p;  
 
-    p.dpi = p.V / densitySq;   
+    // p.dpi = p.V / densitySq;   
     
-    p.densityAdv = densityAdv;
+    p.densityAdv = density + settings.dt * sum;
 
     float aii = 0.0;
 
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            vec2 dji = p.dpi * gradW(p_pi, settings.h_LR);
-            aii += pi.V * dot((p.d - dji), gradW(p_pi, settings.h_LR));
+            vec2 dji = (settings.mass / densitySq) * gradW(p_pi, settings.h_LR);
+            aii += settings.mass * dot((p.d - dji), gradW(p_pi, settings.h_LR));
         }
     )
 
@@ -212,8 +211,8 @@ void main(){
         float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
         float r = length(p_pi);
         if(r < settings.h_LR){
-            vec2 dji = p.dpi * gradW(p_pi, settings.h_LR);
-            aii += volume * dot((p.d - dji), gradW(p_pi, settings.h_LR));
+            vec2 dji = (settings.mass / densitySq) * gradW(p_pi, settings.h_LR);
+            aii += (volume * settings.rho0) * dot((p.d - dji), gradW(p_pi, settings.h_LR));
         }
     }
 

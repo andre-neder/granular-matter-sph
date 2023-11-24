@@ -23,7 +23,7 @@ struct LRParticle{
     float a;
     vec2 d;
     mat2 stress;
-    vec2 dijpj;
+    vec2 dp;
     float dpi;
     float lastP;
     float densityAdv;
@@ -166,16 +166,17 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    vec2 dii = vec2(0);
+    vec2 d = vec2(0);
 
-    float density = p.rho / settings.rho0;
+    float density = p.rho;// / settings.rho0;
     float densitySq = density  * density;
     p.velocity += settings.dt * settings.g;
+    float dtSq = settings.dt * settings.dt;
 
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            dii -= pi.V  / densitySq * gradW(p_pi, settings.h_LR);
+            d -= (settings.mass / densitySq) * gradW(p_pi, settings.h_LR);
         }
     )
 
@@ -186,11 +187,11 @@ void main(){
         float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
         float r = length(p_pi);
         if(r < settings.h_LR){
-            dii -= volume / densitySq * gradW(p_pi, settings.h_LR);
+            d -= (volume * settings.rho0) / densitySq * gradW(p_pi, settings.h_LR);
         }
     }
 
-    p.d = dii;
+    p.d = dtSq * d;
 
     outStorage.particles[particleID] = p;
 }
