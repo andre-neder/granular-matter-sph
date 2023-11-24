@@ -58,18 +58,20 @@ bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
-    vk::PhysicalDeviceFeatures supportedFeatures = pDevice.getFeatures();
+    auto m_deviceFeatures2 = pDevice.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures>();
+    bool supportsAllFeatures =
+        m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.geometryShader &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.shaderSampledImageArrayDynamicIndexing &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceRayTracingPipelineFeaturesKHR>().rayTracingPipeline &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceAccelerationStructureFeaturesKHR>().accelerationStructure &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceBufferDeviceAddressFeatures>().bufferDeviceAddress &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().runtimeDescriptorArray;
+        m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().shaderSampledImageArrayNonUniformIndexing && 
+        m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().descriptorBindingVariableDescriptorCount && 
+        m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().descriptorBindingPartiallyBound;
 
-    // Todo: Check support forindexing features?
-    // vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-
-    // Enable non-uniform indexing
-    // descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-    // descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
-    // descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
-    // descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy  && supportedFeatures.geometryShader;
+    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportsAllFeatures;
 }
 
 QueueFamilyIndices Core::findQueueFamilies(vk::PhysicalDevice pDevice) {
