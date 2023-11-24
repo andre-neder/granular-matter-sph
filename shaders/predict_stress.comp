@@ -148,10 +148,6 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    //! skip this for now
-    outStorage.particles[particleID] = p;
-    return;
-
     //* Strain & Stress 
     mat2 velocityGradient = mat2(0.f);
     mat2 D = mat2(0.f);
@@ -165,7 +161,7 @@ void main(){
             //* Strain & Stress 
             vec2 gradient = gradW(p_pi, settings.h_LR);
             velocityGradient += pi.V * outerProduct(gradient, p.velocity - pi.velocity);
-            D += (1.f / pi.rho) * outerProduct(gradient, gradient);
+            D += (1.f / (pi.rho * settings.rho0)) * outerProduct(gradient, gradient);
         }
     )
 
@@ -196,7 +192,8 @@ void main(){
 
     //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
     //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
-    D *= (2.f * settings.mass * settings.mass * settings.dt) / (p.rho * p.rho);
+    float pRhoSq = (p.rho * settings.rho0) * (p.rho * settings.rho0);
+    D *= (2.f * settings.mass * settings.mass * settings.dt) / pRhoSq;
     mat2 strainTensor = 0.5f * (velocityGradient + transpose(velocityGradient));
     mat2 stressTensor = inverse(D) * strainTensor;
     mat2 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat2(1.f);
