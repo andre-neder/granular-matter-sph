@@ -26,8 +26,8 @@
 
 std::vector<std::string> passTimeings = std::vector<std::string>();
 
-const uint32_t WIDTH = 1280;
-const uint32_t HEIGHT = 720;
+const uint32_t WIDTH = 1920;
+const uint32_t HEIGHT = 1080;
 
 class Application {
 public:

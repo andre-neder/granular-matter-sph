@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project("Vulkan_KHR_Dynamic_Rendering" VERSION 1.0.0)
+project("VkBase" VERSION 1.0.0)
 
 add_compile_definitions(
     SHADER_PATH="${PROJECT_SOURCE_DIR}/shaders" 
@@ -44,37 +44,40 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/glfw)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE glfw)
 
 #add glm
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/glm)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE glm)
 
 #add vma
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/VulkanMemoryAllocator)
-# find_package(VulkanMemoryAllocator CONFIG REQUIRED)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE VulkanMemoryAllocator)
 
 #add tinygltf & stb_image
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/tinygltf)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE tinygltf)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/vendor/tinygltf)
 
-#add glslang
+#add glslang & spirv
 set(ENABLE_OPT OFF)
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/glslang)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE glslang SPIRV)
 
 #add imgui
 set(USE_BACKEND_VULKAN ON)
 set(USE_BACKEND_GLFW ON)
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/imgui)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE vendor/imgui)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE imgui)
 
-#add discregrid
-set(_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS ON)
-include_directories(${PROJECT_SOURCE_DIR}/vendor/Discregrid/extern)
-add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/Discregrid/discregrid)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Discregrid)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE vendor/Discregrid/discregrid/include)
+#add libraries
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
+    glslang 
+    SPIRV 
+    glm 
+    glfw 
+    GPUOpen::VulkanMemoryAllocator 
+    tinygltf
+    imgui 
+)
+
+#add include dirs
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE 
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/vendor/vma-hpp
+    ${PROJECT_SOURCE_DIR}/vendor/tinygltf
+    ${PROJECT_SOURCE_DIR}/vendor/imgui
+)

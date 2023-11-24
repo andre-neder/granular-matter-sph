@@ -24,7 +24,7 @@ Core::Core(bool enableValidation, Window* window){
 void Core::destroy(){
     device.destroyCommandPool(commandPool);
 
-    vmaDestroyAllocator(allocator);
+    allocator.destroy();
     device.destroy();
     instance.destroySurfaceKHR(surface);
     if (m_enableValidation) {
@@ -118,21 +118,6 @@ void Core::createLogicalDevice(){
         vk::DeviceQueueCreateInfo queueCreateInfo({}, queueFamily, 1, &queuePriority);
         queueCreateInfos.push_back(queueCreateInfo);
     }
-    
-
-    //* Request features on device creation
-    vk::PhysicalDeviceFeatures deviceFeatures;
-    deviceFeatures.samplerAnisotropy = VK_TRUE;
-    deviceFeatures.geometryShader = VK_TRUE;
-    deviceFeatures.shaderSampledImageArrayDynamicIndexing = VK_TRUE;
-
-    vk::PhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures{};
-
-    // Enable non-uniform indexing
-    descriptorIndexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
-    descriptorIndexingFeatures.runtimeDescriptorArray = VK_TRUE;
-    descriptorIndexingFeatures.descriptorBindingVariableDescriptorCount = VK_TRUE;
-    descriptorIndexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 
     //MacOS portability extension
     std::vector<vk::ExtensionProperties> extensionProperties =  physicalDevice.enumerateDeviceExtensionProperties();
@@ -141,100 +126,120 @@ void Core::createLogicalDevice(){
             deviceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
     }
 
-    vk::PhysicalDeviceHostQueryResetFeatures resetFeatures{};
-
-    vk::DeviceCreateInfo createInfo;
+    vk::DeviceCreateInfo deviceCreateInfo;
+	if (m_enableValidation)
+	{
+		deviceCreateInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, {});
+	}
+	else
+	{
+		deviceCreateInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, {});
+	}
+    vk::StructureChain<vk::DeviceCreateInfo, vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures> deviceFeatureCreateInfo = {
+		deviceCreateInfo,
+		vk::PhysicalDeviceFeatures2().setFeatures(vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true).setGeometryShader(true).setShaderSampledImageArrayDynamicIndexing(true)),
+		vk::PhysicalDeviceRayTracingPipelineFeaturesKHR().setRayTracingPipeline(true),
+		vk::PhysicalDeviceAccelerationStructureFeaturesKHR().setAccelerationStructure(true),
+		vk::PhysicalDeviceBufferDeviceAddressFeatures().setBufferDeviceAddress(true),
+		vk::PhysicalDeviceDescriptorIndexingFeatures().setRuntimeDescriptorArray(true).setShaderSampledImageArrayNonUniformIndexing(true).setDescriptorBindingVariableDescriptorCount(true).setDescriptorBindingPartiallyBound(true)
+	};
     
-    vk::PhysicalDeviceFeatures2 deviceFeatures2;
-    deviceFeatures2.features = deviceFeatures;
-    deviceFeatures2.pNext = &descriptorIndexingFeatures;
-
-    if (m_enableValidation) {
-        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, nullptr, &deviceFeatures2);
+    try
+    {
+        device = physicalDevice.createDevice(deviceFeatureCreateInfo.get<vk::DeviceCreateInfo>());
     }
-    else{
-        createInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, nullptr, &deviceFeatures2);
-    }
-    
-    try{
-        device = physicalDevice.createDevice(createInfo);
-    }catch(std::exception& e) {
+    catch(std::exception& e) 
+    {
         std::cerr << "Exception Thrown: " << e.what();
     }
     graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
     computeQueue = device.getQueue(indices.computeFamily.value(), 0);
     presentQueue = device.getQueue(indices.presentFamily.value(), 0);
 }
+
 void Core::createAllocator(){
-    VmaAllocatorCreateInfo allocatorInfo = {};
-    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+    vma::AllocatorCreateInfo allocatorInfo;
+    allocatorInfo.flags = vma::AllocatorCreateFlagBits::eBufferDeviceAddress;
     allocatorInfo.physicalDevice = physicalDevice;
     allocatorInfo.device = device;
     allocatorInfo.instance = instance;
-    
-    if(vmaCreateAllocator(&allocatorInfo, &allocator) != VK_SUCCESS)
-        throw std::runtime_error("failed to create Allocator");
+    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
+	try
+	{
+		allocator = vma::createAllocator(allocatorInfo);
+	}
+	catch (std::exception &e)
+	{
+		std::cerr << "Exception Thrown: " << e.what();
+	}
 }
 
-vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage){
+vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::AllocationCreateFlags memoryFlags, vma::MemoryUsage memoryUsage){
     vk::Buffer buffer;
-    VmaAllocation allocation;
-    vk::BufferCreateInfo bufferInfoStaging({}, size, bufferUsage);
-    VmaAllocationCreateInfo allocInfoStaging = {};
-    allocInfoStaging.usage = memoryUsage;
-    if(vmaCreateBuffer(allocator, reinterpret_cast<VkBufferCreateInfo*>(&bufferInfoStaging), &allocInfoStaging, reinterpret_cast<VkBuffer*>(&buffer), &allocation, nullptr) != VK_SUCCESS){
-        throw std::runtime_error("failed to create buffer!");
+    vma::Allocation allocation;
+
+    vk::BufferCreateInfo bufferInfo;
+	bufferInfo.size = size;
+	bufferInfo.usage = bufferUsage;
+
+    vma::AllocationCreateInfo bufferAllocInfo;
+	bufferAllocInfo.usage = memoryUsage;
+	bufferAllocInfo.flags = memoryFlags;
+
+    try
+    {
+        std::tie(buffer, allocation) = allocator.createBuffer(bufferInfo, bufferAllocInfo);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "Exception Thrown: " << e.what();
     }
     m_bufferAllocations[buffer] = allocation;
     return buffer;
 }
-vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage){
-    if(memoryUsage != VMA_MEMORY_USAGE_CPU_ONLY && 
-        memoryUsage != VMA_MEMORY_USAGE_GPU_ONLY &&
-        memoryUsage != VMA_MEMORY_USAGE_CPU_TO_GPU){
+vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage,vma::AllocationCreateFlags allocationFlags){
+    if(allocationFlags != vma::AllocationCreateFlagBits::eHostAccessSequentialWrite && allocationFlags != vma::AllocationCreateFlagBits::eDedicatedMemory && allocationFlags != vma::AllocationCreateFlagBits::eHostAccessRandom){
         throw std::exception("Unsupported memory usage.");
     }
 
     vk::Buffer stagingBuffer;
-
-    if(memoryUsage == VMA_MEMORY_USAGE_GPU_ONLY){
-        stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
+    if(allocationFlags == vma::AllocationCreateFlagBits::eDedicatedMemory){
+        stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
     }
-    else if(memoryUsage == VMA_MEMORY_USAGE_CPU_TO_GPU){
-        stagingBuffer = createBuffer(size, bufferUsage, memoryUsage);
+    else if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite || allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
+        stagingBuffer = createBuffer(size, bufferUsage, allocationFlags);
     }
     
     void* mappedData = mapBuffer(stagingBuffer);
     memcpy(mappedData, data, (size_t) size);
-    if(memoryUsage == VMA_MEMORY_USAGE_CPU_TO_GPU){
+    if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
         flushBuffer(stagingBuffer, 0, size);
     }
     unmapBuffer(stagingBuffer);
 
-    if(memoryUsage == VMA_MEMORY_USAGE_CPU_ONLY || memoryUsage == VMA_MEMORY_USAGE_CPU_TO_GPU){
+    if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite || allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
         return stagingBuffer;
     }
 
-    vk::Buffer buffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferDst | bufferUsage, VMA_MEMORY_USAGE_GPU_ONLY);
+    vk::Buffer buffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferDst | bufferUsage, vma::AllocationCreateFlagBits::eDedicatedMemory);
     copyBufferToBuffer(stagingBuffer, buffer, size);
     destroyBuffer(stagingBuffer);
 
     return buffer;
 }
 void* Core::mapBuffer(vk::Buffer buffer){
-    void* mappedData;
-    vmaMapMemory(allocator, m_bufferAllocations[buffer], &mappedData);
+    void* mappedData = allocator.mapMemory(m_bufferAllocations[buffer]);
     return mappedData;
 }
 void Core::unmapBuffer(vk::Buffer buffer){
-    vmaUnmapMemory(allocator, m_bufferAllocations[buffer]);
+    allocator.unmapMemory(m_bufferAllocations[buffer]);
 }
 void Core::destroyBuffer(vk::Buffer buffer){
-    vmaDestroyBuffer(allocator, buffer, m_bufferAllocations[buffer]);
+    allocator.destroyBuffer(buffer, m_bufferAllocations[buffer]);
     m_bufferAllocations.erase(buffer);
 }
 void Core::flushBuffer(vk::Buffer buffer, size_t offset, size_t size){
-    vmaFlushAllocation(allocator, m_bufferAllocations[buffer], offset, size);
+    allocator.flushAllocation(m_bufferAllocations[buffer], offset, size);
 }
 void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -404,7 +409,7 @@ void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width,
 
     endSingleTimeCommands(commandBuffer);
 }
-vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
+vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
 {
     uint32_t formatSize = 0;
     switch (format){
@@ -421,39 +426,78 @@ vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage,
             break;
     }
 
-    vk::Buffer stagingBuffer = bufferFromData(data, width * height * formatSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    vk::Buffer stagingBuffer = bufferFromData(data, width * height * formatSize, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eHostAccessRandom);
         
-    vk::Image image = createImage2D(vk::ImageUsageFlagBits::eTransferDst | imageUsage, memoryUsage, width, height, format, tiling);
+    vk::Image image = createImage2D(vk::ImageUsageFlagBits::eTransferDst | imageUsage, memoryFlags, width, height, format, tiling);
         
-    transitionImageLayout(image, format, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+    transitionImageLayout(image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer);
     copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
-    //Todo: determine target image layout based on imput
-    transitionImageLayout(image, format, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+    transitionImageLayout(image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader);
 
     destroyBuffer(stagingBuffer);
     
     return image;
 }
-void Core::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+void Core::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::PipelineStageFlags sourceStage, vk::PipelineStageFlags destinationStage)
 {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
-    vk::PipelineStageFlags sourceStage;
-    vk::PipelineStageFlags destinationStage;
     vk::AccessFlags srcAccessMask = {};
     vk::AccessFlags dstAccessMask = {};
+    try{
+        switch (oldLayout)
+        {
+            case vk::ImageLayout::eUndefined:
+                srcAccessMask = vk::AccessFlagBits::eNone;
+                break;
+            case vk::ImageLayout::ePreinitialized:
+                srcAccessMask = vk::AccessFlagBits::eHostWrite;
+                break;
+            case vk::ImageLayout::eColorAttachmentOptimal:
+                srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+                break;
+            case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+                srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+                break;
+            case vk::ImageLayout::eTransferSrcOptimal:
+                srcAccessMask = vk::AccessFlagBits::eTransferRead;
+                break;
+            case vk::ImageLayout::eTransferDstOptimal:
+                srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+                break;
+            case vk::ImageLayout::eShaderReadOnlyOptimal:
+                srcAccessMask = vk::AccessFlagBits::eShaderRead;
+                break;
+            default:
+                throw std::invalid_argument("unsupported layout transition!");
+        }
 
-    if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
-        srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-        dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-        sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
-        destinationStage = vk::PipelineStageFlagBits::eTransfer;
-    } else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-        srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        dstAccessMask = vk::AccessFlagBits::eShaderRead;
-        sourceStage = vk::PipelineStageFlagBits::eTransfer;
-        destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
-    } else {
-        throw std::invalid_argument("unsupported layout transition!");
+        switch (newLayout)
+        {
+            case vk::ImageLayout::eTransferDstOptimal:
+                dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+                break;
+            case vk::ImageLayout::eTransferSrcOptimal:
+                dstAccessMask = vk::AccessFlagBits::eTransferRead;
+                break;
+            case vk::ImageLayout::eColorAttachmentOptimal:
+                dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+                break;
+            case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+                dstAccessMask = dstAccessMask | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+                break;
+            case vk::ImageLayout::eShaderReadOnlyOptimal:
+                if (srcAccessMask == vk::AccessFlagBits::eNone)
+                {
+                    srcAccessMask = vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite;
+                }
+                dstAccessMask = vk::AccessFlagBits::eShaderRead;
+                break;
+            default:
+                throw std::invalid_argument("unsupported layout transition!");
+        }
+    }
+    catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
     }
 
     vk::ImageMemoryBarrier barrier(srcAccessMask, dstAccessMask, oldLayout, newLayout, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
@@ -462,32 +506,62 @@ void Core::transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLa
 
     endSingleTimeCommands(commandBuffer);
 }
-vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
+vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
     vk::Image image;
-    VmaAllocation imageAllocation;
-    vk::ImageCreateInfo imageInfo({}, vk::ImageType::e2D, format, vk::Extent3D{{width, height}, 1}, 1, 1, vk::SampleCountFlagBits::e1, tiling, imageUsage, vk::SharingMode::eExclusive, {}, {}, vk::ImageLayout::eUndefined);
-    VmaAllocationCreateInfo allocInfoImage = {};
-    allocInfoImage.usage = memoryUsage;
-    if(vmaCreateImage(allocator, reinterpret_cast<VkImageCreateInfo*>(&imageInfo), &allocInfoImage, reinterpret_cast<VkImage*>(&image), &imageAllocation, nullptr) != VK_SUCCESS){
-        throw std::runtime_error("failed to create image!");
+    vma::Allocation allocation;
+
+    vk::ImageCreateInfo imageInfo;
+    imageInfo.imageType = vk::ImageType::e2D;
+    imageInfo.format = format;
+    imageInfo.extent = vk::Extent3D{{width, height}, 1};
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.tiling = tiling;
+    imageInfo.usage = imageUsage;
+
+    vma::AllocationCreateInfo imageAllocInfo;
+	imageAllocInfo.flags = memoryFlags;
+
+    try
+    {
+        std::tie(image, allocation) = allocator.createImage(imageInfo, imageAllocInfo);
     }
-    m_imageAllocations[image] = imageAllocation;
+    catch (std::exception &e)
+    {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+    m_imageAllocations[image] = allocation;
     return image;
 }
-vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling) {
+vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling) {
     vk::Image image;
-    VmaAllocation imageAllocation;
-    vk::ImageCreateInfo imageInfo({}, vk::ImageType::e3D, format, vk::Extent3D{{width, height}, depth}, 1, 1, vk::SampleCountFlagBits::e1, tiling, imageUsage, vk::SharingMode::eExclusive, {}, {}, vk::ImageLayout::eUndefined);
-    VmaAllocationCreateInfo allocInfoImage = {};
-    allocInfoImage.usage = memoryUsage;
-    if(vmaCreateImage(allocator, reinterpret_cast<VkImageCreateInfo*>(&imageInfo), &allocInfoImage, reinterpret_cast<VkImage*>(&image), &imageAllocation, nullptr) != VK_SUCCESS){
-        throw std::runtime_error("failed to create image!");
+    vma::Allocation allocation;
+    
+    vk::ImageCreateInfo imageInfo;
+    imageInfo.imageType = vk::ImageType::e3D;
+    imageInfo.format = format;
+    imageInfo.extent = vk::Extent3D{{width, height}, depth};
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.tiling = tiling;
+    imageInfo.usage = imageUsage;
+
+    vma::AllocationCreateInfo imageAllocInfo;
+	imageAllocInfo.flags = memoryFlags;
+
+    try
+    {
+        std::tie(image, allocation) = allocator.createImage(imageInfo, imageAllocInfo);
     }
-    m_imageAllocations[image] = imageAllocation;
+    catch (std::exception &e)
+    {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+    m_imageAllocations[image] = allocation;
     return image;
 }
 void Core::destroyImage(vk::Image image){
-    vmaDestroyImage(allocator, image, m_imageAllocations[image]);
+    allocator.destroyImage(image, m_imageAllocations[image]);
     m_imageAllocations.erase(image);
 }
 
@@ -541,7 +615,7 @@ void Core::destroySampler(vk::Sampler sampler){
 
 vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
-        if (availableFormat.format == vk::Format::eR8G8B8A8Unorm && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+        if (availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
             return availableFormat;
         }
     }

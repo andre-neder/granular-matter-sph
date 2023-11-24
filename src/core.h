@@ -3,8 +3,8 @@
 #include "spirv_utils.h"
 #include "vulkan_utils.h"
 #include "window.h"
-#include <vk_mem_alloc.h>
 #include <map>
+#include <vk_mem_alloc.hpp>
 
 
 #include <stb_image.h>
@@ -56,7 +56,7 @@ namespace gpu
             inline vk::Queue getPresentQueue(){ return presentQueue; };
             inline vk::Queue getComputeQueue(){ return computeQueue; };
 
-            inline VmaAllocator getAllocator(){ return allocator; };
+            inline vma::Allocator getAllocator(){ return allocator; };
 
             inline vk::CommandPool getCommandPool(){ return commandPool; };
             //* SwapChain
@@ -73,8 +73,8 @@ namespace gpu
             vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
             
             //* Buffers
-            vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
-            vk::Buffer bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage);
+            vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::AllocationCreateFlags memoryFlags = {}, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto);
+            vk::Buffer bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage,vma::AllocationCreateFlags allocationFlags);
             void* mapBuffer(vk::Buffer buffer);
             void unmapBuffer(vk::Buffer buffer);
             void flushBuffer(vk::Buffer buffer, size_t offset, size_t size);
@@ -82,11 +82,11 @@ namespace gpu
             void copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
             void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
             //* Images
-            vk::Image image2DFromData(void* data, vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+            vk::Image image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
                   
-            vk::Image createImage2D(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
-            vk::Image createImage3D(vk::ImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
-            void transitionImageLayout(vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout);
+            vk::Image createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+            vk::Image createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+            void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::PipelineStageFlags sourceStage, vk::PipelineStageFlags destinationStage);
             vk::ImageView createImageView(vk::Image image, vk::Format format);
             void destroyImage(vk::Image image);
             void destroyImageView(vk::ImageView view);
@@ -137,7 +137,7 @@ namespace gpu
             vk::Queue graphicsQueue;
             vk::Queue computeQueue;
             vk::Queue presentQueue;
-            VmaAllocator allocator;
+            vma::Allocator allocator;
             vk::CommandPool commandPool; 
 
             vk::SwapchainKHR swapChain;
