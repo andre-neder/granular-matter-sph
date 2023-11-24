@@ -15,9 +15,16 @@ struct LRParticle{
     float rho;
     float p;
     float V;
-    float boundaryVolume;
-    vec2 boundaryNormal;
+    float a;
+    vec2 d;
     mat2 stress;
+    vec2 dijpj;
+    float dpi;
+    float lastP;
+    float densityAdv;
+    float pad0;
+    float pad1;
+    float pad2;
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
@@ -62,12 +69,12 @@ void main(){
     // Semi-implicit euler
     // vec2 vel = (p.position + p.velocity * settings.dt) - (p.position);
     // if(length(vel) > settings.sleepingSpeed){
-        p.position += p.velocity * settings.dt;
+        // p.position += p.velocity * settings.dt;
     // }
-    p.velocity += ((p.internalForce + p.externalForce) / settings.mass) * settings.dt;
+    // p.velocity += ((p.internalForce + p.externalForce) / settings.mass) * settings.dt;
     // Forward Euler
-    // p.velocity += p.internalForce * settings.dt;
-    // p.position += p.velocity * settings.dt;
+    p.velocity += p.internalForce / settings.mass * settings.dt;
+    p.position += p.velocity * settings.dt;
 
     outStorage.particles[particleID] = p;
 }

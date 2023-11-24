@@ -20,9 +20,16 @@ struct LRParticle{
     float rho;
     float p;
     float V;
-    float boundaryVolume;
-    vec2 boundaryNormal;
+    float a;
+    vec2 d;
     mat2 stress;
+    vec2 dijpj;
+    float dpi;
+    float lastP;
+    float densityAdv;
+    float pad0;
+    float pad1;
+    float pad2;
 };
 
 
@@ -184,14 +191,12 @@ void main(){
         }
     }
 
-    // rho += p.boundaryVolume * settings.rho0 * W(boundarySD, settings.h_LR);
-
     p.rho = rho;
 
    
-    p.rho = max(p.rho, settings.rho0); 
-    float exponent = 7.f;
-    float B = settings.stiffness;// (settings.rho0 * c * c) / exponent;
+    // p.rho = max(p.rho, settings.rho0); 
+    // float exponent = 7.f;
+    // float B = settings.stiffness;// (settings.rho0 * c * c) / exponent;
     //? https://forums.dual.sphysics.org/discussion/1804/theory-tait-equation-of-state ???
     //* coles equation
     // float pressure = B * (pow(max(p.rho, settings.rho0) / settings.rho0, exponent) - 1.f); 
@@ -202,9 +207,9 @@ void main(){
     //? Murnaghan equation of state ???
 
     //* Ideal gas equation
-    float pressure = settings.stiffness * (rho - settings.rho0); 
+    // float pressure = settings.stiffness * (rho - settings.rho0); 
     
-    p.p = max(pressure, 0.f);     //? required?
+    // p.p = max(pressure, 0.f);    
     p.V = settings.mass / rho;
 
     outStorage.particles[particleID] = p;

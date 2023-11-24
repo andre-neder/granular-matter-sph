@@ -16,9 +16,16 @@ struct LRParticle{
     float rho;
     float p;
     float V;
-    float boundaryVolume;
-    vec2 boundaryNormal;
+    float a;
+    vec2 d;
     mat2 stress;
+    vec2 dijpj;
+    float dpi;
+    float lastP;
+    float densityAdv;
+    float pad0;
+    float pad1;
+    float pad2;
 };
 
 
@@ -132,13 +139,15 @@ void main(){
     LRParticle p = inStorage.particles[particleID];
     //* Init pressure internalForce
     vec2 internalForce = vec2(0.f);
-    vec2 frictionalForce = vec2(0.f);
+    // vec2 frictionalForce = vec2(0.f);
 
-    vec2 relativeVelocity = settings.windDirection - p.velocity;
-    float occluded = 0.866; //* 30° cone
-    
+    // vec2 relativeVelocity = settings.windDirection - p.velocity;
+    // float occluded = 0.866; //* 30° cone
 
-    float pRhoSq = p.rho * p.rho;
+    float densityi = p.rho / settings.rho0;
+    float densityiSQ = densityi * densityi;
+    float dpi = p.p / densityiSQ; // Not same as p.dpi
+    // float pRhoSq = p.rho * p.rho;
 
     for_all_fluid_neighbors(
         if(particleIndex == particleID){
@@ -147,15 +156,18 @@ void main(){
         if (r < settings.h_LR)
         {
             //* Pressure calculation
-            float piRhoSq = pi.rho * pi.rho;
+            // float piRhoSq = pi.rho * pi.rho;
+            float densityj = pi.rho / settings.rho0;
+            float densityjSQ = densityj * densityj;
+            float dpj = pi.p / densityjSQ;
             vec2 gradient = gradW(p_pi, settings.h_LR);
-            internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+            // internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+            internalForce += pi.V * (dpi + dpj) * gradient; // settings.rho0 / settings.rho0 * dpj
+            // vec2 F_f = settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
-            vec2 F_f = settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+            // frictionalForce += F_f;
 
-            frictionalForce += F_f;
-
-            occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
+            // occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
         }
     )
 
@@ -181,34 +193,34 @@ void main(){
         if(r < settings.h_LR){
             float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
             vec2 gradient = gradW(p_pi, settings.h_LR);
-            internalForce += volume * settings.rho0 * (p.p / pRhoSq) * gradient; 
-            
-            vec2 F_f = volume * settings.rho0 * (p.stress / pRhoSq) * gradient;
+            // internalForce += volume * settings.rho0 * (p.p / pRhoSq) * gradient; 
+            internalForce += volume * dpi * gradient;
+            // vec2 F_f = volume * settings.rho0 * (p.stress / pRhoSq) * gradient;
 
-            float cs = sqrt(settings.stiffness);
-            float eps = 0.01f;
+            // float cs = sqrt(settings.stiffness);
+            // float eps = 0.01f;
             // float ny = (settings.sigma * settings.h_LR * cs) / (2.f * p.rho); //* viscousity constant 
             // float ny = (2 * settings.sigma * settings.h_LR * cs) / (settings.rho0 + p.rho); //* viscousity constant 
             // float pi = -ny * (min(dot((p.velocity - vec2(0)), p_pi), 0.f) / ((r * r) + (eps * settings.h_LR * settings.h_LR)));
             // vec2 F_v = volume * settings.rho0 * pi * gradient; 
 
-            frictionalForce += F_f;//max(F_v, F_f);
+            // frictionalForce += F_f;//max(F_v, F_f);
             // frictionalForce += F_v;
         }
     }
 
-    frictionalForce *= -settings.mass;
+    // frictionalForce *= -settings.mass;
     internalForce *= -settings.mass;
 
     //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
-    float dragWeight = max(0, min(1, 1 - occluded)); 
-    float crossSectionalArea = dragWeight * sqrt((settings.mass / p.rho) / PI) * 2.f; 
-    vec2 dragForce  = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
+    // float dragWeight = max(0, min(1, 1 - occluded)); 
+    // float crossSectionalArea = dragWeight * sqrt((settings.mass / p.rho) / PI) * 2.f; 
+    // vec2 dragForce  = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
     
 
     p.internalForce = internalForce; 
-    p.internalForce += frictionalForce;
-    p.externalForce += dragForce;
+    // p.internalForce += frictionalForce;
+    // p.externalForce += dragForce;
 
     outStorage.particles[particleID] = p;
 }

@@ -17,9 +17,16 @@ struct LRParticle{
     float rho;
     float p;
     float V;
-    float boundaryVolume;
-    vec2 boundaryNormal;
+    float a;
+    vec2 d;
     mat2 stress;
+    vec2 dijpj;
+    float dpi;
+    float lastP;
+    float densityAdv;
+    float pad0;
+    float pad1;
+    float pad2;
 };
 
 layout(set = 0, binding = BUFFER_A) buffer StorageInput{
@@ -79,10 +86,10 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    p.externalForce = settings.g * settings.mass;
+    // p.externalForce = settings.g * settings.mass;
 
     // p.velocity += settings.g * settings.dt;
-    p.predPosition = p.position + (p.velocity ) * 1.f/120.f; //Todo: fix prediction
+    p.predPosition = p.position;// + (p.velocity ) * 1.f/120.f; //Todo: better timestep?
     // p.predPosition = p.position;
 
     outStorage.particles[particleID] = p;

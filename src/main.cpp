@@ -77,19 +77,19 @@ private:
 
         basicRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
 
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            basicRenderPass.vertexBuffer[i] = simulation.particlesBufferHR[i];
-        }
-        basicRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
-        basicRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
-        basicRenderPass.bindingDescription = HRParticle::getBindingDescription();
-
         // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        //     basicRenderPass.vertexBuffer[i] = simulation.particlesBufferB[i];
+        //     basicRenderPass.vertexBuffer[i] = simulation.particlesBufferHR[i];
         // }
-        // basicRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
-        // basicRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
-        // basicRenderPass.bindingDescription = LRParticle::getBindingDescription();
+        // basicRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
+        // basicRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
+        // basicRenderPass.bindingDescription = HRParticle::getBindingDescription();
+
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+            basicRenderPass.vertexBuffer[i] = simulation.particlesBufferB[i];
+        }
+        basicRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
+        basicRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
+        basicRenderPass.bindingDescription = LRParticle::getBindingDescription();
 
         basicRenderPass.init();
         lineRenderPass.init();

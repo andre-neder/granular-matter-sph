@@ -22,9 +22,16 @@ struct LRParticle{
     float rho;
     float p;
     float V;
-    float boundaryVolume;
-    vec2 boundaryNormal;
+    float a;
+    vec2 d;
     mat2 stress;
+    vec2 dijpj;
+    float dpi;
+    float lastP;
+    float densityAdv;
+    float pad0;
+    float pad1;
+    float pad2;
 };
 
 layout(set = 0, binding = BUFFER_B) buffer StorageInput{

@@ -35,11 +35,19 @@ struct LRParticle{
     float p = 0.0;
     // 12
     float V = 0.0;
-    float boundaryVolume = 0.0;
-    glm::vec2 boundaryNormal = glm::vec2(0,0);
+    float a = 0.0;
+    glm::vec2 d = glm::vec2(0,0);
     // 16
     glm::mat2 stress = glm::mat2(1.0);
     // 20
+    glm::vec2 dijpj = glm::vec2(0,0);
+    float dpi = 0.0;
+    float lastP = 0.0;
+    //24
+    float densityAdv = 0.0;
+    float pad0;
+    float pad1;
+    float pad2;
 
     LRParticle(){};
     inline LRParticle(float x, float y) { position = glm::vec2(x, y); }
@@ -181,6 +189,13 @@ private:
     gpu::ComputePass bitonicSortPass;
     gpu::ComputePass startingIndicesPass;
     gpu::ComputePass predictDensityPass;
+
+    gpu::ComputePass iisphvAdvPass;
+    gpu::ComputePass iisphRhoAdvPass;
+    gpu::ComputePass iisphdijpjSolvePass;
+    gpu::ComputePass iisphPressureSolvePass;
+    gpu::ComputePass iisphSolveEndPass;
+
     gpu::ComputePass predictStressPass;
     gpu::ComputePass predictForcePass;
     gpu::ComputePass applyPass;
