@@ -191,14 +191,14 @@ void main(){
             vec2 gradient = gradW(p_pi, settings.h_LR);
             // internalForce += (volume * settings.rho0) * (p.p / pRhoSq) * gradient; 
             internalForce += volume * (p.p / pRhoSq) * gradient; 
-            // vec2 F_f = volume * settings.rho0 * (p.stress / pRhoSq) * gradient;
+            // vec2 F_f = (volume * settings.rho0) * (p.stress / pRhoSq) * gradient;
 
             // float cs = sqrt(settings.stiffness);
             // float eps = 0.01f;
             // float ny = (settings.sigma * settings.h_LR * cs) / (2.f * p.rho); //* viscousity constant 
             // float ny = (2 * settings.sigma * settings.h_LR * cs) / (settings.rho0 + p.rho); //* viscousity constant 
             // float pi = -ny * (min(dot((p.velocity - vec2(0)), p_pi), 0.f) / ((r * r) + (eps * settings.h_LR * settings.h_LR)));
-            // vec2 F_v = volume * settings.rho0 * pi * gradient; 
+            // vec2 F_v = (volume * settings.rho0) * pi * gradient; 
 
             // frictionalForce += F_f;//max(F_v, F_f);
             // frictionalForce += F_v;
