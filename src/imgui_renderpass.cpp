@@ -255,10 +255,10 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex){
     ImGui::Begin("Simulation", &showSimulationSettings);
         ImGui::Checkbox("Simulation running", &simulationRunning);
         ImGui::DragFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 0.1f, 2000.f);
-        ImGui::DragFloat("Pressure stiffness", &settings.stiffness, 1.f, 100.f, 50000.f);
+        // ImGui::DragFloat("Pressure stiffness", &settings.stiffness, 1.f, 100.f, 50000.f);
         ImGui::DragFloat("Mass (kg)", &settings.mass, 1.f, 0.1f, 100.f);
         // ImGui::DragFloat("Kernel Radius (m)", &settings.h_LR, 1.f, 0.1f, 100.f);
-        ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);
+        // ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);
         ImGui::Text("Friction");
         ImGui::DragFloat("Angle of repose (rad)", &settings.theta, 1.f, 0.001f, (float)M_PI);
         // ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);

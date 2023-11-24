@@ -144,9 +144,7 @@ void main(){
     // vec2 relativeVelocity = settings.windDirection - p.velocity;
     // float occluded = 0.866; //* 30° cone
 
-    float densityi = p.rho / settings.rho0;
-    float densityiSQ = densityi * densityi;
-    float dpi = p.p / densityiSQ; // Not same as p.dpi
+    float pRhoSq = p.rho * p.rho;
     // float pRhoSq = p.rho * p.rho;
 
     for_all_fluid_neighbors(
@@ -156,13 +154,11 @@ void main(){
         if (r < settings.h_LR)
         {
             //* Pressure calculation
-            // float piRhoSq = pi.rho * pi.rho;
-            float densityj = pi.rho / settings.rho0;
-            float densityjSQ = densityj * densityj;
-            float dpj = pi.p / densityjSQ;
+            float piRhoSq =  pi.rho *  pi.rho;
+            float dpj = pi.p / piRhoSq;
             vec2 gradient = gradW(p_pi, settings.h_LR);
             // internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
-            internalForce += pi.V * (dpi + dpj) * gradient; // settings.rho0 / settings.rho0 * dpj
+            internalForce += pi.V * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
             // vec2 F_f = settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
 
             // frictionalForce += F_f;
@@ -193,8 +189,8 @@ void main(){
         if(r < settings.h_LR){
             float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
             vec2 gradient = gradW(p_pi, settings.h_LR);
-            // internalForce += volume * settings.rho0 * (p.p / pRhoSq) * gradient; 
-            internalForce += volume * dpi * gradient;
+            // internalForce += (volume * settings.rho0) * (p.p / pRhoSq) * gradient; 
+            internalForce += volume * (p.p / pRhoSq) * gradient; 
             // vec2 F_f = volume * settings.rho0 * (p.stress / pRhoSq) * gradient;
 
             // float cs = sqrt(settings.stiffness);

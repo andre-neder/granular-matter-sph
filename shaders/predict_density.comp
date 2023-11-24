@@ -191,7 +191,7 @@ void main(){
         }
     }
 
-    p.rho = rho;
+    p.rho = rho / settings.rho0;
 
    
     // p.rho = max(p.rho, settings.rho0); 
@@ -203,7 +203,7 @@ void main(){
     //? https://www.politesi.polimi.it/bitstream/10589/33101/1/2011_12_Pirovano.pdf (3.2)
     //* tait's equation
     // float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
-
+    
     //? Murnaghan equation of state ???
 
     //* Ideal gas equation

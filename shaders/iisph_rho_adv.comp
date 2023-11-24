@@ -167,9 +167,8 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    float density = p.rho / settings.rho0;
-    float densitySq = density  * density;
-    float densityAdv = density;
+    float pRhoSq = p.rho  * p.rho;
+    float densityAdv = p.rho;
 
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
@@ -191,7 +190,7 @@ void main(){
 
     p.lastP = 0.5 * p.p;  
 
-    p.dpi = p.V / densitySq;   
+    p.dpi = p.V / pRhoSq;   
     
     p.densityAdv = densityAdv;
 

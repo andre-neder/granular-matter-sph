@@ -172,9 +172,8 @@ void main(){
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            float densityj = pi.rho / settings.rho0;
-            float densityjSq = densityj  * densityj;
-            dij_pj -= pi.V / densityjSq * pi.lastP * gradW(p_pi, settings.h_LR);
+            float piRhoSq = pi.rho  * pi.rho;
+            dij_pj -= pi.V / piRhoSq * pi.lastP * gradW(p_pi, settings.h_LR);
         }
     )
 
