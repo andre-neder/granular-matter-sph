@@ -190,7 +190,7 @@ void main(){
 
     p.lastP = 0.5 * p.p;  
 
-    p.dpi = p.V / pRhoSq;   
+    // p.dpi = p.V / pRhoSq;   
     
     p.densityAdv = densityAdv;
 
@@ -199,7 +199,7 @@ void main(){
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            vec2 dji = p.dpi * gradW(p_pi, settings.h_LR);
+            vec2 dji = (p.V / pRhoSq) * gradW(p_pi, settings.h_LR);
             aii += pi.V * dot((p.d - dji), gradW(p_pi, settings.h_LR));
         }
     )
@@ -211,7 +211,7 @@ void main(){
         float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
         float r = length(p_pi);
         if(r < settings.h_LR){
-            vec2 dji = p.dpi * gradW(p_pi, settings.h_LR);
+            vec2 dji = (p.V / pRhoSq) * gradW(p_pi, settings.h_LR);
             aii += volume * dot((p.d - dji), gradW(p_pi, settings.h_LR));
         }
     }

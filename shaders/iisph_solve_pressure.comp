@@ -169,11 +169,11 @@ void main(){
     LRParticle p = inStorage.particles[particleID];
 
     float sum = 0.0;
-
+    float pRhoSq = p.rho * p.rho;
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            vec2 dji = p.dpi * gradW(p_pi, settings.h_LR);
+            vec2 dji = (p.V / pRhoSq) * gradW(p_pi, settings.h_LR);
             vec2 dji_pi = dji * p.lastP;
             sum += pi.V * dot(p.dijpj - pi.d * pi.lastP - (pi.dijpj - dji_pi), gradW(p_pi, settings.h_LR));
         }
