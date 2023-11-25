@@ -199,7 +199,7 @@ void main(){
         }
     }
 
-    p.rho = rho;// / settings.rho0; // Todo: Remove this
+    p.rho = rho;
     p.V = settings.mass / rho;
 
     //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
