@@ -151,7 +151,7 @@ using namespace gpu;
 
         uniformBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            uniformBuffers[i] = m_core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vma::AllocationCreateFlagBits::eHostAccessRandom);
+            uniformBuffers[i] = m_core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer,  vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
         }
 
         // vk::DeviceSize bufferSize2 = sizeof(SPHSettings);

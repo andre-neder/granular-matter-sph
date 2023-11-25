@@ -176,7 +176,7 @@ void Core::createAllocator(){
 	}
 }
 
-vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::AllocationCreateFlags memoryFlags, vma::MemoryUsage memoryUsage){
+vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags){
     vk::Buffer buffer;
     vma::Allocation allocation;
 
@@ -186,7 +186,7 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
 
     vma::AllocationCreateInfo bufferAllocInfo;
 	bufferAllocInfo.usage = memoryUsage;
-	bufferAllocInfo.flags = memoryFlags;
+	bufferAllocInfo.flags = allocationFlags;
 
     try
     {
@@ -199,31 +199,31 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
     m_bufferAllocations[buffer] = allocation;
     return buffer;
 }
-vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage,vma::AllocationCreateFlags allocationFlags){
-    if(allocationFlags != vma::AllocationCreateFlagBits::eHostAccessSequentialWrite && allocationFlags != vma::AllocationCreateFlagBits::eDedicatedMemory && allocationFlags != vma::AllocationCreateFlagBits::eHostAccessRandom){
+
+vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags){
+    if(memoryUsage != vma::MemoryUsage::eAutoPreferHost && memoryUsage != vma::MemoryUsage::eAutoPreferDevice && memoryUsage != vma::MemoryUsage::eAuto){
         throw std::exception("Unsupported memory usage.");
     }
 
+    bool hostAccess = ((memoryUsage == vma::MemoryUsage::eAutoPreferDevice || memoryUsage == vma::MemoryUsage::eAuto) && allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite) || memoryUsage == vma::MemoryUsage::eAutoPreferHost;
+
     vk::Buffer stagingBuffer;
-    if(allocationFlags == vma::AllocationCreateFlagBits::eDedicatedMemory){
-        stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
+    if(memoryUsage == vma::MemoryUsage::eAutoPreferDevice){
+        stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAuto, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
     }
-    else if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite || allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
-        stagingBuffer = createBuffer(size, bufferUsage, allocationFlags);
+    else if(hostAccess){
+        stagingBuffer = createBuffer(size, bufferUsage, memoryUsage, allocationFlags);
     }
     
     void* mappedData = mapBuffer(stagingBuffer);
     memcpy(mappedData, data, (size_t) size);
-    if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
-        flushBuffer(stagingBuffer, 0, size);
-    }
     unmapBuffer(stagingBuffer);
 
-    if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite || allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
+    if(hostAccess){
         return stagingBuffer;
     }
 
-    vk::Buffer buffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferDst | bufferUsage, vma::AllocationCreateFlagBits::eDedicatedMemory);
+    vk::Buffer buffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferDst | bufferUsage, memoryUsage, allocationFlags);
     copyBufferToBuffer(stagingBuffer, buffer, size);
     destroyBuffer(stagingBuffer);
 
@@ -402,6 +402,7 @@ void Core::createCommandPool() {
         std::cerr << "Exception Thrown: " << e.what();
     }
 }
+
 void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -411,7 +412,8 @@ void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width,
 
     endSingleTimeCommands(commandBuffer);
 }
-vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
+
+vk::Image Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
 {
     uint32_t formatSize = 0;
     switch (format){
@@ -428,9 +430,9 @@ vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage,
             break;
     }
 
-    vk::Buffer stagingBuffer = bufferFromData(data, width * height * formatSize, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eHostAccessRandom);
+    vk::Buffer stagingBuffer = bufferFromData(data, width * height * formatSize, vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAuto, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
         
-    vk::Image image = createImage2D(vk::ImageUsageFlagBits::eTransferDst | imageUsage, memoryFlags, width, height, format, tiling);
+    vk::Image image = createImage2D(vk::ImageUsageFlagBits::eTransferDst | imageUsage, memoryUsage, allocationFlags, width, height, format, tiling);
         
     transitionImageLayout(image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer);
     copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
@@ -440,6 +442,7 @@ vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage,
     
     return image;
 }
+
 void Core::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::PipelineStageFlags sourceStage, vk::PipelineStageFlags destinationStage)
 {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -508,7 +511,8 @@ void Core::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk:
 
     endSingleTimeCommands(commandBuffer);
 }
-vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
+
+vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
     vk::Image image;
     vma::Allocation allocation;
 
@@ -522,7 +526,8 @@ vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCre
     imageInfo.usage = imageUsage;
 
     vma::AllocationCreateInfo imageAllocInfo;
-	imageAllocInfo.flags = memoryFlags;
+    imageAllocInfo.usage = memoryUsage;
+	imageAllocInfo.flags = allocationFlags;
 
     try
     {
@@ -535,7 +540,8 @@ vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCre
     m_imageAllocations[image] = allocation;
     return image;
 }
-vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling) {
+
+vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling) {
     vk::Image image;
     vma::Allocation allocation;
     
@@ -549,7 +555,8 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCre
     imageInfo.usage = imageUsage;
 
     vma::AllocationCreateInfo imageAllocInfo;
-	imageAllocInfo.flags = memoryFlags;
+	imageAllocInfo.usage = memoryUsage;
+	imageAllocInfo.flags = allocationFlags;
 
     try
     {
@@ -562,6 +569,7 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCre
     m_imageAllocations[image] = allocation;
     return image;
 }
+
 void Core::destroyImage(vk::Image image){
     allocator.destroyImage(image, m_imageAllocations[image]);
     m_imageAllocations.erase(image);

@@ -15,9 +15,9 @@ using namespace gpu;
  
         vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(LineVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer, vma::AllocationCreateFlagBits::eDedicatedMemory);
+            vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(LineVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
         }
-        indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::AllocationCreateFlagBits::eDedicatedMemory);
+        indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
         
 
         createDescriptorSetLayout();
@@ -146,7 +146,7 @@ using namespace gpu;
 
         uniformBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            uniformBuffers[i] = m_core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer, vma::AllocationCreateFlagBits::eHostAccessRandom);
+            uniformBuffers[i] = m_core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer,  vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
         }
 
     }
