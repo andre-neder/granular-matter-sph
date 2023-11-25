@@ -211,12 +211,6 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
     startTime = std::chrono::high_resolution_clock::now();
-    // std::cout << dt << std::endl;
-    // float accumulator = dt;
-    // float stepSize = 1.f/120.f;
-    
- 
-    // settings.dt = dt;
 
     // Courant-Friedrichs–Lewy (CFL) condition
     float area = settings.r_LR * 2.f;
