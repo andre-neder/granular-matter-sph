@@ -221,7 +221,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     // Courant-Friedrichs–Lewy (CFL) condition
     float area = settings.r_LR * 2.f;
     // float v_max = sqrt((2 * settings.mass * settings.g.length()) / (settings.rhoAir * area * settings.dragCoefficient));
-    float v_max = sqrt(settings.stiffness);
+    float v_max = sqrt(settings.stiffness); //Todo
     float C_courant = 0.4f;
     float dt_max = C_courant * (settings.h_LR / v_max);
     // std::cout << dt << " " << 1.f / 60.f << " " <<  1.f/120.f << " " << dt_max << std::endl;
