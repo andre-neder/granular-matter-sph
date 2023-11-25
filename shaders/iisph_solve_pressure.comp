@@ -173,9 +173,9 @@ void main(){
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            vec2 dji = (p.V / pRhoSq) * gradW(p_pi, settings.h_LR);
+            vec2 dji = ((p.V * p.rho) / pRhoSq) * gradW(p_pi, settings.h_LR);
             vec2 dji_pi = dji * p.lastP;
-            sum += pi.V * dot(p.dijpj - pi.d * pi.lastP - (pi.dijpj - dji_pi), gradW(p_pi, settings.h_LR));
+            sum += (pi.V * pi.rho) * dot(p.dijpj - pi.d * pi.lastP - (pi.dijpj - dji_pi), gradW(p_pi, settings.h_LR));
         }
     )
 
@@ -186,10 +186,10 @@ void main(){
         float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
         float r = length(p_pi);
         if(r < settings.h_LR){
-            sum += volume * dot(p.dijpj, gradW(p_pi, settings.h_LR));
+            sum += (volume * settings.rho0) * dot(p.dijpj, gradW(p_pi, settings.h_LR));
         }
     }
-    float b = 1.0 - p.densityAdv;
+    float b = settings.rho0 - p.densityAdv;
     float dtSq = settings.dt * settings.dt;
     float omega = 0.5;
     float denom = p.a * dtSq;

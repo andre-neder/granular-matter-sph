@@ -169,9 +169,9 @@ void main(){
             float dpj = pi.p / piRhoSq;
             vec2 gradient = gradW(p_pi, settings.h_LR);
             // internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
-            internalForce += pi.V * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+            internalForce += (pi.V * pi.rho) * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
             // internalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
-            internalForce += pi.V * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+            internalForce += (pi.V * pi.rho) * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
         }
     )
 
@@ -183,12 +183,12 @@ void main(){
             float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
             vec2 gradient = gradW(p_pi, settings.h_LR);
             // internalForce += (volume * settings.rho0) * (p.p / pRhoSq) * gradient; 
-            internalForce += volume * (p.p / pRhoSq) * gradient; 
+            internalForce += (volume * settings.rho0) * (p.p / pRhoSq) * gradient; 
             // internalForce += (volume * settings.rho0) * (p.stress / pRhoSq) * gradient;
-            internalForce += volume * (p.stress / pRhoSq) * gradient;
+            internalForce += (volume * settings.rho0) * (p.stress / pRhoSq) * gradient;
         }
     }
-
+    
     internalForce *= -settings.mass;
 
     p.internalForce = internalForce; 

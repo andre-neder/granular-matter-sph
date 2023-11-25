@@ -161,7 +161,7 @@ void main(){
             //* Strain & Stress 
             vec2 gradient = gradW(p_pi, settings.h_LR);
             velocityGradient += pi.V * outerProduct(gradient, p.velocity - pi.velocity);
-            D += (1.f / (pi.rho * settings.rho0)) * outerProduct(gradient, gradient);
+            D += (1.f / (pi.rho )) * outerProduct(gradient, gradient);
         }
     )
 
@@ -192,7 +192,7 @@ void main(){
 
     //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
     //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
-    float pRhoSq = (p.rho * settings.rho0) * (p.rho * settings.rho0);
+    float pRhoSq = (p.rho ) * (p.rho );
     D *= (2.f * settings.mass * settings.mass * settings.dt) / pRhoSq;
     mat2 strainTensor = 0.5f * (velocityGradient + transpose(velocityGradient));
     mat2 stressTensor = inverse(D) * strainTensor;
