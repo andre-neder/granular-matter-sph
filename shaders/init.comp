@@ -86,7 +86,7 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    // p.externalForce = settings.g * settings.mass;
+    p.externalForce = settings.g * settings.mass;
 
     // p.velocity += settings.g * settings.dt;
     p.predPosition = p.position;// + (p.velocity ) * 1.f/120.f; //Todo: better timestep?

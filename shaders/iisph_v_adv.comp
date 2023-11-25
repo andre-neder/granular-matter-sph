@@ -169,7 +169,8 @@ void main(){
     vec2 dii = vec2(0);
 
     float pRhoSq = p.rho  * p.rho;
-    p.velocity += settings.dt * settings.g;
+
+    p.velocity += settings.dt * (p.externalForce / settings.mass);
 
     for_all_fluid_neighbors(
         if (r < settings.h_LR)

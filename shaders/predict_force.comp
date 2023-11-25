@@ -155,11 +155,8 @@ void main(){
     //* Init pressure internalForce
     vec2 internalForce = vec2(0.f);
 
-    // vec2 relativeVelocity = settings.windDirection - p.velocity;
-    // float occluded = 0.866; //* 30° cone
-
+   
     float pRhoSq = p.rho * p.rho;
-    // float pRhoSq = p.rho * p.rho;
 
     for_all_fluid_neighbors(
         if(particleIndex == particleID){
@@ -175,8 +172,6 @@ void main(){
             internalForce += pi.V * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
             // internalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
             internalForce += pi.V * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
-
-            // occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
         }
     )
 
@@ -197,14 +192,6 @@ void main(){
     internalForce *= -settings.mass;
 
     p.internalForce = internalForce; 
-
-    //Todo: move this to beginning ob frame
-    //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
-    // float dragWeight = max(0, min(1, 1 - occluded)); 
-    // float crossSectionalArea = dragWeight * sqrt((settings.mass / p.rho) / PI) * 2.f; 
-    // vec2 dragForce  = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
-    // p.externalForce += dragForce;
-    
 
     outStorage.particles[particleID] = p;
 }

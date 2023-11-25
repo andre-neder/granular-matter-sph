@@ -65,10 +65,9 @@ layout( push_constant ) uniform Settings{
     float alpha;                             
     uint n_HR;                              
     
-    float pad2;                                
+    vec2 windDirection;                     
     float dragCoefficient;                
-    float rhoAir;                             
-    float pad3;
+    float rhoAir;          
 } settings;
 
 struct ParticleGridEntry{
@@ -170,6 +169,7 @@ void main(){
 
     float sum = 0.0;
     float pRhoSq = p.rho * p.rho;
+
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
