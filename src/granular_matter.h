@@ -145,6 +145,11 @@ struct Line2D : public RigidBody2D{
     };
 };
 
+struct AtomicData{
+    float averageDensityError = 0.f;
+    float v_max = 0.f;
+};
+
 class GranularMatter
 {
 public:
@@ -166,11 +171,11 @@ public:
 private:
     gpu::Core* m_core;
     
-
+    AtomicData atomics;
     std::vector<vk::CommandBuffer> commandBuffers;
     
     std::vector<vk::Buffer> particlesBufferA;
-    std::vector<vk::Buffer> settingsBuffer;
+    std::vector<vk::Buffer> atomicsBuffer;
     
     std::vector<ParticleGridEntry> particleCells; // particle (index) is in cell (value)
     std::vector<vk::Buffer> particleCellBuffer;
@@ -188,7 +193,7 @@ private:
     gpu::ComputePass initPass;
     gpu::ComputePass bitonicSortPass;
     gpu::ComputePass startingIndicesPass;
-    gpu::ComputePass predictDensityPass;
+    gpu::ComputePass computeDensityPass;
 
     gpu::ComputePass iisphvAdvPass;
     gpu::ComputePass iisphRhoAdvPass;
@@ -196,9 +201,9 @@ private:
     gpu::ComputePass iisphPressureSolvePass;
     gpu::ComputePass iisphSolveEndPass;
 
-    gpu::ComputePass predictStressPass;
-    gpu::ComputePass predictForcePass;
-    gpu::ComputePass applyPass;
+    gpu::ComputePass computeStressPass;
+    gpu::ComputePass computeInternalForcePass;
+    gpu::ComputePass integratePass;
     gpu::ComputePass advectionPass;
 
     std::vector<RigidBody2D*> rigidBodies;

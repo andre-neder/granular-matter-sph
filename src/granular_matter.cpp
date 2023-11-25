@@ -96,12 +96,15 @@ GranularMatter::GranularMatter(gpu::Core* core)
     startingIndices.resize(lrParticles.size());
     std::fill(startingIndices.begin(), startingIndices.end(), UINT32_MAX);
 
+    atomicsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferHR.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     startingIndicesBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        atomicsBuffer[i] = m_core->bufferFromData(&atomics, sizeof(AtomicData),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eUniformBuffer, vma::MemoryUsage::eAutoPreferDevice);
+
         particlesBufferA[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
         particlesBufferB[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
         particlesBufferHR[i] = m_core->bufferFromData(hrParticles.data(),sizeof(HRParticle) * hrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
@@ -148,7 +151,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     bitonicSortPass = gpu::ComputePass(m_core, SHADER_PATH"/bitonic_sort.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(BitonicSortParameters));
     startingIndicesPass = gpu::ComputePass(m_core, SHADER_PATH"/start_indices.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workgroup_size_x) }); // , { gpu::SpecializationConstant(1, workgroup_size_x) }
 
-    predictDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_density.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
+    computeDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_density.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     
     iisphvAdvPass = gpu::ComputePass(m_core, SHADER_PATH"/iisph_v_adv.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     iisphRhoAdvPass = gpu::ComputePass(m_core, SHADER_PATH"/iisph_rho_adv.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
@@ -157,9 +160,9 @@ GranularMatter::GranularMatter(gpu::Core* core)
     iisphSolveEndPass = gpu::ComputePass(m_core, SHADER_PATH"/iisph_solve_end.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
 
 
-    predictStressPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_stress.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
-    predictForcePass = gpu::ComputePass(m_core, SHADER_PATH"/predict_force.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
-    applyPass = gpu::ComputePass(m_core, SHADER_PATH"/apply.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
+    computeStressPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_stress.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
+    computeInternalForcePass = gpu::ComputePass(m_core, SHADER_PATH"/compute_internal_force.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
+    integratePass = gpu::ComputePass(m_core, SHADER_PATH"/integrate.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     advectionPass = gpu::ComputePass(m_core, SHADER_PATH"/advection.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
 }
 
@@ -213,12 +216,10 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     startTime = std::chrono::high_resolution_clock::now();
 
     // Courant-Friedrichs–Lewy (CFL) condition
-    float area = settings.r_LR * 2.f;
-    // float v_max = sqrt((2 * settings.mass * settings.g.length()) / (settings.rhoAir * area * settings.dragCoefficient));
     float v_max = sqrt(settings.stiffness); //Todo
     float C_courant = 0.4f;
     float dt_max = C_courant * (settings.h_LR / v_max);
-    // std::cout << dt << " " << 1.f / 60.f << " " <<  1.f/120.f << " " << dt_max << std::endl;
+    
     settings.dt = std::min(dt, dt_max);
 
     vk::MemoryBarrier writeReadBarrier{
@@ -348,10 +349,10 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         
         //* predict density B -> A
         {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictDensityPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(predictDensityPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(computeDensityPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
             commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
         }
 
@@ -434,10 +435,10 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         
         //* predict stress A -> B
         {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictStressPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(predictStressPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(computeStressPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
             commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
         }
         //* wait for compute pass
@@ -446,10 +447,10 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         
         //* predict force B -> A
         {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictForcePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(predictForcePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(computeInternalForcePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
             commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
         }
         
@@ -460,9 +461,9 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
         //* apply force A -> B
         {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, applyPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, applyPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(applyPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integratePass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integratePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(integratePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
             commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
         }
 
@@ -640,10 +641,10 @@ void GranularMatter::destroy(){
     destroyFrameResources();
     vk::Device device = m_core->getDevice();
 
+    initPass.destroy();
     bitonicSortPass.destroy();
     startingIndicesPass.destroy();
-    initPass.destroy();
-    predictDensityPass.destroy();
+    computeDensityPass.destroy();
     
     iisphvAdvPass.destroy();
     iisphRhoAdvPass.destroy();
@@ -651,9 +652,9 @@ void GranularMatter::destroy(){
     iisphPressureSolvePass.destroy();
     iisphSolveEndPass.destroy();
 
-    predictStressPass.destroy();
-    predictForcePass.destroy();
-    applyPass.destroy();
+    computeStressPass.destroy();
+    computeInternalForcePass.destroy();
+    integratePass.destroy();
     advectionPass.destroy();
     
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
@@ -661,6 +662,7 @@ void GranularMatter::destroy(){
     }
 
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_core->destroyBuffer(atomicsBuffer[i]);
         m_core->destroyBuffer(particlesBufferA[i]);
         m_core->destroyBuffer(particlesBufferB[i]);
         m_core->destroyBuffer(particlesBufferHR[i]);
