@@ -175,7 +175,7 @@ void main(){
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            dii -= (pi.V * pi.rho) / pRhoSq * gradW(p_pi, settings.h_LR);
+            dii -= settings.mass / pRhoSq * gradW(p_pi, settings.h_LR);
         }
     )
 

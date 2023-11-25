@@ -173,9 +173,9 @@ void main(){
     for_all_fluid_neighbors(
         if (r < settings.h_LR)
         {
-            vec2 dji = ((p.V * p.rho) / pRhoSq) * gradW(p_pi, settings.h_LR);
+            vec2 dji = (settings.mass / pRhoSq) * gradW(p_pi, settings.h_LR);
             vec2 dji_pi = dji * p.lastP;
-            sum += (pi.V * pi.rho) * dot(p.dijpj - pi.d * pi.lastP - (pi.dijpj - dji_pi), gradW(p_pi, settings.h_LR));
+            sum += settings.mass * dot(p.dijpj - pi.d * pi.lastP - (pi.dijpj - dji_pi), gradW(p_pi, settings.h_LR));
         }
     )
 
@@ -189,13 +189,13 @@ void main(){
             sum += (volume * settings.rho0) * dot(p.dijpj, gradW(p_pi, settings.h_LR));
         }
     }
-    float b = settings.rho0 - p.densityAdv;
+    
     float dtSq = settings.dt * settings.dt;
     float omega = 0.5;
     float denom = p.a * dtSq;
     p.p = 0.0;
     if(abs(denom) > EPSILON){
-        p.p = max((1.0 - omega) * p.lastP + omega / denom * (b - dtSq * sum), 0.0);
+        p.p = max((1.0 - omega) * p.lastP + omega / denom * (settings.rho0 - p.densityAdv - (dtSq * sum)), 0.0);
     }
 
     // if(p.p != 0.0){

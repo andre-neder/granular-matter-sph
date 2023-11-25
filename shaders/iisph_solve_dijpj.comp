@@ -173,7 +173,7 @@ void main(){
         if (r < settings.h_LR)
         {
             float piRhoSq = pi.rho  * pi.rho;
-            dij_pj -= (pi.V * pi.rho) / piRhoSq * pi.lastP * gradW(p_pi, settings.h_LR);
+            dij_pj -= settings.mass / piRhoSq * pi.lastP * gradW(p_pi, settings.h_LR);
         }
     )
     
