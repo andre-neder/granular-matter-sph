@@ -19,9 +19,7 @@ struct Vertex {
     }
     static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, pos)),
-            // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)),
-            // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, texCoord))
+            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(Vertex, pos))
         };
         return attributeDescriptions;
     }
@@ -58,18 +56,9 @@ namespace gpu{
    
             std::vector<vk::Buffer> vertexBuffer;
             vk::Buffer indexBuffer;
-            // std::vector<vk::Buffer> uniformBuffers;
-            // std::vector<vk::Buffer> uniformBuffersSettings;
-            // vk::Image textureImage;
-            // vk::ImageView textureImageView;
-            // vk::Sampler textureSampler;
-            // vk::DescriptorPool descriptorPool;
-            // std::vector<vk::DescriptorSet> descriptorSets;
-            // vk::DescriptorSetLayout descriptorSetLayout;
             vk::PipelineLayout pipelineLayout;
             vk::ShaderModule vertShaderModule;
             vk::ShaderModule fragShaderModule;
-            // vk::ShaderModule geomShaderModule;
 
             void createRenderPass();
             void createDescriptorSets();

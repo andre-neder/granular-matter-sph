@@ -141,6 +141,7 @@ bool SpirvHelper::GLSLtoSPV(const vk::ShaderStageFlagBits shader_type, const std
     const char *pshader = shaderCodeGlsl.c_str();
     EShLanguage stage = SpirvHelper::FindLanguage(shader_type);
     glslang::TShader shader(stage);
+    shader.setEnvTarget(glslang::EShTargetLanguage::EShTargetSpv, glslang::EShTargetLanguageVersion::EShTargetSpv_1_4);
     glslang::TProgram program;
     const char *shaderStrings[1];
     TBuiltInResource Resources = {};

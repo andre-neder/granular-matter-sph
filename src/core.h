@@ -73,8 +73,8 @@ namespace gpu
             vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
             
             //* Buffers
-            vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::AllocationCreateFlags memoryFlags = {}, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto);
-            vk::Buffer bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage,vma::AllocationCreateFlags allocationFlags);
+            vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {});
+            vk::Buffer bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {});
             void* mapBuffer(vk::Buffer buffer);
             void unmapBuffer(vk::Buffer buffer);
             void flushBuffer(vk::Buffer buffer, size_t offset, size_t size);
@@ -82,10 +82,10 @@ namespace gpu
             void copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
             void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
             //* Images
-            vk::Image image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+            vk::Image image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
                   
-            vk::Image createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
-            vk::Image createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+            vk::Image createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+            vk::Image createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, uint32_t depth = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
             void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::PipelineStageFlags sourceStage, vk::PipelineStageFlags destinationStage);
             vk::ImageView createImageView(vk::Image image, vk::Format format);
             void destroyImage(vk::Image image);
@@ -125,7 +125,15 @@ namespace gpu
             std::vector<const char*> deviceExtensions = {
                 VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
                 VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-                VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME
+                VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME,
+                VK_EXT_MEMORY_BUDGET_EXTENSION_NAME,
+                VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+                VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
+                VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
+                VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+                VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+                VK_KHR_SPIRV_1_4_EXTENSION_NAME,
+                VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME
             }; 
 
             vk::Instance instance;

@@ -17,10 +17,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "basic_renderpass.h"
+#include "screenquad_renderpass.h"
 #include "imgui_renderpass.h"
-#include "line_renderpass.h"
-#include "granular_matter.h"
 
 #include "global.h"
 
@@ -45,15 +43,9 @@ private:
     gpu::Core core;
     gpu::Window window;
 
-    gpu::BasicRenderPass basicRenderPass;
-    gpu::LineRenderPass lineRenderPass;
+    gpu::ScreenQuadRenderPass screenQuadPass;
     gpu::ImguiRenderPass imguiRenderPass;
 
-    GranularMatter simulation;
-
-
-    std::vector<vk::Fence> computeInFlightFences;
-    std::vector<vk::Semaphore> computeFinishedSemaphores;
     std::vector<vk::Semaphore> imageAvailableSemaphores;
     std::vector<vk::Semaphore> renderFinishedSemaphores;
     std::vector<vk::Fence> inFlightFences;
@@ -69,38 +61,13 @@ private:
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
 
-        basicRenderPass = gpu::BasicRenderPass(&core);
-        lineRenderPass = gpu::LineRenderPass(&core);
+        screenQuadPass = gpu::ScreenQuadRenderPass(&core);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
-
-        simulation = GranularMatter(&core);
-
-        basicRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-
-        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        //     basicRenderPass.vertexBuffer[i] = simulation.particlesBufferHR[i];
-        // }
-        // basicRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
-        // basicRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
-        // basicRenderPass.bindingDescription = HRParticle::getBindingDescription();
-
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            basicRenderPass.vertexBuffer[i] = simulation.particlesBufferB[i];
-        }
-        basicRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
-        basicRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
-        basicRenderPass.bindingDescription = LRParticle::getBindingDescription();
-
-        basicRenderPass.init();
-        lineRenderPass.init();
-
+        screenQuadPass.init();
         createSyncObjects();
     }
 
     void createSyncObjects() {
-        // std::cout << "MAX_FRAMES_IN_FLIGHT: " << gpu::MAX_FRAMES_IN_FLIGHT << std::endl;
-        computeInFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        computeFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         imageAvailableSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         renderFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         inFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
@@ -109,11 +76,9 @@ private:
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             try{
-                computeFinishedSemaphores[i] = device.createSemaphore(semaphoreInfo);
                 imageAvailableSemaphores[i] = device.createSemaphore(semaphoreInfo);
                 renderFinishedSemaphores[i] = device.createSemaphore(semaphoreInfo);
                 inFlightFences[i] = device.createFence(fenceInfo);
-                computeInFlightFences[i] = device.createFence(fenceInfo);
             }catch(std::exception& e) {
                 std::cerr << "Exception Thrown: " << e.what();
             }
@@ -122,28 +87,6 @@ private:
 
     void drawFrame(){
         vk::Result result;
-        result = device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-
-        device.resetFences(computeInFlightFences[currentFrame]);
-
-        simulation.update((int)currentFrame, 0);
-        
-        std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
-            simulation.getCommandBuffer((int)currentFrame)
-        }; 
-
-        std::vector<vk::Semaphore> signalComputeSemaphores = {computeFinishedSemaphores[currentFrame]};
-
-        vk::SubmitInfo computeSubmitInfo{
-            {},
-            {},
-            submitComputeCommandBuffers,
-            signalComputeSemaphores
-        };
-
-        core.getComputeQueue().submit(computeSubmitInfo, computeInFlightFences[currentFrame]);
-
-
         result = device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;
@@ -162,8 +105,7 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        basicRenderPass.update((int) currentFrame, imageIndex);
-        lineRenderPass.update((int) currentFrame, imageIndex);
+        screenQuadPass.update((int) currentFrame, imageIndex);
         imguiRenderPass.update((int) currentFrame, imageIndex);
 
 
@@ -173,19 +115,16 @@ private:
         imagesInFlight[currentFrame] = inFlightFences[currentFrame];
 
         std::vector<vk::Semaphore> waitSemaphores = {
-            computeFinishedSemaphores[currentFrame], 
             imageAvailableSemaphores[currentFrame]
         };
         std::vector<vk::PipelineStageFlags> waitStages = {
-            vk::PipelineStageFlagBits::eVertexInput, 
             vk::PipelineStageFlagBits::eColorAttachmentOutput
         };
         std::vector<vk::Semaphore> signalSemaphores = {
             renderFinishedSemaphores[currentFrame]
         };
-        std::array<vk::CommandBuffer, 3> submitCommandBuffers = { 
-            basicRenderPass.getCommandBuffer((int) currentFrame), 
-            lineRenderPass.getCommandBuffer((int) currentFrame), 
+        std::array<vk::CommandBuffer, 2> submitCommandBuffers = { 
+            screenQuadPass.getCommandBuffer((int) currentFrame),
             imguiRenderPass.getCommandBuffer((int) currentFrame)
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
@@ -212,20 +151,10 @@ private:
     }
 
     void mainLoop(){
-        double time = glfwGetTime();
-        uint32_t fps = 0;
         while (!window.shouldClose()) {
             glfwPollEvents();
 
             drawFrame();
-            
-            fps++;
-            if((glfwGetTime() - time) >= 1.0){
-                time = glfwGetTime();
-                std::string title = "Application  FPS:"+std::to_string(fps);
-                window.setTitle(title);
-                fps = 0;
-            }
         }
         device.waitIdle();
     }
@@ -238,22 +167,16 @@ private:
 
     void cleanup(){
         core.getDevice().waitIdle();
-
         
-        basicRenderPass.destroy();
-        lineRenderPass.destroy();
+        screenQuadPass.destroy();
         imguiRenderPass.destroy();
-
-        simulation.destroy();
 
         cleanupSwapchain();
 
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             device.destroySemaphore(imageAvailableSemaphores[i]);
             device.destroySemaphore(renderFinishedSemaphores[i]);
-            device.destroySemaphore(computeFinishedSemaphores[i]);
             device.destroyFence(inFlightFences[i]);
-            device.destroyFence(computeInFlightFences[i]);
         }
         
         window.destroy();
@@ -270,16 +193,15 @@ private:
         }
         device.waitIdle();
 
-        basicRenderPass.destroyFrameResources();
-        lineRenderPass.destroyFrameResources();
+        screenQuadPass.destroyFrameResources();
         imguiRenderPass.destroyFrameResources();
+        
         cleanupSwapchain();
 
         core.createSwapChain(&window);
         core.createSwapChainImageViews();
    
-        basicRenderPass.initFrameResources();
-        lineRenderPass.initFrameResources();
+        screenQuadPass.initFrameResources();
         imguiRenderPass.initFrameResources();
 
         imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);

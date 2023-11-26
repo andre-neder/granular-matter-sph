@@ -5,6 +5,7 @@
 using namespace gpu;
 
 Core::Core(bool enableValidation, Window* window){
+    
     m_enableValidation = enableValidation;
     instance = createInstance(m_enableValidation);
         if(m_enableValidation){
@@ -176,7 +177,7 @@ void Core::createAllocator(){
 	}
 }
 
-vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::AllocationCreateFlags memoryFlags, vma::MemoryUsage memoryUsage){
+vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags){
     vk::Buffer buffer;
     vma::Allocation allocation;
 
@@ -186,7 +187,7 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
 
     vma::AllocationCreateInfo bufferAllocInfo;
 	bufferAllocInfo.usage = memoryUsage;
-	bufferAllocInfo.flags = memoryFlags;
+	bufferAllocInfo.flags = allocationFlags;
 
     try
     {
@@ -199,50 +200,55 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
     m_bufferAllocations[buffer] = allocation;
     return buffer;
 }
-vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage,vma::AllocationCreateFlags allocationFlags){
-    if(allocationFlags != vma::AllocationCreateFlagBits::eHostAccessSequentialWrite && allocationFlags != vma::AllocationCreateFlagBits::eDedicatedMemory && allocationFlags != vma::AllocationCreateFlagBits::eHostAccessRandom){
+
+vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags){
+    if(memoryUsage != vma::MemoryUsage::eAutoPreferHost && memoryUsage != vma::MemoryUsage::eAutoPreferDevice && memoryUsage != vma::MemoryUsage::eAuto){
         throw std::exception("Unsupported memory usage.");
     }
 
+    bool hostReadWrite = ((memoryUsage == vma::MemoryUsage::eAutoPreferDevice || memoryUsage == vma::MemoryUsage::eAuto) && allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite) || memoryUsage == vma::MemoryUsage::eAutoPreferHost;
+
     vk::Buffer stagingBuffer;
-    if(allocationFlags == vma::AllocationCreateFlagBits::eDedicatedMemory){
-        stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
+    if(memoryUsage == vma::MemoryUsage::eAutoPreferDevice){
+        stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAuto, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
     }
-    else if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite || allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
-        stagingBuffer = createBuffer(size, bufferUsage, allocationFlags);
+    else if(hostReadWrite){
+        stagingBuffer = createBuffer(size, bufferUsage, memoryUsage, allocationFlags);
     }
     
     void* mappedData = mapBuffer(stagingBuffer);
     memcpy(mappedData, data, (size_t) size);
-    if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
-        flushBuffer(stagingBuffer, 0, size);
-    }
     unmapBuffer(stagingBuffer);
 
-    if(allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite || allocationFlags == vma::AllocationCreateFlagBits::eHostAccessRandom){
+    if(hostReadWrite){
         return stagingBuffer;
     }
 
-    vk::Buffer buffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferDst | bufferUsage, vma::AllocationCreateFlagBits::eDedicatedMemory);
+    vk::Buffer buffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferDst | bufferUsage, memoryUsage, allocationFlags);
     copyBufferToBuffer(stagingBuffer, buffer, size);
     destroyBuffer(stagingBuffer);
 
     return buffer;
 }
+
 void* Core::mapBuffer(vk::Buffer buffer){
     void* mappedData = allocator.mapMemory(m_bufferAllocations[buffer]);
     return mappedData;
 }
+
 void Core::unmapBuffer(vk::Buffer buffer){
     allocator.unmapMemory(m_bufferAllocations[buffer]);
 }
+
 void Core::destroyBuffer(vk::Buffer buffer){
     allocator.destroyBuffer(buffer, m_bufferAllocations[buffer]);
     m_bufferAllocations.erase(buffer);
 }
+
 void Core::flushBuffer(vk::Buffer buffer, size_t offset, size_t size){
     allocator.flushAllocation(m_bufferAllocations[buffer], offset, size);
 }
+
 void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -251,6 +257,7 @@ void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::De
 
     endSingleTimeCommands(commandBuffer);
 }
+
 vk::CommandBuffer Core::beginSingleTimeCommands() {
     vk::CommandBufferAllocateInfo allocInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1);
     vk::CommandBuffer commandBuffer;
@@ -269,6 +276,7 @@ vk::CommandBuffer Core::beginSingleTimeCommands() {
     }
     return commandBuffer;
 }
+
 void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
     try{
         commandBuffer.end();
@@ -316,7 +324,6 @@ void gpu::Core::updateDescriptorSet(vk::DescriptorSet set)
     descriptorWrites.clear();
 }
 
-
 void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::BufferDescriptorWrite write)
 {
     //Todo: Cleanup
@@ -341,7 +348,6 @@ void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite w
     vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, (uint32_t)imageInfos->size(), write.type, imageInfos->data());
     m_descriptorWrites.at(set).push_back(descriptorWrite);
 }
-
 
 vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<DescriptorSetBinding> bindings)
 {
@@ -402,6 +408,7 @@ void Core::createCommandPool() {
         std::cerr << "Exception Thrown: " << e.what();
     }
 }
+
 void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -411,7 +418,8 @@ void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width,
 
     endSingleTimeCommands(commandBuffer);
 }
-vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
+
+vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
 {
     uint32_t formatSize = 0;
     switch (format){
@@ -428,9 +436,9 @@ vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage,
             break;
     }
 
-    vk::Buffer stagingBuffer = bufferFromData(data, width * height * formatSize, vk::BufferUsageFlagBits::eTransferSrc, vma::AllocationCreateFlagBits::eHostAccessRandom);
+    vk::Buffer stagingBuffer = bufferFromData(data, width * height * formatSize, vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAuto, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
         
-    vk::Image image = createImage2D(vk::ImageUsageFlagBits::eTransferDst | imageUsage, memoryFlags, width, height, format, tiling);
+    vk::Image image = createImage2D(vk::ImageUsageFlagBits::eTransferDst | imageUsage, memoryUsage, allocationFlags, width, height, format, tiling);
         
     transitionImageLayout(image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer);
     copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
@@ -440,6 +448,7 @@ vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage,
     
     return image;
 }
+
 void Core::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::PipelineStageFlags sourceStage, vk::PipelineStageFlags destinationStage)
 {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -508,7 +517,8 @@ void Core::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk:
 
     endSingleTimeCommands(commandBuffer);
 }
-vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
+
+vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
     vk::Image image;
     vma::Allocation allocation;
 
@@ -522,7 +532,8 @@ vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCre
     imageInfo.usage = imageUsage;
 
     vma::AllocationCreateInfo imageAllocInfo;
-	imageAllocInfo.flags = memoryFlags;
+    imageAllocInfo.usage = memoryUsage;
+	imageAllocInfo.flags = allocationFlags;
 
     try
     {
@@ -535,7 +546,8 @@ vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::AllocationCre
     m_imageAllocations[image] = allocation;
     return image;
 }
-vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCreateFlags memoryFlags, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling) {
+
+vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling) {
     vk::Image image;
     vma::Allocation allocation;
     
@@ -549,7 +561,8 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCre
     imageInfo.usage = imageUsage;
 
     vma::AllocationCreateInfo imageAllocInfo;
-	imageAllocInfo.flags = memoryFlags;
+	imageAllocInfo.usage = memoryUsage;
+	imageAllocInfo.flags = allocationFlags;
 
     try
     {
@@ -562,6 +575,7 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::AllocationCre
     m_imageAllocations[image] = allocation;
     return image;
 }
+
 void Core::destroyImage(vk::Image image){
     allocator.destroyImage(image, m_imageAllocations[image]);
     m_imageAllocations.erase(image);
@@ -611,6 +625,7 @@ vk::Sampler Core::createSampler(vk::SamplerAddressMode addressMode, vk::BorderCo
     }
     return sampler;
 }
+
 void Core::destroySampler(vk::Sampler sampler){
     device.destroySampler(sampler);
 }
@@ -694,21 +709,23 @@ void Core::createSwapChain(Window* window) {
     swapChainImageFormat = surfaceFormat.format;
     swapChainExtent = extent;
 }
+
 void Core::createSwapChainImageViews(){
     swapChainImageViews.resize(getSwapChainImageCount());
     for (size_t i = 0; i < getSwapChainImageCount(); i++) {
         swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
     }
 }
+
 void Core::destroySwapChainImageViews(){
     for (auto imageView : swapChainImageViews) {
         destroyImageView(imageView);
     }
 }
+
 void Core::destroySwapChain(){
     device.destroySwapchainKHR(swapChain);
 }
-
 
 vk::ShaderModule Core::createShaderModule(const std::vector<uint32_t> code) {
     vk::ShaderModuleCreateInfo createInfo({}, code);
