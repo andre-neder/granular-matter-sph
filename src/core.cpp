@@ -206,13 +206,13 @@ vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bu
         throw std::exception("Unsupported memory usage.");
     }
 
-    bool hostReadWrite = ((memoryUsage == vma::MemoryUsage::eAutoPreferDevice || memoryUsage == vma::MemoryUsage::eAuto) && allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite) || memoryUsage == vma::MemoryUsage::eAutoPreferHost;
+    bool hostAccess = ((memoryUsage == vma::MemoryUsage::eAutoPreferDevice || memoryUsage == vma::MemoryUsage::eAuto) && allocationFlags == vma::AllocationCreateFlagBits::eHostAccessSequentialWrite) || memoryUsage == vma::MemoryUsage::eAutoPreferHost;
 
     vk::Buffer stagingBuffer;
     if(memoryUsage == vma::MemoryUsage::eAutoPreferDevice){
         stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAuto, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
     }
-    else if(hostReadWrite){
+    else if(hostAccess){
         stagingBuffer = createBuffer(size, bufferUsage, memoryUsage, allocationFlags);
     }
     
@@ -220,7 +220,7 @@ vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bu
     memcpy(mappedData, data, (size_t) size);
     unmapBuffer(stagingBuffer);
 
-    if(hostReadWrite){
+    if(hostAccess){
         return stagingBuffer;
     }
 
@@ -419,7 +419,7 @@ void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width,
     endSingleTimeCommands(commandBuffer);
 }
 
-vk::Image gpu::Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
+vk::Image Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling)
 {
     uint32_t formatSize = 0;
     switch (format){
