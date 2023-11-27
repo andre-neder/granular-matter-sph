@@ -106,14 +106,14 @@ GranularMatter::GranularMatter(gpu::Core* core)
     startingIndices.resize(lrParticles.size());
     std::fill(startingIndices.begin(), startingIndices.end(), UINT32_MAX);
 
-    atomicsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    volumeMapTransformsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferHR.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     startingIndicesBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        atomicsBuffer[i] = m_core->bufferFromData(&atomics, sizeof(AtomicData),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
+        volumeMapTransformsBuffer[i] = m_core->bufferFromData(volumeMapTransforms.data(), volumeMapTransforms.size() * sizeof(VolumeMapTransform),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
 
         particlesBufferA[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
         particlesBufferB[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
@@ -567,7 +567,7 @@ void GranularMatter::createDescriptorSets() {
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(LRParticle) * lrParticles.size() });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(LRParticle) * lrParticles.size() });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 2, vk::DescriptorType::eStorageBuffer, particlesBufferHR[i], sizeof(HRParticle) * hrParticles.size() });
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 3, vk::DescriptorType::eStorageBuffer, atomicsBuffer[i], sizeof(AtomicData)});
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 3, vk::DescriptorType::eStorageBuffer, volumeMapTransformsBuffer[i], volumeMapTransforms.size() * sizeof(VolumeMapTransform)});
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 4, vk::DescriptorType::eSampler, volumeMapSampler, {}, {} });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 5, vk::DescriptorType::eSampledImage, {}, signedDistanceFieldViews, vk::ImageLayout::eShaderReadOnlyOptimal });
 
@@ -601,6 +601,13 @@ float cubicExtension(float r){
     }
 }
 
+glm::vec2 adjustKernelRadiusOffset(glm::vec2 position){
+    return glm::vec2(position.x - 2 * settings.h_LR, position.y - 2 * settings.h_LR);
+}
+glm::vec2 adjustKernelRadiusScale(glm::vec2 scale){
+    return glm::vec2(scale + 4 * settings.h_LR);
+}
+
 void GranularMatter::createSignedDistanceFields()
 {
 
@@ -616,6 +623,7 @@ void GranularMatter::createSignedDistanceFields()
     Line2D wallLeft{ glm::vec2(1, 0), settings.h_LR};
     rigidBodies.push_back(&wallLeft);
     Line2D wallRight{ glm::vec2(-1, 0), 0};
+    wallRight.position = glm::vec2(settings.DOMAIN_WIDTH, 0);
     rigidBodies.push_back(&wallRight);
 
     // rigidBodies.push_back(&box);
@@ -646,6 +654,11 @@ void GranularMatter::createSignedDistanceFields()
         signedDistanceFields.push_back(image);
         auto view = m_core->createImageView(image, vk::Format::eR32G32B32A32Sfloat); 
         signedDistanceFieldViews.push_back(view);
+        auto transform = VolumeMapTransform();
+        transform.position = adjustKernelRadiusOffset(rb->position);
+        transform.scale = adjustKernelRadiusScale(rb->scale);
+        std::cout << transform.position.x << " " << transform.position.y << std::endl;
+        volumeMapTransforms.push_back(transform);
     }
 
     volumeMapSampler = m_core->createSampler(vk::SamplerAddressMode::eClampToEdge); //, vk::BorderColor::eFloatOpaqueWhite
@@ -677,7 +690,7 @@ void GranularMatter::destroy(){
     }
 
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        m_core->destroyBuffer(atomicsBuffer[i]);
+        m_core->destroyBuffer(volumeMapTransformsBuffer[i]);
         m_core->destroyBuffer(particlesBufferA[i]);
         m_core->destroyBuffer(particlesBufferB[i]);
         m_core->destroyBuffer(particlesBufferHR[i]);

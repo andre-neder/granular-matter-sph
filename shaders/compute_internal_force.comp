@@ -75,20 +75,8 @@ layout(set = 1, binding = 2) buffer StartringIndicesStorage{
     uint startingIndices[];
 };
 
-int MASKS[] = int[] (0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF, 0x0000FFFF);
-
-int xy2z(vec2 U) {       // --- grid location to curve index
-    ivec2 I = ivec2(U);
-    int n=8;
-    for (int i=3; i>=0; i--)
-        I =  (I | (I << n)) & MASKS[i],
-        n /= 2;
-    return I.x | (I.y << 1);
-}
-
 uint calculateCellKey(uvec2 cell){
     return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
-   // return xy2z(cell);
 }
 
 float rand(){
@@ -118,12 +106,6 @@ vec2 gradW(float r, vec2 rij, float h){
 
 layout(set = 0, binding = 4) uniform sampler volumeMapSampler; 
 layout(set = 0, binding = 5) uniform texture2D sdfTexture[]; 
-vec2 adjustKernelRadiusOffset(vec2 position){
-    return vec2(position.x - 2 * settings.h_LR, position.y - 2 * settings.h_LR);
-}
-vec2 adjustKernelRadiusScale(vec2 scale){
-    return vec2(scale + 4 * settings.h_LR);
-}
 
 #define for_all_fluid_neighbors(code) { \
     ivec2 particleCell = ivec2(floor(vec2(p.predPosition / settings.h_LR))); \
@@ -146,20 +128,14 @@ vec2 adjustKernelRadiusScale(vec2 scale){
     } \
 }
 
+struct VolumeMapTransform{
+    vec2 position;
+    vec2 scale;
+};
 
-//Todo: move to separat buffer
-//* For each implicit boundary
-float halfBoxSize = settings.DOMAIN_HEIGHT / 4;
-vec2 rigidBodyPositions[] = {
-    vec2( 0, 0), // Bottom
-    vec2( 0, 0), // Left
-    vec2( settings.DOMAIN_WIDTH, 0), // Right
-    // vec2( settings.DOMAIN_WIDTH / 2.0 - halfBoxSize, 0),
-};
-vec2 rigidBodyScale[] = {
-    vec2(1), vec2(1), vec2(1), 
-    // vec2(halfBoxSize * 2),
-};
+layout(set = 0, binding = 3) buffer VolumeMapTransforms{
+    VolumeMapTransform transform[];
+} volumeMaps;
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
@@ -187,8 +163,8 @@ void main(){
         }
     )
 
-    for (int i = 0; i < rigidBodyPositions.length(); i++){
-        vec2 samplePosition = (p.predPosition - adjustKernelRadiusOffset(rigidBodyPositions[i])) / adjustKernelRadiusScale(rigidBodyScale[i]);
+    for (int i = 0; i < volumeMaps.transform.length(); i++){ 
+        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale;
         vec2 p_pi = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).gb;
         float r = length(p_pi);
         if(r < settings.h_LR){

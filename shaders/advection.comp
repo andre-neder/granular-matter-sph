@@ -81,32 +81,13 @@ layout(set = 1, binding = 2) buffer StartringIndicesStorage{
 };
 
 
-int MASKS[] = int[] (0x55555555, 0x33333333, 0x0F0F0F0F, 0x00FF00FF, 0x0000FFFF);
-
-int xy2z(vec2 U) {       // --- grid location to curve index
-    ivec2 I = ivec2(U);
-    int n=8;
-    for (int i=3; i>=0; i--)
-        I =  (I | (I << n)) & MASKS[i],
-        n /= 2;
-    return I.x | (I.y << 1);
-}
 
 uint calculateCellKey(uvec2 cell){
     return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
-   // return xy2z(cell);
 }
 
 float w(float d){
     return max(0, pow(1.0 - (d * d / (9.0 * settings.r_LR * settings.r_LR)), 3));
-}
-
-
-vec2 adjustKernelRadiusOffset(vec2 position){
-    return vec2(position.x - 2 * settings.h_LR, position.y - 2 * settings.h_LR);
-}
-vec2 adjustKernelRadiusScale(vec2 scale){
-    return vec2(scale + 4 * settings.h_LR);
 }
 
 
@@ -135,17 +116,14 @@ layout(set = 0, binding = 5) uniform texture2D sdfTexture[];
     } \
 } 
 
-float halfBoxSize = settings.DOMAIN_HEIGHT / 4;
-vec2 rigidBodyPositions[] = {
-    vec2( 0, 0), // Bottom
-    vec2( 0, 0), // Left
-    vec2( settings.DOMAIN_WIDTH, 0), // Right
-    // vec2( settings.DOMAIN_WIDTH / 2.0 - halfBoxSize, 0),
+struct VolumeMapTransform{
+    vec2 position;
+    vec2 scale;
 };
-vec2 rigidBodyScale[] = {
-    vec2(1), vec2(1), vec2(1), 
-    // vec2(halfBoxSize * 2),
-};
+
+layout(set = 0, binding = 3) buffer VolumeMapTransforms{
+    VolumeMapTransform transform[];
+} volumeMaps;
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
@@ -177,11 +155,9 @@ void main(){
         }
     )
 
-
-
     //Volume maps
-    for (int i = 0; i < rigidBodyPositions.length(); i++){ 
-        vec2 samplePosition = (p.position - adjustKernelRadiusOffset(rigidBodyPositions[i])) / adjustKernelRadiusScale(rigidBodyScale[i]);
+    for (int i = 0; i < volumeMaps.transform.length(); i++){ 
+        vec2 samplePosition = (p.position - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale;
         vec2 p_pi = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).gb;
         float d = length(p_pi);
          if(d <= settings.h_HR){
