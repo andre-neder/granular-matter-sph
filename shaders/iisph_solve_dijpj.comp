@@ -33,7 +33,7 @@ struct LRParticle{
 };
 
 
-layout(set = 0, binding = BUFFER_A) buffer StorageInput{
+layout(set = 0, binding = BUFFER_A) readonly buffer StorageInput{
     LRParticle particles[];
 } inStorage;
 
