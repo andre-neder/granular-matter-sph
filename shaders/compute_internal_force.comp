@@ -122,7 +122,9 @@ layout(set = 0, binding = 5) uniform texture2D sdfTexture[];
                 LRParticle pi = inStorage.particles[particleIndex]; \
                 vec2 p_pi = p.predPosition - pi.predPosition;\
                 float r = length(p_pi); \
-                code \
+                if (r < settings.h_LR){\
+                    code \
+                }\
             } \
         }  \
     } \
@@ -150,17 +152,16 @@ void main(){
         if(particleIndex == particleID){
             continue;
         }
-        if (r < settings.h_LR)
-        {
-            //* Pressure calculation
-            float piRhoSq =  pi.rho *  pi.rho;
-            float dpj = pi.p / piRhoSq;
-            vec2 gradient = gradW(p_pi, settings.h_LR);
-            
-            internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
-            
-            internalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
-        }
+       
+        //* Pressure calculation
+        float piRhoSq =  pi.rho *  pi.rho;
+        float dpj = pi.p / piRhoSq;
+        vec2 gradient = gradW(p_pi, settings.h_LR);
+        
+        internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+        
+        internalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+        
     )
 
     for (int i = 0; i < volumeMaps.transform.length(); i++){ 

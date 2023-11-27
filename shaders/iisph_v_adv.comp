@@ -147,7 +147,9 @@ vec2 gradW(float r, vec2 rij, float h){
                 LRParticle pi = inStorage.particles[particleIndex]; \
                 vec2 p_pi = p.predPosition - pi.predPosition;\
                 float r = length(p_pi); \
-                code \
+                if (r < settings.h_LR){\
+                    code \
+                }\
             } \
         }  \
     } \
@@ -175,10 +177,7 @@ void main(){
     p.velocity += settings.dt * (p.externalForce / settings.mass);
 
     for_all_fluid_neighbors(
-        if (r < settings.h_LR)
-        {
-            dii -= settings.mass / pRhoSq * gradW(p_pi, settings.h_LR);
-        }
+        dii -= settings.mass / pRhoSq * gradW(p_pi, settings.h_LR);
     )
 
     //Volume maps

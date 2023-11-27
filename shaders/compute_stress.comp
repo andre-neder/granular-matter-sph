@@ -143,7 +143,9 @@ layout(set = 0, binding = 5) uniform texture2D sdfTexture[];
                 LRParticle pi = inStorage.particles[particleIndex]; \
                 vec2 p_pi = p.predPosition - pi.predPosition;\
                 float r = length(p_pi); \
-                code \
+                if (r < settings.h_LR){\
+                    code \
+                }\
             } \
         }  \
     } \
@@ -173,13 +175,12 @@ void main(){
         if(particleIndex == particleID){
             continue;
         }
-        if (r < settings.h_LR)
-        {
-            //* Strain & Stress 
-            vec2 gradient = gradW(p_pi, settings.h_LR);
-            velocityGradient += pi.V * outerProduct(gradient, p.velocity - pi.velocity);
-            D += (1.f / (pi.rho )) * outerProduct(gradient, gradient);
-        }
+
+        //* Strain & Stress 
+        vec2 gradient = gradW(p_pi, settings.h_LR);
+        velocityGradient += pi.V * outerProduct(gradient, p.velocity - pi.velocity);
+        D += (1.f / (pi.rho )) * outerProduct(gradient, gradient);
+    
     )
 
 

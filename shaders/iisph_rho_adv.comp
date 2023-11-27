@@ -147,7 +147,9 @@ vec2 gradW(float r, vec2 rij, float h){
                 LRParticle pi = inStorage.particles[particleIndex]; \
                 vec2 p_pi = p.predPosition - pi.predPosition;\
                 float r = length(p_pi); \
-                code \
+                if (r < settings.h_LR){\
+                    code \
+                }\
             } \
         }  \
     } \
@@ -171,10 +173,7 @@ void main(){
     float densityAdv = p.rho;
 
     for_all_fluid_neighbors(
-        if (r < settings.h_LR)
-        {
-            densityAdv += settings.dt * settings.mass * dot((p.velocity - pi.velocity), gradW(p_pi, settings.h_LR));
-        }
+        densityAdv += settings.dt * settings.mass * dot((p.velocity - pi.velocity), gradW(p_pi, settings.h_LR));
     )
 
     //Volume maps
@@ -195,11 +194,8 @@ void main(){
     float aii = 0.0;
 
     for_all_fluid_neighbors(
-        if (r < settings.h_LR)
-        {
-            vec2 dji = (settings.mass / pRhoSq) * gradW(p_pi, settings.h_LR);
-            aii += settings.mass * dot((p.d - dji), gradW(p_pi, settings.h_LR));
-        }
+        vec2 dji = (settings.mass / pRhoSq) * gradW(p_pi, settings.h_LR);
+        aii += settings.mass * dot((p.d - dji), gradW(p_pi, settings.h_LR));
     )
 
     //Volume maps

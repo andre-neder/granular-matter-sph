@@ -148,7 +148,9 @@ vec2 gradW(float r, vec2 rij, float h){
                 LRParticle pi = inStorage.particles[particleIndex]; \
                 vec2 p_pi = p.predPosition - pi.predPosition;\
                 float r = length(p_pi); \
-                code \
+                if (r < settings.h_LR){\
+                    code \
+                }\
             } \
         }  \
     } \
