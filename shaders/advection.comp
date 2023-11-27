@@ -118,6 +118,19 @@ layout(set = 0, binding = 5) uniform texture2D sdfTexture[];
     } \
 } 
 
+#define for_all_volume_maps(code) { \
+    for (int i = 0; i < volumeMaps.transform.length(); i++){ \
+        vec2 samplePosition = (p.position - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale; \
+        vec3 vM = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).rgb; \
+        vec2 p_pi = vM.gb; \
+        float volume = vM.r; \
+        float r = length(p_pi); \
+        if(r < settings.h_HR){ \
+            code \
+        }\
+    }\
+}
+
 struct VolumeMapTransform{
     vec2 position;
     vec2 scale;
@@ -155,21 +168,16 @@ void main(){
         
     )
 
-    //Volume maps
-    for (int i = 0; i < volumeMaps.transform.length(); i++){ 
-        vec2 samplePosition = (p.position - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale;
-        vec2 p_pi = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).gb;
-        float d = length(p_pi);
-         if(d <= settings.h_HR){
-            float weight = w(d);
-            averageWeightedVelocity += weight * vec2(0);
-            overallWeight += weight;   
-            if(weight > maxWeight){
-                maxWeight = weight;
-                argMaxWeight = d;
-            } 
+    
+    for_all_volume_maps(
+        float weight = w(r);
+        averageWeightedVelocity += weight * vec2(0);
+        overallWeight += weight;   
+        if(weight > maxWeight){
+            maxWeight = weight;
+            argMaxWeight = r;
         }
-    }
+    )
 
     overallWeight = max(EPSILON, overallWeight);
     float nanFactor = overallWeight <= EPSILON ? 0.0 : 1.0;

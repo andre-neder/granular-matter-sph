@@ -132,6 +132,15 @@ vec2 gradW(float r, vec2 rij, float h){
     return -dir * slope;
 }
 
+struct VolumeMapTransform{
+    vec2 position;
+    vec2 scale;
+};
+
+layout(set = 0, binding = 3) buffer VolumeMapTransforms{
+    VolumeMapTransform transform[];
+} volumeMaps;
+
 #define for_all_fluid_neighbors(code) { \
     ivec2 particleCell = ivec2(floor(vec2(p.predPosition / settings.h_LR))); \
     for (int k = -1; k <= 1; k++){ \
@@ -155,15 +164,19 @@ vec2 gradW(float r, vec2 rij, float h){
     } \
 }
 
+#define for_all_volume_maps(code) { \
+    for (int i = 0; i < volumeMaps.transform.length(); i++){ \
+        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale; \
+        vec3 vM = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).rgb; \
+        vec2 p_pi = vM.gb; \
+        float volume = vM.r; \
+        float r = length(p_pi); \
+        if(r < settings.h_LR){ \
+            code \
+        }\
+    }\
+}
 
-struct VolumeMapTransform{
-    vec2 position;
-    vec2 scale;
-};
-
-layout(set = 0, binding = 3) buffer VolumeMapTransforms{
-    VolumeMapTransform transform[];
-} volumeMaps;
 
 void main(){
 
@@ -180,16 +193,10 @@ void main(){
         dii -= settings.mass / pRhoSq * gradW(p_pi, settings.h_LR);
     )
 
-    //Volume maps
-    for (int i = 0; i < volumeMaps.transform.length(); i++){ 
-        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale;
-        vec2 p_pi = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).gb;
-        float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
-        float r = length(p_pi);
-        if(r < settings.h_LR){
-            dii -= (volume * settings.rho0) / pRhoSq * gradW(p_pi, settings.h_LR);
-        }
-    }
+    
+    for_all_volume_maps(
+        dii -= (volume * settings.rho0) / pRhoSq * gradW(p_pi, settings.h_LR);
+    )
     
     p.d = dii;
 

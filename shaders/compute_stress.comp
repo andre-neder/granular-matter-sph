@@ -151,6 +151,18 @@ layout(set = 0, binding = 5) uniform texture2D sdfTexture[];
     } \
 }
 
+#define for_all_volume_maps(code) { \
+    for (int i = 0; i < volumeMaps.transform.length(); i++){ \
+        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale; \
+        vec3 vM = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).rgb; \
+        vec2 p_pi = vM.gb; \
+        float volume = vM.r; \
+        float r = length(p_pi); \
+        if(r < settings.h_LR){ \
+            code \
+        }\
+    }\
+}
 
 struct VolumeMapTransform{
     vec2 position;
@@ -183,19 +195,11 @@ void main(){
     
     )
 
-
-
-    for (int i = 0; i < volumeMaps.transform.length(); i++){ 
-        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale;
-        vec2 p_pi = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).gb;
-        float r = length(p_pi);
-        if(r < settings.h_LR){
-            float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
-            vec2 gradient = gradW(p_pi, settings.h_LR);
-            velocityGradient += volume * outerProduct(gradient, p.velocity - vec2(0,0));
-            D += (1.f / settings.rho0) * outerProduct(gradient, gradient);
-        }
-    }
+    for_all_volume_maps(
+        vec2 gradient = gradW(p_pi, settings.h_LR);
+        velocityGradient += volume * outerProduct(gradient, p.velocity - vec2(0,0));
+        D += (1.f / settings.rho0) * outerProduct(gradient, gradient);
+    )
 
     //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
     //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf

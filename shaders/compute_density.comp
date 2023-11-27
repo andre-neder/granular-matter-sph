@@ -142,6 +142,19 @@ vec2 gradW(float r, vec2 rij, float h){
     } \
 }
 
+#define for_all_volume_maps(code) { \
+    for (int i = 0; i < volumeMaps.transform.length(); i++){ \
+        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale; \
+        vec3 vM = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).rgb; \
+        vec2 p_pi = vM.gb; \
+        float volume = vM.r; \
+        float r = length(p_pi); \
+        if(r < settings.h_LR){ \
+            code \
+        }\
+    }\
+}
+
 struct VolumeMapTransform{
     vec2 position;
     vec2 scale;
@@ -176,16 +189,9 @@ void main(){
 
     rho *= settings.mass;
 
-    //Volume maps
-    for (int i = 0; i < volumeMaps.transform.length(); i++){ 
-        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale;
-        vec2 p_pi = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).gb;
-        float r = length(p_pi);
-        if(r < settings.h_LR){
-            float volume = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).r;
-            rho += (volume * settings.rho0) * W(r, settings.h_LR);
-        }
-    }
+    for_all_volume_maps(
+        rho += (volume * settings.rho0) * W(r, settings.h_LR);
+    )
 
     p.rho = rho;
     p.V = settings.mass / rho;
