@@ -11,7 +11,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCount;
 uint32_t workGroupCount2;
 
-glm::ivec3 computeSpace = glm::ivec3(128, 128, 1);
+glm::ivec3 computeSpace = glm::ivec3(128, 64, 1);
 
 #define TIMESTAMP_QUERY_COUNT 20
 
@@ -106,6 +106,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     startingIndices.resize(lrParticles.size());
     std::fill(startingIndices.begin(), startingIndices.end(), UINT32_MAX);
 
+    additionalDataBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     volumeMapTransformsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
@@ -113,6 +114,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     startingIndicesBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        additionalDataBuffer[i] = m_core->bufferFromData(&additionalData,  sizeof(AdditionalData),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
         volumeMapTransformsBuffer[i] = m_core->bufferFromData(volumeMapTransforms.data(), volumeMapTransforms.size() * sizeof(VolumeMapTransform),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
 
         particlesBufferA[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
@@ -530,7 +532,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 void GranularMatter::createDescriptorPool() {
 
     descriptorPool = m_core->createDescriptorPool({
-        { vk::DescriptorType::eStorageBuffer, (2 + 2 + 1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT },
+        { vk::DescriptorType::eStorageBuffer, (2 + 2 + 1 + 1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT },
         { vk::DescriptorType::eSampler, 1 * gpu::MAX_FRAMES_IN_FLIGHT },
         { vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size() * gpu::MAX_FRAMES_IN_FLIGHT },
     }, (1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT);
@@ -548,8 +550,9 @@ void GranularMatter::createDescriptorSetLayout() {
         {1, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
         {2, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
         {3, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
-        {4, vk::DescriptorType::eSampler, vk::ShaderStageFlagBits::eCompute},
-        {5, vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size(), vk::ShaderStageFlagBits::eCompute, vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound }
+        {4, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
+        {5, vk::DescriptorType::eSampler, vk::ShaderStageFlagBits::eCompute},
+        {6, vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size(), vk::ShaderStageFlagBits::eCompute, vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound }
     });
     
 }
@@ -567,9 +570,10 @@ void GranularMatter::createDescriptorSets() {
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(LRParticle) * lrParticles.size() });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(LRParticle) * lrParticles.size() });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 2, vk::DescriptorType::eStorageBuffer, particlesBufferHR[i], sizeof(HRParticle) * hrParticles.size() });
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 3, vk::DescriptorType::eStorageBuffer, volumeMapTransformsBuffer[i], volumeMapTransforms.size() * sizeof(VolumeMapTransform)});
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 4, vk::DescriptorType::eSampler, volumeMapSampler, {}, {} });
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 5, vk::DescriptorType::eSampledImage, {}, signedDistanceFieldViews, vk::ImageLayout::eShaderReadOnlyOptimal });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 3, vk::DescriptorType::eStorageBuffer, additionalDataBuffer[i], sizeof(AdditionalData) });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 4, vk::DescriptorType::eStorageBuffer, volumeMapTransformsBuffer[i], volumeMapTransforms.size() * sizeof(VolumeMapTransform)});
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 5, vk::DescriptorType::eSampler, volumeMapSampler, {}, {} });
+        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 6, vk::DescriptorType::eSampledImage, {}, signedDistanceFieldViews, vk::ImageLayout::eShaderReadOnlyOptimal });
 
         m_core->updateDescriptorSet(descriptorSetsParticles[i]);
     }
@@ -657,7 +661,6 @@ void GranularMatter::createSignedDistanceFields()
         auto transform = VolumeMapTransform();
         transform.position = adjustKernelRadiusOffset(rb->position);
         transform.scale = adjustKernelRadiusScale(rb->scale);
-        std::cout << transform.position.x << " " << transform.position.y << std::endl;
         volumeMapTransforms.push_back(transform);
     }
 
@@ -690,6 +693,7 @@ void GranularMatter::destroy(){
     }
 
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_core->destroyBuffer(additionalDataBuffer[i]);
         m_core->destroyBuffer(volumeMapTransformsBuffer[i]);
         m_core->destroyBuffer(particlesBufferA[i]);
         m_core->destroyBuffer(particlesBufferB[i]);

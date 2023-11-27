@@ -1,7 +1,7 @@
 #version 460
 
 #extension GL_EXT_nonuniform_qualifier : require
-#extension GL_EXT_shader_atomic_float : require
+#extension GL_EXT_shader_atomic_float : enable
 
 #define UINT_MAX (0xffffffff)
 #define FLOAT_MAX 3.402823466e+38
@@ -47,12 +47,17 @@ struct VolumeMapTransform{
     vec2 scale;
 };
 
-layout(set = 0, binding = 3) buffer VolumeMapTransforms{
+layout(set = 0, binding = 3) buffer AdditionalData{
+    float averageDensityError;
+    float pad[3];
+} additionalData;
+
+layout(set = 0, binding = 4) buffer VolumeMapTransforms{
     VolumeMapTransform transform[];
 } volumeMaps;
 
-layout(set = 0, binding = 4) uniform sampler volumeMapSampler; 
-layout(set = 0, binding = 5) uniform texture2D sdfTexture[]; 
+layout(set = 0, binding = 5) uniform sampler volumeMapSampler; 
+layout(set = 0, binding = 6) uniform texture2D sdfTexture[]; 
  
 layout( push_constant ) uniform Settings{
     vec2 g; 
@@ -192,7 +197,7 @@ void main(){
     if(p.p != 0.0){
         float newDensity = settings.rho0 * ((p.a * p.p + sum) * dtSq - b) + settings.rho0;
         //? just do 2 iterations for now
-        // atomicAdd(atomic.averageDensityError, newDensity - settings.rho0);
+        atomicAdd(additionalData.averageDensityError, newDensity - settings.rho0);
     }
 
     outStorage.particles[particleID] = p;

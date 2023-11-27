@@ -150,6 +150,11 @@ struct VolumeMapTransform{
     glm::vec2 scale = glm::vec2(1.0);
 };
 
+struct AdditionalData{
+    float averageDensityError = 0.01f;
+    float pad[3];
+};
+
 class GranularMatter
 {
 public:
@@ -171,6 +176,10 @@ public:
 private:
     gpu::Core* m_core;
     
+
+    AdditionalData additionalData;
+    std::vector<vk::Buffer>additionalDataBuffer;
+
     std::vector<VolumeMapTransform> volumeMapTransforms;
     std::vector<vk::CommandBuffer> commandBuffers;
     

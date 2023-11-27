@@ -120,8 +120,8 @@ vec2 gradW(float r, vec2 rij, float h){
     return -dir * slope;
 }
 
-layout(set = 0, binding = 4) uniform sampler volumeMapSampler; 
-layout(set = 0, binding = 5) uniform texture2D sdfTexture[]; 
+layout(set = 0, binding = 5) uniform sampler volumeMapSampler; 
+layout(set = 0, binding = 6) uniform texture2D sdfTexture[]; 
 
 
 #define for_all_fluid_neighbors(code) { \
@@ -165,7 +165,7 @@ struct VolumeMapTransform{
     vec2 scale;
 };
 
-layout(set = 0, binding = 3) buffer VolumeMapTransforms{
+layout(set = 0, binding = 4) buffer VolumeMapTransforms{
     VolumeMapTransform transform[];
 } volumeMaps;
 

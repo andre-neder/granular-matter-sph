@@ -41,8 +41,8 @@ layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
     LRParticle particles[];
 } outStorage;
 
-layout(set = 0, binding = 4) uniform sampler volumeMapSampler; 
-layout(set = 0, binding = 5) uniform texture2D sdfTexture[]; 
+layout(set = 0, binding = 5) uniform sampler volumeMapSampler; 
+layout(set = 0, binding = 6) uniform texture2D sdfTexture[]; 
  
 layout( push_constant ) uniform Settings{
     vec2 g; 
@@ -133,7 +133,7 @@ struct VolumeMapTransform{
     vec2 scale;
 };
 
-layout(set = 0, binding = 3) buffer VolumeMapTransforms{
+layout(set = 0, binding = 4) buffer VolumeMapTransforms{
     VolumeMapTransform transform[];
 } volumeMaps;
 

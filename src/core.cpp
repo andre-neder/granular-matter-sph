@@ -58,7 +58,7 @@ bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
-    auto m_deviceFeatures2 = pDevice.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures>();
+    auto m_deviceFeatures2 = pDevice.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>();
     bool supportsAllFeatures =
         m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy &&
         m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.geometryShader &&
@@ -69,7 +69,9 @@ bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
         m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().runtimeDescriptorArray;
         m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().shaderSampledImageArrayNonUniformIndexing && 
         m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().descriptorBindingVariableDescriptorCount && 
-        m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().descriptorBindingPartiallyBound;
+        m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().descriptorBindingPartiallyBound &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>().shaderBufferFloat32Atomics &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>().shaderBufferFloat32AtomicAdd;
 
     return indices.isComplete() && extensionsSupported && swapChainAdequate && supportsAllFeatures;
 }
@@ -137,13 +139,14 @@ void Core::createLogicalDevice(){
 	{
 		deviceCreateInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, {});
 	}
-    vk::StructureChain<vk::DeviceCreateInfo, vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures> deviceFeatureCreateInfo = {
+    vk::StructureChain<vk::DeviceCreateInfo, vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT> deviceFeatureCreateInfo = {
 		deviceCreateInfo,
 		vk::PhysicalDeviceFeatures2().setFeatures(vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true).setGeometryShader(true).setShaderSampledImageArrayDynamicIndexing(true)),
 		vk::PhysicalDeviceRayTracingPipelineFeaturesKHR().setRayTracingPipeline(true),
 		vk::PhysicalDeviceAccelerationStructureFeaturesKHR().setAccelerationStructure(true),
 		vk::PhysicalDeviceBufferDeviceAddressFeatures().setBufferDeviceAddress(true),
-		vk::PhysicalDeviceDescriptorIndexingFeatures().setRuntimeDescriptorArray(true).setShaderSampledImageArrayNonUniformIndexing(true).setDescriptorBindingVariableDescriptorCount(true).setDescriptorBindingPartiallyBound(true)
+		vk::PhysicalDeviceDescriptorIndexingFeatures().setRuntimeDescriptorArray(true).setShaderSampledImageArrayNonUniformIndexing(true).setDescriptorBindingVariableDescriptorCount(true).setDescriptorBindingPartiallyBound(true),
+        vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT().setShaderBufferFloat32Atomics(true).setShaderBufferFloat32AtomicAdd(true)
 	};
     
     try
