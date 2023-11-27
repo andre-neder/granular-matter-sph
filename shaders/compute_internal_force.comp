@@ -163,7 +163,6 @@ void main(){
        
         //* Pressure calculation
         float piRhoSq =  pi.rho *  pi.rho;
-        float dpj = pi.p / piRhoSq;
         vec2 gradient = gradW(p_pi, settings.h_LR);
         
         internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
