@@ -11,7 +11,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCount;
 uint32_t workGroupCount2;
 
-glm::ivec3 computeSpace = glm::ivec3(64, 32, 1);
+glm::ivec3 computeSpace = glm::ivec3(128, 128, 1);
 
 #define TIMESTAMP_QUERY_COUNT 20
 
@@ -173,7 +173,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     computeStressPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_stress.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     computeInternalForcePass = gpu::ComputePass(m_core, SHADER_PATH"/compute_internal_force.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
     integratePass = gpu::ComputePass(m_core, SHADER_PATH"/integrate.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
-    advectionPass = gpu::ComputePass(m_core, SHADER_PATH"/advection.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
+    advectionPass = gpu::ComputePass(m_core, SHADER_PATH"/hr_advection.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workgroup_size_x) }, sizeof(SPHSettings));
 }
 
 GranularMatter::~GranularMatter()
@@ -226,9 +226,9 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     startTime = std::chrono::high_resolution_clock::now();
 
     // Courant-Friedrichs–Lewy (CFL) condition
-    // float v_max = sqrt(settings.stiffness); //Todo
-    // float C_courant = 0.4f;
-    // float dt_max = C_courant * (settings.h_LR / v_max);
+    float v_max = sqrt(settings.stiffness); //Todo
+    float C_courant = 0.4f;
+    float dt_max = C_courant * (settings.h_LR / v_max);
     
     settings.dt = dt; //std::min(dt, dt_max);
 
