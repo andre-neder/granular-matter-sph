@@ -79,25 +79,20 @@ uint calculateCellKey(uvec2 cell){
     return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
 }
 
-float rand(){
-    return fract(sin(dot(vec2(settings.dt * 25165843.f, settings.dt * 786433), vec2(12.9898, 78.233))) * 43758.5453);
-}
-
-//Todo: try other gradient
 float W(float r, float h){
     float volume = PI * pow(h, 4.f) / 6.f;
     return (h - r) * (h - r) / volume;
 }
 vec2 gradW(vec2 rij, float h){
     float r = length(rij);
-    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
+    vec2 dir = r <= EPSILON ? vec2(0) : normalize(rij); 
     float scale = -12.f / (PI * pow(h, 4.f));
     float slope = scale * (r - h);
     return -dir * slope;
 }
 
 vec2 gradW(float r, vec2 rij, float h){
-    vec2 dir = r <= EPSILON ? vec2(rand(), rand()) : normalize(rij); 
+    vec2 dir = r <= EPSILON ? vec2(0) : normalize(rij); 
     float scale = -12.f / (PI * pow(h, 4.f));
     float slope = scale * (r - h);
     return -dir * slope;  
