@@ -162,10 +162,19 @@ layout(set = 0, binding = 4) buffer VolumeMapTransforms{
     VolumeMapTransform transform[];
 } volumeMaps;
 
-void main(){
+layout(set = 0, binding = 3) buffer AdditionalData{
+    float averageDensityError;
+    float pad[3];
+} additionalData;
 
-    uint particleID = gl_GlobalInvocationID.x;;
+void main(){
+    
+    uint particleID = gl_GlobalInvocationID.x;
     LRParticle p = inStorage.particles[particleID];
+
+    if(particleID == 0){
+        additionalData.averageDensityError = 0.0;
+    }
 
     vec2 dij_pj = vec2(0.0); 
 

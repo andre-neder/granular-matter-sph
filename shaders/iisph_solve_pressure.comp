@@ -185,19 +185,20 @@ void main(){
         sum += (volume * settings.rho0) * dot(p.dijpj, gradW(p_pi, settings.h_LR));
     )
     
-    float b = settings.rho0 - p.densityAdv;
     float dtSq = settings.dt * settings.dt;
     float omega = 0.5;
     float denom = p.a * dtSq;
     p.p = 0.0;
     if(abs(denom) > EPSILON){
-        p.p = max((1.0 - omega) * p.lastP + omega / denom * (b - (dtSq * sum)), 0.0);
+        p.p = max((1.0 - omega) * p.lastP + omega / denom * (settings.rho0 - p.densityAdv - (dtSq * sum)), 0.0);
     }
 
     if(p.p != 0.0){
-        float newDensity = settings.rho0 * ((p.a * p.p + sum) * dtSq - b) + settings.rho0;
+        float b = settings.rho0 - p.densityAdv;
+        float newDensity = ((p.a * p.p + sum) * dtSq - b) + settings.rho0;
         //? just do 2 iterations for now
-        atomicAdd(additionalData.averageDensityError, newDensity - settings.rho0);
+        float densityError = newDensity - settings.rho0;
+        atomicAdd(additionalData.averageDensityError, densityError);
     }
 
     outStorage.particles[particleID] = p;

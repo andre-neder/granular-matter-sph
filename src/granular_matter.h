@@ -151,7 +151,7 @@ struct VolumeMapTransform{
 };
 
 struct AdditionalData{
-    float averageDensityError = 0.01f;
+    float averageDensityError = 0.001f;
     float pad[3];
 };
 
@@ -179,6 +179,7 @@ private:
 
     AdditionalData additionalData;
     std::vector<vk::Buffer>additionalDataBuffer;
+    std::vector<vk::Fence> iisphFences;
 
     std::vector<VolumeMapTransform> volumeMapTransforms;
     std::vector<vk::CommandBuffer> commandBuffers;
