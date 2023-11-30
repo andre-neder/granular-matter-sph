@@ -187,7 +187,7 @@ private:
     std::vector<VolumeMapTransform> volumeMapTransforms;
     std::vector<vk::CommandBuffer> commandBuffers;
     
-    std::vector<vk::Buffer> particlesBufferA;
+    // std::vector<vk::Buffer> particlesBufferA;
     std::vector<vk::Buffer> volumeMapTransformsBuffer;
     
     std::vector<ParticleGridEntry> particleCells; // particle (index) is in cell (value)

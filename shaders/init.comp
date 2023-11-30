@@ -2,8 +2,8 @@
 #define VULKAN 100
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
-#define BUFFER_A 0
-#define BUFFER_B 1
+
+
 #define UINT_MAX (0xffffffff)
 
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
@@ -29,13 +29,11 @@ struct LRParticle{
     float pad2;
 };
 
-layout(set = 0, binding = BUFFER_A) readonly buffer StorageInput{
-    LRParticle particles[];
-} inStorage;
 
-layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
+
+layout(set = 0, binding = 1) buffer SSBO{
     LRParticle particles[];
-} outStorage;
+} ssbo;
 
 layout( push_constant ) uniform Settings{
     vec2 g; 
@@ -83,7 +81,7 @@ uint calculateCellKey(uvec2 cell){
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
-    LRParticle p = inStorage.particles[particleID];
+    LRParticle p = ssbo.particles[particleID];
 
     p.externalForce = settings.g * settings.mass;
 
@@ -92,7 +90,7 @@ void main(){
     p.predPosition = p.position;
     //Todo: Prediction required?
 
-    outStorage.particles[particleID] = p;
+    ssbo.particles[particleID] = p;
 
     ivec2 gridCell = ivec2(floor(vec2(p.predPosition / settings.h_LR)));
     

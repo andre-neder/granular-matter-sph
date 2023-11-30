@@ -6,8 +6,7 @@
 #define FLOAT_MAX 3.402823466e+38
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
-#define BUFFER_A 0
-#define BUFFER_B 1
+
 
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
@@ -33,13 +32,11 @@ struct LRParticle{
 };
 
 
-layout(set = 0, binding = BUFFER_B) readonly buffer StorageInput{
-    LRParticle particles[];
-} inStorage;
 
-layout(set = 0, binding = BUFFER_A) buffer StorageOutput{
+
+layout(set = 0, binding = 1) buffer SSBO{
     LRParticle particles[];
-} outStorage;
+} ssbo;
 
 layout(set = 0, binding = 5) uniform sampler volumeMapSampler; 
 layout(set = 0, binding = 6) uniform texture2D sdfTexture[]; 
@@ -127,7 +124,7 @@ vec2 gradW(float r, vec2 rij, float h){
                     break; \
                 } \
                 uint particleIndex = gridLookup.entries[i].particleIndex; \
-                LRParticle pi = inStorage.particles[particleIndex]; \
+                LRParticle pi = ssbo.particles[particleIndex]; \
                 vec2 p_pi = p.predPosition - pi.predPosition;\
                 float r = length(p_pi); \
                 if (r < settings.h_LR){\
@@ -163,7 +160,7 @@ layout(set = 0, binding = 4) buffer VolumeMapTransforms{
 void main(){
 
     uint particleID = gl_GlobalInvocationID.x;;
-    LRParticle p = inStorage.particles[particleID];
+    LRParticle p = ssbo.particles[particleID];
 
     vec2 relativeVelocity = settings.windDirection - p.velocity;
     float occluded = 0.866; //* 30° cone
@@ -200,6 +197,6 @@ void main(){
     
     
 
-    outStorage.particles[particleID] = p;
+    ssbo.particles[particleID] = p;
 }
 

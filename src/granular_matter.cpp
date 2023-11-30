@@ -13,7 +13,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCount;
 uint32_t workGroupCount2;
 
-glm::ivec3 computeSpace = glm::ivec3(256,128, 1);
+glm::ivec3 computeSpace = glm::ivec3(256,64, 1);
 
 std::vector<vk::QueryPool> timeQueryPools;
 std::vector<std::vector<std::string>> timestampLabels;
@@ -99,7 +99,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     additionalDataBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     volumeMapTransformsBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-    particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    // particlesBufferA.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferB.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particlesBufferHR.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
@@ -108,7 +108,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
         additionalDataBuffer[i] = m_core->bufferFromData(&additionalData,  sizeof(AdditionalData), vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferHost, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite );
         volumeMapTransformsBuffer[i] = m_core->bufferFromData(volumeMapTransforms.data(), volumeMapTransforms.size() * sizeof(VolumeMapTransform),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
 
-        particlesBufferA[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
+        // particlesBufferA[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
         particlesBufferB[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
         particlesBufferHR[i] = m_core->bufferFromData(hrParticles.data(),sizeof(HRParticle) * hrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
         
@@ -252,7 +252,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     timestampLabels[currentFrame].push_back("Copy data from last Frame");
     {
         vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * lrParticles.size());
-        commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferA[currentFrame], 1, &copyRegion);
+        commandBuffers[currentFrame].copyBuffer(particlesBufferB[(currentFrame - 1) % gpu::MAX_FRAMES_IN_FLIGHT], particlesBufferB[currentFrame], 1, &copyRegion);
     }
 
     {
@@ -489,14 +489,14 @@ void GranularMatter::update(int currentFrame, int imageIndex){
             commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], timestampLabels[currentFrame].size());
             
         
-            timestampLabels[currentFrame].push_back("IISPH Iteration" + std::to_string(l) + "Sync buffers");
-            {
-                vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * lrParticles.size());
-                commandBuffers[currentFrame].copyBuffer(particlesBufferB[currentFrame], particlesBufferA[currentFrame], 1, &copyRegion);
-            }
-            //* Wait for copy action
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
-            commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eTransfer, timeQueryPools[currentFrame], timestampLabels[currentFrame].size());
+            // timestampLabels[currentFrame].push_back("IISPH Iteration" + std::to_string(l) + "Sync buffers");
+            // {
+            //     vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * lrParticles.size());
+            //     commandBuffers[currentFrame].copyBuffer(particlesBufferB[currentFrame], particlesBufferA[currentFrame], 1, &copyRegion);
+            // }
+            // //* Wait for copy action
+            // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
+            // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eTransfer, timeQueryPools[currentFrame], timestampLabels[currentFrame].size());
             
         
             m_core->endCommands(commandBuffers[currentFrame]);
@@ -614,15 +614,15 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 
         m_core->beginCommands(commandBuffers[currentFrame]);
 
-        timestampLabels[currentFrame].push_back("Sync buffers");
-        {
-            // Todo: try with mutiple descriptor sets
-            vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * lrParticles.size());
-            commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
-        }
-        //* Wait for copy action
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], timestampLabels[currentFrame].size());
+        // timestampLabels[currentFrame].push_back("Sync buffers");
+        // {
+        //     // Todo: try with mutiple descriptor sets
+        //     vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * lrParticles.size());
+        //     commandBuffers[currentFrame].copyBuffer(particlesBufferA[currentFrame], particlesBufferB[currentFrame], 1, &copyRegion);
+        // }
+        // //* Wait for copy action
+        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
+        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], timestampLabels[currentFrame].size());
         
         
     }
@@ -634,7 +634,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
 void GranularMatter::createDescriptorPool() {
 
     descriptorPool = m_core->createDescriptorPool({
-        { vk::DescriptorType::eStorageBuffer, (2 + 2 + 1 + 1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT },
+        { vk::DescriptorType::eStorageBuffer, (2 + 1 + 1 + 1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT },
         { vk::DescriptorType::eSampler, 1 * gpu::MAX_FRAMES_IN_FLIGHT },
         { vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size() * gpu::MAX_FRAMES_IN_FLIGHT },
     }, (1 + 1) * gpu::MAX_FRAMES_IN_FLIGHT);
@@ -648,7 +648,7 @@ void GranularMatter::createDescriptorSetLayout() {
     });
 
     descriptorSetLayoutParticles = m_core->createDescriptorSetLayout({
-        {0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
+        // {0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
         {1, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
         {2, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
         {3, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute},
@@ -668,8 +668,8 @@ void GranularMatter::createDescriptorSets() {
         m_core->addDescriptorWrite(descriptorSetsGrid[i], { 0, vk::DescriptorType::eStorageBuffer, particleCellBuffer[i], sizeof(ParticleGridEntry) * particleCells.size() });
         m_core->addDescriptorWrite(descriptorSetsGrid[i], { 2, vk::DescriptorType::eStorageBuffer, startingIndicesBuffers[i], sizeof(uint32_t) * startingIndices.size() });
         m_core->updateDescriptorSet(descriptorSetsGrid[i]);
-
-        m_core->addDescriptorWrite(descriptorSetsParticles[i], { 0, vk::DescriptorType::eStorageBuffer, particlesBufferA[i], sizeof(LRParticle) * lrParticles.size() });
+        
+        // m_core->addDescriptorWrite(descriptorSetsParticles[i], { 0, vk::DescriptorType::eStorageBuffer, particlesBufferB[(i - 1) % gpu::MAX_FRAMES_IN_FLIGHT], sizeof(LRParticle) * lrParticles.size() });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 1, vk::DescriptorType::eStorageBuffer, particlesBufferB[i], sizeof(LRParticle) * lrParticles.size() });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 2, vk::DescriptorType::eStorageBuffer, particlesBufferHR[i], sizeof(HRParticle) * hrParticles.size() });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 3, vk::DescriptorType::eStorageBuffer, additionalDataBuffer[i], sizeof(AdditionalData) });
@@ -797,7 +797,7 @@ void GranularMatter::destroy(){
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->destroyBuffer(additionalDataBuffer[i]);
         m_core->destroyBuffer(volumeMapTransformsBuffer[i]);
-        m_core->destroyBuffer(particlesBufferA[i]);
+        // m_core->destroyBuffer(particlesBufferA[i]);
         m_core->destroyBuffer(particlesBufferB[i]);
         m_core->destroyBuffer(particlesBufferHR[i]);
         m_core->destroyBuffer(particleCellBuffer[i]);

@@ -2,8 +2,8 @@
 #define VULKAN 100
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
-#define BUFFER_A 0
-#define BUFFER_B 1
+
+
 
 #extension GL_EXT_nonuniform_qualifier : require
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
@@ -30,13 +30,11 @@ struct LRParticle{
 };
 
 
-layout(set = 0, binding = BUFFER_A) readonly buffer StorageInput{
-    LRParticle particles[];
-} inStorage;
 
-layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
+
+layout(set = 0, binding = 1) buffer SSBO{
     LRParticle particles[];
-} outStorage;
+} ssbo;
 
 layout( push_constant ) uniform Settings{
     vec2 g; 
@@ -136,7 +134,7 @@ layout(set = 0, binding = 6) uniform texture2D sdfTexture[];
                     break; \
                 } \
                 uint particleIndex = gridLookup.entries[i].particleIndex; \
-                LRParticle pi = inStorage.particles[particleIndex]; \
+                LRParticle pi = ssbo.particles[particleIndex]; \
                 vec2 p_pi = p.predPosition - pi.predPosition;\
                 float r = length(p_pi); \
                 if (r < settings.h_LR){\
@@ -173,7 +171,7 @@ void main(){
 
 
     uint particleID = gl_GlobalInvocationID.x;;
-    LRParticle p = inStorage.particles[particleID];
+    LRParticle p = ssbo.particles[particleID];
 
     //* Strain & Stress 
     mat2 velocityGradient = mat2(0.f);
@@ -228,5 +226,5 @@ void main(){
     // p.pad0 = normStressTensor;
     // p.stress = frobenius(stress) > frobenius(cohesion) ? stress : cohesion;
 
-    outStorage.particles[particleID] = p;
+    ssbo.particles[particleID] = p;
 }
