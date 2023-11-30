@@ -33,11 +33,11 @@ struct LRParticle{
 };
 
 
-layout(set = 0, binding = BUFFER_A) readonly buffer StorageInput{
+layout(set = 0, binding = BUFFER_B) readonly buffer StorageInput{
     LRParticle particles[];
 } inStorage;
 
-layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
+layout(set = 0, binding = BUFFER_A) buffer StorageOutput{
     LRParticle particles[];
 } outStorage;
 
@@ -51,7 +51,7 @@ layout( push_constant ) uniform Settings{
 
     float rho0; 
     float mass;
-    float stiffness;	  
+    float maxCompression;	  
     float dt;	 
 
     float DOMAIN_WIDTH; 

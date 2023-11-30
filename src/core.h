@@ -101,6 +101,8 @@ namespace gpu
             void beginCommands(vk::CommandBuffer commandBuffer, vk::CommandBufferBeginInfo beginInfo = vk::CommandBufferBeginInfo());
             void endCommands(vk::CommandBuffer commandBuffer);
             
+            void createQueryPool(vk::QueryPool* pool, vk::QueryType type, uint32_t size);
+
             //* Descriptors
             std::vector<vk::DescriptorSet> allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count = gpu::MAX_FRAMES_IN_FLIGHT);
             // void updateDescriptorSet(vk::DescriptorSet set, std::vector<gpu::BufferDescriptorWrite> writes);

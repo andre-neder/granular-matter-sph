@@ -45,7 +45,7 @@ layout( push_constant ) uniform Settings{
 
     float rho0; 
     float mass;
-    float stiffness;	  
+    float maxCompression;	  
     float dt;	 
 
     float DOMAIN_WIDTH; 
@@ -210,16 +210,17 @@ void main(){
     float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
 
     mat2 stress = mat2(0);
-    mat2 cohesion = mat2(0);
+
 
     float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);
     if(p.p > EPSILON && normDeviatoricStressTensor > EPSILON){
         stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
     }
 
-    // p.stress = stress;
+    p.stress = stress;
     
     // float maxCohesion = _beta * _beta * _C;
+    // mat2 cohesion = mat2(0);
     // float normStressTensor = frobenius(stressTensor);
     // if(p.p > EPSILON && normStressTensor > EPSILON){
     //     cohesion = normStressTensor <= maxCohesion ? stressTensor : stressTensor * (maxCohesion / normStressTensor);

@@ -14,7 +14,7 @@ layout( push_constant ) uniform Settings{
 
     float rho0; 
     float mass;
-    float stiffness;	  
+    float maxCompression;	  
     float dt;	 
 
     float DOMAIN_WIDTH; 

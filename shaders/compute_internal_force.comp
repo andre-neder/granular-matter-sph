@@ -44,7 +44,7 @@ layout( push_constant ) uniform Settings{
 
     float rho0; 
     float mass;
-    float stiffness;	  
+    float maxCompression;	  
     float dt;	 
 
     float DOMAIN_WIDTH; 
@@ -167,7 +167,7 @@ void main(){
         
         internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
         
-        internalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+        // internalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
         
     )
 
@@ -176,7 +176,7 @@ void main(){
         
         internalForce += (volume * settings.rho0) * (p.p / pRhoSq) * gradient; 
         
-        internalForce += (volume * settings.rho0) * (p.stress / pRhoSq) * gradient;
+        // internalForce += (volume * settings.rho0) * (p.stress / pRhoSq) * gradient;
     )
 
     internalForce *= -settings.mass;

@@ -21,11 +21,11 @@ struct SPHSettings{
 
     float rho0 = 1950.f;                                //* kg/m^3
     float mass = PARTICLE_VOLUME * rho0;                //* kg
-    float stiffness = 50000.f;	                        
+    float maxCompression = 0.01f;	                        
     float dt = 0.0006f;	                                //* s
 
-    float DOMAIN_WIDTH = 100.f;                          //* m
-    float DOMAIN_HEIGHT = 50.f;                         //* m
+    float DOMAIN_WIDTH = 400.f;                          //* m
+    float DOMAIN_HEIGHT = 200.f;                         //* m
     float sleepingSpeed = 0.0005f;                         //* m/s
     float h_HR = r_LR * 3;
 

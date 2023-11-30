@@ -11,7 +11,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCount;
 uint32_t workGroupCount2;
 
-glm::ivec3 computeSpace = glm::ivec3(512, 64, 1);
+glm::ivec3 computeSpace = glm::ivec3(256,128, 1);
 
 #define TIMESTAMP_QUERY_COUNT 20
 
@@ -59,24 +59,25 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     timeQueryPools.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        vk::QueryPoolCreateInfo createInfo{
-            {},
-            vk::QueryType::eTimestamp,
-            TIMESTAMP_QUERY_COUNT, // start time & end time
-            {}
-        };
+        // vk::QueryPoolCreateInfo createInfo{
+        //     {},
+        //     vk::QueryType::eTimestamp,
+        //     TIMESTAMP_QUERY_COUNT, // start time & end time
+        //     {}
+        // };
         
-        vk::Result result = m_core->getDevice().createQueryPool(&createInfo, nullptr, &timeQueryPools[i]);
-        if (result != vk::Result::eSuccess)
-        {
-            throw std::runtime_error("Failed to create time query pool!");
-        }
+        // vk::Result result = m_core->getDevice().createQueryPool(&createInfo, nullptr, &timeQueryPools[i]);
+        // if (result != vk::Result::eSuccess)
+        // {
+        //     throw std::runtime_error("Failed to create time query pool!");
+        // }
+        m_core->createQueryPool(&timeQueryPools[i], vk::QueryType::eTimestamp, TIMESTAMP_QUERY_COUNT);
     }
    
     // equilibrium distance
     float r0 = 0.5f * settings.h_LR;
 
-    float initialDistance = 0.5f * settings.h_LR;
+    float initialDistance = 0.7f * settings.h_LR;
     std::vector<glm::vec2> hrParticleOffsets = {
         {0, 0},
         {0, settings.r_LR},
@@ -84,12 +85,12 @@ GranularMatter::GranularMatter(gpu::Core* core)
         {0, -settings.r_LR},
         {-settings.r_LR, 0},
     };
-
+    float randomFaktor = 3.f;
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
             //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
-            glm::vec2 lrPosition = glm::vec2(j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.y / 2),i * initialDistance + settings.h_LR );
-            lrParticles.push_back(LRParticle(lrPosition.x, lrPosition.y));
+            glm::vec2 lrPosition = glm::vec2(j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.y / 2),i * initialDistance + settings.h_LR);
+            lrParticles.push_back(LRParticle(lrPosition.x + std::rand() / RAND_MAX * randomFaktor , lrPosition.y + std::rand() / RAND_MAX * randomFaktor));
 
             for(uint32_t k = 0; k < settings.n_HR; k++){
                 glm::vec2 offset = hrParticleOffsets[k % hrParticleOffsets.size()];
@@ -243,7 +244,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     startTime = std::chrono::high_resolution_clock::now();
 
     // Courant-Friedrichs–Lewy (CFL) condition
-    float v_max = sqrt(settings.stiffness); //Todo
+    float v_max = sqrt(settings.maxCompression); //Todo
     float C_courant = 0.4f;
     float dt_max = C_courant * (settings.h_LR / v_max);
     
@@ -381,8 +382,22 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
         
+                
+        //* predict stress A -> B
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(computeStressPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
+        }
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
+        
+
         //* IISPH
-        //* v adv A -> B
+        //* v adv B -> A
         {
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphvAdvPass.m_pipeline);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphvAdvPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
@@ -394,7 +409,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         //* wait for compute pass
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-        //* rho adv B -> A
+        //* rho adv A -> B
         {
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphRhoAdvPass.m_pipeline);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphRhoAdvPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
@@ -434,10 +449,10 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         m_core->beginCommands(commandBuffers[currentFrame]);
 
         uint32_t l = 0;
-        float ny = 0.03f * settings.rho0;
+        float ny = settings.maxCompression * settings.rho0;
         while ((l < 2 || std::abs(additionalData.averageDensityError) > ny) && l < 20 ) 
         {
-            //* dijpj solve A -> B
+            //* dijpj solve B -> A
             {
                 commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipeline);
                 commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
@@ -449,7 +464,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
             //* wait for compute pass
             commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
             // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-            //* pressure solve B -> A
+            //* pressure solve A -> B
             {
                 commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphPressureSolvePass.m_pipeline);
                 commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphPressureSolvePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
@@ -461,7 +476,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
             //* wait for compute pass
             commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
             // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-            //* last pressure = pressure A -> B
+            //* last pressure = pressure B -> A
             {
                 commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphSolveEndPass.m_pipeline);
                 commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphSolveEndPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
@@ -474,7 +489,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
             commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
             // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
 
-            //* copy B -> A
+            //* copy A -> B
             {
                 vk::BufferCopy copyRegion(0, 0, sizeof(LRParticle) * lrParticles.size());
                 commandBuffers[currentFrame].copyBuffer(particlesBufferB[currentFrame], particlesBufferA[currentFrame], 1, &copyRegion);
@@ -525,19 +540,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         }
         std::cout << l << std::endl;
 
-        
-        //* predict stress A -> B
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(computeStressPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCount, 1, 1);
-        }
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-        
+
         //* predict force B -> A
         {
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipeline);
@@ -561,16 +564,16 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         }
 
         // //* wait for compute pass
-        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
         // //* advect hr particles B -> HR
-        // {
-        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        //     commandBuffers[currentFrame].dispatch(workGroupCount2, 1, 1);
-        // }
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCount2, 1, 1);
+        }
 
         simulationStepForward = false;
 

@@ -303,6 +303,22 @@ void gpu::Core::endCommands(vk::CommandBuffer commandBuffer)
     }
 }
 
+void gpu::Core::createQueryPool(vk::QueryPool* pool, vk::QueryType type, uint32_t size)
+{
+    vk::QueryPoolCreateInfo createInfo{
+        {},
+        type,
+        size, // start time & end time
+        {}
+    };
+    
+    vk::Result result = device.createQueryPool(&createInfo, nullptr, pool);
+    if (result != vk::Result::eSuccess)
+    {
+        throw std::runtime_error("Failed to create time query pool!");
+    }
+}
+
 std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count)
 {
     //Duplicate layout for each set

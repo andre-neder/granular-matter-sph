@@ -33,11 +33,11 @@ struct LRParticle{
 };
 
 
-layout(set = 0, binding = BUFFER_A) readonly buffer StorageInput{
+layout(set = 0, binding = BUFFER_B) readonly buffer StorageInput{
     LRParticle particles[];
 } inStorage;
 
-layout(set = 0, binding = BUFFER_B) buffer StorageOutput{
+layout(set = 0, binding = BUFFER_A) buffer StorageOutput{
     LRParticle particles[];
 } outStorage;
 
@@ -51,7 +51,7 @@ layout( push_constant ) uniform Settings{
 
     float rho0; 
     float mass;
-    float stiffness;	  
+    float maxCompression;	  
     float dt;	 
 
     float DOMAIN_WIDTH; 
@@ -181,9 +181,30 @@ void main(){
 
     vec2 dii = vec2(0);
 
+    vec2 frictionalForce = vec2(0);
+
     float pRhoSq = p.rho  * p.rho;
 
-    p.velocity += settings.dt * (p.externalForce / settings.mass);
+     for_all_fluid_neighbors(
+        if(particleIndex == particleID){
+            continue;
+        }
+       
+        //* Pressure calculation
+        float piRhoSq =  pi.rho *  pi.rho;
+        vec2 gradient = gradW(p_pi, settings.h_LR);
+        frictionalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
+        
+    )
+
+    for_all_volume_maps(
+        vec2 gradient = gradW(p_pi, settings.h_LR);
+        frictionalForce += (volume * settings.rho0) * (p.stress / pRhoSq) * gradient;
+    )
+
+    frictionalForce *= -settings.mass;
+
+    p.velocity += settings.dt * ((p.externalForce + frictionalForce) / settings.mass); 
 
     for_all_fluid_neighbors(
         dii -= settings.mass / pRhoSq * gradW(p_pi, settings.h_LR);
