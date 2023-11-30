@@ -187,7 +187,7 @@ void main(){
         //* Strain & Stress 
         vec2 gradient = gradW(p_pi, settings.h_LR);
         velocityGradient += pi.V * outerProduct(gradient, p.velocity - pi.velocity);
-        D += (1.f / (pi.rho )) * outerProduct(gradient, gradient);
+        D += (1.f / (pi.rho)) * outerProduct(gradient, gradient);
     
     )
 
@@ -217,7 +217,7 @@ void main(){
         stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
     }
 
-    p.stress = stress;
+    // p.stress = stress;
     
     // float maxCohesion = _beta * _beta * _C;
     // float normStressTensor = frobenius(stressTensor);

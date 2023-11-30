@@ -88,7 +88,7 @@ void main(){
     p.externalForce = settings.g * settings.mass;
 
     // p.velocity += settings.g * settings.dt;
-    // p.predPosition = p.position + (p.velocity ) * 1.f/120.f; 
+    // p.predPosition = p.position + (p.velocity + settings.g * settings.dt) * 1.f/120.f; 
     p.predPosition = p.position;
     //Todo: Prediction required?
 

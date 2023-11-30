@@ -98,7 +98,6 @@ private:
     }
 
     void createSyncObjects() {
-        // std::cout << "MAX_FRAMES_IN_FLIGHT: " << gpu::MAX_FRAMES_IN_FLIGHT << std::endl;
         computeInFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         computeFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         imageAvailableSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
@@ -131,18 +130,26 @@ private:
         std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
             simulation.getCommandBuffer((int)currentFrame)
         }; 
+        
+        {
+            std::vector<vk::Semaphore> signalComputeSemaphores = {computeFinishedSemaphores[currentFrame]};
 
-        std::vector<vk::Semaphore> signalComputeSemaphores = {computeFinishedSemaphores[currentFrame]};
+            std::vector<vk::Semaphore> waitSemaphores = {
+                simulation.iisphSemaphores[currentFrame]
+            };
+            std::vector<vk::PipelineStageFlags> waitStages = {
+                vk::PipelineStageFlagBits::eComputeShader
+            };
 
-        vk::SubmitInfo computeSubmitInfo{
-            {},
-            {},
-            submitComputeCommandBuffers,
-            signalComputeSemaphores
-        };
+            vk::SubmitInfo computeSubmitInfo{
+                waitSemaphores,
+                waitStages,
+                submitComputeCommandBuffers,
+                signalComputeSemaphores
+            };
 
-        core.getComputeQueue().submit(computeSubmitInfo, computeInFlightFences[currentFrame]);
-
+            core.getComputeQueue().submit(computeSubmitInfo, computeInFlightFences[currentFrame]);
+        }
 
         result = device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 

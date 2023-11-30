@@ -174,11 +174,6 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = inStorage.particles[particleID];
 
-    if(particleID == 0){
-        float particleCount = inStorage.particles.length();
-        additionalData.averageDensityError /= particleCount;
-    }
-
     p.lastP = p.p;
     
     outStorage.particles[particleID] = p;

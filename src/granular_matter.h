@@ -151,7 +151,7 @@ struct VolumeMapTransform{
 };
 
 struct AdditionalData{
-    float averageDensityError = 0.001f;
+    float averageDensityError = 0.f;
     float pad[3];
 };
 
@@ -173,6 +173,8 @@ public:
     void destroyFrameResources();
     void destroy(); 
 
+    std::vector<vk::Semaphore> iisphSemaphores;
+
 private:
     gpu::Core* m_core;
     
@@ -180,6 +182,7 @@ private:
     AdditionalData additionalData;
     std::vector<vk::Buffer>additionalDataBuffer;
     std::vector<vk::Fence> iisphFences;
+
 
     std::vector<VolumeMapTransform> volumeMapTransforms;
     std::vector<vk::CommandBuffer> commandBuffers;

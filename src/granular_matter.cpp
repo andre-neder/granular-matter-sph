@@ -11,7 +11,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCount;
 uint32_t workGroupCount2;
 
-glm::ivec3 computeSpace = glm::ivec3(256, 128, 1);
+glm::ivec3 computeSpace = glm::ivec3(512, 64, 1);
 
 #define TIMESTAMP_QUERY_COUNT 20
 
@@ -114,7 +114,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     particleCellBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     startingIndicesBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        additionalDataBuffer[i] = m_core->bufferFromData(&additionalData,  sizeof(AdditionalData),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
+        additionalDataBuffer[i] = m_core->bufferFromData(&additionalData,  sizeof(AdditionalData), vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferHost, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite );
         volumeMapTransformsBuffer[i] = m_core->bufferFromData(volumeMapTransforms.data(), volumeMapTransforms.size() * sizeof(VolumeMapTransform),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
 
         particlesBufferA[i] = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
@@ -130,15 +130,18 @@ GranularMatter::GranularMatter(gpu::Core* core)
     createDescriptorSets();
 
     iisphFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    iisphSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
+    vk::SemaphoreCreateInfo semaphoreInfo;
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         try{
             iisphFences[i] = m_core->getDevice().createFence(fenceInfo);
+            iisphSemaphores[i] = m_core->getDevice().createSemaphore(semaphoreInfo);
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
     }
-    
+
     std::vector<vk::DescriptorSetLayout> descriptorSetLayoutsParticle{
         descriptorSetLayoutParticles
     };
@@ -214,25 +217,27 @@ std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_res
 
 void GranularMatter::update(int currentFrame, int imageIndex){ 
 
-    uint64_t buffer[TIMESTAMP_QUERY_COUNT];
+    {
+        uint64_t buffer[TIMESTAMP_QUERY_COUNT];
 
-    vk::Result result = m_core->getDevice().getQueryPoolResults(timeQueryPools[currentFrame], 0, TIMESTAMP_QUERY_COUNT, sizeof(uint64_t) * TIMESTAMP_QUERY_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
-    if (result == vk::Result::eNotReady)
-    {
-        
-    }
-    else if (result == vk::Result::eSuccess)
-    {
-        for (size_t i = 0; i < TIMESTAMP_QUERY_COUNT -1; i++) {
-            passTimeings.push_back(passLabels[i] + std::to_string((buffer[i + 1] - buffer[i]) / (float)1000000) + " ms");
+        vk::Result result = m_core->getDevice().getQueryPoolResults(timeQueryPools[currentFrame], 0, TIMESTAMP_QUERY_COUNT, sizeof(uint64_t) * TIMESTAMP_QUERY_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
+        if (result == vk::Result::eNotReady)
+        {
+            
         }
-        passTimeings.push_back("Total                  " + std::to_string((buffer[TIMESTAMP_QUERY_COUNT -1] - buffer[0]) / (float)1000000) + " ms");
+        else if (result == vk::Result::eSuccess)
+        {
+            for (size_t i = 0; i < TIMESTAMP_QUERY_COUNT -1; i++) {
+                passTimeings.push_back(passLabels[i] + std::to_string((buffer[i + 1] - buffer[i]) / (float)1000000) + " ms");
+            }
+            passTimeings.push_back("Total                  " + std::to_string((buffer[TIMESTAMP_QUERY_COUNT -1] - buffer[0]) / (float)1000000) + " ms");
+        }
+        else
+        {
+            throw std::runtime_error("Failed to receive query results!");
+        }
     }
-    else
-    {
-        throw std::runtime_error("Failed to receive query results!");
-    }
-        
+    
     auto currentTime = std::chrono::high_resolution_clock::now();
     float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
     startTime = std::chrono::high_resolution_clock::now();
@@ -249,12 +254,7 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         vk::AccessFlagBits::eMemoryRead
     };
 
-    vk::CommandBufferBeginInfo beginInfo;
-    try{
-        commandBuffers[currentFrame].begin(beginInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    m_core->beginCommands(commandBuffers[currentFrame]);
 
      // Queries must be reset after each individual use.
     commandBuffers[currentFrame].resetQueryPool(timeQueryPools[currentFrame], 0, TIMESTAMP_QUERY_COUNT);
@@ -406,7 +406,36 @@ void GranularMatter::update(int currentFrame, int imageIndex){
         //* wait for compute pass
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], nextQuery());
-        for (int i = 0; i < 5; i++)
+
+        m_core->endCommands(commandBuffers[currentFrame]);
+
+        //Submit Commandbuffer and wait for execution to finish
+        {
+            std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
+                commandBuffers[currentFrame]
+            }; 
+
+            std::vector<vk::Semaphore> signalComputeSemaphores = {iisphSemaphores[currentFrame]};
+
+            vk::SubmitInfo computeSubmitInfo{
+                {},
+                {},
+                submitComputeCommandBuffers,
+                signalComputeSemaphores
+            };
+
+            m_core->getDevice().resetFences(iisphFences[currentFrame]);
+            m_core->getComputeQueue().submit(computeSubmitInfo, iisphFences[currentFrame]);
+        
+            vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
+            m_core->getDevice().resetFences(iisphFences[currentFrame]);
+        }
+
+        m_core->beginCommands(commandBuffers[currentFrame]);
+
+        uint32_t l = 0;
+        float ny = 0.03f * settings.rho0;
+        while ((l < 2 || std::abs(additionalData.averageDensityError) > ny) && l < 20 ) 
         {
             //* dijpj solve A -> B
             {
@@ -454,12 +483,47 @@ void GranularMatter::update(int currentFrame, int imageIndex){
             commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
             // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eTransfer, timeQueryPools[currentFrame], nextQuery());
 
-            // vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
-            // m_core->getDevice().resetFences(iisphFences[currentFrame]);
-            // core.getComputeQueue().submit(computeSubmitInfo, iisphFences[currentFrame]);
+            m_core->endCommands(commandBuffers[currentFrame]);
+            
+            //Submit Commandbuffer and wait for execution to finish
+            {
+                std::vector<vk::Semaphore> waitSemaphores = {
+                    iisphSemaphores[currentFrame]
+                };
+                std::vector<vk::PipelineStageFlags> waitStages = {
+                    vk::PipelineStageFlagBits::eComputeShader
+                };
+                std::vector<vk::Semaphore> signalSemaphores = {
+                    iisphSemaphores[currentFrame]
+                };
+                std::array<vk::CommandBuffer, 1> submitCommandBuffers = { 
+                    commandBuffers[currentFrame]
+                };
+                vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
 
+                m_core->getDevice().resetFences(iisphFences[currentFrame]);
+                m_core->getComputeQueue().submit(submitInfo, iisphFences[currentFrame]);
+
+                vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
+            }
+
+            void* mappedData = m_core->mapBuffer(additionalDataBuffer[currentFrame]);
+            // Get average density error
+            memcpy(&additionalData, mappedData, (size_t) sizeof(AdditionalData));
+            additionalData.averageDensityError /= lrParticles.size(); // average density
+            additionalData.averageDensityError -= settings.rho0; // average density error
+            
+            // Reset average density error
+            AdditionalData resetData;
+            memcpy(mappedData, &resetData, (size_t) sizeof(AdditionalData));
+            m_core->flushBuffer(additionalDataBuffer[currentFrame], 0, (size_t) sizeof(AdditionalData));
+            m_core->unmapBuffer(additionalDataBuffer[currentFrame]);
+
+            std::cout << additionalData.averageDensityError << std::endl;
+            l++;
+            m_core->beginCommands(commandBuffers[currentFrame]);
         }
-        
+        std::cout << l << std::endl;
 
         
         //* predict stress A -> B
@@ -516,8 +580,32 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     
     }
     else{
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer , {}, writeReadBarrier, nullptr, nullptr);
+        m_core->endCommands(commandBuffers[currentFrame]);
+
+        //Submit Commandbuffer and wait for execution to finish
+        {
+            std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
+                commandBuffers[currentFrame]
+            }; 
+
+            std::vector<vk::Semaphore> signalComputeSemaphores = {iisphSemaphores[currentFrame]};
+
+            vk::SubmitInfo computeSubmitInfo{
+                {},
+                {},
+                submitComputeCommandBuffers,
+                signalComputeSemaphores
+            };
+
+            m_core->getDevice().resetFences(iisphFences[currentFrame]);
+            m_core->getComputeQueue().submit(computeSubmitInfo, iisphFences[currentFrame]);
+        
+            vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
+            m_core->getDevice().resetFences(iisphFences[currentFrame]);
+        }
+
+        m_core->beginCommands(commandBuffers[currentFrame]);
+
         //* copy A -> B
         {
             // Todo: try with mutiple descriptor sets
@@ -531,12 +619,8 @@ void GranularMatter::update(int currentFrame, int imageIndex){
     }
 
     assert(nextQuery() <= TIMESTAMP_QUERY_COUNT);
-    //* submit calls
-    try{
-        commandBuffers[currentFrame].end();
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+
+    m_core->endCommands(commandBuffers[currentFrame]);
 }
 
 
@@ -728,6 +812,7 @@ void GranularMatter::destroy(){
 
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->getDevice().destroyFence(iisphFences[i]);
+        m_core->getDevice().destroySemaphore(iisphSemaphores[i]);
     }
         
 

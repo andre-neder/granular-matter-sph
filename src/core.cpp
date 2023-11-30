@@ -285,6 +285,24 @@ void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
     device.freeCommandBuffers(commandPool, 1, &commandBuffer);
 }
 
+void gpu::Core::beginCommands(vk::CommandBuffer commandBuffer, vk::CommandBufferBeginInfo beginInfo)
+{
+    try{
+        commandBuffer.begin(beginInfo);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+}
+
+void gpu::Core::endCommands(vk::CommandBuffer commandBuffer)
+{
+    try{
+        commandBuffer.end();
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+}
+
 std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count)
 {
     //Duplicate layout for each set

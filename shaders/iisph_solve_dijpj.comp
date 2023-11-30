@@ -172,10 +172,6 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;
     LRParticle p = inStorage.particles[particleID];
 
-    if(particleID == 0){
-        additionalData.averageDensityError = 0.0;
-    }
-
     vec2 dij_pj = vec2(0.0); 
 
     for_all_fluid_neighbors(
