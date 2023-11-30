@@ -189,22 +189,11 @@ void main(){
     float omega = 0.5;
     float denom = p.a * dtSq;
     float tmp = (settings.rho0 - p.densityAdv - (dtSq * sum));
-    p.p = 0.0;
-    if(abs(denom) > EPSILON){
-        p.p = max((1.0 - omega) * p.lastP + omega / denom * tmp, 0.0);
-    }
 
-    if(p.p != 0.0){
-        // float b = settings.rho0 - p.densityAdv;
-        // float newDensity = ((p.a * p.p + sum) * dtSq - b);
-
-        float newDensity = abs(p.p * denom - tmp) + settings.rho0;
-        
-        atomicAdd(additionalData.averageDensityError, newDensity);
-    }
-    else{
-        atomicAdd(additionalData.averageDensityError, settings.rho0);
-    }
+    p.p = abs(denom) > EPSILON ? max((1.0 - omega) * p.lastP + omega / denom * tmp, 0.0) : 0.0;
+    
+    float newDensity = p.p != 0.0 ? abs(p.p * denom - tmp) + settings.rho0 : settings.rho0;
+    atomicAdd(additionalData.averageDensityError, newDensity);
 
     outStorage.particles[particleID] = p;
 }
