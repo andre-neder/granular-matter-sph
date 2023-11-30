@@ -195,6 +195,8 @@ void main(){
     float newDensity = p.p != 0.0 ? abs(p.p * denom - tmp) + settings.rho0 : settings.rho0;
     atomicAdd(additionalData.averageDensityError, newDensity);
 
+    p.pad0 = newDensity;
+
     outStorage.particles[particleID] = p;
 }
 
