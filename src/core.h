@@ -38,6 +38,7 @@ namespace gpu
     };
 
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+    const uint32_t MAX_QUERY_POOL_COUNT = 256;
     class Core{
         public:
             Core(){};
@@ -101,7 +102,8 @@ namespace gpu
             void beginCommands(vk::CommandBuffer commandBuffer, vk::CommandBufferBeginInfo beginInfo = vk::CommandBufferBeginInfo());
             void endCommands(vk::CommandBuffer commandBuffer);
             
-            void createQueryPool(vk::QueryPool* pool, vk::QueryType type, uint32_t size);
+            void createTimestampQueryPool(vk::QueryPool* pool);
+            std::vector<uint64_t> getTimestampQueryPoolResults(vk::QueryPool* pool);
 
             //* Descriptors
             std::vector<vk::DescriptorSet> allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count = gpu::MAX_FRAMES_IN_FLIGHT);
@@ -145,6 +147,7 @@ namespace gpu
             vma::Allocator allocator;
             vk::CommandPool commandPool; 
 
+
             vk::SwapchainKHR swapChain;
             vk::Format swapChainImageFormat;
             vk::Extent2D swapChainExtent;
@@ -156,6 +159,7 @@ namespace gpu
             std::map<vk::DescriptorSet, std::vector<vk::WriteDescriptorSet>> m_descriptorWrites;
             std::map<vk::DescriptorSetLayout, uint32_t> m_descriptorCount;
             std::map<vk::DescriptorSetLayout, vk::DescriptorBindingFlags> m_descriptorBindingFlags;
+
 
             void pickPhysicalDevice();
             bool isDeviceSuitable(vk::PhysicalDevice pDevice);

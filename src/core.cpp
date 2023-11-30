@@ -303,12 +303,12 @@ void gpu::Core::endCommands(vk::CommandBuffer commandBuffer)
     }
 }
 
-void gpu::Core::createQueryPool(vk::QueryPool* pool, vk::QueryType type, uint32_t size)
+void gpu::Core::createTimestampQueryPool(vk::QueryPool* pool)
 {
     vk::QueryPoolCreateInfo createInfo{
         {},
-        type,
-        size, // start time & end time
+        vk::QueryType::eTimestamp,
+        MAX_QUERY_POOL_COUNT, 
         {}
     };
     
@@ -317,6 +317,28 @@ void gpu::Core::createQueryPool(vk::QueryPool* pool, vk::QueryType type, uint32_
     {
         throw std::runtime_error("Failed to create time query pool!");
     }
+
+}
+
+
+std::vector<uint64_t> gpu::Core::getTimestampQueryPoolResults(vk::QueryPool *pool)
+{
+    uint64_t buffer[MAX_QUERY_POOL_COUNT];
+
+    vk::Result result = device.getQueryPoolResults(*pool, 0, MAX_QUERY_POOL_COUNT, sizeof(uint64_t) * MAX_QUERY_POOL_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
+    if (result == vk::Result::eNotReady)
+    {
+        return std::vector<uint64_t>(buffer, buffer + MAX_QUERY_POOL_COUNT);
+    }
+    else if (result == vk::Result::eSuccess)
+    {
+        return std::vector<uint64_t>(buffer, buffer + MAX_QUERY_POOL_COUNT);
+    }
+    else
+    {
+        throw std::runtime_error("Failed to receive query results!");
+    }
+
 }
 
 std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count)
@@ -335,7 +357,7 @@ std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorS
         allocInfo.pNext = &variableDescriptorCountAllocInfo;
     // }
     try{
-        auto& sets = device.allocateDescriptorSets(allocInfo);
+        auto sets = device.allocateDescriptorSets(allocInfo);
         for(auto& set : sets){
             //* create a write queue for each set
             m_descriptorWrites[set] = std::vector<vk::WriteDescriptorSet>();
@@ -401,7 +423,7 @@ vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<Descrip
     
 
     try{
-        auto& descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+        auto descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
         m_descriptorCount[descriptorSetLayout] = descriptorCount;
         m_descriptorBindingFlags[descriptorSetLayout] = layoutFlags;
         return descriptorSetLayout;

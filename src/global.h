@@ -5,6 +5,11 @@
 #include <math.h>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <iostream>
+#include <utility>
+#include <random>
+#include <queue>
 #include <glm/glm.hpp>
 
 extern bool simulationRunning;
@@ -46,5 +51,31 @@ struct UniformBufferObject {
     glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 proj = glm::mat4(1.0f);
 };
+
+template<typename T>
+struct ShiftingArray{
+    inline ShiftingArray(){};
+    inline ShiftingArray(uint32_t size, T defaultValue){
+        data = std::vector<T>(size, defaultValue);
+    }
+    void append(T value){
+        std::shift_left(data.begin(), data.end(), 1);
+        data.push_back(value);
+    }
+    T get(uint32_t i){
+        return data.at(i);
+    }
+    private:
+        std::vector<T> data;
+   
+};
+
+struct SimulationMetrics{
+    static const uint32_t MAX_VALUES_PER_METRIC = 100;
+    ShiftingArray<float> averageDensityError = ShiftingArray(100, 0.f);
+};
+
+extern SimulationMetrics simulationMetrics;
+
 
 #endif

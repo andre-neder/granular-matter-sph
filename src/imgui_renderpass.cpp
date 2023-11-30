@@ -4,6 +4,9 @@
 bool simulationRunning = false;
 
 SPHSettings settings = SPHSettings();
+extern std::vector<std::vector<std::string>> timestampLabels;
+extern std::vector<std::vector<uint64_t>> timestamps;
+
 bool show_demo_window = false;
 bool showGPUInfo = true;
 bool showSimulationSettings = true;
@@ -183,12 +186,13 @@ void ImguiRenderPass::createRenderPass(){
         std::cerr << "Exception Thrown: " << e.what();
     }
 }
+float drawAverageDensityError(void*, int i) { return simulationMetrics.averageDensityError.get(i) / settings.rho0; };
 
 void ImguiRenderPass::update(int currentFrame, int imageIndex){
     
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
+    ImGui::NewFrame();                                        
 
     static bool p_dockSpaceOpen = true;
     static bool opt_fullscreen = true;
@@ -245,11 +249,35 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex){
         ImGui::Text(m_deviceProperties.deviceName);
     ImGui::End();
 
-    ImGui::Begin("Timings", &showGPUInfo);
-        for (size_t i = 0; i < passTimeings.size(); i++) {
-            ImGui::Text(passTimeings[i].c_str());
+    ImGui::Begin("Metrics", &showGPUInfo); 
+        ImGui::PlotLines("Average density error", drawAverageDensityError, NULL, SimulationMetrics::MAX_VALUES_PER_METRIC, 0, NULL, 0.0f, settings.maxCompression, ImVec2(0, 80));
+
+        if (ImGui::BeginTable("Timings", 2))
+        {
+            for (int row = 0; row < timestampLabels[currentFrame].size(); row++)
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text(timestampLabels[currentFrame][row].c_str());
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text((std::to_string((timestamps[currentFrame][row + 1] - timestamps[currentFrame][row]) / (float)1000000) + " ms").c_str());
+            }
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Total");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text((std::to_string((timestamps[currentFrame][timestampLabels[currentFrame].size() - 1] - timestamps[currentFrame][0]) / (float)1000000) + " ms").c_str());
+            }
+            {
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("dt");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text((std::to_string(settings.dt) + " ms").c_str());
+            }
+            ImGui::EndTable();
         }
-        passTimeings = std::vector<std::string>();
     ImGui::End();
 
     ImGui::Begin("Simulation", &showSimulationSettings);
