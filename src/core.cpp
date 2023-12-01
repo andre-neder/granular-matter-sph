@@ -33,6 +33,27 @@ void Core::destroy(){
     instance.destroy();
 }
 
+uint32_t gpu::Core::getIdealWorkGroupSize()
+{
+    uint32_t vendorID = physicalDevice.getProperties().vendorID;
+    uint32_t workGroupSize = 1;
+    switch (vendorID)
+    {
+    case 4318: // nvidia
+        workGroupSize = 32;
+        break;
+    case 4130: // AMD
+        workGroupSize = 64;
+        break;
+    case 32902: // Intel
+        workGroupSize = 16;
+        break; 
+    default:
+        break;
+    }
+    return workGroupSize;
+}
+
 void Core::pickPhysicalDevice() {
     std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
     bool deviceFound = false;

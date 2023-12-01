@@ -57,6 +57,8 @@ namespace gpu
             inline vk::Queue getPresentQueue(){ return presentQueue; };
             inline vk::Queue getComputeQueue(){ return computeQueue; };
 
+            uint32_t getIdealWorkGroupSize();
+
             inline vma::Allocator getAllocator(){ return allocator; };
 
             inline vk::CommandPool getCommandPool(){ return commandPool; };
