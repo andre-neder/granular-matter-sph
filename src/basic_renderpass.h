@@ -5,13 +5,13 @@
 #include <stb_image_write.h>
 #include <tiny_gltf.h>
 #include "renderpass.h"
-
+#include "camera.h"
 
 namespace gpu{
     class BasicRenderPass : public RenderPass{
         public:
             BasicRenderPass(){};
-            BasicRenderPass(gpu::Core* core);
+            BasicRenderPass(gpu::Core* core, gpu::Camera* camera);
             ~BasicRenderPass(){};
 
             void initFrameResources();
@@ -28,7 +28,7 @@ namespace gpu{
 
         private:
 
-   
+            Camera* m_camera;
             vk::Buffer indexBuffer;
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;

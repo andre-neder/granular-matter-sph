@@ -4,8 +4,9 @@
 
 using namespace gpu;
 
-    BasicRenderPass::BasicRenderPass(gpu::Core* core){
+    BasicRenderPass::BasicRenderPass(gpu::Core* core, gpu::Camera* camera){
         m_core = core;
+        m_camera = camera;
     }
     void BasicRenderPass::init(){
 
@@ -47,7 +48,7 @@ using namespace gpu;
     
     void BasicRenderPass::update(int currentFrame, int imageIndex){
         updateUniformBuffer(currentFrame);
-
+        CameraData cameraData = m_camera->getCameraData();
         vk::CommandBufferBeginInfo beginInfo;
         try{
             commandBuffers[currentFrame].begin(beginInfo);
@@ -65,7 +66,7 @@ using namespace gpu;
             // commandBuffers[currentFrame].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-            commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0,sizeof(CameraData), &cameraData);
             commandBuffers[currentFrame].draw(vertexCount, 1, 0, 0);
 
         commandBuffers[currentFrame].endRenderPass();
@@ -102,7 +103,7 @@ using namespace gpu;
         vk::PipelineMultisampleStateCreateInfo multisampling({}, vk::SampleCountFlagBits::e1, VK_FALSE);
         vk::PipelineColorBlendAttachmentState colorBlendAttachment(VK_FALSE, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
         vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
-        vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(SPHSettings)};
+        vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(CameraData)};
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout, 1, &pushConstantRange, nullptr);
 
         try{

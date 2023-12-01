@@ -17,12 +17,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+#include "camera.h"
 #include "basic_renderpass.h"
 #include "imgui_renderpass.h"
 #include "line_renderpass.h"
 #include "granular_matter.h"
 
 #include "global.h"
+
 
 std::vector<std::string> passTimeings = std::vector<std::string>();
 
@@ -44,6 +46,7 @@ private:
 
     gpu::Core core;
     gpu::Window window;
+    gpu::Camera camera;
 
     gpu::BasicRenderPass basicRenderPass;
     gpu::LineRenderPass lineRenderPass;
@@ -62,6 +65,8 @@ private:
 
     void initWindow(){
         window = gpu::Window("Application", WIDTH, HEIGHT);
+
+        camera = gpu::Camera(gpu::Camera::eTrackBall, &window, WIDTH, HEIGHT, glm::vec3(0,0,-5), glm::vec3(0.0));
     }
 
     void initVulkan(){
@@ -69,7 +74,7 @@ private:
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
 
-        basicRenderPass = gpu::BasicRenderPass(&core);
+        basicRenderPass = gpu::BasicRenderPass(&core, &camera);
         lineRenderPass = gpu::LineRenderPass(&core);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
 
