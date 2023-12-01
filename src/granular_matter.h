@@ -184,10 +184,9 @@ private:
     std::vector<vk::Fence> iisphFences;
 
 
-    std::vector<VolumeMapTransform> volumeMapTransforms;
     std::vector<vk::CommandBuffer> commandBuffers;
     
-    // std::vector<vk::Buffer> particlesBufferA;
+    std::vector<VolumeMapTransform> volumeMapTransforms;
     std::vector<vk::Buffer> volumeMapTransformsBuffer;
     
     std::vector<ParticleGridEntry> particleCells; // particle (index) is in cell (value)
