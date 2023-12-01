@@ -8,7 +8,9 @@
 \usepackage{listings} % Für Code-listings o.ä.
 \usepackage{graphicx} % Für Graphiken
 \usepackage{amsmath,amssymb,amsfonts} % Mathe, Symbole....
-\usepackage{algorithmic}
+\DeclareMathOperator{\Tr}{Tr}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
 \usepackage{float}
 \usepackage{gensymb} % Mathe, Symbole....
 \usepackage{textcomp} % Symbole....
@@ -29,7 +31,7 @@
 ]{biblatex}
 \addbibresource{sources.bib}
 
-\title{Echtzeitsimulation von granularer Materie mittels Smoothed Particle Hydrodynamics}
+\title{Real-time Simulation of Granular Matter using Smoothed Particle Hydrodynamics}
 \author{André Neder}
 \zweitgutachter{Alexander Maximilian Nilles, M.Sc.}
 \zweitgutachterInfo{(Institut für Computervisualistik, AG Computergraphik)}
@@ -42,49 +44,180 @@
     \tableofcontents
     \newpage
     \section{Introduction}
-    \blindtext[1]
+    
     \section{Related Work}
-    \blindtext[1]
+    
     \section{Basics}
     \subsection{Granular Matter}
-    \blindtext[1]
+    
     \section{Method}
     \subsection{Smoothed Particle Hydrodynamics}
-    \blindtext[1]
+    Density neighbors
+    \begin{equation}
+        \rho_i = \sum_j V_j \rho_j W(x_i - x_j, h)
+        = \sum_j m_j W(x_i - x_j, h)
+    \end{equation}
+    $ W_{ij} \equiv W(x_i - x_j, h)$\\
+    
+    Density boundaries
+    \begin{equation}
+        \rho_i = \sum_b V_b \rho_0 W_{ib}
+    \end{equation}
+    Unilateral incompressibility 
+    \begin{equation}
+        \rho_i \leq \rho_0 \; \bot \;  p \geq 0
+    \end{equation}
+    Velocity relative to the air
+    \begin{equation}
+        v^2_{i,rel} = |v_a - v_i|^2\ \frac{v_a - v_i}{|v_a - v_i|}
+    \end{equation}
+    Drag
+    \begin{equation}
+        F^{drag}_i = \frac{1}{2}\rho_a v^2_{i,rel} C_{D,i}  \omega  A_i
+    \end{equation}
+    Velocity gradient
+    \begin{equation}
+        \nabla u_i = \sum_j V_j \nabla W_{ij} u_j^T
+    \end{equation}
+    Strain
+    \begin{equation}
+        \varepsilon = \frac{1}{2} (\nabla u_i + \nabla u_i^T)
+    \end{equation}
+    D
+    \begin{equation}
+        D_i = \frac{2 m_i^2 \Delta t}{\rho_i^2} \sum_j \frac{1}{\rho_j} \nabla W_{ij}  \nabla W_{ij}^T
+    \end{equation}
+    $\nabla W_{ij}  \nabla W_{ij}^T \equiv W_{ij} \otimes W_{ij}$\\
+    Stress
+    \begin{equation}
+        s_i = D^{-1} \varepsilon
+    \end{equation}
+    \begin{equation}
+        s_{i, hydrostatic} = \frac{1}{2} \Tr s_i 
+    \end{equation}
+    \begin{equation}
+        s_{i, deviatoric} = s_i - s_{i, hydrostatic} 
+    \end{equation}
+    $s_i$ refers to $s_{i, deviatoric}$ for further equations
+
+    Drucker-Prager Yield Criterion
+    \begin{equation}
+        ||s_i|| \leq p_i \sqrt{2} \sin \Theta
+    \end{equation}
+
+    Friction Force
+    \begin{equation}
+        F_i^f = -m_i \sum_{j \neq i} m_j (\frac{s_i}{\rho_i^2} + \frac{s_j}{\rho_j^2})  \nabla W_{ij}
+    \end{equation}
+    \begin{equation}
+        F_i^f = -m_i \sum_{b} V_b \rho_0 (\frac{s_i}{\rho_i^2}) \nabla W_{ib}
+    \end{equation}
+
+    Todo: EOS
+    Pressure Force
+    \begin{equation}
+        F_i^p = -m_i \sum_{j \neq i} m_j (\frac{p_i}{\rho_i^2} + \frac{p_j}{\rho_j^2})  \nabla W_{ij}
+    \end{equation}
+    \begin{equation}
+        F_i^p = -m_i \sum_{b} V_b \rho_0 (\frac{p_i}{\rho_i^2}) \nabla W_{ib}
+    \end{equation}
+
+    Non pressure forces
+    \begin{equation}
+        F_i^{adv} = F^g + F_i^f + f_i^{drag}
+    \end{equation}
+
+    intermediate velocity
+    \begin{equation}
+        v_i^{adv} = v_i + \Delta t \frac{F_i^{adv}}{m_i}
+    \end{equation}
+
+    intermediate density
+    \begin{equation}
+        \rho_i^{adv} = \rho_i + \Delta t \sum_j m_j v_{ij}^{adv} \nabla W_{ij}
+    \end{equation}
+
+    pressure
+    \begin{equation}
+        p_i^{l+1} = (1 - \omega) p_i^l + \omega \frac{1}{a_{ii} * \Delta t^2} (\rho_0 - \rho_i^{adv} - \Delta t^2 \psi)
+    \end{equation}
+    $\omega = 0.5$
+    \begin{equation}
+        \psi = \sum_j m_j (\sum_j d_{ij}p_j^l - d_{jj}p_j^l - \sum_{k \neq i} d_{jk}p_k^l) \nabla W_{ij}
+    \end{equation}
+    \begin{equation}
+        \sum_{k \neq i} d_{jk}p_k^l = \sum_{k} d_{jk}p_k^l - d_{ji}p_i^l
+    \end{equation}
+    \begin{equation}
+        \rho_i^{l+1} = |p * a_{ii} * \Delta t^2 - (\rho_0 - \rho_i^{adv} - \Delta t^2 \psi)| + \rho_0
+    \end{equation}
+
+    \begin{equation}
+        a_{ii} = \sum_j m_j (d_{ii} - d_{ji}) \nabla W_{ij}
+    \end{equation}
+    Integration
+    \begin{equation}
+        v_i(t + \Delta t) = v_i^{adv} + \Delta t \frac{F_i^p}{m_i}
+    \end{equation}
+    \begin{equation}
+        x_i(t + \Delta t) = x_i + \Delta t v_i(t + \Delta t)
+    \end{equation}
+    
     \subsection{Vulkan}
-    \blindtext[1]
+    
     \section{Implementation}
-    \blindtext[1]
+    
     \subsection{Libraries \& NewTechnologies}
-    \blindtext[1]
+    
     \subsection{Datastructures}
-    \blindtext[1]
+    
     \subsection{Algorithm}
-    \blindtext[1]
+    \begin{algorithm}
+        \caption{Full Simulation Frame}
+        \begin{algorithmic}[1]
+        \State find neighbors 
+        \State compute $\rho$
+        \State compute drag 
+        \State compute $s$ 
+        \State compute $v$ advection 
+        \State compute $\rho$ advection 
+        \State $l = 0$
+        \While {$l < 2$ $||$ $\rho_{avg} - \rho_0 < \eta $}
+            \State compute $d_{ij}p_{j}$
+            \State compute $p^{l+1}$
+            \State $p(t) = p^{l+1}$
+            \State $l = l+1$
+        \EndWhile
+        \State compute $F^p$ 
+        \State integrate 
+        \State advect HR particles 
+        \end{algorithmic}
+    \end{algorithm}
+    
     \subsubsection{Neighborhood Search}
-    \blindtext[1]
+    
     \subsubsection{Density \& Pressure}
-    \blindtext[1]
+    
     \subsubsection{Stress \& Strain}
-    \blindtext[1]
+    
     \subsubsection{Force}
-    \blindtext[1]
+    
     \subsubsection{Rigidbody Interactions}
-    \blindtext[1]
+    
     \subsubsection{Integration}
-    \blindtext[1]
+    
     \subsubsection{Upscaling}
-    \blindtext[1]
+    
     \subsubsection{Visualization}
-    \blindtext[1]
+    
     \subsubsection{User Interface}
-    \blindtext[1]
+    
     \section{Evaluation}
-    \blindtext[1]
+    
     \subsection{Performance}
-    \blindtext[1]
+    
     \section{Conclusion \& Future Work}
-    \blindtext[1]
+    
     \newpage
     \printbibliography
 \end{document}
