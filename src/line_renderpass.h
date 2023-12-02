@@ -7,6 +7,7 @@
 #include "renderpass.h"
 
 #include "global.h"
+#include "camera.h"
 
 struct LineVertex {
     glm::vec2 pos;
@@ -52,7 +53,7 @@ namespace gpu{
     class LineRenderPass : public RenderPass{
         public:
             LineRenderPass(){};
-            LineRenderPass(gpu::Core* core);
+            LineRenderPass(gpu::Core* core, gpu::Camera* camera);
             ~LineRenderPass(){};
 
             void initFrameResources();
@@ -62,7 +63,7 @@ namespace gpu{
             void init();
 
         private:
-
+            gpu::Camera* m_camera;
 
             std::vector<vk::Buffer> vertexBuffer;
             vk::Buffer indexBuffer;

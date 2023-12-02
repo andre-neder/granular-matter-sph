@@ -23,6 +23,7 @@
 #include "granular_matter.h"
 
 #include "global.h"
+#include "camera.h"
 
 std::vector<std::string> passTimeings = std::vector<std::string>();
 
@@ -43,6 +44,7 @@ private:
     vk::Device device;
 
     gpu::Core core;
+    gpu::Camera camera;
     gpu::Window window;
 
     gpu::BasicRenderPass basicRenderPass;
@@ -62,6 +64,7 @@ private:
 
     void initWindow(){
         window = gpu::Window("Application", WIDTH, HEIGHT);
+        camera = gpu::Camera(gpu::Camera::Type::eTrackBall, window.getGLFWWindow(), WIDTH, HEIGHT, glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     }
 
     void initVulkan(){
@@ -69,8 +72,8 @@ private:
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
 
-        basicRenderPass = gpu::BasicRenderPass(&core);
-        lineRenderPass = gpu::LineRenderPass(&core);
+        basicRenderPass = gpu::BasicRenderPass(&core, &camera);
+        lineRenderPass = gpu::LineRenderPass(&core, &camera);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
 
         simulation = GranularMatter(&core);
@@ -219,11 +222,20 @@ private:
     }
 
     void mainLoop(){
+        
+        std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
+
         double time = glfwGetTime();
         uint32_t fps = 0;
         while (!window.shouldClose()) {
-            glfwPollEvents();
 
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+            startTime = std::chrono::high_resolution_clock::now();
+
+            glfwPollEvents();
+            camera.handleInput();
+            camera.update(dt);
             drawFrame();
             
             fps++;

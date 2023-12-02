@@ -4,8 +4,9 @@
 
 using namespace gpu;
 
-    BasicRenderPass::BasicRenderPass(gpu::Core* core){
+    BasicRenderPass::BasicRenderPass(gpu::Core* core, gpu::Camera* camera){
         m_core = core;
+        m_camera = camera;
     }
     void BasicRenderPass::init(){
 
@@ -210,12 +211,12 @@ using namespace gpu;
 
         UniformBufferObject ubo{};
         ubo.model = glm::mat4(1.0f),// glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        ubo.view = m_camera->getView();
         ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / (float) m_core->getSwapChainExtent().height, 0.1f, 10.0f);
         ubo.proj[1][1] *= -1;
         
         void* mappedData = m_core->mapBuffer(uniformBuffers[currentImage]);
         memcpy(mappedData, &ubo, (size_t) sizeof(ubo));
         m_core->flushBuffer(uniformBuffers[currentImage], 0, (size_t) sizeof(ubo));
-        m_core->unmapBuffer(uniformBuffers[currentImage]);
+        m_core->unmapBuffer(uniformBuffers[currentImage]); 
     }

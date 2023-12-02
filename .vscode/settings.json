@@ -87,6 +87,7 @@
         "future": "cpp",
         "all": "cpp",
         "*.inc": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "any": "cpp"
     }
 }

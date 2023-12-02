@@ -34,7 +34,11 @@ layout( push_constant ) uniform Settings{
 
 layout(location = 0) in vec2 inPosition;
 
+vec4 transformScreenSpace(vec2 v){
+    return vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (v.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
+}
+
 void main() {
     gl_PointSize = 1;
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (inPosition.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (inPosition.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model * transformScreenSpace(inPosition);
 }
