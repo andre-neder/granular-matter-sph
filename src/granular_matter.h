@@ -107,8 +107,8 @@ public:
 
     std::vector<LRParticle> lrParticles;
     std::vector<HRParticle> hrParticles;
-    std::vector<vk::Buffer> particlesBufferB;
-    std::vector<vk::Buffer> particlesBufferHR;
+    vk::Buffer particlesBufferB;
+    vk::Buffer particlesBufferHR;
 
     inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
     void initFrameResources();
@@ -130,12 +130,13 @@ private:
     std::vector<vk::CommandBuffer> commandBuffers;
     
     std::vector<VolumeMapTransform> volumeMapTransforms;
-    std::vector<vk::Buffer> volumeMapTransformsBuffer;
+    vk::Buffer volumeMapTransformsBuffer;
     
     std::vector<ParticleGridEntry> particleCells; // particle (index) is in cell (value)
-    std::vector<vk::Buffer> particleCellBuffer;
     std::vector<uint32_t> startingIndices; 
-    std::vector<vk::Buffer> startingIndicesBuffers;
+    
+    vk::Buffer particleCellBuffer;
+    vk::Buffer startingIndicesBuffers;
 
     std::vector<vk::DescriptorSet> descriptorSetsGrid;
     std::vector<vk::DescriptorSet> descriptorSetsParticles;

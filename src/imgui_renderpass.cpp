@@ -262,6 +262,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex){
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Text((std::to_string((timestamps[currentFrame][row + 1] - timestamps[currentFrame][row]) / (float)1000000) + " ms").c_str());
             }
+            if(!timestampLabels[currentFrame].empty())
             {
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
