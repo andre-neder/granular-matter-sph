@@ -1,12 +1,14 @@
 #version 460
-#define VULKAN 100
+
+#extension GL_EXT_nonuniform_qualifier : require
+#extension GL_EXT_shader_atomic_float : enable
+
+#define UINT_MAX (0xffffffff)
+#define FLOAT_MAX 3.402823466e+38
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
 
-
-#define UINT_MAX (0xffffffff)
-
-layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
+//* Types
 
 struct LRParticle{
     vec2 position;
@@ -29,12 +31,35 @@ struct LRParticle{
     float pad2;
 };
 
+struct ParticleGridEntry{
+    uint particleIndex;
+    uint cellKey;
+};
 
+struct VolumeMapTransform{
+    vec2 position;
+    vec2 scale;
+};
+
+//* Layout
+layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(set = 0, binding = 1) buffer SSBO{
     LRParticle particles[];
 } ssbo;
 
+layout(set = 0, binding = 3) buffer AdditionalData{
+    float averageDensityError;
+    float pad[3];
+} additionalData;
+
+layout(set = 0, binding = 4) buffer VolumeMapTransforms{
+    VolumeMapTransform transform[];
+} volumeMaps;
+
+layout(set = 0, binding = 5) uniform sampler volumeMapSampler; 
+layout(set = 0, binding = 6) uniform texture2D sdfTexture[]; 
+ 
 layout( push_constant ) uniform Settings{
     vec2 g; 
     float r_LR;                 
@@ -60,12 +85,6 @@ layout( push_constant ) uniform Settings{
     float rhoAir;          
 } settings;
 
-
-struct ParticleGridEntry{
-    uint particleIndex;
-    uint cellKey;
-};
-
 layout(set = 1, binding = 0) buffer GridLookUpStorage{
     ParticleGridEntry entries[];
 } gridLookup;
@@ -74,10 +93,71 @@ layout(set = 1, binding = 2) buffer StartringIndicesStorage{
     uint startingIndices[];
 };
 
+//* Functions
 
 uint calculateCellKey(uvec2 cell){
     return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
 }
+
+// https://github.com/glslify/glsl-frobenius/blob/master/index.glsl
+float frobenius(mat2 m) {
+  return sqrt(dot(m[0],m[0]) + dot(m[1],m[1]));
+}
+
+float frobenius(mat3 m) {
+  return sqrt(dot(m[0],m[0]) + dot(m[1],m[1]) + dot(m[2],m[2]));
+}
+
+float W(float r, float h){
+    float volume = PI * pow(h, 4.f) / 6.f;
+    return (h - r) * (h - r) / volume;
+}
+vec2 gradW(vec2 rij, float h){
+    float r = length(rij);
+    vec2 dir = r <= EPSILON ? vec2(0) : normalize(rij); 
+    float scale = -12.f / (PI * pow(h, 4.f));
+    float slope = scale * (r - h);
+    return -dir * slope;
+}
+
+//* Macros
+
+#define for_all_fluid_neighbors(code) { \
+    ivec2 particleCell = ivec2(floor(vec2(p.predPosition / settings.h_LR))); \
+    for (int k = -1; k <= 1; k++){ \
+        for (int l = -1; l <= 1; l++){ \
+            ivec2 cell = ivec2(particleCell.x + k, particleCell.y + l); \
+            uint cellKey = calculateCellKey(uvec2(cell)); \
+            uint startIndex = startingIndices[cellKey]; \
+            for(uint i = startIndex; i < gridLookup.entries.length(); i++) { \
+                if(gridLookup.entries[i].cellKey != cellKey){ \
+                    break; \
+                } \
+                uint particleIndex = gridLookup.entries[i].particleIndex; \
+                LRParticle pi = ssbo.particles[particleIndex]; \
+                vec2 p_pi = p.predPosition - pi.predPosition;\
+                float r = length(p_pi); \
+                if (r < settings.h_LR){\
+                    code \
+                }\
+            } \
+        }  \
+    } \
+}
+
+#define for_all_volume_maps(code) { \
+    for (int i = 0; i < volumeMaps.transform.length(); i++){ \
+        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale; \
+        vec3 vM = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).rgb; \
+        vec2 p_pi = vM.gb; \
+        float volume = vM.r; \
+        float r = length(p_pi); \
+        if(r < settings.h_LR){ \
+            code \
+        }\
+    }\
+}
+
 
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;

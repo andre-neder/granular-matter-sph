@@ -149,16 +149,12 @@ void main(){
     float argMaxWeight = 0;
     float maxWeight = 0;
 
-    // vec2 relativeVelocity = settings.windDirection - p.velocity;
-    // float occluded = 0.866; //* 30° cone
-    
     float rho = 0;
 
     for_all_fluid_neighbors(
         float weight = w(r);
         averageWeightedVelocity += weight * pi.velocity;
         rho += weight * pi.rho;
-        // occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
 
         overallWeight += weight;   
         if(weight > maxWeight){
@@ -188,12 +184,6 @@ void main(){
     float c1 = w(settings.r_LR);
     float c2 = 0.6;
     float alpha = (maxWeight <= c1 || nanFactor * maxWeight / overallWeight >= c2) ? 1.0 - maxWeight : 0.0;
-
-    //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
-    // float dragWeight = max(0, min(1, 1 - occluded)); 
-    // float crossSectionalArea = dragWeight * sqrt((settings.mass / rho) / PI) * 2.f; 
-    // vec2 dragForce  = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
-    
 
     vec2 externalForce = settings.g * settings.mass;// + dragForce;
 

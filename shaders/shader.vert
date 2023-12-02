@@ -37,13 +37,7 @@ layout( push_constant ) uniform Settings{
 
 layout(location = 0) in vec2 inPosition;
 layout(location = 1) in vec2 inVelocity;
-// layout(location = 1) in float inRho;
-// layout(location = 1) in vec3 inColor;
-// layout(location = 2) in vec2 inTexCoord;
 
-// layout(location = 0) out vec3 fragColor;
-// layout(location = 0) out vec4 outVelocity;
-// layout(location = 0) out float outRho;
 layout(location = 0) out vec2 outPosition;
 layout(location = 1) out vec2 outVelocity;
 
