@@ -62,8 +62,6 @@ struct LRParticle{
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
             vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, position)),
             vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, velocity)),
-            // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
-            // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, texCoord))
         };
         return attributeDescriptions;
     }
@@ -85,8 +83,6 @@ struct HRParticle{
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
             vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, position)),
             vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, velocity)),
-            // vk::VertexInputAttributeDescription(1, 0, vk::Format::eR16Sfloat, offsetof(LRParticle, rho)),
-            // vk::VertexInputAttributeDescription(2, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, texCoord))
         };
         return attributeDescriptions;
     }
