@@ -13,7 +13,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCountLR;
 uint32_t workGroupCountHR;
 
-glm::ivec3 computeSpace = glm::ivec3(256,128, 1);
+glm::ivec3 computeSpace = glm::ivec3(16, 16, 16);
 
 std::vector<vk::QueryPool> timeQueryPools;
 std::vector<std::vector<std::string>> timestampLabels;
@@ -44,26 +44,32 @@ GranularMatter::GranularMatter(gpu::Core* core)
     float r0 = 0.5f * settings.h_LR;
 
     float initialDistance = 0.7f * settings.h_LR;
-    std::vector<glm::vec2> hrParticleOffsets = {
-        {0, 0},
-        {0, settings.r_LR},
-        {settings.r_LR, 0},
-        {0, -settings.r_LR},
-        {-settings.r_LR, 0},
+    std::vector<glm::vec3> hrParticleOffsets = {
+        {0, 0, 0},
+        {settings.r_LR, 0, 0},
+        {-settings.r_LR, 0, 0},
+        {0, settings.r_LR, 0},
+        {0, -settings.r_LR, 0},
+        {0, 0, settings.r_LR},
+        {0, 0, -settings.r_LR},
     };
     
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
-            //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
-            glm::vec2 lrPosition = glm::vec2(j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.y / 2),i * initialDistance + settings.h_LR);
-            lrParticles.push_back(LRParticle(lrPosition.x , lrPosition.y));
+            for(int k = 0;k < computeSpace.z ; k++){
+                //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
+                glm::vec3 lrPosition = glm::vec3(j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.y / 2),i * initialDistance + settings.h_LR, k * initialDistance + settings.h_LR);
+                lrParticles.push_back(LRParticle(lrPosition.x , lrPosition.y, lrPosition.z));
 
-            for(uint32_t k = 0; k < settings.n_HR; k++){
-                glm::vec2 offset = hrParticleOffsets[k % hrParticleOffsets.size()];
-                hrParticles.push_back(HRParticle(
-                    lrPosition.x + offset.x + RandomFloat(-settings.r_LR, settings.r_LR), 
-                    lrPosition.y + offset.y + RandomFloat(-settings.r_LR, settings.r_LR)
-                ));
+                for(uint32_t l = 0; l < settings.n_HR; l++){
+                    glm::vec3 offset = hrParticleOffsets[l % hrParticleOffsets.size()];
+                    hrParticles.push_back(HRParticle(
+                        lrPosition.x + offset.x + RandomFloat(-settings.r_LR, settings.r_LR), 
+                        lrPosition.y + offset.y + RandomFloat(-settings.r_LR, settings.r_LR),
+                        lrPosition.z + offset.z + RandomFloat(-settings.r_LR, settings.r_LR)
+                    ));
+                }
+                
             }
         }
     }
@@ -479,21 +485,21 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         
-        timestampLabels[currentFrame].push_back("Advect HR particles");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
-        }
+        // timestampLabels[currentFrame].push_back("Advect HR particles");
+        // {
+        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+        //     commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
+        // }
 
-        simulationStepForward = false;
 
         //* Wait for copy action
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
+        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
+        simulationStepForward = false;
         
     }
     else{
@@ -586,7 +592,7 @@ float cubicExtension(float r){
         return 1;
     }
     else if(r < h){
-        float alpha = 15.f / (14.f * M_PI * h * h);
+        float alpha = 15.f / (14.f * (float)M_PI * h * h);
         float q = r / h;
         if(r < EPSILON){
             return 0;
@@ -605,11 +611,11 @@ float cubicExtension(float r){
     }
 }
 
-glm::vec2 adjustKernelRadiusOffset(glm::vec2 position){
-    return glm::vec2(position.x - 2 * settings.h_LR, position.y - 2 * settings.h_LR);
+glm::vec4 adjustKernelRadiusOffset(glm::vec3 position){
+    return glm::vec4(position - 2 * settings.h_LR, 1.0);
 }
-glm::vec2 adjustKernelRadiusScale(glm::vec2 scale){
-    return glm::vec2(scale + 4 * settings.h_LR);
+glm::vec4 adjustKernelRadiusScale(glm::vec3 scale){
+    return glm::vec4(scale + 4 * settings.h_LR, 1.0);
 }
 
 void GranularMatter::createSignedDistanceFields()
@@ -617,23 +623,23 @@ void GranularMatter::createSignedDistanceFields()
 
     //* Setup rigid bodies
     float halfBoxSize = settings.DOMAIN_HEIGHT / 4;
-    Box2D box{ 
-        // glm::vec2(settings.DOMAIN_WIDTH / 2 - halfBoxSize / 2, halfBoxSize),
-        glm::vec2(halfBoxSize)
-    };
+    // Box3D box{ 
+    //     // glm::vec3(settings.DOMAIN_WIDTH / 2 - halfBoxSize / 2, halfBoxSize),
+    //     glm::vec3(halfBoxSize)
+    // };
 
-    Line2D floor{ glm::vec2(0, 1), settings.h_LR};
+    Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
     rigidBodies.push_back(&floor);
-    Line2D wallLeft{ glm::vec2(1, 0), settings.h_LR};
+    Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
     rigidBodies.push_back(&wallLeft);
-    Line2D wallRight{ glm::vec2(-1, 0), 0};
-    wallRight.position = glm::vec2(settings.DOMAIN_WIDTH, 0);
+    Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
+    wallRight.position = glm::vec3(settings.DOMAIN_WIDTH, 0, 0);
     rigidBodies.push_back(&wallRight);
 
     // rigidBodies.push_back(&box);
 
-    glm::vec2 h_LR(settings.h_LR);
-    glm::vec2 textureSize = { 40, 40 };
+    glm::vec3 h_LR(settings.h_LR);
+    glm::vec3 textureSize = { 40, 40, 40 };
 
     for(auto rb : rigidBodies){
         //* Extend area by kernel radius
@@ -641,22 +647,28 @@ void GranularMatter::createSignedDistanceFields()
         aabb.min -= 2.f * h_LR;
         aabb.max += 2.f * h_LR;
         //* Get Sampling Step Size
-        glm::vec2 stepSize = (aabb.max - aabb.min) / (textureSize);
+        glm::vec3 stepSize = (aabb.max - aabb.min) / (textureSize);
         std::vector<glm::vec4> volumeMap;
-        for(int y = (int)-(textureSize.y / 2); y < (textureSize.y / 2); y++){
-            for(int x = (int)-(textureSize.x / 2); x < (textureSize.x / 2); x++){
-                glm::vec2 samplePoint = glm::vec2{x * stepSize.x + 0.5 * stepSize.x, y * stepSize.y + 0.5 * stepSize.y};
-                float sd = rb->signedDistance(samplePoint);
-                float volume = cubicExtension(sd);
+        for(int z = (int)-(textureSize.z / 2); z < (textureSize.z / 2); z++){
+            for(int y = (int)-(textureSize.y / 2); y < (textureSize.y / 2); y++){
+                for(int x = (int)-(textureSize.x / 2); x < (textureSize.x / 2); x++){
+                    glm::vec3 samplePoint = glm::vec3{
+                        x * stepSize.x + 0.5 * stepSize.x, 
+                        y * stepSize.y + 0.5 * stepSize.y,
+                        z * stepSize.z + 0.5 * stepSize.z
+                    };
+                    float sd = rb->signedDistance(samplePoint);
+                    float volume = cubicExtension(sd);
 
-                glm::vec2 nearestPoint = rb->signedDistanceGradient(samplePoint);
-                volumeMap.push_back(glm::vec4(volume, nearestPoint.x, nearestPoint.y, 1.0));
+                    glm::vec3 nearestPoint = rb->signedDistanceGradient(samplePoint);
+                    volumeMap.push_back(glm::vec4(nearestPoint.x, nearestPoint.y, nearestPoint.z, volume));
+                }
             }
         }
         //* create vulkan texture
-        auto image = m_core->image2DFromData(volumeMap.data(), vk::ImageUsageFlagBits::eSampled, vma::MemoryUsage::eAutoPreferDevice, {}, (uint32_t)textureSize.x, (uint32_t)textureSize.y, vk::Format::eR32G32B32A32Sfloat);
+        auto image = m_core->image3DFromData(volumeMap.data(), vk::ImageUsageFlagBits::eSampled, vma::MemoryUsage::eAutoPreferDevice, {}, (uint32_t)textureSize.x, (uint32_t)textureSize.y, (uint32_t)textureSize.z, vk::Format::eR32G32B32A32Sfloat);
         signedDistanceFields.push_back(image);
-        auto view = m_core->createImageView(image, vk::Format::eR32G32B32A32Sfloat); 
+        auto view = m_core->createImageView3D(image, vk::Format::eR32G32B32A32Sfloat); 
         signedDistanceFieldViews.push_back(view);
         auto transform = VolumeMapTransform();
         transform.position = adjustKernelRadiusOffset(rb->position);

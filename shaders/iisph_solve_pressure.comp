@@ -11,24 +11,22 @@
 //* Types
 
 struct LRParticle{
-    vec2 position;
-    vec2 predPosition;
-    vec2 velocity;
-    vec2 externalForce;
-    vec2 internalForce;
+    vec4 position;
+    vec4 velocity;
+    vec4 externalForce;
+    vec4 internalForce;
+    vec4 d;
+    vec4 dijpj;
+    mat4 stress;
+
     float rho;
     float p;
     float V;
     float a;
-    vec2 d;
-    mat2 stress;
-    vec2 dijpj;
     float dpi;
     float lastP;
     float densityAdv;
     float pad0;
-    float pad1;
-    float pad2;
 };
 
 struct ParticleGridEntry{
@@ -37,8 +35,8 @@ struct ParticleGridEntry{
 };
 
 struct VolumeMapTransform{
-    vec2 position;
-    vec2 scale;
+    vec4 position;
+    vec4 scale;
 };
 
 //* Layout
@@ -58,31 +56,32 @@ layout(set = 0, binding = 4) buffer VolumeMapTransforms{
 } volumeMaps;
 
 layout(set = 0, binding = 5) uniform sampler volumeMapSampler; 
-layout(set = 0, binding = 6) uniform texture2D sdfTexture[]; 
+layout(set = 0, binding = 6) uniform texture3D sdfTexture[]; 
  
 layout( push_constant ) uniform Settings{
-    vec2 g; 
-    float r_LR;                 
-    float h_LR; 
+    vec4 g; 
 
+    float r_LR;         
+    float h_LR; 
     float rho0; 
     float mass;
-    float maxCompression;	  
-    float dt;	 
 
+    float maxCompression;	
+    float dt;	 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
+
     float sleepingSpeed;
     float h_HR;
-
-    float theta;       
-    float sigma;                           
-    float alpha;                             
-    uint n_HR;                              
+    float theta;                               
+    float rhoAir;                                 
     
-    vec2 windDirection;                     
+    vec4 windDirection;      
+
     float dragCoefficient;                
-    float rhoAir;          
+    uint n_HR; 
+    float pad0;
+    float pad1;           
 } settings;
 
 layout(set = 1, binding = 0) buffer GridLookUpStorage{
@@ -95,14 +94,15 @@ layout(set = 1, binding = 2) buffer StartringIndicesStorage{
 
 //* Functions
 
-uint calculateCellKey(uvec2 cell){
-    return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
+uint calculateCellKey(uvec3 cell){
+    return (cell.x * 3079 + cell.y * 1543 + cell.z * 389) % gridLookup.entries.length();
 }
 
 // https://github.com/glslify/glsl-frobenius/blob/master/index.glsl
 float frobenius(mat2 m) {
   return sqrt(dot(m[0],m[0]) + dot(m[1],m[1]));
 }
+
 
 float frobenius(mat3 m) {
   return sqrt(dot(m[0],m[0]) + dot(m[1],m[1]) + dot(m[2],m[2]));
@@ -112,9 +112,9 @@ float W(float r, float h){
     float volume = PI * pow(h, 4.f) / 6.f;
     return (h - r) * (h - r) / volume;
 }
-vec2 gradW(vec2 rij, float h){
+vec3 gradW(vec3 rij, float h){
     float r = length(rij);
-    vec2 dir = r <= EPSILON ? vec2(0) : normalize(rij); 
+    vec3 dir = r <= EPSILON ? vec3(0) : normalize(rij); 
     float scale = -12.f / (PI * pow(h, 4.f));
     float slope = scale * (r - h);
     return -dir * slope;
@@ -123,34 +123,36 @@ vec2 gradW(vec2 rij, float h){
 //* Macros
 
 #define for_all_fluid_neighbors(code) { \
-    ivec2 particleCell = ivec2(floor(vec2(p.predPosition / settings.h_LR))); \
+    ivec3 particleCell = ivec3(floor(vec3(p.position.xyz / settings.h_LR))); \
     for (int k = -1; k <= 1; k++){ \
         for (int l = -1; l <= 1; l++){ \
-            ivec2 cell = ivec2(particleCell.x + k, particleCell.y + l); \
-            uint cellKey = calculateCellKey(uvec2(cell)); \
-            uint startIndex = startingIndices[cellKey]; \
-            for(uint i = startIndex; i < gridLookup.entries.length(); i++) { \
-                if(gridLookup.entries[i].cellKey != cellKey){ \
-                    break; \
+            for (int m = -1; m <= 1; m++){ \
+                ivec3 cell = ivec3(particleCell.x + k, particleCell.y + l, particleCell.z + m); \
+                uint cellKey = calculateCellKey(uvec3(cell)); \
+                uint startIndex = startingIndices[cellKey]; \
+                for(uint i = startIndex; i < gridLookup.entries.length(); i++) { \
+                    if(gridLookup.entries[i].cellKey != cellKey){ \
+                        break; \
+                    } \
+                    uint particleIndex = gridLookup.entries[i].particleIndex; \
+                    LRParticle pi = ssbo.particles[particleIndex]; \
+                    vec3 p_pi = p.position.xyz - pi.position.xyz;\
+                    float r = length(p_pi); \
+                    if (r < settings.h_LR){\
+                        code \
+                    }\
                 } \
-                uint particleIndex = gridLookup.entries[i].particleIndex; \
-                LRParticle pi = ssbo.particles[particleIndex]; \
-                vec2 p_pi = p.predPosition - pi.predPosition;\
-                float r = length(p_pi); \
-                if (r < settings.h_LR){\
-                    code \
-                }\
-            } \
+            }  \
         }  \
     } \
 }
 
 #define for_all_volume_maps(code) { \
     for (int i = 0; i < volumeMaps.transform.length(); i++){ \
-        vec2 samplePosition = (p.predPosition - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale; \
-        vec3 vM = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).rgb; \
-        vec2 p_pi = vM.gb; \
-        float volume = vM.r; \
+        vec3 samplePosition = (p.position.xyz - volumeMaps.transform[i].position.xyz) / volumeMaps.transform[i].scale.xyz; \
+        vec4 vM = texture(sampler3D(sdfTexture[i], volumeMapSampler), samplePosition); \
+        vec3 p_pi = vM.rgb; \
+        float volume = vM.a; \
         float r = length(p_pi); \
         if(r < settings.h_LR){ \
             code \
@@ -167,14 +169,14 @@ void main(){
     float pRhoSq = p.rho * p.rho;
 
     for_all_fluid_neighbors(
-        vec2 dji = (settings.mass / pRhoSq) * gradW(p_pi, settings.h_LR);
-        vec2 dji_pi = dji * p.lastP;
-        sum += settings.mass * dot(p.dijpj - pi.d * pi.lastP - (pi.dijpj - dji_pi), gradW(p_pi, settings.h_LR));
+        vec3 dji = (settings.mass / pRhoSq) * gradW(p_pi, settings.h_LR);
+        vec3 dji_pi = dji * p.lastP;
+        sum += settings.mass * dot(p.dijpj.xyz - pi.d.xyz * pi.lastP - (pi.dijpj.xyz - dji_pi), gradW(p_pi, settings.h_LR));
     )
 
     // Volume maps
     for_all_volume_maps(
-        sum += (volume * settings.rho0) * dot(p.dijpj, gradW(p_pi, settings.h_LR));
+        sum += (volume * settings.rho0) * dot(p.dijpj.xyz, gradW(p_pi, settings.h_LR));
     )
     
     float dtSq = settings.dt * settings.dt;
@@ -186,8 +188,6 @@ void main(){
     
     float newDensity = p.p != 0.0 ? abs(p.p * denom - tmp) + settings.rho0 : settings.rho0;
     atomicAdd(additionalData.averageDensityError, newDensity);
-
-    p.pad0 = newDensity;
 
     ssbo.particles[particleID] = p;
 }

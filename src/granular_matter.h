@@ -24,33 +24,26 @@ struct ParticleGridEntry{
 };
 
 struct LRParticle{
-    glm::vec2 position = glm::vec2(0,0);
-    glm::vec2 predPosition = glm::vec2(0,0);
-    // 4
-    glm::vec2 velocity = glm::vec2(0,0);
-    glm::vec2 externalForce = glm::vec2(0,0);
-    // 8
-    glm::vec2 internalForce = glm::vec2(0,0);
+    glm::vec4 position = glm::vec4(0);
+    glm::vec4 velocity = glm::vec4(0);
+    glm::vec4 externalForce = glm::vec4(0);
+    glm::vec4 internalForce = glm::vec4(0);
+    glm::vec4 d = glm::vec4(0);
+    glm::vec4 dijpj = glm::vec4(0);
+    glm::mat4 stress = glm::mat4(1.0);
+
     float rho = settings.rho0;
     float p = 0.0;
-    // 12
     float V = 0.0;
     float a = 0.0;
-    glm::vec2 d = glm::vec2(0,0);
-    // 16
-    glm::mat2 stress = glm::mat2(1.0);
-    // 20
-    glm::vec2 dijpj = glm::vec2(0,0);
+
     float dpi = 0.0;
     float lastP = 0.0;
-    //24
     float densityAdv = 0.0;
     float pad0;
-    float pad1;
-    float pad2;
 
     LRParticle(){};
-    inline LRParticle(float x, float y) { position = glm::vec2(x, y); }
+    inline LRParticle(float x, float y , float z) { position = glm::vec4(x, y, z, 1.0); }
 
     static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
         std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
@@ -60,18 +53,18 @@ struct LRParticle{
     }
     static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, position)),
-            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(LRParticle, velocity)),
+            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, position)),
+            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, velocity)),
         };
         return attributeDescriptions;
     }
 };
 
 struct HRParticle{
-    glm::vec2 position = glm::vec2(0,0);
-    glm::vec2 velocity = glm::vec2(0,0);  
+    glm::vec4 position = glm::vec4(0);
+    glm::vec4 velocity = glm::vec4(0);  
     HRParticle(){};
-    inline HRParticle(float x, float y) { position = glm::vec2(x, y); }
+    inline HRParticle(float x, float y, float z) { position = glm::vec4(x, y, z, 1); }
 
      static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
         std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
@@ -81,16 +74,16 @@ struct HRParticle{
     }
     static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, position)),
-            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32Sfloat, offsetof(HRParticle, velocity)),
+            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, position)),
+            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, velocity)),
         };
         return attributeDescriptions;
     }
 };
 
 struct VolumeMapTransform{
-    glm::vec2 position = glm::vec2(0.0);
-    glm::vec2 scale = glm::vec2(1.0);
+    glm::vec4 position = glm::vec4(0.0);
+    glm::vec4 scale = glm::vec4(1.0);
 };
 
 struct AdditionalData{

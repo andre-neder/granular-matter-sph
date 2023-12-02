@@ -83,14 +83,16 @@ namespace gpu
             void flushBuffer(vk::Buffer buffer, size_t offset, size_t size);
             void destroyBuffer(vk::Buffer buffer);
             void copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size);
-            void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height);
+            void copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width = 1, uint32_t height = 1, uint32_t depth = 1);
             //* Images
             vk::Image image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
-                  
+            vk::Image image3DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, uint32_t depth = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
+
             vk::Image createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
             vk::Image createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, uint32_t depth = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
             void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::PipelineStageFlags sourceStage, vk::PipelineStageFlags destinationStage);
-            vk::ImageView createImageView(vk::Image image, vk::Format format);
+            vk::ImageView createImageView2D(vk::Image image, vk::Format format);
+            vk::ImageView createImageView3D(vk::Image image, vk::Format format);
             void destroyImage(vk::Image image);
             void destroyImageView(vk::ImageView view);
             //* Samplers

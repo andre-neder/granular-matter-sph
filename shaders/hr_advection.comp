@@ -9,29 +9,27 @@
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
 struct HRParticle{
-    vec2 position;
-    vec2 velocity;
+    vec4 position;
+    vec4 velocity;
 };
 
 struct LRParticle{
-    vec2 position;
-    vec2 predPosition;
-    vec2 velocity;
-    vec2 externalForce;
-    vec2 internalForce;
+    vec4 position;
+    vec4 velocity;
+    vec4 externalForce;
+    vec4 internalForce;
+    vec4 d;
+    vec4 dijpj;
+    mat4 stress;
+
     float rho;
     float p;
     float V;
     float a;
-    vec2 d;
-    mat2 stress;
-    vec2 dijpj;
     float dpi;
     float lastP;
     float densityAdv;
     float pad0;
-    float pad1;
-    float pad2;
 };
 
 layout(set = 0, binding = 1) readonly buffer SSBO_LR{
@@ -43,28 +41,29 @@ layout(set = 0, binding = 2) buffer SSBO_HR{
 } ssbo_hr;
 
 layout( push_constant ) uniform Settings{
-    vec2 g; 
-    float r_LR;                 
-    float h_LR; 
+    vec4 g; 
 
+    float r_LR;         
+    float h_LR; 
     float rho0; 
     float mass;
-    float maxCompression;	  
-    float dt;	 
 
+    float maxCompression;	
+    float dt;	 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
+
     float sleepingSpeed;
     float h_HR;
-
-    float theta;       
-    float sigma;                           
-    float alpha;                             
-    uint n_HR;                              
+    float theta;                               
+    float rhoAir;                                 
     
-    vec2 windDirection;                     
+    vec4 windDirection;      
+
     float dragCoefficient;                
-    float rhoAir;          
+    uint n_HR; 
+    float pad0;
+    float pad1;           
 } settings;
 
 struct ParticleGridEntry{
@@ -82,8 +81,8 @@ layout(set = 1, binding = 2) buffer StartringIndicesStorage{
 
 
 
-uint calculateCellKey(uvec2 cell){
-    return (cell.x * 3079 + cell.y * 1543) % gridLookup.entries.length();
+uint calculateCellKey(uvec3 cell){
+    return (cell.x * 3079 + cell.y * 1543 + cell.z * 389) % gridLookup.entries.length();
 }
 
 float w(float d){
@@ -92,38 +91,41 @@ float w(float d){
 
 
 layout(set = 0, binding = 5) uniform sampler volumeMapSampler; 
-layout(set = 0, binding = 6) uniform texture2D sdfTexture[]; 
+layout(set = 0, binding = 6) uniform texture3D sdfTexture[]; 
 
 // modified for advection
 #define for_all_fluid_neighbors(code) { \
-    ivec2 particleCell = ivec2(floor(vec2(p.position / settings.h_LR))); \
+    ivec3 particleCell = ivec3(floor(vec3(p.position.xyz / settings.h_LR))); \
     for (int k = -1; k <= 1; k++){ \
         for (int l = -1; l <= 1; l++){ \
-            ivec2 cell = ivec2(particleCell.x + k, particleCell.y + l); \
-            uint cellKey = calculateCellKey(uvec2(cell)); \
-            uint startIndex = startingIndices[cellKey]; \
-            for(uint i = startIndex; i < gridLookup.entries.length(); i++) { \
-                if(gridLookup.entries[i].cellKey != cellKey){ \
-                    break; \
+            for (int m = -1; m <= 1; m++){ \
+                ivec3 cell = ivec3(particleCell.x + k, particleCell.y + l, particleCell.z + m); \
+                uint cellKey = calculateCellKey(uvec3(cell)); \
+                uint startIndex = startingIndices[cellKey]; \
+                for(uint i = startIndex; i < gridLookup.entries.length(); i++) { \
+                    if(gridLookup.entries[i].cellKey != cellKey){ \
+                        break; \
+                    } \
+                    uint particleIndex = gridLookup.entries[i].particleIndex; \
+                    LRParticle pi = ssbo_lr.particles[particleIndex]; \
+                    vec3 p_pi = p.position.xyz - pi.position.xyz;\
+                    float r = length(p_pi); \
+                    if (r < settings.h_LR){\
+                        code \
+                    }\
                 } \
-                uint particleIndex = gridLookup.entries[i].particleIndex; \
-                LRParticle pi = ssbo_lr.particles[particleIndex]; \
-                vec2 p_pi = p.position - pi.position;\
-                float r = length(p_pi); \
-                if (r < settings.h_HR){\
-                    code \
-                }\
-            } \
+            }  \
         }  \
     } \
-} 
+}
+
 
 #define for_all_volume_maps(code) { \
     for (int i = 0; i < volumeMaps.transform.length(); i++){ \
-        vec2 samplePosition = (p.position - volumeMaps.transform[i].position) / volumeMaps.transform[i].scale; \
-        vec3 vM = texture(sampler2D(sdfTexture[i], volumeMapSampler), samplePosition).rgb; \
-        vec2 p_pi = vM.gb; \
-        float volume = vM.r; \
+        vec3 samplePosition = (p.position.xyz - volumeMaps.transform[i].position.xyz) / volumeMaps.transform[i].scale.xyz; \
+        vec4 vM = texture(sampler3D(sdfTexture[i], volumeMapSampler), samplePosition); \
+        vec3 p_pi = vM.rgb; \
+        float volume = vM.a; \
         float r = length(p_pi); \
         if(r < settings.h_HR){ \
             code \
@@ -132,8 +134,8 @@ layout(set = 0, binding = 6) uniform texture2D sdfTexture[];
 }
 
 struct VolumeMapTransform{
-    vec2 position;
-    vec2 scale;
+    vec4 position;
+    vec4 scale;
 };
 
 layout(set = 0, binding = 4) buffer VolumeMapTransforms{
@@ -144,7 +146,7 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     HRParticle p = ssbo_hr.particles[particleID];
 
-    vec2 averageWeightedVelocity = vec2(0);
+    vec3 averageWeightedVelocity = vec3(0);
     float overallWeight = 0.0;
     float argMaxWeight = 0;
     float maxWeight = 0;
@@ -153,7 +155,7 @@ void main(){
 
     for_all_fluid_neighbors(
         float weight = w(r);
-        averageWeightedVelocity += weight * pi.velocity;
+        averageWeightedVelocity += weight * pi.velocity.xyz;
         rho += weight * pi.rho;
 
         overallWeight += weight;   
@@ -167,7 +169,7 @@ void main(){
     
     for_all_volume_maps(
         float weight = w(r);
-        averageWeightedVelocity += weight * vec2(0);
+        averageWeightedVelocity += weight * vec3(0);
         overallWeight += weight;   
         if(weight > maxWeight){
             maxWeight = weight;
@@ -178,22 +180,22 @@ void main(){
     overallWeight = max(EPSILON, overallWeight);
     float nanFactor = overallWeight <= EPSILON ? 0.0 : 1.0;
 
-    vec2 velocity = nanFactor * (1.0 / overallWeight) * averageWeightedVelocity;
+    vec3 velocity = nanFactor * (1.0 / overallWeight) * averageWeightedVelocity;
     rho = nanFactor * (1.0 / overallWeight) * rho;
 
     float c1 = w(settings.r_LR);
     float c2 = 0.6;
     float alpha = (maxWeight <= c1 || nanFactor * maxWeight / overallWeight >= c2) ? 1.0 - maxWeight : 0.0;
 
-    vec2 externalForce = settings.g * settings.mass;// + dragForce;
+    vec3 externalForce = settings.g.xyz * settings.mass;// + dragForce;
 
 
-    // vec2 vel = (p.position + p.velocity * settings.dt) - (p.position);
+    // vec3 vel = (p.position + p.velocity * settings.dt) - (p.position);
     // if(length(vel) > settings.sleepingSpeed){
-        p.position += settings.dt * p.velocity;
+        p.position.xyz += settings.dt * p.velocity.xyz;
     // }
 
-    p.velocity = (1.0 - alpha) * velocity + alpha * (p.velocity + settings.dt * (externalForce / settings.mass));
+    p.velocity.xyz = (1.0 - alpha) * velocity + alpha * (p.velocity.xyz + settings.dt * (externalForce / settings.mass));
 
     ssbo_hr.particles[particleID] = p;
 }

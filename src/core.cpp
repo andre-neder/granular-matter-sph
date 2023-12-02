@@ -483,10 +483,10 @@ void Core::createCommandPool() {
     }
 }
 
-void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height) {
+void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height, uint32_t depth) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
 
-    vk::BufferImageCopy region(0, 0, 0, vk::ImageSubresourceLayers( vk::ImageAspectFlagBits::eColor, 0, 0, 1), {0, 0, 0}, vk::Extent3D{{width, height}, 1});
+    vk::BufferImageCopy region(0, 0, 0, vk::ImageSubresourceLayers( vk::ImageAspectFlagBits::eColor, 0, 0, 1), {0, 0, 0}, vk::Extent3D{{width, height}, depth});
 
     commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, 1, &region);
 
@@ -592,6 +592,37 @@ void Core::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk:
     endSingleTimeCommands(commandBuffer);
 }
 
+
+vk::Image gpu::Core::image3DFromData(void *data, vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, uint32_t depth, vk::Format format, vk::ImageTiling tiling)
+{
+    uint32_t formatSize = 0;
+    switch (format){
+        case vk::Format::eR32G32Sfloat:
+            formatSize = 2 * 4;
+            break;
+        case vk::Format::eR32G32B32Sfloat:
+            formatSize = 3 * 4;
+            break;
+        case vk::Format::eR32G32B32A32Sfloat:
+            formatSize = 4 * 4;
+            break;
+        default:
+            break;
+    }
+
+    vk::Buffer stagingBuffer = bufferFromData(data, width * height * depth * formatSize, vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAuto, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
+        
+    vk::Image image = createImage3D(vk::ImageUsageFlagBits::eTransferDst | imageUsage, memoryUsage, allocationFlags, width, height, depth, format, tiling);
+        
+    transitionImageLayout(image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer);
+    copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(width), static_cast<uint32_t>(height), static_cast<uint32_t>(depth));
+    transitionImageLayout(image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader);
+
+    destroyBuffer(stagingBuffer);
+    
+    return image;
+}
+
 vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags, uint32_t width, uint32_t height, vk::Format format, vk::ImageTiling tiling) {
     vk::Image image;
     vma::Allocation allocation;
@@ -659,8 +690,19 @@ void Core::destroyImageView(vk::ImageView view){
     device.destroyImageView(view);
 }
 
-vk::ImageView Core::createImageView(vk::Image image, vk::Format format) {
+vk::ImageView Core::createImageView2D(vk::Image image, vk::Format format) {
     vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e2D, format, {}, vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+    vk::ImageView imageView;
+    try{
+        imageView = device.createImageView(viewInfo);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+    return imageView;
+}
+
+vk::ImageView Core::createImageView3D(vk::Image image, vk::Format format) {
+    vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e3D, format, {}, vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
     vk::ImageView imageView;
     try{
         imageView = device.createImageView(viewInfo);
@@ -785,7 +827,7 @@ void Core::createSwapChain(Window* window) {
 void Core::createSwapChainImageViews(){
     swapChainImageViews.resize(getSwapChainImageCount());
     for (size_t i = 0; i < getSwapChainImageCount(); i++) {
-        swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat);
+        swapChainImageViews[i] = createImageView2D(swapChainImages[i], swapChainImageFormat);
     }
 }
 void Core::destroySwapChainImageViews(){

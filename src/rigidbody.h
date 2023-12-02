@@ -8,48 +8,48 @@ namespace std{
 }
 
 struct AABB{
-    glm::vec2 min;
-    glm::vec2 max;
+    glm::vec3 min;
+    glm::vec3 max;
 };
 
 struct RigidBody2D{
     bool active = false; // states if object is influenced by forces
     bool invert = false; // states uf the sdf should be inverted
-    glm::vec2 position = glm::vec2(0.0);
-    glm::vec2 scale = glm::vec2(1.0);
+    glm::vec3 position = glm::vec3(0.0);
+    glm::vec3 scale = glm::vec3(1.0);
     AABB aabb;
-    virtual glm::vec2 signedDistanceGradient(glm::vec2 position) = 0; // calculates the signed distance and direction 
-    virtual float signedDistance(glm::vec2 position) = 0; // calculates the signed distance 
+    virtual glm::vec3 signedDistanceGradient(glm::vec3 position) = 0; // calculates the signed distance and direction 
+    virtual float signedDistance(glm::vec3 position) = 0; // calculates the signed distance 
 };
 
-struct Box2D : public RigidBody2D{
-    glm::vec2 halfSize;
-    inline Box2D(glm::vec2 halfSize) : halfSize(halfSize) {
+struct Box3D : public RigidBody2D{
+    glm::vec3 halfSize;
+    inline Box3D(glm::vec3 halfSize) : halfSize(halfSize) {
         aabb.min = -halfSize;
         aabb.max = halfSize;
     };
-    glm::vec2 signedDistanceGradient(glm::vec2 p) override {
-        glm::vec2 q = glm::abs(p) - halfSize;
-        glm::vec2 n = (q.x > q.y ?  glm::vec2(std::sign(p.x), 0) : glm::vec2(0, std::sign(p.y)));
-        return n * glm::length(glm::max(q,glm::vec2(0.0))) + std::min(std::max(q.x, q.y), 0.f);
+    glm::vec3 signedDistanceGradient(glm::vec3 p) override {
+        glm::vec3 q = glm::abs(p) - halfSize;
+        glm::vec3 n = (q.x > q.y ?  glm::vec3(std::sign(p.x), 0, 0) : q.y > q.z ?  glm::vec3(0, std::sign(p.y), 0) : glm::vec3(0, 0, std::sign(p.z)));
+        return n * glm::length(glm::max(q,glm::vec3(0.0))) + std::min(std::max(q.x, std::max(q.y, q.z)), 0.f);
     };
-    float signedDistance(glm::vec2 p) override {
-        glm::vec2 q = glm::abs(p) - halfSize;
-        return glm::length(glm::max(q,glm::vec2(0.0))) + std::min(std::max(q.x, q.y), 0.f);
+    float signedDistance(glm::vec3 p) override {
+        glm::vec3 q = glm::abs(p) - halfSize;
+        return glm::length(glm::max(q,glm::vec3(0.0))) + std::min(std::max(q.x, std::max(q.y, q.z)), 0.f);
     };
 };
 
-struct Line2D : public RigidBody2D{
-    glm::vec2 normal;
+struct Plane3D : public RigidBody2D{
+    glm::vec3 normal;
     float h; 
-    inline Line2D(glm::vec2 normal, float h) : normal(normal), h(h) {
-        aabb.min = glm::vec2(0);
-        aabb.max = glm::vec2(0);
+    inline Plane3D(glm::vec3 normal, float h) : normal(normal), h(h) {
+        aabb.min = glm::vec3(0);
+        aabb.max = glm::vec3(0);
     };
-    glm::vec2 signedDistanceGradient(glm::vec2 p) override {
+    glm::vec3 signedDistanceGradient(glm::vec3 p) override {
         return normal * (glm::dot(p, normal) + h);
     };
-    float signedDistance(glm::vec2 p) override {
+    float signedDistance(glm::vec3 p) override {
         return (glm::dot(p, normal) + h);
     };
 };

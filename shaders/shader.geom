@@ -10,38 +10,38 @@ layout(binding = 0) uniform UniformBufferObject {
 } ubo;
 
 layout(location = 0) in float[] inRho;
-layout(location = 1) in vec2[] inPosition;
+layout(location = 1) in vec3[] inPosition;
 
 layout(location = 0) out float outRho;
 
 layout( push_constant ) uniform Settings{
-    vec2 g; 
-    float r_LR;                 
-    float h_LR; 
+    vec4 g; 
 
+    float r_LR;         
+    float h_LR; 
     float rho0; 
     float mass;
-    float maxCompression;	  
-    float dt;	 
 
+    float maxCompression;	
+    float dt;	 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
+
     float sleepingSpeed;
     float h_HR;
-
-    float theta;       
-    float sigma;                           
-    float alpha;                             
-    uint n_HR;                              
+    float theta;                               
+    float rhoAir;                                 
     
-    float pad2;                                
+    vec4 windDirection;      
+
     float dragCoefficient;                
-    float rhoAir;                             
-    float pad3;
+    uint n_HR; 
+    float pad0;
+    float pad1;           
 } settings;
 
-vec4 transformScreenSpace(vec2 v){
-    return ubo.proj * ubo.view * ubo.model * vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (v.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 0.0, 1.0);
+vec4 transformScreenSpace(vec3 v){
+    return vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (v.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, (v.z / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 1.0);
 }
 
 void main() {    

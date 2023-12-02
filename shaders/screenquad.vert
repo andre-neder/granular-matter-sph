@@ -1,41 +1,41 @@
 #version 460
 
 layout( push_constant ) uniform Settings{
-    vec2 g; 
-    float r_LR;                 
-    float h_LR; 
+    vec4 g; 
 
+    float r_LR;         
+    float h_LR; 
     float rho0; 
     float mass;
-    float maxCompression;	  
-    float dt;	 
 
+    float maxCompression;	
+    float dt;	 
     float DOMAIN_WIDTH; 
     float DOMAIN_HEIGHT;  
+
     float sleepingSpeed;
     float h_HR;
-
-    float theta;       
-    float sigma;                           
-    float alpha;                             
-    uint n_HR;                              
+    float theta;                               
+    float rhoAir;                                 
     
-    float pad2;                                
+    vec4 windDirection;      
+
     float dragCoefficient;                
-    float rhoAir;                             
-    float pad3;
+    uint n_HR; 
+    float pad0;
+    float pad1;           
 } settings;
 
-layout(location = 0) in vec2 inPosition;
+layout(location = 0) in vec3 inPosition;
 // layout(location = 1) in vec3 inColor;
-// layout(location = 2) in vec2 inTexCoord;
+// layout(location = 2) in vec3 inTexCoord;
 
 // layout(location = 0) out vec3 fragColor;
 // layout(location = 0) out vec4 outVelocity;
-layout(location = 1) out vec2 outPos;
+layout(location = 1) out vec3 outPos;
 //
 void main() {
-    gl_Position = vec4(inPosition, 0, 1);
+    gl_Position = vec4(inPosition, 1);
     outPos = inPosition;
     // gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
     // fragTexCoord = inTexCoord;
