@@ -18,7 +18,7 @@ namespace gpu
         public:
             inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
             virtual void initFrameResources() = 0;
-            virtual void update(int currentFrame, int imageIndex) = 0;
+            virtual void update(int currentFrame, int imageIndex, float dt) = 0;
             virtual void destroyFrameResources() = 0;
             virtual void destroy() = 0; 
     };    

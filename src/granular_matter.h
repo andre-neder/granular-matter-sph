@@ -112,7 +112,7 @@ public:
 
     inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
     void initFrameResources();
-    void update(int currentFrame, int imageIndex);
+    void update(int currentFrame, int imageIndex, float dt);
     void destroyFrameResources();
     void destroy(); 
 

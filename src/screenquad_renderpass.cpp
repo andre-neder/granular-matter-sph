@@ -54,7 +54,7 @@ using namespace gpu;
         }
     }
     
-    void ScreenQuadRenderPass::update(int currentFrame, int imageIndex){
+    void ScreenQuadRenderPass::update(int currentFrame, int imageIndex, float dt){
         // updateUniformBuffer(currentFrame);
 
         // void* mappedData = m_core->mapBuffer(uniformBuffersSettings[currentFrame]);

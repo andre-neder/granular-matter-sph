@@ -188,7 +188,7 @@ void ImguiRenderPass::createRenderPass(){
 }
 float drawAverageDensityError(void*, int i) { return simulationMetrics.averageDensityError.get(i) / settings.rho0; };
 
-void ImguiRenderPass::update(int currentFrame, int imageIndex){
+void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -275,7 +275,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex){
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("dt");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::Text((std::to_string(settings.dt) + " ms").c_str());
+                ImGui::Text((std::to_string(settings.dt * 1000.f) + " ms").c_str());
             }
             ImGui::EndTable();
         }

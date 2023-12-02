@@ -122,13 +122,13 @@ private:
         }
     }
 
-    void drawFrame(){
+    void drawFrame(float dt){
         vk::Result result;
         result = device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         device.resetFences(computeInFlightFences[currentFrame]);
 
-        simulation.update((int)currentFrame, 0);
+        simulation.update((int)currentFrame, 0, dt);
         
         std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
             simulation.getCommandBuffer((int)currentFrame)
@@ -172,9 +172,9 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        basicRenderPass.update((int) currentFrame, imageIndex);
-        lineRenderPass.update((int) currentFrame, imageIndex);
-        imguiRenderPass.update((int) currentFrame, imageIndex);
+        basicRenderPass.update((int) currentFrame, imageIndex, dt);
+        lineRenderPass.update((int) currentFrame, imageIndex, dt);
+        imguiRenderPass.update((int) currentFrame, imageIndex, dt);
 
 
         if ((VkFence) imagesInFlight[currentFrame] != VK_NULL_HANDLE){
@@ -224,9 +224,9 @@ private:
     void mainLoop(){
         
         std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
-
-        double time = glfwGetTime();
+        float accumulatedTime = 0;
         uint32_t fps = 0;
+
         while (!window.shouldClose()) {
 
             auto currentTime = std::chrono::high_resolution_clock::now();
@@ -234,16 +234,19 @@ private:
             startTime = std::chrono::high_resolution_clock::now();
 
             glfwPollEvents();
+
             camera.handleInput();
             camera.update(dt);
-            drawFrame();
+
+            drawFrame(dt);
             
             fps++;
-            if((glfwGetTime() - time) >= 1.0){
-                time = glfwGetTime();
+            accumulatedTime += dt;
+            if(accumulatedTime >= 1.0){
                 std::string title = "Application  FPS:"+std::to_string(fps);
                 window.setTitle(title);
                 fps = 0;
+                accumulatedTime = 0;
             }
         }
         device.waitIdle();

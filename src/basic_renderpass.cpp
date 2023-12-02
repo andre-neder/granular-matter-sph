@@ -46,7 +46,7 @@ using namespace gpu;
         }
     }
     
-    void BasicRenderPass::update(int currentFrame, int imageIndex){
+    void BasicRenderPass::update(int currentFrame, int imageIndex, float dt){
         updateUniformBuffer(currentFrame);
 
         vk::CommandBufferBeginInfo beginInfo;
