@@ -1,7 +1,9 @@
 #pragma once
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
+
 #define TINYGLTF_USE_CPP14
 
 #ifdef _WIN32
@@ -19,7 +21,7 @@
 
 #include "basic_renderpass.h"
 #include "imgui_renderpass.h"
-#include "line_renderpass.h"
+#include "triangle_renderpass.h"
 #include "granular_matter.h"
 
 #include "global.h"
@@ -48,7 +50,7 @@ private:
     gpu::Window window;
 
     gpu::BasicRenderPass basicRenderPass;
-    gpu::LineRenderPass lineRenderPass;
+    gpu::TriangleRenderPass triangleRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
 
     GranularMatter simulation;
@@ -73,7 +75,7 @@ private:
         device = core.getDevice();
 
         basicRenderPass = gpu::BasicRenderPass(&core, &camera);
-        lineRenderPass = gpu::LineRenderPass(&core, &camera);
+        triangleRenderPass = gpu::TriangleRenderPass(&core, &camera);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
 
         simulation = GranularMatter(&core);
@@ -95,7 +97,7 @@ private:
         basicRenderPass.bindingDescription = LRParticle::getBindingDescription();
 
         basicRenderPass.init();
-        lineRenderPass.init();
+        triangleRenderPass.init();
 
         createSyncObjects();
     }
@@ -173,7 +175,7 @@ private:
         }
 
         basicRenderPass.update((int) currentFrame, imageIndex, dt);
-        lineRenderPass.update((int) currentFrame, imageIndex, dt);
+        triangleRenderPass.update((int) currentFrame, imageIndex, dt);
         imguiRenderPass.update((int) currentFrame, imageIndex, dt);
 
 
@@ -195,7 +197,7 @@ private:
         };
         std::array<vk::CommandBuffer, 3> submitCommandBuffers = { 
             basicRenderPass.getCommandBuffer((int) currentFrame), 
-            lineRenderPass.getCommandBuffer((int) currentFrame), 
+            triangleRenderPass.getCommandBuffer((int) currentFrame), 
             imguiRenderPass.getCommandBuffer((int) currentFrame)
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
@@ -263,7 +265,7 @@ private:
 
         
         basicRenderPass.destroy();
-        lineRenderPass.destroy();
+        triangleRenderPass.destroy();
         imguiRenderPass.destroy();
 
         simulation.destroy();
@@ -293,7 +295,7 @@ private:
         device.waitIdle();
 
         basicRenderPass.destroyFrameResources();
-        lineRenderPass.destroyFrameResources();
+        triangleRenderPass.destroyFrameResources();
         imguiRenderPass.destroyFrameResources();
         cleanupSwapchain();
 
@@ -301,7 +303,7 @@ private:
         core.createSwapChainImageViews();
    
         basicRenderPass.initFrameResources();
-        lineRenderPass.initFrameResources();
+        triangleRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
 
         imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);

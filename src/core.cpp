@@ -4,6 +4,10 @@
 
 using namespace gpu;
 
+bool hasStencilComponent(vk::Format format) {
+    return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
+}
+
 Core::Core(bool enableValidation, Window* window){
     m_enableValidation = enableValidation;
     instance = createInstance(m_enableValidation);
@@ -690,8 +694,8 @@ void Core::destroyImageView(vk::ImageView view){
     device.destroyImageView(view);
 }
 
-vk::ImageView Core::createImageView2D(vk::Image image, vk::Format format) {
-    vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e2D, format, {}, vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+vk::ImageView Core::createImageView2D(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags) {
+    vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e2D, format, {}, vk::ImageSubresourceRange( aspectFlags, 0, 1, 0, 1));
     vk::ImageView imageView;
     try{
         imageView = device.createImageView(viewInfo);
@@ -823,20 +827,29 @@ void Core::createSwapChain(Window* window) {
     swapChainImages = device.getSwapchainImagesKHR(swapChain);
     swapChainImageFormat = surfaceFormat.format;
     swapChainExtent = extent;
+
+    depthFormat = findDepthFormat();
+
+    swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},swapChainExtent.width, swapChainExtent.height, depthFormat);
+    
+
 }
 void Core::createSwapChainImageViews(){
     swapChainImageViews.resize(getSwapChainImageCount());
     for (size_t i = 0; i < getSwapChainImageCount(); i++) {
         swapChainImageViews[i] = createImageView2D(swapChainImages[i], swapChainImageFormat);
     }
+    swapChainDepthImageView = createImageView2D(swapChainDepthImage, depthFormat, vk::ImageAspectFlagBits::eDepth);
 }
 void Core::destroySwapChainImageViews(){
     for (auto imageView : swapChainImageViews) {
         destroyImageView(imageView);
     }
+    destroyImageView(swapChainDepthImageView);
 }
 void Core::destroySwapChain(){
     device.destroySwapchainKHR(swapChain);
+    destroyImage(swapChainDepthImage);
 }
 
 
@@ -877,4 +890,27 @@ vk::ShaderModule Core::loadShaderModule(std::string src) {
     }
     glslang::FinalizeProcess();
     return shaderModule;
+}
+
+vk::Format Core::findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
+    for (vk::Format format : candidates) {
+        vk::FormatProperties props;
+        physicalDevice.getFormatProperties(format, &props);
+
+        if (tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & features) == features) {
+            return format;
+        } else if (tiling == vk::ImageTiling::eOptimal && (props.optimalTilingFeatures & features) == features) {
+            return format;
+        }
+    }
+
+    throw std::runtime_error("failed to find supported format!");
+}
+
+vk::Format Core::findDepthFormat() {
+    return findSupportedFormat(
+        {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
+        vk::ImageTiling::eOptimal,
+        vk::FormatFeatureFlagBits::eDepthStencilAttachment
+    );
 }

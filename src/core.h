@@ -63,10 +63,13 @@ namespace gpu
 
             inline vk::CommandPool getCommandPool(){ return commandPool; };
             //* SwapChain
+
             inline vk::Format getSwapChainImageFormat(){ return swapChainImageFormat; };
+            inline vk::Format getDepthFormat(){ return depthFormat; };
             inline size_t getSwapChainImageCount(){ return swapChainImages.size(); };
             inline vk::Extent2D getSwapChainExtent(){ return swapChainExtent; };
             inline vk::ImageView getSwapChainImageView(int index){ return swapChainImageViews[index]; };
+            inline vk::ImageView getSwapChainDepthImageView(){ return swapChainDepthImageView; };
             inline vk::SwapchainKHR getSwapChain(){ return swapChain; };
             //* Helpers
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
@@ -74,6 +77,8 @@ namespace gpu
             vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
             vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
             vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
+            vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
+            vk::Format findDepthFormat();
             
             //* Buffers
             vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {});
@@ -91,7 +96,7 @@ namespace gpu
             vk::Image createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
             vk::Image createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {}, uint32_t width = 1, uint32_t height = 1, uint32_t depth = 1, vk::Format format = vk::Format::eR8G8B8A8Unorm, vk::ImageTiling tiling = vk::ImageTiling::eOptimal);
             void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::PipelineStageFlags sourceStage, vk::PipelineStageFlags destinationStage);
-            vk::ImageView createImageView2D(vk::Image image, vk::Format format);
+            vk::ImageView createImageView2D(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
             vk::ImageView createImageView3D(vk::Image image, vk::Format format);
             void destroyImage(vk::Image image);
             void destroyImageView(vk::ImageView view);
@@ -154,9 +159,13 @@ namespace gpu
 
             vk::SwapchainKHR swapChain;
             vk::Format swapChainImageFormat;
+            vk::Format depthFormat;
             vk::Extent2D swapChainExtent;
             std::vector<vk::Image> swapChainImages;
             std::vector<vk::ImageView> swapChainImageViews;
+
+            vk::Image swapChainDepthImage;
+            vk::ImageView swapChainDepthImageView;
 
             std::map<vk::Buffer, VmaAllocation> m_bufferAllocations;
             std::map<vk::Image, VmaAllocation> m_imageAllocations;

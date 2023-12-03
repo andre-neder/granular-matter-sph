@@ -98,26 +98,21 @@ uint calculateCellKey(uvec3 cell){
     return (cell.x * 3079 + cell.y * 1543 + cell.z * 389) % gridLookup.entries.length();
 }
 
-// https://github.com/glslify/glsl-frobenius/blob/master/index.glsl
-float frobenius(mat2 m) {
-  return sqrt(dot(m[0],m[0]) + dot(m[1],m[1]));
-}
-
-
 float frobenius(mat3 m) {
   return sqrt(dot(m[0],m[0]) + dot(m[1],m[1]) + dot(m[2],m[2]));
 }
 
 float W(float r, float h){
-    float volume = PI * pow(h, 4.f) / 6.f;
-    return (h - r) * (h - r) / volume;
+    float scale = 15.0 / (PI * pow(h, 6));
+    float v = h - r;
+    return v * v * v * scale;
 }
-vec3 gradW(vec3 rij, float h){
-    float r = length(rij);
-    vec3 dir = r <= EPSILON ? vec3(0) : normalize(rij); 
-    float scale = -12.f / (PI * pow(h, 4.f));
-    float slope = scale * (r - h);
-    return -dir * slope;
+vec3 gradW(vec3 r, float h){
+    float scale = 45.0 / (pow(h, 5.0) * PI);
+    float rl = length(r);
+    float v = h - rl;
+    vec3 dir = rl <= EPSILON ? vec3(0) : normalize(r);
+    return -v * v * scale * dir;
 }
 
 //* Macros
@@ -194,11 +189,9 @@ void main(){
 
     //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
     float dragWeight = max(0, min(1, 1 - occluded)); 
-    float crossSectionalArea = dragWeight * sqrt((settings.mass / rho) / PI) * 2.f; 
-    vec3 dragForce = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
-    // p.externalForce.xyz += dragForce;
-    
-    
+    float crossSectionalArea = dragWeight * sqrt(p.V / PI) * 2.f; 
+    vec3 dragForce = (0.5 * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
+    p.externalForce.xyz += dragForce;
 
     ssbo.particles[particleID] = p;
 }

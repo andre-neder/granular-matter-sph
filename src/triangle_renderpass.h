@@ -1,6 +1,4 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include <tiny_gltf.h>
@@ -9,39 +7,39 @@
 #include "global.h"
 #include "camera.h"
 
-struct LineVertex {
-    glm::vec2 pos;
+struct Vertex {
+    glm::vec4 pos;
 
     static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
         std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
-            vk::VertexInputBindingDescription(0, sizeof(LineVertex), vk::VertexInputRate::eVertex)
+            vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex)
         };
         return bindingDescriptions;
     }
     static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32Sfloat, offsetof(LineVertex, pos)),
+            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Vertex, pos)),
         };
         return attributeDescriptions;
     }
 };
 
 const float halfBoxSize = settings.DOMAIN_HEIGHT / 4.f;
-const std::vector<LineVertex> vertices = {
-    {{0.f, 0.f}},
-    {{settings.DOMAIN_WIDTH, 0.f}},
-    {{0.f, settings.DOMAIN_HEIGHT}},
-    {{settings.DOMAIN_WIDTH, settings.DOMAIN_HEIGHT}},
-    {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , 0 }},
-    {{(settings.DOMAIN_WIDTH / 2 + halfBoxSize) , 0 }},
-    {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , halfBoxSize * 2 }},
-    {{(settings.DOMAIN_WIDTH / 2 + halfBoxSize) , halfBoxSize * 2 }},
+const std::vector<Vertex> vertices = {
+    {{0.f, 0.f, 0.f, 0.f}},
+    {{settings.DOMAIN_WIDTH, 0.f, 0.f, 0.f}},
+    {{0.f, 0.f, settings.DOMAIN_WIDTH, 0.f}},
+    {{settings.DOMAIN_WIDTH, 0.f, settings.DOMAIN_WIDTH, 0.f}},
+    // {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , 0 , 0.f, 0.f}},
+    // {{(settings.DOMAIN_WIDTH / 2 + halfBoxSize) , 0 , 0.f, 0.f}},
+    // {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , halfBoxSize * 2 , 0.f, 0.f}},
+    // {{(settings.DOMAIN_WIDTH / 2 + halfBoxSize) , halfBoxSize * 2 , 0.f, 0.f}},
 };
 
 const std::vector<uint32_t> indices = {
-    0, 1, // floor
-    0, 2, // left
-    1, 3, // right
+    0, 1, 2, 2, 1, 3// floor
+    // 0, 2, // left
+    // 1, 3, // right
 
     // 4, 5, //box
     // 4, 6,
@@ -50,11 +48,11 @@ const std::vector<uint32_t> indices = {
 };
 
 namespace gpu{
-    class LineRenderPass : public RenderPass{
+    class TriangleRenderPass : public RenderPass{
         public:
-            LineRenderPass(){};
-            LineRenderPass(gpu::Core* core, gpu::Camera* camera);
-            ~LineRenderPass(){};
+            TriangleRenderPass(){};
+            TriangleRenderPass(gpu::Core* core, gpu::Camera* camera);
+            ~TriangleRenderPass(){};
 
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);

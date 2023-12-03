@@ -43,7 +43,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     // equilibrium distance
     float r0 = 0.5f * settings.h_LR;
 
-    float initialDistance = 0.7f * settings.h_LR;
+    float initialDistance = 0.5f * settings.h_LR;
     std::vector<glm::vec3> hrParticleOffsets = {
         {0, 0, 0},
         {settings.r_LR, 0, 0},
@@ -58,7 +58,10 @@ GranularMatter::GranularMatter(gpu::Core* core)
         for(int j = 0;j < computeSpace.y ; j++){
             for(int k = 0;k < computeSpace.z ; k++){
                 //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
-                glm::vec3 lrPosition = glm::vec3(j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.y / 2),i * initialDistance + settings.h_LR, k * initialDistance + settings.h_LR);
+                glm::vec3 lrPosition = glm::vec3(
+                    j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.y / 2),
+                    i * initialDistance + settings.h_LR, 
+                    k * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.z / 2));
                 lrParticles.push_back(LRParticle(lrPosition.x , lrPosition.y, lrPosition.z));
 
                 for(uint32_t l = 0; l < settings.n_HR; l++){
@@ -630,7 +633,7 @@ void GranularMatter::createSignedDistanceFields()
 
     Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
     rigidBodies.push_back(&floor);
-    
+
     Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
     rigidBodies.push_back(&wallLeft);
 

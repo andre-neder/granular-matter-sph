@@ -2,7 +2,6 @@
 #include <math.h>
 #include "core.h"
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include "compute_pass.h"
 #include "global.h"
 #include "rigidbody.h"
@@ -40,7 +39,7 @@ struct LRParticle{
     float dpi = 0.0;
     float lastP = 0.0;
     float densityAdv = 0.0;
-    float pad0;
+    float pad0 = 0.0;
 
     LRParticle(){};
     inline LRParticle(float x, float y , float z) { position = glm::vec4(x, y, z, 1.0); }

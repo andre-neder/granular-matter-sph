@@ -1,6 +1,5 @@
 #pragma once
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include <tiny_gltf.h>

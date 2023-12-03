@@ -1,22 +1,24 @@
-#include "line_renderpass.h"
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/gtc/matrix_transform.hpp>
+#include "triangle_renderpass.h"
 #include <chrono>
 #include "global.h"
 
 using namespace gpu;
 
-    LineRenderPass::LineRenderPass(gpu::Core* core, gpu::Camera* camera){
+    TriangleRenderPass::TriangleRenderPass(gpu::Core* core, gpu::Camera* camera){
         m_core = core;
         m_camera = camera;
     }
-    void LineRenderPass::init(){
+    void TriangleRenderPass::init(){
 
-        vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/line.vert");
-        fragShaderModule = m_core->loadShaderModule(SHADER_PATH"/line.frag");
+        vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.vert");
+        fragShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.frag");
         // geomShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.geom");
  
         vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(LineVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
+            vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(Vertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
         }
         indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
         
@@ -24,7 +26,7 @@ using namespace gpu;
         createDescriptorSetLayout();
         initFrameResources();
     }
-    void LineRenderPass::initFrameResources(){
+    void TriangleRenderPass::initFrameResources(){
         createRenderPass();
         createFramebuffers();
         createGraphicsPipeline();
@@ -33,7 +35,7 @@ using namespace gpu;
         createDescriptorSets();
         createCommandBuffers();
     }
-    void LineRenderPass::createRenderPass(){
+    void TriangleRenderPass::createRenderPass(){
         vk::AttachmentDescription colorAttachment({}, 
             m_core->getSwapChainImageFormat(), 
             vk::SampleCountFlagBits::e1, 
@@ -61,7 +63,7 @@ using namespace gpu;
         }
     }
     
-    void LineRenderPass::update(int currentFrame, int imageIndex, float dt){
+    void TriangleRenderPass::update(int currentFrame, int imageIndex, float dt){
         updateUniformBuffer(currentFrame);
 
         vk::CommandBufferBeginInfo beginInfo;
@@ -70,21 +72,29 @@ using namespace gpu;
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
-        // std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
-        // vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
+        vk::ClearValue colorClear;
+        colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
+        // vk::ClearValue depthClear;
+        // depthClear.depthStencil = vk::ClearDepthStencilValue(1.f);
+        std::array<vk::ClearValue, 1> clearValues = {
+            colorClear, 
+            // depthClear
+        };
+        
+        vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
 
-        // commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
-        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-        //     std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[currentFrame]};
-        //     std::vector<vk::DeviceSize> offsets = {0};
-        //     commandBuffers[currentFrame].bindVertexBuffers(0, vertexBuffers, offsets);
-        //     commandBuffers[currentFrame].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings), &settings);
-        //     commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[currentFrame]};
+            std::vector<vk::DeviceSize> offsets = {0};
+            commandBuffers[currentFrame].bindVertexBuffers(0, vertexBuffers, offsets);
+            commandBuffers[currentFrame].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
 
-        // commandBuffers[currentFrame].endRenderPass();
+        commandBuffers[currentFrame].endRenderPass();
         try{
             commandBuffers[currentFrame].end();
         }catch(std::exception& e) {
@@ -92,7 +102,7 @@ using namespace gpu;
         }
     }
     
-    void LineRenderPass::createDescriptorSets() {
+    void TriangleRenderPass::createDescriptorSets() {
      
         descriptorSets = m_core->allocateDescriptorSets(descriptorSetLayout, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
 
@@ -103,18 +113,18 @@ using namespace gpu;
         }
     }
     
-    void LineRenderPass::createGraphicsPipeline(){
+    void TriangleRenderPass::createGraphicsPipeline(){
         vk::PipelineShaderStageCreateInfo vertShaderStageInfo({}, vk::ShaderStageFlagBits::eVertex, vertShaderModule, "main");
         // vk::PipelineShaderStageCreateInfo geomShaderStageInfo({}, vk::ShaderStageFlagBits::eGeometry, geomShaderModule, "main");
         vk::PipelineShaderStageCreateInfo fragShaderStageInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main");
 
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo}; // geomShaderStageInfo
 
-        auto bindingDescription = LineVertex::getBindingDescription();
-        auto attributeDescriptions = LineVertex::getAttributeDescriptions();
+        auto bindingDescription = Vertex::getBindingDescription();
+        auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindingDescription, attributeDescriptions);
-        vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::eLineList, VK_FALSE);
+        vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
         vk::Viewport viewport(0.0f, 0.0f, (float) m_core->getSwapChainExtent().width, (float) m_core->getSwapChainExtent().height, 0.0f, 1.0f);
         vk::Rect2D scissor(vk::Offset2D(0, 0),m_core->getSwapChainExtent());
         vk::PipelineViewportStateCreateInfo viewportState({}, viewport, scissor);
@@ -124,7 +134,7 @@ using namespace gpu;
         vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
         vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings)};
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout, 1, &pushConstantRange, nullptr);
-
+        // vk::PipelineDepthStencilStateCreateInfo depthStencil({}, VK_TRUE, VK_TRUE, vk::CompareOp::eLess, VK_FALSE, VK_FALSE);
         try{
             pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
         }catch(std::exception& e) {
@@ -142,7 +152,7 @@ using namespace gpu;
     }
 
 
-    void LineRenderPass::createUniformBuffers() {
+    void TriangleRenderPass::createUniformBuffers() {
         vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
 
         uniformBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
@@ -152,19 +162,19 @@ using namespace gpu;
 
     }
 
-    void LineRenderPass::createDescriptorPool() {
+    void TriangleRenderPass::createDescriptorPool() {
         descriptorPool = m_core->createDescriptorPool({
             { vk::DescriptorType::eUniformBuffer, 1 * gpu::MAX_FRAMES_IN_FLIGHT }
         }, 1 * gpu::MAX_FRAMES_IN_FLIGHT );
     }
 
-    void LineRenderPass::createDescriptorSetLayout() {
+    void TriangleRenderPass::createDescriptorSetLayout() {
         descriptorSetLayout = m_core->createDescriptorSetLayout({
             {0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex }
         });
     }
     
-    void LineRenderPass::destroyFrameResources(){
+    void TriangleRenderPass::destroyFrameResources(){
         vk::Device device = m_core->getDevice();
         for (auto framebuffer : framebuffers) {
             device.destroyFramebuffer(framebuffer);
@@ -178,7 +188,7 @@ using namespace gpu;
         m_core->destroyDescriptorPool(descriptorPool);
         device.destroyRenderPass(renderPass);
     }
-    void LineRenderPass::destroy(){
+    void TriangleRenderPass::destroy(){
         destroyFrameResources();
 
         vk::Device device = m_core->getDevice();
@@ -194,7 +204,7 @@ using namespace gpu;
 
         m_core->destroyDescriptorSetLayout(descriptorSetLayout);
     }
-    void LineRenderPass::updateUniformBuffer(uint32_t currentImage) {
+    void TriangleRenderPass::updateUniformBuffer(uint32_t currentImage) {
         static auto startTime = std::chrono::high_resolution_clock::now();
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
