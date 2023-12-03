@@ -168,30 +168,33 @@ void main(){
 
     vec3 dii = vec3(0);
 
-    vec3 frictionalForce = vec3(0);
-
     float pRhoSq = p.rho  * p.rho;
 
-     for_all_fluid_neighbors(
-        if(particleIndex == particleID){
-            continue;
-        }
+    // vec3 frictionalForce = vec3(0);
+
+    // for_all_fluid_neighbors(
+    //     if(particleIndex == particleID){
+    //         continue;
+    //     }
        
-        //* Pressure calculation
-        float piRhoSq =  pi.rho *  pi.rho;
-        vec3 gradient = gradW(p_pi, settings.h_LR);
-        frictionalForce += (settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * vec4(gradient, 0)).xyz;
+    //     //* Pressure calculation
+    //     float piRhoSq =  pi.rho *  pi.rho;
+    //     vec3 gradient = gradW(p_pi, settings.h_LR);
+    //     frictionalForce += (settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * vec4(gradient, 0)).xyz;
         
-    )
+    // )
 
-    for_all_volume_maps(
-        vec3 gradient = gradW(p_pi, settings.h_LR);
-        frictionalForce += ((volume * settings.rho0) * (p.stress / pRhoSq) * vec4(gradient, 0)).xyz;
-    )
+    // for_all_volume_maps(
+    //     vec3 gradient = gradW(p_pi, settings.h_LR);
+    //     frictionalForce += ((volume * settings.rho0) * (p.stress / pRhoSq) * vec4(gradient, 0)).xyz;
+    // )
 
-    frictionalForce *= -settings.mass;
+    // frictionalForce *= -settings.mass;
 
-    p.velocity.xyz += settings.dt * ((p.externalForce.xyz + frictionalForce.xyz) / settings.mass); 
+    // p.externalForce.xyz += frictionalForce.xyz;
+
+
+    p.velocity.xyz += settings.dt * (p.externalForce.xyz / settings.mass); 
 
     for_all_fluid_neighbors(
         dii -= settings.mass / pRhoSq * gradW(p_pi, settings.h_LR);

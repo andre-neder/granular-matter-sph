@@ -630,11 +630,20 @@ void GranularMatter::createSignedDistanceFields()
 
     Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
     rigidBodies.push_back(&floor);
+    
     Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
     rigidBodies.push_back(&wallLeft);
+
     Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
     wallRight.position = glm::vec3(settings.DOMAIN_WIDTH, 0, 0);
     rigidBodies.push_back(&wallRight);
+
+    Plane3D wallBack{ glm::vec3(0, 0, 1), settings.h_LR};
+    rigidBodies.push_back(&wallBack);
+
+    Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
+    wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH);
+    rigidBodies.push_back(&wallFront);
 
     // rigidBodies.push_back(&box);
 

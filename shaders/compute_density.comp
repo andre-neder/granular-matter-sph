@@ -196,7 +196,7 @@ void main(){
     float dragWeight = max(0, min(1, 1 - occluded)); 
     float crossSectionalArea = dragWeight * sqrt((settings.mass / rho) / PI) * 2.f; 
     vec3 dragForce = (1.f/2.f * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
-    p.externalForce.xyz += dragForce;
+    // p.externalForce.xyz += dragForce;
     
     
 
