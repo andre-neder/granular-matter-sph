@@ -35,21 +35,39 @@ layout( push_constant ) uniform Settings{
     float pad1;           
 } settings;
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inVelocity;
+layout (location = 0) in vec3 vPosition;
+layout (location = 1) in vec3 vNormal;
+layout (location = 2) in vec2 vUV;
+layout (location = 3) in vec4 vColor;
+layout (location = 4) in vec4 vJoint;
+layout (location = 5) in vec4 vWeight;
+layout (location = 6) in vec4 vTangent;
 
-layout(location = 0) out vec3 outPosition;
-layout(location = 1) out vec3 outVelocity;
+layout(location = 7) in vec3 inPosition;
+layout(location = 8) in vec3 inVelocity;
+// layout(location = 0) out vec3 outPosition;
+layout(location = 0) out vec3 outNormal;
+// layout(location = 1) out vec3 outVelocity;
 
 vec4 transformScreenSpace(vec3 v){
     return vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (v.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, (v.z / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 1.0);
 }
 
+
+
+
 void main() {
     gl_PointSize = 1;
-    // gl_Position = vec4(inPosition, 0, 1);
-    gl_Position = ubo.proj * ubo.view * ubo.model * transformScreenSpace(inPosition) ;
-    outPosition = inPosition;
-    outVelocity = inVelocity;
+
+    mat4 model = mat4(1.0);
+    model[0] = vec4(settings.r_LR,0,0,0);
+    model[1] = vec4(0,settings.r_LR,0,0);
+    model[2] = vec4(0,0,settings.r_LR,0);
+    model[3] = vec4(inPosition,1.0);
+    // gl_Position = vec4(inPosition, 0, 1); 
+    outNormal = normalize(vNormal);
+    gl_Position = ubo.proj * ubo.view * transformScreenSpace( (model * vec4(vPosition, 1.0)).xyz) ;
+    // outPosition = inPosition;
+    // outVelocity = inVelocity;
     // outRho = inRho;
 }

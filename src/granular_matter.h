@@ -43,17 +43,17 @@ struct LRParticle{
 
     LRParticle(){};
     inline LRParticle(float x, float y , float z) { position = glm::vec4(x, y, z, 1.0); }
-
+    static const uint32_t BINDING = 1;
     static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
         std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
-            vk::VertexInputBindingDescription(0, sizeof(LRParticle), vk::VertexInputRate::eVertex)
+            vk::VertexInputBindingDescription(BINDING, sizeof(LRParticle), vk::VertexInputRate::eInstance)
         };
         return bindingDescriptions;
     }
     static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, position)),
-            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, velocity)),
+            vk::VertexInputAttributeDescription(7, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, position)),
+            vk::VertexInputAttributeDescription(8, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, velocity)),
         };
         return attributeDescriptions;
     }

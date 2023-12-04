@@ -7,25 +7,25 @@
 #include "global.h"
 #include "camera.h"
 
-struct Vertex {
+struct TriangleVertex {
     glm::vec4 pos;
 
     static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
         std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
-            vk::VertexInputBindingDescription(0, sizeof(Vertex), vk::VertexInputRate::eVertex)
+            vk::VertexInputBindingDescription(0, sizeof(TriangleVertex), vk::VertexInputRate::eVertex)
         };
         return bindingDescriptions;
     }
     static std::array<vk::VertexInputAttributeDescription, 1> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 1> attributeDescriptions{
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Vertex, pos)),
+            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(TriangleVertex, pos)),
         };
         return attributeDescriptions;
     }
 };
 
 const float halfBoxSize = settings.DOMAIN_HEIGHT / 4.f;
-const std::vector<Vertex> vertices = {
+const std::vector<TriangleVertex> vertices = {
     {{0.f, 0.f, 0.f, 0.f}},
     {{settings.DOMAIN_WIDTH, 0.f, 0.f, 0.f}},
     {{0.f, 0.f, settings.DOMAIN_WIDTH, 0.f}},

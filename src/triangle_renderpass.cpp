@@ -18,7 +18,7 @@ using namespace gpu;
  
         vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(Vertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
+            vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(TriangleVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
         }
         indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
         
@@ -154,8 +154,8 @@ using namespace gpu;
 
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo}; // geomShaderStageInfo
 
-        auto bindingDescription = Vertex::getBindingDescription();
-        auto attributeDescriptions = Vertex::getAttributeDescriptions();
+        auto bindingDescription = TriangleVertex::getBindingDescription();
+        auto attributeDescriptions = TriangleVertex::getAttributeDescriptions();
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindingDescription, attributeDescriptions);
         vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
@@ -246,7 +246,7 @@ using namespace gpu;
         UniformBufferObject ubo{};
         ubo.model = glm::mat4(1.0);// glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.view =  m_camera->getView();//glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / (float) m_core->getSwapChainExtent().height, 0.1f, 10.0f);
+        ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / (float) m_core->getSwapChainExtent().height, 0.1f, 1000.0f);
         ubo.proj[1][1] *= -1;
         
         void* mappedData = m_core->mapBuffer(uniformBuffers[currentImage]);

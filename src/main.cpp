@@ -19,7 +19,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
-#include "basic_renderpass.h"
+#include "particle_renderpass.h"
 #include "imgui_renderpass.h"
 #include "triangle_renderpass.h"
 #include "granular_matter.h"
@@ -49,7 +49,7 @@ private:
     gpu::Camera camera;
     gpu::Window window;
 
-    gpu::BasicRenderPass basicRenderPass;
+    gpu::ParticleRenderPass particleRenderPass;
     gpu::TriangleRenderPass triangleRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
 
@@ -74,29 +74,29 @@ private:
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
 
-        basicRenderPass = gpu::BasicRenderPass(&core, &camera);
+        particleRenderPass = gpu::ParticleRenderPass(&core, &camera);
         triangleRenderPass = gpu::TriangleRenderPass(&core, &camera);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
 
         simulation = GranularMatter(&core);
 
-        basicRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        particleRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
 
         // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        //     basicRenderPass.vertexBuffer[i] = simulation.particlesBufferHR;
+        //     particleRenderPass.vertexBuffer[i] = simulation.particlesBufferHR;
         // }
-        // basicRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
-        // basicRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
-        // basicRenderPass.bindingDescription = HRParticle::getBindingDescription();
+        // particleRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
+        // particleRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
+        // particleRenderPass.bindingDescription = HRParticle::getBindingDescription();
 
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            basicRenderPass.vertexBuffer[i] = simulation.particlesBufferB;
+            particleRenderPass.vertexBuffer[i] = simulation.particlesBufferB;
         }
-        basicRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
-        basicRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
-        basicRenderPass.bindingDescription = LRParticle::getBindingDescription();
+        particleRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
+        particleRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
+        particleRenderPass.bindingDescription = LRParticle::getBindingDescription();
 
-        basicRenderPass.init();
+        particleRenderPass.init();
         triangleRenderPass.init();
 
         createSyncObjects();
@@ -174,7 +174,7 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        basicRenderPass.update((int) currentFrame, imageIndex, dt);
+        particleRenderPass.update((int) currentFrame, imageIndex, dt);
         triangleRenderPass.update((int) currentFrame, imageIndex, dt);
         imguiRenderPass.update((int) currentFrame, imageIndex, dt);
 
@@ -196,7 +196,7 @@ private:
             renderFinishedSemaphores[currentFrame]
         };
         std::array<vk::CommandBuffer, 3> submitCommandBuffers = { 
-            basicRenderPass.getCommandBuffer((int) currentFrame), 
+            particleRenderPass.getCommandBuffer((int) currentFrame), 
             triangleRenderPass.getCommandBuffer((int) currentFrame), 
             imguiRenderPass.getCommandBuffer((int) currentFrame)
         };
@@ -264,7 +264,7 @@ private:
         core.getDevice().waitIdle();
 
         
-        basicRenderPass.destroy();
+        particleRenderPass.destroy();
         triangleRenderPass.destroy();
         imguiRenderPass.destroy();
 
@@ -294,7 +294,7 @@ private:
         }
         device.waitIdle();
 
-        basicRenderPass.destroyFrameResources();
+        particleRenderPass.destroyFrameResources();
         triangleRenderPass.destroyFrameResources();
         imguiRenderPass.destroyFrameResources();
         cleanupSwapchain();
@@ -302,7 +302,7 @@ private:
         core.createSwapChain(&window);
         core.createSwapChainImageViews();
    
-        basicRenderPass.initFrameResources();
+        particleRenderPass.initFrameResources();
         triangleRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
 

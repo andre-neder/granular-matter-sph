@@ -5,14 +5,15 @@
 #include <tiny_gltf.h>
 #include "renderpass.h"
 #include "camera.h"
+#include "model.h"
 
 
 namespace gpu{
-    class BasicRenderPass : public RenderPass{
+    class ParticleRenderPass : public RenderPass{
         public:
-            BasicRenderPass(){};
-            BasicRenderPass(gpu::Core* core, gpu::Camera* camera);
-            ~BasicRenderPass(){};
+            ParticleRenderPass(){};
+            ParticleRenderPass(gpu::Core* core, gpu::Camera* camera);
+            ~ParticleRenderPass(){};
 
             void createFramebuffers();
             void initFrameResources();
@@ -29,8 +30,11 @@ namespace gpu{
 
         private:
             gpu::Camera* m_camera;
+
+            Model particleModel;
+            vk::Buffer particleModelIndexBuffer;
+            vk::Buffer particleModelVertexBuffer;
    
-            vk::Buffer indexBuffer;
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;
             // vk::Image textureImage;
