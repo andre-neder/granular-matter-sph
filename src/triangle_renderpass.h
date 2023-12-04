@@ -54,6 +54,7 @@ namespace gpu{
             TriangleRenderPass(gpu::Core* core, gpu::Camera* camera);
             ~TriangleRenderPass(){};
 
+            void createFramebuffers();
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);
             void destroyFrameResources();

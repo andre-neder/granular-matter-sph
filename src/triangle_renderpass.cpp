@@ -26,6 +26,23 @@ using namespace gpu;
         createDescriptorSetLayout();
         initFrameResources();
     }
+
+     void TriangleRenderPass::createFramebuffers(){
+        framebuffers.resize(m_core->getSwapChainImageCount());
+        for (int i = 0; i < m_core->getSwapChainImageCount(); i++) {
+            std::array<vk::ImageView, 2> attachments = {
+                m_core->getSwapChainImageView(i),
+                m_core->getSwapChainDepthImageView()
+            };
+            vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, m_core->getSwapChainExtent().width, m_core->getSwapChainExtent().height, 1);
+            try{
+                framebuffers[i] = m_core->getDevice().createFramebuffer(framebufferInfo);
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
+        }
+    }
+
     void TriangleRenderPass::initFrameResources(){
         createRenderPass();
         createFramebuffers();
@@ -36,7 +53,8 @@ using namespace gpu;
         createCommandBuffers();
     }
     void TriangleRenderPass::createRenderPass(){
-        vk::AttachmentDescription colorAttachment({}, 
+        vk::AttachmentDescription colorAttachment(
+            {}, 
             m_core->getSwapChainImageFormat(), 
             vk::SampleCountFlagBits::e1, 
             vk::AttachmentLoadOp::eLoad, 
@@ -44,18 +62,34 @@ using namespace gpu;
             vk::AttachmentLoadOp::eDontCare, 
             vk::AttachmentStoreOp::eDontCare, 
             vk::ImageLayout::eColorAttachmentOptimal, 
-            vk::ImageLayout::eColorAttachmentOptimal);
-
+            vk::ImageLayout::eColorAttachmentOptimal
+        );
         vk::AttachmentReference attachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
-        vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, attachmentRef, {}, {});
-        // vk::SubpassDependency dependency(
-        //     VK_SUBPASS_EXTERNAL, 
-        //     0, 
-        //     vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-        //     vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-        //     vk::AccessFlagBits::eNoneKHR, 
-        //     vk::AccessFlagBits::eColorAttachmentWrite);
-        vk::RenderPassCreateInfo renderPassInfo({}, colorAttachment, subpass); // , dependency
+
+        vk::AttachmentDescription depthAttachment(
+            {}, 
+            m_core->getDepthFormat(), 
+            vk::SampleCountFlagBits::e1, 
+            vk::AttachmentLoadOp::eLoad, 
+            vk::AttachmentStoreOp::eStore, 
+            vk::AttachmentLoadOp::eLoad, 
+            vk::AttachmentStoreOp::eDontCare, 
+            vk::ImageLayout::eDepthStencilAttachmentOptimal, 
+            vk::ImageLayout::eDepthStencilAttachmentOptimal
+        );
+        vk::AttachmentReference depthAttachmentRef(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+        std::array<vk::AttachmentDescription, 2> attachments{
+            colorAttachment,
+            depthAttachment
+        };
+
+        vk::SubpassDescription subpass;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments = &attachmentRef;
+        subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+        vk::RenderPassCreateInfo renderPassInfo({}, attachments, subpass);
         try{
             renderPass = m_core->getDevice().createRenderPass(renderPassInfo);
         }catch(std::exception& e) {
@@ -74,11 +108,11 @@ using namespace gpu;
         }
         vk::ClearValue colorClear;
         colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
-        // vk::ClearValue depthClear;
-        // depthClear.depthStencil = vk::ClearDepthStencilValue(1.f);
-        std::array<vk::ClearValue, 1> clearValues = {
+        vk::ClearValue depthClear;
+        depthClear.depthStencil = vk::ClearDepthStencilValue(1.f);
+        std::array<vk::ClearValue, 2> clearValues = {
             colorClear, 
-            // depthClear
+            depthClear
         };
         
         vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
@@ -134,14 +168,14 @@ using namespace gpu;
         vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
         vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings)};
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout, 1, &pushConstantRange, nullptr);
-        // vk::PipelineDepthStencilStateCreateInfo depthStencil({}, VK_TRUE, VK_TRUE, vk::CompareOp::eLess, VK_FALSE, VK_FALSE);
+        vk::PipelineDepthStencilStateCreateInfo depthStencil({}, VK_TRUE, VK_TRUE, vk::CompareOp::eLess, VK_FALSE, VK_FALSE);
         try{
             pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
 
-        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, renderPass);
+        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, &depthStencil, &colorBlending, {}, pipelineLayout, renderPass);
         
         vk::Result result;
         std::tie(result, graphicsPipeline) = m_core->getDevice().createGraphicsPipeline( nullptr, pipelineInfo);

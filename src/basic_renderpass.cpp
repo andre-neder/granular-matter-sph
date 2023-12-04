@@ -28,8 +28,26 @@ using namespace gpu;
         createDescriptorSets();
         createCommandBuffers();
     }
+
+    void BasicRenderPass::createFramebuffers(){
+        framebuffers.resize(m_core->getSwapChainImageCount());
+        for (int i = 0; i < m_core->getSwapChainImageCount(); i++) {
+            std::array<vk::ImageView, 2> attachments = {
+                m_core->getSwapChainImageView(i),
+                m_core->getSwapChainDepthImageView()
+            };
+            vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, m_core->getSwapChainExtent().width, m_core->getSwapChainExtent().height, 1);
+            try{
+                framebuffers[i] = m_core->getDevice().createFramebuffer(framebufferInfo);
+            }catch(std::exception& e) {
+                std::cerr << "Exception Thrown: " << e.what();
+            }
+        }
+    }
+
     void BasicRenderPass::createRenderPass(){
-        vk::AttachmentDescription colorAttachment({}, 
+        vk::AttachmentDescription colorAttachment(
+            {}, 
             m_core->getSwapChainImageFormat(), 
             vk::SampleCountFlagBits::e1, 
             vk::AttachmentLoadOp::eClear, 
@@ -37,10 +55,34 @@ using namespace gpu;
             vk::AttachmentLoadOp::eDontCare, 
             vk::AttachmentStoreOp::eDontCare, 
             vk::ImageLayout::eUndefined, 
-            vk::ImageLayout::eColorAttachmentOptimal);
-        vk::AttachmentReference colorAttachmentRef({}, vk::ImageLayout::eColorAttachmentOptimal);
-        vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, colorAttachmentRef);
-        vk::RenderPassCreateInfo renderPassInfo({}, colorAttachment, subpass);
+            vk::ImageLayout::eColorAttachmentOptimal
+        );
+        vk::AttachmentReference colorAttachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
+
+        vk::AttachmentDescription depthAttachment(
+            {}, 
+            m_core->getDepthFormat(), 
+            vk::SampleCountFlagBits::e1, 
+            vk::AttachmentLoadOp::eClear, 
+            vk::AttachmentStoreOp::eStore, 
+            vk::AttachmentLoadOp::eClear, 
+            vk::AttachmentStoreOp::eDontCare, 
+            vk::ImageLayout::eUndefined, 
+            vk::ImageLayout::eDepthStencilAttachmentOptimal
+        );
+        vk::AttachmentReference depthAttachmentRef(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+        std::array<vk::AttachmentDescription, 2> attachments{
+            colorAttachment,
+            depthAttachment
+        };
+
+        vk::SubpassDescription subpass;
+        subpass.colorAttachmentCount = 1;
+        subpass.pColorAttachments = &colorAttachmentRef;
+        subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+        vk::RenderPassCreateInfo renderPassInfo({}, attachments, subpass);
         try{
             renderPass = m_core->getDevice().createRenderPass(renderPassInfo);
         }catch(std::exception& e) {
@@ -57,7 +99,10 @@ using namespace gpu;
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
-        std::vector<vk::ClearValue> clearValues = {vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f})};
+        std::array<vk::ClearValue, 2> clearValues = {
+            vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}),
+            vk::ClearDepthStencilValue({1.0f, 0})
+        };
         vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
 
         commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
@@ -107,14 +152,14 @@ using namespace gpu;
         vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
         vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(SPHSettings)};
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout, 1, &pushConstantRange, nullptr);
-
+        vk::PipelineDepthStencilStateCreateInfo depthStencil({}, VK_TRUE, VK_TRUE, vk::CompareOp::eLess, VK_FALSE, VK_FALSE);
         try{
             pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
         }catch(std::exception& e) {
             std::cerr << "Exception Thrown: " << e.what();
         }
 
-        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, {}, &colorBlending, {}, pipelineLayout, renderPass);
+        vk::GraphicsPipelineCreateInfo pipelineInfo({}, shaderStages, &vertexInputInfo, &inputAssembly, {}, &viewportState, &rasterizer, &multisampling, &depthStencil, &colorBlending, {}, pipelineLayout, renderPass);
         
         vk::Result result;
         std::tie(result, graphicsPipeline) = m_core->getDevice().createGraphicsPipeline( nullptr, pipelineInfo);
@@ -125,28 +170,7 @@ using namespace gpu;
     }
 
     void BasicRenderPass::createTextureImage() {
-        // int texWidth, texHeight, texChannels;
-        // stbi_uc* pixels = stbi_load(ASSETS_PATH "/checker.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        // vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
-        // if (!pixels) {
-        //     throw std::runtime_error("failed to load texture image!");
-        // }
-        
-        // vk::Buffer stagingBuffer = m_core->createBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
-        // void* mappedData = m_core->mapBuffer(stagingBuffer);
-        // memcpy(mappedData, pixels, static_cast<size_t>(imageSize));
-        // m_core->unmapBuffer(stagingBuffer);
-
-        // stbi_image_free(pixels);
-
-        // textureImage = m_core->createImage2D(vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled, VMA_MEMORY_USAGE_GPU_ONLY, texWidth, texHeight, vk::Format::eR8G8B8A8Srgb, vk::ImageTiling::eOptimal);
-        
-        // m_core->transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-        // m_core->copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-        // m_core->transitionImageLayout(textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-
-        // m_core->destroyBuffer(stagingBuffer);
     }
 
     void BasicRenderPass::createUniformBuffers() {
@@ -157,12 +181,6 @@ using namespace gpu;
             uniformBuffers[i] = m_core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer,  vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
         }
 
-        // vk::DeviceSize bufferSize2 = sizeof(SPHSettings);
-
-        // uniformBuffersSettings.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        //     uniformBuffersSettings[i] = m_core->createBuffer(bufferSize2, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
-        // }
     }
 
     void BasicRenderPass::createDescriptorPool() {
@@ -199,10 +217,6 @@ using namespace gpu;
         device.destroyShaderModule(fragShaderModule);
         device.destroyShaderModule(vertShaderModule);
         device.destroyShaderModule(geomShaderModule);
-
-        // m_core->destroySampler(textureSampler);
-        // m_core->destroyImageView(textureImageView);
-        // m_core->destroyImage(textureImage);
         
         m_core->destroyDescriptorSetLayout(descriptorSetLayout);
     }
