@@ -589,25 +589,28 @@ void GranularMatter::createDescriptorSets() {
 }
 
 #define EPSILON 0.0000001f
+
+float cubicSplineKernel(float r, float h){
+    float alpha = 15.f / (14.f * (float)M_PI * h * h);
+    float q = r / h;
+
+    if (q >= 0.0 && q < 1.0) {
+        return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
+    } else if (q >= 1.f && q < 2.f) {
+        float beta_ = (2.f - q);
+        return alpha * 0.25f * beta_ * beta_ * beta_;
+    } else {
+        return 0.f;
+    }
+}
+
 float cubicExtension(float r){
     float h = settings.h_LR;
-    if(r < 0){
+    if(r < EPSILON){
         return 1;
     }
     else if(r < h){
-        float alpha = 15.f / (14.f * (float)M_PI * h * h);
-        float q = r / h;
-        if(r < EPSILON){
-            return 0;
-        }
-        if (q >= 0.0 && q < 1.0) {
-            return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
-        } else if (q >= 1.f && q < 2.f) {
-            float beta_ = (2.f - q);
-            return alpha * 0.25f * beta_ * beta_ * beta_;
-        } else {
-            return 0.f;
-        }
+        return cubicSplineKernel(r, h);
     }
     else{
         return 0;
@@ -634,19 +637,19 @@ void GranularMatter::createSignedDistanceFields()
     Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
     rigidBodies.push_back(&floor);
 
-    Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
-    rigidBodies.push_back(&wallLeft);
+    // Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
+    // rigidBodies.push_back(&wallLeft);
 
-    Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
-    wallRight.position = glm::vec3(settings.DOMAIN_WIDTH, 0, 0);
-    rigidBodies.push_back(&wallRight);
+    // Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
+    // wallRight.position = glm::vec3(settings.DOMAIN_WIDTH, 0, 0);
+    // rigidBodies.push_back(&wallRight);
 
-    Plane3D wallBack{ glm::vec3(0, 0, 1), settings.h_LR};
-    rigidBodies.push_back(&wallBack);
+    // Plane3D wallBack{ glm::vec3(0, 0, 1), settings.h_LR};
+    // rigidBodies.push_back(&wallBack);
 
-    Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
-    wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH);
-    rigidBodies.push_back(&wallFront);
+    // Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
+    // wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH);
+    // rigidBodies.push_back(&wallFront);
 
     // rigidBodies.push_back(&box);
 

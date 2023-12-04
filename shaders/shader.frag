@@ -36,6 +36,7 @@ layout( push_constant ) uniform Settings{
 layout(location = 0) out vec4 outColor;
 // layout(location = 0) in vec3 inPosition;
 layout(location = 0) in vec3 inNormal;
+layout(location = 1) in vec3 eye;
 // layout(location = 1) in vec3 inVelocity;
 
 void main() {
@@ -43,8 +44,8 @@ void main() {
     vec4 lightColor = vec4(1.0);
     vec4 ambient = vec4(0.3);
     vec3 lightVec = vec3(-1.0, -2.0, -1.0);
-    float phi = max(dot(inNormal, lightVec), 0.0);
-    outColor = sand * ambient + sand * cos(phi) * lightColor;
+    float phi = max(dot(normalize(inNormal), normalize(eye)), 0.0);
+    outColor = sand * ambient + sand * cos(1 - phi) * lightColor;
     // vec3 vel = (inPosition + inVelocity * settings.dt) - (inPosition);
     // if(length(vel) > settings.sleepingSpeed){
     //     outColor = vec4(0, 1, 0, 1);
