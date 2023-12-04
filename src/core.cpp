@@ -477,6 +477,52 @@ void gpu::Core::destroyDescriptorSetLayout(vk::DescriptorSetLayout layout)
     device.destroyDescriptorSetLayout(layout);
 }
 
+vk::RenderPass gpu::Core::createColorDepthRenderPass(vk::AttachmentLoadOp loadOp, vk::AttachmentStoreOp storeOp)
+{
+    vk::AttachmentDescription colorAttachment(
+        {}, 
+        getSwapChainImageFormat(), 
+        vk::SampleCountFlagBits::e1, 
+        loadOp, 
+        storeOp, 
+        vk::AttachmentLoadOp::eDontCare, 
+        vk::AttachmentStoreOp::eDontCare, 
+        loadOp == vk::AttachmentLoadOp::eLoad ? vk::ImageLayout::eColorAttachmentOptimal : vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal
+    );
+    vk::AttachmentReference colorAttachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::AttachmentDescription depthAttachment(
+        {}, 
+        getDepthFormat(), 
+        vk::SampleCountFlagBits::e1, 
+        loadOp, 
+        storeOp, 
+        loadOp, 
+        vk::AttachmentStoreOp::eDontCare, 
+        loadOp == vk::AttachmentLoadOp::eLoad ? vk::ImageLayout::eDepthStencilAttachmentOptimal : vk::ImageLayout::eUndefined , 
+        vk::ImageLayout::eDepthStencilAttachmentOptimal
+    );
+    vk::AttachmentReference depthAttachmentRef(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+    std::array<vk::AttachmentDescription, 2> attachments{
+        colorAttachment,
+        depthAttachment
+    };
+
+    vk::SubpassDescription subpass;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorAttachmentRef;
+    subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+    vk::RenderPassCreateInfo renderPassInfo({}, attachments, subpass);
+    try{
+        return device.createRenderPass(renderPassInfo);
+    }catch(std::exception& e) {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+}
+
 void Core::createCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
     vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());

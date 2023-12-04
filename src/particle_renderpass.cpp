@@ -51,48 +51,7 @@ using namespace gpu;
     }
 
     void ParticleRenderPass::createRenderPass(){
-        vk::AttachmentDescription colorAttachment(
-            {}, 
-            m_core->getSwapChainImageFormat(), 
-            vk::SampleCountFlagBits::e1, 
-            vk::AttachmentLoadOp::eClear, 
-            vk::AttachmentStoreOp::eStore, 
-            vk::AttachmentLoadOp::eDontCare, 
-            vk::AttachmentStoreOp::eDontCare, 
-            vk::ImageLayout::eUndefined, 
-            vk::ImageLayout::eColorAttachmentOptimal
-        );
-        vk::AttachmentReference colorAttachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
-
-        vk::AttachmentDescription depthAttachment(
-            {}, 
-            m_core->getDepthFormat(), 
-            vk::SampleCountFlagBits::e1, 
-            vk::AttachmentLoadOp::eClear, 
-            vk::AttachmentStoreOp::eStore, 
-            vk::AttachmentLoadOp::eClear, 
-            vk::AttachmentStoreOp::eDontCare, 
-            vk::ImageLayout::eUndefined, 
-            vk::ImageLayout::eDepthStencilAttachmentOptimal
-        );
-        vk::AttachmentReference depthAttachmentRef(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-        std::array<vk::AttachmentDescription, 2> attachments{
-            colorAttachment,
-            depthAttachment
-        };
-
-        vk::SubpassDescription subpass;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &colorAttachmentRef;
-        subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-        vk::RenderPassCreateInfo renderPassInfo({}, attachments, subpass);
-        try{
-            renderPass = m_core->getDevice().createRenderPass(renderPassInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+        renderPass = m_core->createColorDepthRenderPass(vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore);
     }
     
     void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt){
@@ -121,10 +80,9 @@ using namespace gpu;
             commandBuffers[currentFrame].bindVertexBuffers(1, vertexBuffers, offsets);
 
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            
             commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(SPHSettings), &settings);
-            // commandBuffers[currentFrame].draw(vertexCount, 1, 0, 0);
-            // commandBuffers[currentFrame].draw(particleModel._indices.size(), 1, 0, 0);
+
             for (auto node : particleModel._linearNodes){
 				for(auto primitive : node->primitives){
 					commandBuffers[currentFrame].drawIndexed(primitive->indexCount, vertexCount, primitive->firstIndex, 0, 0);

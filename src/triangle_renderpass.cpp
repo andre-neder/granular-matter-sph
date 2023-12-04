@@ -53,48 +53,7 @@ using namespace gpu;
         createCommandBuffers();
     }
     void TriangleRenderPass::createRenderPass(){
-        vk::AttachmentDescription colorAttachment(
-            {}, 
-            m_core->getSwapChainImageFormat(), 
-            vk::SampleCountFlagBits::e1, 
-            vk::AttachmentLoadOp::eLoad, 
-            vk::AttachmentStoreOp::eStore, 
-            vk::AttachmentLoadOp::eDontCare, 
-            vk::AttachmentStoreOp::eDontCare, 
-            vk::ImageLayout::eColorAttachmentOptimal, 
-            vk::ImageLayout::eColorAttachmentOptimal
-        );
-        vk::AttachmentReference attachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
-
-        vk::AttachmentDescription depthAttachment(
-            {}, 
-            m_core->getDepthFormat(), 
-            vk::SampleCountFlagBits::e1, 
-            vk::AttachmentLoadOp::eLoad, 
-            vk::AttachmentStoreOp::eStore, 
-            vk::AttachmentLoadOp::eLoad, 
-            vk::AttachmentStoreOp::eDontCare, 
-            vk::ImageLayout::eDepthStencilAttachmentOptimal, 
-            vk::ImageLayout::eDepthStencilAttachmentOptimal
-        );
-        vk::AttachmentReference depthAttachmentRef(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-        std::array<vk::AttachmentDescription, 2> attachments{
-            colorAttachment,
-            depthAttachment
-        };
-
-        vk::SubpassDescription subpass;
-        subpass.colorAttachmentCount = 1;
-        subpass.pColorAttachments = &attachmentRef;
-        subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-        vk::RenderPassCreateInfo renderPassInfo({}, attachments, subpass);
-        try{
-            renderPass = m_core->getDevice().createRenderPass(renderPassInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+        renderPass = m_core->createColorDepthRenderPass(vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore);
     }
     
     void TriangleRenderPass::update(int currentFrame, int imageIndex, float dt){

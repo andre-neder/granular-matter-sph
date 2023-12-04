@@ -124,6 +124,8 @@ namespace gpu
             vk::DescriptorPool createDescriptorPool(std::vector<vk::DescriptorPoolSize> sizes, uint32_t maxSets = 1 * gpu::MAX_FRAMES_IN_FLIGHT );
             void destroyDescriptorPool(vk::DescriptorPool pool);
             void destroyDescriptorSetLayout(vk::DescriptorSetLayout layout);
+    
+            vk::RenderPass createColorDepthRenderPass(vk::AttachmentLoadOp loadOp, vk::AttachmentStoreOp storeOp);
 
             //* Swapchain
             void createSwapChain(Window* window);
