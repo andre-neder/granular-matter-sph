@@ -103,16 +103,20 @@ float frobenius(mat3 m) {
 }
 
 float W(float r, float h){
-    float scale = 15.0 / (PI * pow(h, 6));
+    float scale = 15.0 / (PI * pow(h, 6.0));
     float v = h - r;
     return v * v * v * scale;
 }
 vec3 gradW(vec3 r, float h){
-    float scale = 45.0 / (pow(h, 5.0) * PI);
+    float scale = 45.0 / (pow(h, 6.0) * PI);
     float rl = length(r);
     float v = h - rl;
     vec3 dir = rl <= EPSILON ? vec3(0) : normalize(r);
     return -v * v * scale * dir;
+}
+
+float trace(mat3 m){
+    return m[0][0] + m[1][1] + m[2][2];
 }
 
 //* Macros
@@ -162,7 +166,7 @@ void main(){
     LRParticle p = ssbo.particles[particleID];
 
     //* Strain & Stress 
-    mat3 velocityGradient = mat3(0.f);
+    mat3 deformationGradient = mat3(0.f);
     mat3 D = mat3(0.f);
 
     for_all_fluid_neighbors(
@@ -172,14 +176,14 @@ void main(){
 
         //* Strain & Stress 
         vec3 gradient = gradW(p_pi, settings.h_LR);
-        velocityGradient += pi.V * outerProduct(gradient, p.velocity.xyz - pi.velocity.xyz);
+        deformationGradient += pi.V * outerProduct(gradient, p.velocity.xyz - pi.velocity.xyz);
         D += (1.f / (pi.rho)) * outerProduct(gradient, gradient);
     
     )
 
     for_all_volume_maps(
         vec3 gradient = gradW(p_pi, settings.h_LR);
-        velocityGradient += volume * outerProduct(gradient, p.velocity.xyz - vec3(0));
+        deformationGradient += volume * outerProduct(gradient, p.velocity.xyz - vec3(0));
         D += (1.f / settings.rho0) * outerProduct(gradient, gradient);
     )
 
@@ -187,15 +191,25 @@ void main(){
     //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
     float pRhoSq = (p.rho ) * (p.rho );
     D *= (2.f * settings.mass * settings.mass * settings.dt) / pRhoSq;
-    mat3 strainTensor = 0.5f * (velocityGradient + transpose(velocityGradient));
+
+    mat3 strainTensor = 0.5f * (deformationGradient + transpose(deformationGradient));
+
     mat3 stressTensor = inverse(D) * strainTensor;
-    mat3 meanHydrostaticStressTensor = 0.5f * (stressTensor[0][0] + stressTensor[1][1]) * mat3(1.f);
+
+    // Piola-Kirchhoff stress tensor
+    // float lambda = 1.0;
+    // float mu = 1.0;
+    // float G = 44;//mu;
+    // float K = 38;//lambda + 2 * mu / 3;
+    // mat3 P = 2 * G * strainTensor + (K - 2.0/3.0 * G) * trace(strainTensor) * mat3(1.0);
+
+    mat3 meanHydrostaticStressTensor = 0.5f * trace(stressTensor) * mat3(1.f);
     mat3 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
+    mat3 stress = mat3(0);
     
     float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
     float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
 
-    mat3 stress = mat3(0);
 
 
     float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);

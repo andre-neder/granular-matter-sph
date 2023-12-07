@@ -103,12 +103,12 @@ float frobenius(mat3 m) {
 }
 
 float W(float r, float h){
-    float scale = 15.0 / (PI * pow(h, 6));
+    float scale = 15.0 / (PI * pow(h, 6.0));
     float v = h - r;
     return v * v * v * scale;
 }
 vec3 gradW(vec3 r, float h){
-    float scale = 45.0 / (pow(h, 5.0) * PI);
+    float scale = 45.0 / (pow(h, 6.0) * PI);
     float rl = length(r);
     float v = h - rl;
     vec3 dir = rl <= EPSILON ? vec3(0) : normalize(r);
@@ -163,12 +163,16 @@ void main(){
     // Semi-implicit euler
     // vec3 vel = (p.position + p.velocity * settings.dt) - (p.position);
     // if(length(vel) > settings.sleepingSpeed){
-        // p.position += p.velocity * settings.dt;
+    //     p.position += p.velocity * settings.dt;
     // }
     // p.velocity += ((p.internalForce + p.externalForce) / settings.mass) * settings.dt;
     // Forward Euler
     p.velocity += p.internalForce / settings.mass * settings.dt;
-    p.position += p.velocity * settings.dt;
+    // p.position += p.velocity * settings.dt;
+    vec3 vel = (p.position.xyz + p.velocity.xyz * settings.dt) - (p.position.xyz);
+    if(length(vel) > settings.sleepingSpeed){
+        p.position.xyz += p.velocity.xyz * settings.dt;
+    }
 
     ssbo.particles[particleID] = p;
 }

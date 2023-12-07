@@ -3,8 +3,8 @@
 #include "utils.h"
 
 struct AABB{
-    glm::vec3 min;
-    glm::vec3 max;
+    glm::vec3 min = glm::vec3(0.0);
+    glm::vec3 max = glm::vec3(0.0);
 };
 
 struct RigidBody2D{

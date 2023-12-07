@@ -87,6 +87,7 @@ bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
     bool supportsAllFeatures =
         m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy &&
         m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.geometryShader &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.fillModeNonSolid &&
         m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.shaderSampledImageArrayDynamicIndexing &&
         m_deviceFeatures2.get<vk::PhysicalDeviceRayTracingPipelineFeaturesKHR>().rayTracingPipeline &&
         m_deviceFeatures2.get<vk::PhysicalDeviceAccelerationStructureFeaturesKHR>().accelerationStructure &&
@@ -166,7 +167,7 @@ void Core::createLogicalDevice(){
 	}
     vk::StructureChain<vk::DeviceCreateInfo, vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT> deviceFeatureCreateInfo = {
 		deviceCreateInfo,
-		vk::PhysicalDeviceFeatures2().setFeatures(vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true).setGeometryShader(true).setShaderSampledImageArrayDynamicIndexing(true)),
+		vk::PhysicalDeviceFeatures2().setFeatures(vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true).setGeometryShader(true).setShaderSampledImageArrayDynamicIndexing(true).setFillModeNonSolid(true)),
 		vk::PhysicalDeviceRayTracingPipelineFeaturesKHR().setRayTracingPipeline(true),
 		vk::PhysicalDeviceAccelerationStructureFeaturesKHR().setAccelerationStructure(true),
 		vk::PhysicalDeviceBufferDeviceAddressFeatures().setBufferDeviceAddress(true),

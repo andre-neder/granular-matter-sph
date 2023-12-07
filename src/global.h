@@ -24,7 +24,7 @@ struct SPHSettings{
     
     float r_LR = PARTICLE_RADIUS;                       //* m
     float h_LR = r_LR * 4;                              //* m
-    float rho0 = 1950.f;                                //* kg/m^3
+    float rho0 = 1450.f;                                //* kg/m^3
     float mass = PARTICLE_VOLUME * rho0;                //* kg
 
     float maxCompression = 0.01f;	  

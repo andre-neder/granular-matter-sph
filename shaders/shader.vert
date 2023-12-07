@@ -51,7 +51,7 @@ layout(location = 1) out vec3 eye;
 layout(location = 2) out vec3 outVelocity;
 
 vec4 transformScreenSpace(vec3 v){
-    return vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (v.y / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, (v.z / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 1.0);
+    return vec4((settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT), (v.y / settings.DOMAIN_HEIGHT) * 2.0, (v.z / settings.DOMAIN_HEIGHT) * 2.0 - 1.0, 1.0);
 }
 
 

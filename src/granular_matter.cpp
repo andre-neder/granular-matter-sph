@@ -13,7 +13,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCountLR;
 uint32_t workGroupCountHR;
 
-glm::ivec3 computeSpace = glm::ivec3(32, 16, 32);
+glm::ivec3 computeSpace = glm::ivec3(4, 512, 4);
 
 std::vector<vk::QueryPool> timeQueryPools;
 std::vector<std::vector<std::string>> timestampLabels;
@@ -60,7 +60,11 @@ GranularMatter::GranularMatter(gpu::Core* core)
                     i * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2),
                     j * initialDistance + settings.h_LR, 
                     k * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.z / 2));
-                lrParticles.push_back(LRParticle(lrPosition.x , lrPosition.y, lrPosition.z));
+                lrParticles.push_back(LRParticle(
+                    lrPosition.x + RandomFloat(-settings.r_LR, settings.r_LR), 
+                    lrPosition.y + RandomFloat(-settings.r_LR, settings.r_LR), 
+                    lrPosition.z + RandomFloat(-settings.r_LR, settings.r_LR)
+                ));
 
                 for(uint32_t l = 0; l < settings.n_HR; l++){
                     glm::vec3 offset = hrParticleOffsets[l % hrParticleOffsets.size()];
@@ -375,7 +379,7 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
 
         uint32_t l = 0;
         float ny = settings.maxCompression * settings.rho0;
-        while ((l < 2 || std::abs(additionalData.averageDensityError) > ny) && l < 20 ) 
+        while ((l < 2 || std::abs(additionalData.averageDensityError) > ny) && l < 100 ) 
         {
             timestampLabels[currentFrame].push_back("IISPH Iteration " + std::to_string(l) + " Compute dijpj");
             {
@@ -589,18 +593,17 @@ void GranularMatter::createDescriptorSets() {
 #define EPSILON 0.0000001f
 
 float cubicSplineKernel(float r, float h){
-    float alpha = 15.f / (14.f * (float)M_PI * h * h);
+    float alpha = 1.f / (4.f * (float)M_PI);
     float q = r / h;
-
-    if (q >= 0.0 && q < 1.0) {
-        return alpha * (1.f - 1.5f * q * q + 0.75f * q * q * q);
-    } else if (q >= 1.f && q < 2.f) {
-        float beta_ = (2.f - q);
-        return alpha * 0.25f * beta_ * beta_ * beta_;
+    if (0.f <= q && q <= 1.0) {
+        return alpha * (std::powf((2.f - q), 3.f) - 4.f * std::powf((1.f - q), 2.f));
+    } else if (1.f <= q && q <= 2.f) {
+        return alpha * std::powf((2.f - q), 3.f);
     } else {
         return 0.f;
     }
 }
+
 
 float cubicExtension(float r){
     float h = settings.h_LR;
@@ -608,7 +611,7 @@ float cubicExtension(float r){
         return 1;
     }
     else if(r < h){
-        return cubicSplineKernel(r, h);
+        return cubicSplineKernel(r, h) / cubicSplineKernel(0, h);
     }
     else{
         return 0;
@@ -627,34 +630,34 @@ void GranularMatter::createSignedDistanceFields()
 
     //* Setup rigid bodies
     float halfBoxSize = settings.DOMAIN_WIDTH / 2;
-    Box3D box{ 
-        // glm::vec3(settings.DOMAIN_WIDTH / 2 - halfBoxSize / 2, halfBoxSize),
-        glm::vec3(halfBoxSize, settings.r_LR, halfBoxSize)
-    };
-    box.position = glm::vec3(0, -settings.r_LR, 0);
-    box.scale = glm::vec3(2 * halfBoxSize, 2 * settings.r_LR, 2 * halfBoxSize);
-    rigidBodies.push_back(&box);
+    // Box3D box{ 
+    //     // glm::vec3(settings.DOMAIN_WIDTH / 2 - halfBoxSize / 2, halfBoxSize),
+    //     glm::vec3(halfBoxSize, settings.r_LR, halfBoxSize)
+    // };
+    // box.position = glm::vec3(0, -settings.r_LR, 0);
+    // box.scale = glm::vec3(2 * halfBoxSize, 2 * settings.r_LR, 2 * halfBoxSize);
+    // rigidBodies.push_back(&box);
 
-    // Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
-    // rigidBodies.push_back(&floor);
+    Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
+    rigidBodies.push_back(&floor);
 
-    // Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
-    // rigidBodies.push_back(&wallLeft);
+    Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
+    rigidBodies.push_back(&wallLeft);
 
-    // Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
-    // wallRight.position = glm::vec3(settings.DOMAIN_WIDTH, 0, 0);
-    // rigidBodies.push_back(&wallRight);
+    Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
+    wallRight.position = glm::vec3(settings.DOMAIN_WIDTH, 0, 0);
+    rigidBodies.push_back(&wallRight);
 
-    // Plane3D wallBack{ glm::vec3(0, 0, 1), settings.h_LR};
-    // rigidBodies.push_back(&wallBack);
+    Plane3D wallBack{ glm::vec3(0, 0, 1), settings.h_LR};
+    rigidBodies.push_back(&wallBack);
 
-    // Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
-    // wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH);
-    // rigidBodies.push_back(&wallFront);
+    Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
+    wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH);
+    rigidBodies.push_back(&wallFront);
 
 
     glm::vec3 h_LR(settings.h_LR);
-    glm::vec3 textureSize = { 41, 41, 41 };
+    glm::vec3 textureSize = { 21, 21, 21 };
 
     for(auto rb : rigidBodies){
         //* Extend area by kernel radius
@@ -669,13 +672,13 @@ void GranularMatter::createSignedDistanceFields()
                 for(int x = (int)-(textureSize.x / 2); x <= (textureSize.x / 2); x++){
                     glm::vec3 samplePoint = glm::vec3{
                         x * stepSize.x, 
-                        y * stepSize.y,
-                        z * stepSize.z
+                        y * stepSize.y, 
+                        z * stepSize.z  
                     };
                     float sd = rb->signedDistance(samplePoint);
                     float volume = cubicExtension(sd);
-
                     glm::vec3 nearestPoint = rb->signedDistanceGradient(samplePoint);
+                    nearestPoint -= glm::normalize(rb->signedDistanceGradient(samplePoint)) * settings.r_LR * 1.f;
                     volumeMap.push_back(glm::vec4(nearestPoint.x, nearestPoint.y, nearestPoint.z, volume));
                 }
             }

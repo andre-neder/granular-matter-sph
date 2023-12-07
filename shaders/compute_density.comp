@@ -103,12 +103,12 @@ float frobenius(mat3 m) {
 }
 
 float W(float r, float h){
-    float scale = 15.0 / (PI * pow(h, 6));
+    float scale = 15.0 / (PI * pow(h, 6.0));
     float v = h - r;
     return v * v * v * scale;
 }
 vec3 gradW(vec3 r, float h){
-    float scale = 45.0 / (pow(h, 5.0) * PI);
+    float scale = 45.0 / (pow(h, 6.0) * PI);
     float rl = length(r);
     float v = h - rl;
     vec3 dir = rl <= EPSILON ? vec3(0) : normalize(r);
@@ -161,7 +161,7 @@ void main(){
     LRParticle p = ssbo.particles[particleID];
 
     vec3 relativeVelocity = settings.windDirection.xyz - p.velocity.xyz;
-    float occluded = 0.866; //* 30° cone
+    float occluded = 0.866; //* 30° cone 0.966;
 
 
     //* Density

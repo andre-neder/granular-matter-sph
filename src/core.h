@@ -38,7 +38,7 @@ namespace gpu
     };
 
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-    const uint32_t MAX_QUERY_POOL_COUNT = 256;
+    const uint32_t MAX_QUERY_POOL_COUNT = 1024;
     class Core{
         public:
             Core(){};
