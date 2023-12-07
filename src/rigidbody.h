@@ -1,11 +1,6 @@
 
 #include <glm/glm.hpp>
-
-namespace std{
-    template <typename T> int sign(T val) {
-        return (T(0) < val) - (val < T(0));
-    }
-}
+#include "utils.h"
 
 struct AABB{
     glm::vec3 min;

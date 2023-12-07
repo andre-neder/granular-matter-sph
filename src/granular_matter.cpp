@@ -2,7 +2,7 @@
 #include <chrono>
 #include "iostream"
 #include "global.h"
-
+#include "utils.h"
 
 SimulationMetrics simulationMetrics = SimulationMetrics();
 
@@ -13,7 +13,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCountLR;
 uint32_t workGroupCountHR;
 
-glm::ivec3 computeSpace = glm::ivec3(16, 16, 16);
+glm::ivec3 computeSpace = glm::ivec3(32, 16, 32);
 
 std::vector<vk::QueryPool> timeQueryPools;
 std::vector<std::vector<std::string>> timestampLabels;
@@ -39,9 +39,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
         m_core->createTimestampQueryPool(&timeQueryPools[i]);
         timestampLabels[i] = std::vector<std::string>();
     }
-   
-    // equilibrium distance
-    float r0 = 0.5f * settings.h_LR;
+
 
     float initialDistance = 0.5f * settings.h_LR;
     std::vector<glm::vec3> hrParticleOffsets = {
@@ -59,8 +57,8 @@ GranularMatter::GranularMatter(gpu::Core* core)
             for(int k = 0;k < computeSpace.z ; k++){
                 //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
                 glm::vec3 lrPosition = glm::vec3(
-                    j * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.y / 2),
-                    i * initialDistance + settings.h_LR, 
+                    i * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2),
+                    j * initialDistance + settings.h_LR, 
                     k * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.z / 2));
                 lrParticles.push_back(LRParticle(lrPosition.x , lrPosition.y, lrPosition.z));
 
@@ -628,14 +626,17 @@ void GranularMatter::createSignedDistanceFields()
 {
 
     //* Setup rigid bodies
-    float halfBoxSize = settings.DOMAIN_HEIGHT / 4;
-    // Box3D box{ 
-    //     // glm::vec3(settings.DOMAIN_WIDTH / 2 - halfBoxSize / 2, halfBoxSize),
-    //     glm::vec3(halfBoxSize)
-    // };
+    float halfBoxSize = settings.DOMAIN_WIDTH / 2;
+    Box3D box{ 
+        // glm::vec3(settings.DOMAIN_WIDTH / 2 - halfBoxSize / 2, halfBoxSize),
+        glm::vec3(halfBoxSize, settings.r_LR, halfBoxSize)
+    };
+    box.position = glm::vec3(0, -settings.r_LR, 0);
+    box.scale = glm::vec3(2 * halfBoxSize, 2 * settings.r_LR, 2 * halfBoxSize);
+    rigidBodies.push_back(&box);
 
-    Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
-    rigidBodies.push_back(&floor);
+    // Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
+    // rigidBodies.push_back(&floor);
 
     // Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
     // rigidBodies.push_back(&wallLeft);
@@ -651,10 +652,9 @@ void GranularMatter::createSignedDistanceFields()
     // wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH);
     // rigidBodies.push_back(&wallFront);
 
-    // rigidBodies.push_back(&box);
 
     glm::vec3 h_LR(settings.h_LR);
-    glm::vec3 textureSize = { 40, 40, 40 };
+    glm::vec3 textureSize = { 41, 41, 41 };
 
     for(auto rb : rigidBodies){
         //* Extend area by kernel radius
@@ -664,13 +664,13 @@ void GranularMatter::createSignedDistanceFields()
         //* Get Sampling Step Size
         glm::vec3 stepSize = (aabb.max - aabb.min) / (textureSize);
         std::vector<glm::vec4> volumeMap;
-        for(int z = (int)-(textureSize.z / 2); z < (textureSize.z / 2); z++){
-            for(int y = (int)-(textureSize.y / 2); y < (textureSize.y / 2); y++){
-                for(int x = (int)-(textureSize.x / 2); x < (textureSize.x / 2); x++){
+        for(int z = (int)-(textureSize.z / 2); z <= (textureSize.z / 2); z++){
+            for(int y = (int)-(textureSize.y / 2); y <= (textureSize.y / 2); y++){
+                for(int x = (int)-(textureSize.x / 2); x <= (textureSize.x / 2); x++){
                     glm::vec3 samplePoint = glm::vec3{
-                        x * stepSize.x + 0.5 * stepSize.x, 
-                        y * stepSize.y + 0.5 * stepSize.y,
-                        z * stepSize.z + 0.5 * stepSize.z
+                        x * stepSize.x, 
+                        y * stepSize.y,
+                        z * stepSize.z
                     };
                     float sd = rb->signedDistance(samplePoint);
                     float volume = cubicExtension(sd);

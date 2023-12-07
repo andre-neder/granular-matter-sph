@@ -26,10 +26,10 @@ struct TriangleVertex {
 
 const float halfBoxSize = settings.DOMAIN_HEIGHT / 4.f;
 const std::vector<TriangleVertex> vertices = {
-    {{0.f, 0.f, 0.f, 0.f}},
-    {{settings.DOMAIN_WIDTH, 0.f, 0.f, 0.f}},
-    {{0.f, 0.f, settings.DOMAIN_WIDTH, 0.f}},
-    {{settings.DOMAIN_WIDTH, 0.f, settings.DOMAIN_WIDTH, 0.f}},
+    {{0.f, settings.r_LR, 0.f, 1.f}},
+    {{settings.DOMAIN_WIDTH, settings.r_LR, 0.f, 1.f}},
+    {{0.f, settings.r_LR, settings.DOMAIN_WIDTH, 1.f}},
+    {{settings.DOMAIN_WIDTH, settings.r_LR, settings.DOMAIN_WIDTH, 1.f}},
     // {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , 0 , 0.f, 0.f}},
     // {{(settings.DOMAIN_WIDTH / 2 + halfBoxSize) , 0 , 0.f, 0.f}},
     // {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , halfBoxSize * 2 , 0.f, 0.f}},
