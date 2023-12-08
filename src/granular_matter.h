@@ -22,6 +22,16 @@ struct ParticleGridEntry{
     uint32_t cellKey = UINT32_MAX;
 };
 
+struct WindParticle{
+    glm::vec4 position = glm::vec4(0);
+    glm::vec4 velocity = glm::vec4(0);
+    glm::vec4 internalForce = glm::vec4(0);
+    float p = 0.0;
+    float V = 0.0;
+    float pad0 = 0.0;
+    float pad1 = 0.0;
+};
+
 struct LRParticle{
     glm::vec4 position = glm::vec4(0);
     glm::vec4 velocity = glm::vec4(0);
@@ -64,17 +74,17 @@ struct HRParticle{
     glm::vec4 velocity = glm::vec4(0);  
     HRParticle(){};
     inline HRParticle(float x, float y, float z) { position = glm::vec4(x, y, z, 1); }
-
+    static const uint32_t BINDING = 1;
      static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
         std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
-            vk::VertexInputBindingDescription(0, sizeof(HRParticle), vk::VertexInputRate::eVertex)
+            vk::VertexInputBindingDescription(BINDING, sizeof(HRParticle), vk::VertexInputRate::eInstance)
         };
         return bindingDescriptions;
     }
     static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
-            vk::VertexInputAttributeDescription(0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, position)),
-            vk::VertexInputAttributeDescription(1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, velocity)),
+            vk::VertexInputAttributeDescription(7, BINDING, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, position)),
+            vk::VertexInputAttributeDescription(8, BINDING, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, velocity)),
         };
         return attributeDescriptions;
     }

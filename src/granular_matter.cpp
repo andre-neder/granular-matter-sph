@@ -490,19 +490,19 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         
-        // timestampLabels[currentFrame].push_back("Advect HR particles");
-        // {
-        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        //     commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
-        // }
+        timestampLabels[currentFrame].push_back("Advect HR particles");
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
+        }
 
 
-        //* Wait for copy action
-        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
-        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+        // * Wait for copy action
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         simulationStepForward = false;
         

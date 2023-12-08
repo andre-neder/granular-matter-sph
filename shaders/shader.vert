@@ -59,11 +59,11 @@ vec4 transformScreenSpace(vec3 v){
 
 void main() {
     gl_PointSize = 1;
-
+    float scale = settings.r_LR;
     mat4 model = mat4(1.0);
-    model[0] = vec4(settings.r_LR,0,0,0);
-    model[1] = vec4(0,settings.r_LR,0,0);
-    model[2] = vec4(0,0,settings.r_LR,0);
+    model[0] = vec4(scale,0,0,0);
+    model[1] = vec4(0,scale,0,0);
+    model[2] = vec4(0,0,scale,0);
     model[3] = vec4(inPosition,1.0);
     // gl_Position = vec4(inPosition, 0, 1); 
     eye = ubo.view[3].xyz;
