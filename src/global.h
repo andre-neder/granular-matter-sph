@@ -15,22 +15,18 @@
 extern bool simulationRunning;
 extern bool simulationStepForward;
 
-extern std::vector<std::string> passTimeings;
-#define PARTICLE_RADIUS 0.2f                            //* m
-#define PARTICLE_VOLUME (4.f / 3.f * (float) M_PI * (PARTICLE_RADIUS * PARTICLE_RADIUS * PARTICLE_RADIUS))
-
 struct SPHSettings{
     glm::vec4 g = glm::vec4(0.f, -9.81f, 0.f, 0.f);          //* m/s^2
     
-    float r_LR = PARTICLE_RADIUS;                       //* m
+    float r_LR = 0.2f;                       //* m
     float h_LR = r_LR * 4;                              //* m
     float rho0 = 1450.f;                                //* kg/m^3
-    float mass = PARTICLE_VOLUME * rho0;                //* kg
+    float mass = (4.f / 3.f * (float) M_PI * (r_LR * r_LR * r_LR)) * rho0;                //* kg
 
     float maxCompression = 0.01f;	  
     float dt = 0.0006f;	                                //* s
-    float DOMAIN_WIDTH = 20.f;                         //* m
-    float DOMAIN_HEIGHT = 20.f;                        //* m
+    float DOMAIN_WIDTH = 100.f;                         //* m
+    float DOMAIN_HEIGHT = 100.f;                        //* m
 
     float sleepingSpeed = 0.0005f;                      //* m/s
     float h_HR = r_LR * 3;

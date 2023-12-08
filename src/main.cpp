@@ -27,8 +27,6 @@
 #include "global.h"
 #include "camera.h"
 
-std::vector<std::string> passTimeings = std::vector<std::string>();
-
 const uint32_t WIDTH = 1280;
 const uint32_t HEIGHT = 720;
 
@@ -41,7 +39,6 @@ public:
         cleanup();
     }
 private:
-    bool enableValidation = true;
     vk::PhysicalDevice physicalDevice;
     vk::Device device;
 
@@ -70,7 +67,7 @@ private:
     }
 
     void initVulkan(){
-        core = gpu::Core(enableValidation, &window);
+        core = gpu::Core(true, &window);
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
 

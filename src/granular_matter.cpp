@@ -13,7 +13,7 @@ uint32_t workGroupCountSort;
 uint32_t workGroupCountLR;
 uint32_t workGroupCountHR;
 
-glm::ivec3 computeSpace = glm::ivec3(4, 512, 4);
+glm::ivec3 computeSpace = glm::ivec3(16, 32, 16);
 
 std::vector<vk::QueryPool> timeQueryPools;
 std::vector<std::vector<std::string>> timestampLabels;
@@ -58,12 +58,12 @@ GranularMatter::GranularMatter(gpu::Core* core)
                 //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
                 glm::vec3 lrPosition = glm::vec3(
                     i * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2),
-                    j * initialDistance + settings.h_LR, 
+                    j * initialDistance + settings.r_LR, 
                     k * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.z / 2));
                 lrParticles.push_back(LRParticle(
-                    lrPosition.x + RandomFloat(-settings.r_LR, settings.r_LR), 
-                    lrPosition.y + RandomFloat(-settings.r_LR, settings.r_LR), 
-                    lrPosition.z + RandomFloat(-settings.r_LR, settings.r_LR)
+                    lrPosition.x,// + RandomFloat(-settings.r_LR, settings.r_LR), 
+                    lrPosition.y,// + RandomFloat(-settings.r_LR, settings.r_LR), 
+                    lrPosition.z// + RandomFloat(-settings.r_LR, settings.r_LR)
                 ));
 
                 for(uint32_t l = 0; l < settings.n_HR; l++){
