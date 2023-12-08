@@ -18,7 +18,7 @@ extern bool simulationStepForward;
 struct SPHSettings{
     glm::vec4 g = glm::vec4(0.f, -9.81f, 0.f, 0.f);          //* m/s^2
     
-    float r_LR = 0.2f;                       //* m
+    float r_LR = 0.2f;                                  //* m
     float h_LR = r_LR * 4;                              //* m
     float rho0 = 1450.f;                                //* kg/m^3
     float mass = (4.f / 3.f * (float) M_PI * (r_LR * r_LR * r_LR)) * rho0;                //* kg
@@ -37,8 +37,8 @@ struct SPHSettings{
                                         
     float dragCoefficient = 0.47f;                      //* Sphere Reynoldsnumber 10^6
     uint32_t n_HR = 7 * 10;                             //* number of HR lrParticles per LR particle 2D: (/5) 3D: (/7)      
-    float pad0;
-    float pad1;                                   
+    float scale_W = 15.f / (M_PI * pow(h_LR, 6.0));
+    float scale_GradW = 45.f / (pow(h_LR, 6.0) * M_PI);                                   
 };
 
 extern SPHSettings settings;

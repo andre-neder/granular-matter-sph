@@ -80,8 +80,8 @@ layout( push_constant ) uniform Settings{
 
     float dragCoefficient;                
     uint n_HR; 
-    float pad0;
-    float pad1;           
+    float scale_W;
+    float scale_GradW;           
 } settings;
 
 layout(set = 1, binding = 0) buffer GridLookUpStorage{
@@ -103,16 +103,14 @@ float frobenius(mat3 m) {
 }
 
 float W(float r, float h){
-    float scale = 15.0 / (PI * pow(h, 6.0));
     float v = h - r;
-    return v * v * v * scale;
+    return v * v * v * settings.scale_W;
 }
 vec3 gradW(vec3 r, float h){
-    float scale = 45.0 / (pow(h, 6.0) * PI);
     float rl = length(r);
     float v = h - rl;
     vec3 dir = rl <= EPSILON ? vec3(0) : normalize(r);
-    return -v * v * scale * dir;
+    return -v * v * settings.scale_GradW* dir;
 }
 
 //* Macros
