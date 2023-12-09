@@ -40,7 +40,7 @@ layout(location = 1) in vec3 eye;
 layout(location = 2) in vec3 inVelocity;
 
 void main() {
-    vec4 sand = vec4(vec3(1 - length(inVelocity), 0.0, length(inVelocity)),1.0);// vec4(246.f / 255.f,215.f / 255.f,176.f / 255.f, 1.0); //
+    vec4 sand = vec4(246.f / 255.f,215.f / 255.f,176.f / 255.f, 1.0); // vec4(vec3(length(inVelocity), 0.0, 1 - length(inVelocity)),1.0); //
     vec4 lightColor = vec4(1.0);
     vec4 ambient = vec4(0.3);
     vec3 lightVec = vec3(-1.0, -2.0, -1.0);

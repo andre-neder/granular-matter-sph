@@ -59,7 +59,8 @@ vec4 transformScreenSpace(vec3 v){
 
 void main() {
     gl_PointSize = 1;
-    float scale = settings.r_LR;
+    float scale = settings.r_LR; // LR
+    // float scale = settings.r_LR / 7; // HR
     mat4 model = mat4(1.0);
     model[0] = vec4(scale,0,0,0);
     model[1] = vec4(0,scale,0,0);
