@@ -81,7 +81,11 @@ layout( push_constant ) uniform Settings{
     float dragCoefficient;                
     uint n_HR; 
     float scale_W;
-    float scale_GradW;           
+    float scale_GradW;
+    float A_LR; 
+    float v_max;
+    float pad0;
+    float pad1; 
 } settings;
 
 layout(set = 1, binding = 0) buffer GridLookUpStorage{
@@ -181,18 +185,18 @@ void main(){
         vec3 gradient = gradW(p_pi, settings.h_LR);
         vec3 F_f = ((volume * settings.rho0) * (p.stress / pRhoSq) * vec4(gradient, 0)).xyz;
 
-        float cs = sqrt(1.4);
+        float c_s = settings.v_max;
         float eps = 0.01;
-        float sigma = 20.0;
-        float ny = (sigma * settings.h_LR * cs) / (2.f * p.rho); 
-        // float ny = (2 * sigma * settings.h_LR * cs) / (settings.rho0 + p.rho); 
+        float sigma = 100.0;
+        // float ny = (sigma * settings.h_LR * c_s) / (2.f * p.rho); 
+        float ny = (2.0 * sigma * settings.h_LR * c_s) / (settings.rho0 + p.rho); 
         float pi = -ny * (min(dot((p.velocity.xyz - vec3(0)), p_pi), 0.f) / ((r * r) + (eps * settings.h_LR * settings.h_LR)));
         vec3 F_v = (volume * settings.rho0) * pi * gradient; 
 
-        frictionalForce += length(F_f) > length(F_v) ? F_f : F_v;
+        frictionalForce += F_f; //length(F_f) > length(F_v) ? F_f : F_v;
     )
 
-    frictionalForce *= -settings.mass;
+    frictionalForce *= -settings.mass; 
 
     p.externalForce.xyz += frictionalForce.xyz;
 

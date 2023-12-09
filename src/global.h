@@ -38,7 +38,11 @@ struct SPHSettings{
     float dragCoefficient = 0.47f;                      //* Sphere Reynoldsnumber 10^6
     uint32_t n_HR = 7 * 10;                             //* number of HR lrParticles per LR particle 2D: (/5) 3D: (/7)      
     float scale_W = 15.f / (M_PI * pow(h_LR, 6.0));
-    float scale_GradW = 45.f / (pow(h_LR, 6.0) * M_PI);                                   
+    float scale_GradW = 60.f / (pow(h_LR, 6.0) * M_PI);    
+    float A_LR = r_LR * r_LR * M_PI;                               
+    float v_max = ((2.f * mass * glm::length(g)) / (rhoAir * A_LR * dragCoefficient));       
+    float pad0;                        
+    float pad1;                        
 };
 
 extern SPHSettings settings;

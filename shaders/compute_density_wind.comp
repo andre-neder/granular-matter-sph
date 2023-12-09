@@ -8,6 +8,11 @@
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
 
+#define R_WIND 2.0
+#define H_WIND R_WIND * 4.0
+#define V_WIND 4.f / 3.f * PI * (R_WIND * R_WIND * R_WIND)
+
+
 //* Types
 
 struct LRParticle{
@@ -26,6 +31,16 @@ struct LRParticle{
     float dpi;
     float lastP;
     float densityAdv;
+    float pad0;
+};
+
+struct WindParticle{
+    vec4 position;
+    vec4 velocity;
+    vec4 internalForce;
+    float rho;
+    float p;
+    float V;
     float pad0;
 };
 
@@ -96,6 +111,10 @@ layout(set = 1, binding = 2) buffer StartringIndicesStorage{
     uint startingIndices[];
 };
 
+layout(set = 2, binding = 0) buffer SSBOWind{
+    WindParticle particles[];
+} ssboWind;
+
 //* Functions
 
 uint calculateCellKey(uvec3 cell){
@@ -116,6 +135,18 @@ vec3 gradW(vec3 r, float h){
     vec3 dir = rl <= EPSILON ? vec3(0) : normalize(r);
     return -v * v * settings.scale_GradW* dir;
 }
+
+vec3 infiniteDomainOffsets[9] = {
+    vec3(0,0,0),
+    vec3(-settings.DOMAIN_WIDTH,0,0),
+    vec3(settings.DOMAIN_WIDTH,0,0),
+    vec3(0,0,-settings.DOMAIN_WIDTH),
+    vec3(0,0,settings.DOMAIN_WIDTH),
+    vec3(-settings.DOMAIN_WIDTH,0,-settings.DOMAIN_WIDTH),
+    vec3(-settings.DOMAIN_WIDTH,0,settings.DOMAIN_WIDTH),
+    vec3(settings.DOMAIN_WIDTH,0,-settings.DOMAIN_WIDTH),
+    vec3(settings.DOMAIN_WIDTH,0,settings.DOMAIN_WIDTH)
+};
 
 //* Macros
 
@@ -151,50 +182,62 @@ vec3 gradW(vec3 r, float h){
         vec3 p_pi = vM.rgb; \
         float volume = vM.a; \
         float r = length(p_pi); \
-        if(r < settings.h_LR){ \
+        if(r < H_WIND){ \
             code \
         }\
     }\
 }
 
+#define for_all_wind_particles(code) { \
+    for (int i = 0; i < ssboWind.particles.length(); i++){  \
+        WindParticle pi = ssboWind.particles[i];  \
+        for(int j = 0; j < infiniteDomainOffsets.length(); j++){ \
+            vec3 p_pi = p.position.xyz - (pi.position.xyz + infiniteDomainOffsets[j]); \
+            float r = length(p_pi); \
+            if(r < H_WIND){ \
+                code \
+            }\
+        }\
+    }\
+} 
+
 void main(){
 
-    uint particleID = gl_GlobalInvocationID.x;;
-    LRParticle p = ssbo.particles[particleID];
+    uint particleID = gl_GlobalInvocationID.x;
+    if(particleID >= ssboWind.particles.length()){
+        return;
+    }
+    WindParticle p = ssboWind.particles[particleID];
 
-    vec3 relativeVelocity = settings.windDirection.xyz - p.velocity.xyz;
-    float occluded = 0.866; //* 30° cone 0.966;
 
 
     //* Density
     float rho = 0.f;
+    float rho2 = 0.f;
 
     for_all_fluid_neighbors(
-
         //* Density
-        rho += W(r, settings.h_LR); 
-
-        if(particleIndex == particleID){
-            continue;
-        }
-        occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
+        rho2 += W(r, settings.h_LR); 
     )
+    rho2 *= (V_WIND * settings.rhoAir);//settings.mass;
 
-    rho *= settings.mass;
-
-    for_all_volume_maps(
-        rho += (volume * settings.rho0) * W(r, settings.h_LR);
+    for_all_wind_particles(
+        rho += W(r, H_WIND);
     )
+                
+    rho *= (V_WIND * settings.rhoAir);
 
-    p.rho = rho;
-    p.V = settings.mass / rho;
+    rho += rho2;
 
-    //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
-    float dragWeight = max(0, min(1, 1 - occluded)); 
-    float crossSectionalArea = dragWeight * settings.A_LR; 
-    vec3 dragForce = (0.5 * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
-    p.externalForce.xyz += dragForce;
+    // for_all_volume_maps(
+    //     rho += (volume * settings.rhoAir) * W(r, H_WIND);
+    // )
 
-    ssbo.particles[particleID] = p;
+    p.rho = max(rho, settings.rhoAir);
+    p.V = (V_WIND * settings.rhoAir) / rho;
+
+    p.p = 50.0 * (p.rho - settings.rhoAir); 
+    p.p = max(p.p, 0.f);    
+    ssboWind.particles[particleID] = p;
 }
 

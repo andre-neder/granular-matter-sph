@@ -93,6 +93,13 @@ private:
         particleRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
         particleRenderPass.bindingDescription = LRParticle::getBindingDescription();
 
+        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        //     particleRenderPass.vertexBuffer[i] = simulation.windParticlesBuffer;
+        // }
+        // particleRenderPass.vertexCount = (uint32_t)simulation.windParticles.size();
+        // particleRenderPass.attributeDescriptions = WindParticle::getAttributeDescriptions();
+        // particleRenderPass.bindingDescription = WindParticle::getBindingDescription();
+
         particleRenderPass.init();
         triangleRenderPass.init();
 

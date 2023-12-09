@@ -32,7 +32,11 @@ layout( push_constant ) uniform Settings{
     float dragCoefficient;                
     uint n_HR; 
     float scale_W;
-    float scale_GradW;           
+    float scale_GradW;
+    float A_LR; 
+    float v_max;
+    float pad0;
+    float pad1; 
 } settings;
 
 layout (location = 0) in vec3 vPosition;

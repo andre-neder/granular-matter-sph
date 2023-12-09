@@ -1,0 +1,120 @@
+#version 460
+
+#extension GL_EXT_nonuniform_qualifier : require
+#extension GL_EXT_shader_atomic_float : enable
+
+#define UINT_MAX (0xffffffff)
+#define FLOAT_MAX 3.402823466e+38
+#define EPSILON 0.0000001f
+#define PI      3.1415926f
+
+#define R_WIND 2.0
+#define H_WIND (R_WIND * 4.0)
+#define V_WIND (4.f / 3.f * PI * (R_WIND * R_WIND * R_WIND))
+
+//* Types
+
+struct WindParticle{
+    vec4 position;
+    vec4 velocity;
+    vec4 internalForce;
+    float rho;
+    float p;
+    float V;
+    float pad0;
+};
+
+struct ParticleGridEntry{
+    uint particleIndex;
+    uint cellKey;
+};
+
+struct VolumeMapTransform{
+    vec4 position;
+    vec4 scale;
+};
+
+
+//* Layout
+layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout(set = 0, binding = 0) buffer SSBO{
+    WindParticle particles[];
+} ssboWind;
+
+layout( push_constant ) uniform Settings{
+    vec4 g; 
+
+    float r_LR;         
+    float h_LR; 
+    float rho0; 
+    float mass;
+
+    float maxCompression;	
+    float dt;	 
+    float DOMAIN_WIDTH; 
+    float DOMAIN_HEIGHT;  
+
+    float sleepingSpeed;
+    float h_HR;
+    float theta;                               
+    float rhoAir;                                 
+    
+    vec4 windDirection;      
+
+    float dragCoefficient;                
+    uint n_HR; 
+    float scale_W;
+    float scale_GradW;
+    float A_LR; 
+    float v_max;
+    float pad0;
+    float pad1; 
+} settings;
+
+void main(){
+    uint particleID = gl_GlobalInvocationID.x;
+    if(particleID >= ssboWind.particles.length()){
+        return;
+    }
+    WindParticle p = ssboWind.particles[particleID];
+
+    // Forward Euler
+    // p.velocity.xyz += (settings.g.xyz + (p.internalForce.xyz / settings.mass)) * settings.dt;
+    p.velocity.xyz += (p.internalForce.xyz / (V_WIND * settings.rhoAir)) * settings.dt;
+    
+    // p.position += p.velocity * settings.dt;
+    p.position.xyz += p.velocity.xyz * settings.dt;
+
+    // p.velocity.x = p.position.x <= (0) ? 0.9 * -p.velocity.x : p.velocity.x;
+    // p.velocity.x = p.position.x >= (settings.DOMAIN_WIDTH) ? 0.9 * -p.velocity.x : p.velocity.x;
+    p.velocity.y = p.position.y <= (0) ? 0.9 * -p.velocity.y : p.velocity.y;
+    p.velocity.y = p.position.y >= (settings.DOMAIN_HEIGHT) ? 0.9 * -p.velocity.y : p.velocity.y;
+    // p.velocity.z = p.position.z <= (0) ? 0.9 * -p.velocity.z : p.velocity.z;
+    // p.velocity.z = p.position.z >= (settings.DOMAIN_WIDTH) ? 0.9 * -p.velocity.z : p.velocity.z;
+    
+    // p.position.x = max(p.position.x, (0) );
+    // p.position.x = min(p.position.x, (settings.DOMAIN_WIDTH ));
+    // p.position.y = max(p.position.y, (0));
+    // p.position.y = min(p.position.y, (settings.DOMAIN_HEIGHT));
+    // p.position.z = max(p.position.z, (0)) ;
+    // p.position.z = min(p.position.z, (settings.DOMAIN_WIDTH));
+
+    // if(p.position.x <= H_WIND){
+    //     p.velocity.x = settings.windDirection.x;
+    // }
+
+    // if(p.position.z <= H_WIND){
+    //     p.velocity.z = settings.windDirection.z;
+    // }
+
+    p.position.xyz = vec3(
+        mod(p.position.x, settings.DOMAIN_WIDTH),
+        p.position.y,//mod(p.position.y, settings.DOMAIN_HEIGHT),
+        mod(p.position.z, settings.DOMAIN_WIDTH)
+    );
+
+    
+
+    ssboWind.particles[particleID] = p;
+}
