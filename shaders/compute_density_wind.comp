@@ -8,7 +8,7 @@
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
 
-#define R_WIND 2.0
+#define R_WIND 1.0
 #define H_WIND R_WIND * 4.0
 #define V_WIND 4.f / 3.f * PI * (R_WIND * R_WIND * R_WIND)
 
@@ -36,6 +36,7 @@ struct LRParticle{
 
 struct WindParticle{
     vec4 position;
+    vec4 initialPosition;
     vec4 velocity;
     vec4 internalForce;
     float rho;
@@ -212,32 +213,34 @@ void main(){
 
 
     //* Density
-    float rho = 0.f;
-    float rho2 = 0.f;
+    // float rho = 0.f;
+    // float rho2 = 0.f;
 
-    for_all_fluid_neighbors(
-        //* Density
-        rho2 += W(r, settings.h_LR); 
-    )
-    rho2 *= (V_WIND * settings.rhoAir);//settings.mass;
+    // for_all_fluid_neighbors(
+    //     //* Density
+    //     // rho2 += W(r, settings.h_LR); 
+       
+    // )
+    p.velocity.xyz = vec3(0);
+    // rho2 *= (V_WIND * settings.rhoAir);//settings.mass;
 
-    for_all_wind_particles(
-        rho += W(r, H_WIND);
-    )
+    // for_all_wind_particles(
+    //     rho += W(r, H_WIND);
+    // )
                 
-    rho *= (V_WIND * settings.rhoAir);
+    // rho *= (V_WIND * settings.rhoAir);
 
-    rho += rho2;
+    // rho += rho2;
 
     // for_all_volume_maps(
     //     rho += (volume * settings.rhoAir) * W(r, H_WIND);
     // )
 
-    p.rho = max(rho, settings.rhoAir);
-    p.V = (V_WIND * settings.rhoAir) / rho;
+    // p.rho = max(rho, settings.rhoAir);
+    // p.V = (V_WIND * settings.rhoAir) / rho;
 
-    p.p = 50.0 * (p.rho - settings.rhoAir); 
-    p.p = max(p.p, 0.f);    
+    // p.p = 10.0 * (p.rho - settings.rhoAir); 
+    // p.p = max(p.p, 0.f);    
     ssboWind.particles[particleID] = p;
 }
 

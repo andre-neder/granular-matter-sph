@@ -53,16 +53,18 @@ GranularMatter::GranularMatter(gpu::Core* core)
         {0, 0, -settings.r_LR},
     };
 
-    float windParticleRadius = 2.0f;
+    float windParticleRadius = 1.0f;
     float windKernelRadius = windParticleRadius * 4;
     float windEquilibriumDistance = 0.5 * windKernelRadius;
     for(int i = 0;i < settings.DOMAIN_WIDTH / windEquilibriumDistance ; i++){
         for(int j = 0;j < settings.DOMAIN_HEIGHT / windEquilibriumDistance ; j++){
-            for(int k = 0;k < settings.DOMAIN_WIDTH / windEquilibriumDistance ; k++){
+            // for(int k = 0;k < settings.DOMAIN_WIDTH / windEquilibriumDistance ; k++){
+            for(int k = 0;k < 1 ; k++){
                 glm::vec3 position = glm::vec3(
                     i * windEquilibriumDistance + windParticleRadius,
                     j * windEquilibriumDistance + windParticleRadius, 
-                    k * windEquilibriumDistance + windParticleRadius
+                    // k * windEquilibriumDistance + windParticleRadius
+                    0.5 * settings.DOMAIN_WIDTH
                 );
                 windParticles.push_back(WindParticle(
                     position.x, 
@@ -355,15 +357,15 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
 
         
-        timestampLabels[currentFrame].push_back("Integrate wind");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipelineLayout, 0, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(integrateWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        }
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+        // timestampLabels[currentFrame].push_back("Integrate wind");
+        // {
+        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipeline);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipelineLayout, 0, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].pushConstants(integrateWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+        //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
+        // }
+        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
 
 

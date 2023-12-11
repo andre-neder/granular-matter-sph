@@ -7,7 +7,7 @@
 #define FLOAT_MAX 3.402823466e+38
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
-#define R_WIND 2.0
+#define R_WIND 1.0
 #define H_WIND (R_WIND * 4.0)
 #define V_WIND (4.f / 3.f * PI * (R_WIND * R_WIND * R_WIND))
 
@@ -34,6 +34,7 @@ struct LRParticle{
 
 struct WindParticle{
     vec4 position;
+    vec4 initialPosition;
     vec4 velocity;
     vec4 internalForce;
     float rho;
@@ -207,30 +208,31 @@ void main(){
     }
     WindParticle p = ssboWind.particles[particleID];
 
-    vec3 internalForce = vec3(0.f);
+    // vec3 internalForce = vec3(0.f);
 
    
-    float pRhoSq = p.rho * p.rho;
+    // float pRhoSq = p.rho * p.rho;
 
     for_all_fluid_neighbors(
-        if(particleIndex == particleID){
-            continue;
-        }
        
         //* Pressure calculation
-        float piRhoSq =  pi.rho *  pi.rho;
+        // float piRhoSq =  pi.rho *  pi.rho;
         vec3 gradient = gradW(p_pi, settings.h_LR);
         
-        internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+        // internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+        p.velocity.xyz += p_pi;
+        // internalForce += gradient;
    
     )
 
-    for_all_wind_particles(
-        float piRhoSq =  pi.rho *  pi.rho;
-        vec3 gradient = gradW(p_pi, H_WIND);
+    p.velocity.xyz = normalize(p.velocity.xyz);
 
-        internalForce += (V_WIND * settings.rhoAir) * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
-    )
+    // for_all_wind_particles(
+    //     float piRhoSq =  pi.rho *  pi.rho;
+    //     vec3 gradient = gradW(p_pi, H_WIND);
+
+    //     internalForce += (V_WIND * settings.rhoAir) * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+    // )
 
     // for_all_volume_maps(
     //     vec3 gradient = gradW(p_pi, H_WIND);
@@ -238,9 +240,9 @@ void main(){
     //     internalForce += (volume * settings.rhoAir) * (p.p / pRhoSq) * gradient; 
     // )
 
-    internalForce *= -(V_WIND * settings.rhoAir);
+    // internalForce *= -(V_WIND * settings.rhoAir);
 
-    p.internalForce.xyz = internalForce; 
+    // p.internalForce.xyz = internalForce; 
 
     ssboWind.particles[particleID] = p;
 }

@@ -8,7 +8,7 @@
 #define EPSILON 0.0000001f
 #define PI      3.1415926f
 
-#define R_WIND 2.0
+#define R_WIND 1.0
 #define H_WIND (R_WIND * 4.0)
 #define V_WIND (4.f / 3.f * PI * (R_WIND * R_WIND * R_WIND))
 
@@ -16,6 +16,7 @@
 
 struct WindParticle{
     vec4 position;
+    vec4 initialPosition;
     vec4 velocity;
     vec4 internalForce;
     float rho;
@@ -104,15 +105,22 @@ void main(){
     //     p.velocity.x = settings.windDirection.x;
     // }
 
-    // if(p.position.z <= H_WIND){
-    //     p.velocity.z = settings.windDirection.z;
-    // }
+    
 
     p.position.xyz = vec3(
         mod(p.position.x, settings.DOMAIN_WIDTH),
         p.position.y,//mod(p.position.y, settings.DOMAIN_HEIGHT),
         mod(p.position.z, settings.DOMAIN_WIDTH)
     );
+
+    if(p.position.x <= H_WIND){
+        p.velocity.xyz = vec3(10,0,0);
+        p.position.y = p.initialPosition.y;
+    }
+
+    p.position.z = 0.5 * settings.DOMAIN_WIDTH; //2D
+
+
 
     
 

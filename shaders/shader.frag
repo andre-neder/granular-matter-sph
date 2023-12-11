@@ -50,6 +50,7 @@ void main() {
     vec3 lightVec = vec3(-1.0, -2.0, -1.0);
     float phi = max(dot(normalize(inNormal), normalize(eye)), 0.0);
     outColor = sand * ambient + sand * cos(1 - phi) * lightColor;
+    // outColor = vec4(inVelocity, 1.0);
     // vec3 vel = (inPosition + inVelocity * settings.dt) - (inPosition);
     // if(length(vel) > settings.sleepingSpeed){
     //     outColor = vec4(0, 1, 0, 1);
