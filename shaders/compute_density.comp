@@ -195,6 +195,22 @@ void main(){
     vec3 dragForce = (0.5 * settings.rhoAir * (length(relativeVelocity) * relativeVelocity) * settings.dragCoefficient * crossSectionalArea);
     p.externalForce.xyz += dragForce;
 
+    // p.rho = max(p.rho, settings.rho0); 
+    // float exponent = 7.f;
+    // float stiffness = 7.0;
+    // float B = stiffness;// (settings.rho0 * c * c) / exponent;
+
+    //* coles equation (https://forums.dual.sphysics.org/discussion/1804/theory-tait-equation-of-state)
+    // float pressure = B * (pow(max(p.rho, settings.rho0) / settings.rho0, exponent) - 1.f); 
+
+    //* tait's equation (https://www.politesi.polimi.it/bitstream/10589/33101/1/2011_12_Pirovano.pdf (3.2))
+    // float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
+ 
+    //* Ideal gas equation
+    // float pressure = stiffness * (rho - settings.rho0); 
+
+    // float rhoError = rho - settings.rho0;
+
     ssbo.particles[particleID] = p;
 }
 

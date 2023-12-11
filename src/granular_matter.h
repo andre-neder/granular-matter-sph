@@ -174,6 +174,7 @@ private:
     vk::DescriptorPool descriptorPool;
  
     gpu::ComputePass initPass;
+    gpu::ComputePass predictPass;
     gpu::ComputePass bitonicSortPass;
     gpu::ComputePass startingIndicesPass;
     gpu::ComputePass computeDensityPass;

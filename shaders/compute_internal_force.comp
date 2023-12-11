@@ -177,16 +177,16 @@ void main(){
         
         internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
         
-        // internalForce += settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * gradient;
-        
+        internalForce += (settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * vec4(gradient, 0)).xyz;
     )
 
     for_all_volume_maps(
         vec3 gradient = gradW(p_pi, settings.h_LR);
+        float mass = (volume * settings.rho0);
+
+        internalForce += mass * (p.p / pRhoSq) * gradient; 
         
-        internalForce += (volume * settings.rho0) * (p.p / pRhoSq) * gradient; 
-        
-        // internalForce += (volume * settings.rho0) * (p.stress / pRhoSq) * gradient;
+        internalForce += (mass * (p.stress / pRhoSq) * vec4(gradient, 0)).xyz;
     )
 
     internalForce *= -settings.mass;

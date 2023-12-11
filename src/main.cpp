@@ -143,16 +143,16 @@ private:
         {
             std::vector<vk::Semaphore> signalComputeSemaphores = {computeFinishedSemaphores[currentFrame]};
 
-            std::vector<vk::Semaphore> waitSemaphores = {
-                simulation.iisphSemaphores[currentFrame]
-            };
-            std::vector<vk::PipelineStageFlags> waitStages = {
-                vk::PipelineStageFlagBits::eComputeShader
-            };
+            // std::vector<vk::Semaphore> waitSemaphores = {
+            //     simulation.iisphSemaphores[currentFrame]
+            // };
+            // std::vector<vk::PipelineStageFlags> waitStages = {
+            //     vk::PipelineStageFlagBits::eComputeShader
+            // };
 
             vk::SubmitInfo computeSubmitInfo{
-                waitSemaphores,
-                waitStages,
+                {}, //waitSemaphores,
+                {}, //waitStages,
                 submitComputeCommandBuffers,
                 signalComputeSemaphores
             };

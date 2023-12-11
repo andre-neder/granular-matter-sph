@@ -114,13 +114,17 @@ vec3 gradW(vec3 r, float h){
     float rl = length(r);
     float v = h - rl;
     vec3 dir = rl <= EPSILON ? vec3(0) : normalize(r);
-    return -v * v * settings.scale_GradW * dir;
+    return -v * v * settings.scale_GradW* dir;
+}
+
+float trace(mat3 m){
+    return m[0][0] + m[1][1] + m[2][2];
 }
 
 //* Macros
 
 #define for_all_fluid_neighbors(code) { \
-    ivec3 particleCell = ivec3(floor(vec3(p.position.xyz / settings.h_LR))); \
+    ivec3 particleCell = ivec3(floor(vec3(p.dijpj.xyz / settings.h_LR))); \
     for (int k = -1; k <= 1; k++){ \
         for (int l = -1; l <= 1; l++){ \
             for (int m = -1; m <= 1; m++){ \
@@ -133,7 +137,7 @@ vec3 gradW(vec3 r, float h){
                     } \
                     uint particleIndex = gridLookup.entries[i].particleIndex; \
                     LRParticle pi = ssbo.particles[particleIndex]; \
-                    vec3 p_pi = p.position.xyz - pi.position.xyz;\
+                    vec3 p_pi = p.dijpj.xyz - pi.dijpj.xyz;\
                     float r = length(p_pi); \
                     if (r < settings.h_LR){\
                         code \
@@ -146,7 +150,7 @@ vec3 gradW(vec3 r, float h){
 
 #define for_all_volume_maps(code) { \
     for (int i = 0; i < volumeMaps.transform.length(); i++){ \
-        vec3 samplePosition = (p.position.xyz - volumeMaps.transform[i].position.xyz) / volumeMaps.transform[i].scale.xyz; \
+        vec3 samplePosition = (p.dijpj.xyz - volumeMaps.transform[i].position.xyz) / volumeMaps.transform[i].scale.xyz; \
         vec4 vM = texture(sampler3D(sdfTexture[i], volumeMapSampler), samplePosition); \
         vec3 p_pi = vM.rgb; \
         float volume = vM.a; \
@@ -157,21 +161,74 @@ vec3 gradW(vec3 r, float h){
     }\
 }
 
-
 void main(){
+
+
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = ssbo.particles[particleID];
 
-    p.externalForce.xyz = settings.g.xyz * settings.mass;
-    p.internalForce.xyz = vec3(0.0);
+    //* Strain & Stress 
+    mat3 deformationGradient = mat3(0.f);
+    mat3 D = mat3(0.f);
+
+    for_all_fluid_neighbors(
+        if(particleIndex == particleID){
+            continue;
+        }
+
+        //* Strain & Stress 
+        vec3 gradient = gradW(p_pi, settings.h_LR);
+        deformationGradient += pi.V * outerProduct(gradient, p.d.xyz - pi.d.xyz);
+        D += (1.f / (pi.rho)) * outerProduct(gradient, gradient);
     
+    )
+
+    for_all_volume_maps(
+        vec3 gradient = gradW(p_pi, settings.h_LR);
+        deformationGradient += volume * outerProduct(gradient, p.d.xyz - vec3(0));
+        D += (1.f / settings.rho0) * outerProduct(gradient, gradient);
+    )
+
+    //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
+    //? http://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
+    float pRhoSq = (p.rho ) * (p.rho );
+    D *= (2.f * settings.mass * settings.mass * settings.dt) / pRhoSq;
+
+    mat3 strainTensor = 0.5f * (deformationGradient + transpose(deformationGradient));
+
+    mat3 stressTensor = inverse(D) * strainTensor;
+
+    // Piola-Kirchhoff stress tensor
+    // float lambda = 1.0;
+    // float mu = 1.0;
+    // float G = 44;//mu;
+    // float K = 38;//lambda + 2 * mu / 3;
+    // mat3 P = 2 * G * strainTensor + (K - 2.0/3.0 * G) * trace(strainTensor) * mat3(1.0);
+
+    mat3 meanHydrostaticStressTensor = 0.5f * trace(stressTensor) * mat3(1.f);
+    mat3 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
+    mat3 stress = mat3(0);
+    
+    float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
+    float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
+
+
+
+    float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);
+    if(p.p > EPSILON && normDeviatoricStressTensor > EPSILON){
+        stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
+    }
+
+    p.stress = mat4(stress);
+    
+    // float maxCohesion = _beta * _beta * _C;
+    // mat3 cohesion = mat3(0);
+    // float normStressTensor = frobenius(stressTensor);
+    // if(p.p > EPSILON && normStressTensor > EPSILON){
+    //     cohesion = normStressTensor <= maxCohesion ? stressTensor : stressTensor * (maxCohesion / normStressTensor);
+    // }
+    // p.pad0 = normStressTensor;
+    // p.stress = frobenius(stress) > frobenius(cohesion) ? stress : cohesion;
+
     ssbo.particles[particleID] = p;
-
-    ivec3 gridCell = ivec3(floor(vec3(p.position / settings.h_LR)));
-    
-    uint cellKey = calculateCellKey(gridCell);
-
-    gridLookup.entries[particleID].particleIndex = particleID;
-    gridLookup.entries[particleID].cellKey = cellKey;
-    startingIndices[particleID] = UINT_MAX;
 }

@@ -183,7 +183,8 @@ GranularMatter::GranularMatter(gpu::Core* core)
     bitonicSortPass = gpu::ComputePass(m_core, SHADER_PATH"/bitonic_sort.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(BitonicSortParameters));
     startingIndicesPass = gpu::ComputePass(m_core, SHADER_PATH"/start_indices.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workGroupSize) }); // , { gpu::SpecializationConstant(1, workGroupSize) }
 
-    computeDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_density.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
+    predictPass = gpu::ComputePass(m_core, SHADER_PATH"/predict_velocity_position.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
+    computeDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_density_pred.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     
     iisphvAdvPass = gpu::ComputePass(m_core, SHADER_PATH"/iisph_v_adv.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     iisphRhoAdvPass = gpu::ComputePass(m_core, SHADER_PATH"/iisph_rho_adv.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
@@ -192,7 +193,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
     iisphSolveEndPass = gpu::ComputePass(m_core, SHADER_PATH"/iisph_solve_end.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
 
 
-    computeStressPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_stress.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
+    computeStressPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_stress_pred.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     computeInternalForcePass = gpu::ComputePass(m_core, SHADER_PATH"/compute_internal_force.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     integratePass = gpu::ComputePass(m_core, SHADER_PATH"/integrate.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     advectionPass = gpu::ComputePass(m_core, SHADER_PATH"/hr_advection.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
@@ -230,7 +231,8 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
 
     // Courant-Friedrichs–Lewy (CFL) condition
     float C_courant = 0.4f; 
-    float dt_max = C_courant * (settings.h_LR / settings.v_max);
+    float v_max = sqrt(50000); // settings.v_max
+    float dt_max = C_courant * (settings.h_LR / v_max);
     settings.dt = std::min(dt, dt_max);
 
     vk::MemoryBarrier writeReadBarrier{
@@ -331,228 +333,250 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
 
-        
-        timestampLabels[currentFrame].push_back("Density Pressure wind");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(densityWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
+        { // Wind stuff
+            // timestampLabels[currentFrame].push_back("Density Pressure wind");
+            // {
+            //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipeline);
+            //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
+            //     commandBuffers[currentFrame].pushConstants(densityWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
+            // }
+            // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+            // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+
+            // timestampLabels[currentFrame].push_back("Internal Force wind");
+            // {
+            //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipeline);
+            //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
+            //     commandBuffers[currentFrame].pushConstants(computeInternalForceWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
+            // }
+            // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+            // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+
+            
+            // timestampLabels[currentFrame].push_back("Integrate wind");
+            // {
+            //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipeline);
+            //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipelineLayout, 0, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
+            //     commandBuffers[currentFrame].pushConstants(integrateWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
+            // }
+            // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+            // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         }
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-
-        timestampLabels[currentFrame].push_back("Internal Force wind");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(computeInternalForceWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        }
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-
         
-        // timestampLabels[currentFrame].push_back("Integrate wind");
-        // {
-        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipeline);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipelineLayout, 0, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].pushConstants(integrateWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        // }
-        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-        
+        //While i < 3
+        // predict Position & velocity
+        // density error & strain rate
+        // yield condition
+        int k = 0;
+        while(k < 3){
+            timestampLabels[currentFrame].push_back("Predict velocity/position");
+            {
+                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, predictPass.m_pipeline);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, predictPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].pushConstants(predictPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+            }
 
+            //* wait for compute pass
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+            commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+           
+            timestampLabels[currentFrame].push_back("Compute density");
+            {
+                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipeline);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].pushConstants(computeDensityPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+            }
 
-        timestampLabels[currentFrame].push_back("Compute density");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(computeDensityPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
-        }
+            //* wait for compute pass
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+            commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+            
+                    
+            timestampLabels[currentFrame].push_back("Compute stress");
+            {
+                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipeline);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].pushConstants(computeStressPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+            }
+            //* wait for compute pass
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+            commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+            
+            
+            {    // IISPH
 
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-        
-        
+                // //* IISPH
+                // timestampLabels[currentFrame].push_back("IISPH Compute v advection");
+                // {
+                //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphvAdvPass.m_pipeline);
+                //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphvAdvPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphvAdvPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                //     commandBuffers[currentFrame].pushConstants(iisphvAdvPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                //     commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+                // }
                 
-        timestampLabels[currentFrame].push_back("Compute stress");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeStressPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(computeStressPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
-        }
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-        
-        
+                // //* wait for compute pass
+                // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+                // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+                
+                
+                // timestampLabels[currentFrame].push_back("IISPH Compute rho advection");
+                // {
+                //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphRhoAdvPass.m_pipeline);
+                //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphRhoAdvPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphRhoAdvPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                //     commandBuffers[currentFrame].pushConstants(iisphRhoAdvPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                //     commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+                // }
+                
+                // //* wait for compute pass
+                // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+                // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+                
+                
+                // m_core->endCommands(commandBuffers[currentFrame]);
 
-        //* IISPH
-        timestampLabels[currentFrame].push_back("IISPH Compute v advection");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphvAdvPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphvAdvPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphvAdvPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(iisphvAdvPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
-        }
-        
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-        
-        
-        timestampLabels[currentFrame].push_back("IISPH Compute rho advection");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphRhoAdvPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphRhoAdvPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphRhoAdvPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(iisphRhoAdvPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
-        }
-        
-        //* wait for compute pass
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-        
-        
-        m_core->endCommands(commandBuffers[currentFrame]);
+                // //Submit Commandbuffer and wait for execution to finish
+                // {
+                //     std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
+                //         commandBuffers[currentFrame]
+                //     }; 
 
-        //Submit Commandbuffer and wait for execution to finish
-        {
-            std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
-                commandBuffers[currentFrame]
-            }; 
+                //     std::vector<vk::Semaphore> signalComputeSemaphores = {iisphSemaphores[currentFrame]};
 
-            std::vector<vk::Semaphore> signalComputeSemaphores = {iisphSemaphores[currentFrame]};
+                //     vk::SubmitInfo computeSubmitInfo{
+                //         {},
+                //         {},
+                //         submitComputeCommandBuffers,
+                //         signalComputeSemaphores
+                //     };
 
-            vk::SubmitInfo computeSubmitInfo{
-                {},
-                {},
-                submitComputeCommandBuffers,
-                signalComputeSemaphores
-            };
+                //     m_core->getDevice().resetFences(iisphFences[currentFrame]);
+                //     m_core->getComputeQueue().submit(computeSubmitInfo, iisphFences[currentFrame]);
+                
+                //     vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
+                //     m_core->getDevice().resetFences(iisphFences[currentFrame]);
+                // }
 
-            m_core->getDevice().resetFences(iisphFences[currentFrame]);
-            m_core->getComputeQueue().submit(computeSubmitInfo, iisphFences[currentFrame]);
-        
-            vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
-            m_core->getDevice().resetFences(iisphFences[currentFrame]);
-        }
+                // m_core->beginCommands(commandBuffers[currentFrame]);
 
-        m_core->beginCommands(commandBuffers[currentFrame]);
+                // uint32_t l = 0;
+                // float ny = settings.maxCompression * settings.rho0;
+                // while ((l < 2 || std::abs(additionalData.averageDensityError) > ny) && l < 100 ) 
+                // {
+                //     timestampLabels[currentFrame].push_back("IISPH Iteration " + std::to_string(l) + " Compute dijpj");
+                //     {
+                //         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipeline);
+                //         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                //         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                //         commandBuffers[currentFrame].pushConstants(iisphdijpjSolvePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                //         commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+                //     }
+                    
+                //     //* wait for compute pass
+                //     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+                //     commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+                    
+                
+                //     timestampLabels[currentFrame].push_back("IISPH Iteration " + std::to_string(l) + " Compute pressure");
+                //     {
+                //         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphPressureSolvePass.m_pipeline);
+                //         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphPressureSolvePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                //         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphPressureSolvePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                //         commandBuffers[currentFrame].pushConstants(iisphPressureSolvePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                //         commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+                //     }
+                    
+                //     //* wait for compute pass
+                //     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+                //     commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+                    
+                
+                //     timestampLabels[currentFrame].push_back("IISPH Iteration " + std::to_string(l) + " Write last pressure");
+                //     {
+                //         commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphSolveEndPass.m_pipeline);
+                //         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphSolveEndPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                //         commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphSolveEndPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                //         commandBuffers[currentFrame].pushConstants(iisphSolveEndPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                //         commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+                //     }
+                    
+                //     //* wait for compute pass
+                //     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+                //     commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
 
-        uint32_t l = 0;
-        float ny = settings.maxCompression * settings.rho0;
-        while ((l < 2 || std::abs(additionalData.averageDensityError) > ny) && l < 100 ) 
-        {
-            timestampLabels[currentFrame].push_back("IISPH Iteration " + std::to_string(l) + " Compute dijpj");
+                //     m_core->endCommands(commandBuffers[currentFrame]);
+                    
+                //     //Submit Commandbuffer and wait for execution to finish
+                //     {
+                //         std::vector<vk::Semaphore> waitSemaphores = {
+                //             iisphSemaphores[currentFrame]
+                //         };
+                //         std::vector<vk::PipelineStageFlags> waitStages = {
+                //             vk::PipelineStageFlagBits::eComputeShader
+                //         };
+                //         std::vector<vk::Semaphore> signalSemaphores = {
+                //             iisphSemaphores[currentFrame]
+                //         };
+                //         std::array<vk::CommandBuffer, 1> submitCommandBuffers = { 
+                //             commandBuffers[currentFrame]
+                //         };
+                //         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
+
+                //         m_core->getDevice().resetFences(iisphFences[currentFrame]);
+                //         m_core->getComputeQueue().submit(submitInfo, iisphFences[currentFrame]);
+
+                //         vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
+                //     }
+
+                //     void* mappedData = m_core->mapBuffer(additionalDataBuffer[currentFrame]);
+                //     // Get average density error
+                //     memcpy(&additionalData, mappedData, (size_t) sizeof(AdditionalData));
+                //     additionalData.averageDensityError /= lrParticles.size(); // average density
+                //     additionalData.averageDensityError -= settings.rho0; // average density error
+                    
+                //     // Reset average density error
+                //     AdditionalData resetData;
+                //     memcpy(mappedData, &resetData, (size_t) sizeof(AdditionalData));
+                //     m_core->flushBuffer(additionalDataBuffer[currentFrame], 0, (size_t) sizeof(AdditionalData));
+                //     m_core->unmapBuffer(additionalDataBuffer[currentFrame]);
+                //     // Increase iteration count
+                //     l++;
+                //     m_core->beginCommands(commandBuffers[currentFrame]);
+                //     commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eHost, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
+                // }
+                
+                // simulationMetrics.averageDensityError.append(additionalData.averageDensityError);
+                
+            }
+
+            timestampLabels[currentFrame].push_back("Compute pressure force");
             {
-                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipeline);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphdijpjSolvePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].pushConstants(iisphdijpjSolvePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipeline);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+                commandBuffers[currentFrame].pushConstants(computeInternalForcePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
                 commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
             }
-            
-            //* wait for compute pass
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-            commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-            
-        
-            timestampLabels[currentFrame].push_back("IISPH Iteration " + std::to_string(l) + " Compute pressure");
-            {
-                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphPressureSolvePass.m_pipeline);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphPressureSolvePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphPressureSolvePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].pushConstants(iisphPressureSolvePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-                commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
-            }
-            
-            //* wait for compute pass
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-            commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-            
-        
-            timestampLabels[currentFrame].push_back("IISPH Iteration " + std::to_string(l) + " Write last pressure");
-            {
-                commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, iisphSolveEndPass.m_pipeline);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphSolveEndPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, iisphSolveEndPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-                commandBuffers[currentFrame].pushConstants(iisphSolveEndPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-                commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
-            }
-            
-            //* wait for compute pass
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+
+            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
             commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
 
-            m_core->endCommands(commandBuffers[currentFrame]);
-            
-            //Submit Commandbuffer and wait for execution to finish
-            {
-                std::vector<vk::Semaphore> waitSemaphores = {
-                    iisphSemaphores[currentFrame]
-                };
-                std::vector<vk::PipelineStageFlags> waitStages = {
-                    vk::PipelineStageFlagBits::eComputeShader
-                };
-                std::vector<vk::Semaphore> signalSemaphores = {
-                    iisphSemaphores[currentFrame]
-                };
-                std::array<vk::CommandBuffer, 1> submitCommandBuffers = { 
-                    commandBuffers[currentFrame]
-                };
-                vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
-
-                m_core->getDevice().resetFences(iisphFences[currentFrame]);
-                m_core->getComputeQueue().submit(submitInfo, iisphFences[currentFrame]);
-
-                vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
-            }
-
-            void* mappedData = m_core->mapBuffer(additionalDataBuffer[currentFrame]);
-            // Get average density error
-            memcpy(&additionalData, mappedData, (size_t) sizeof(AdditionalData));
-            additionalData.averageDensityError /= lrParticles.size(); // average density
-            additionalData.averageDensityError -= settings.rho0; // average density error
-            
-            // Reset average density error
-            AdditionalData resetData;
-            memcpy(mappedData, &resetData, (size_t) sizeof(AdditionalData));
-            m_core->flushBuffer(additionalDataBuffer[currentFrame], 0, (size_t) sizeof(AdditionalData));
-            m_core->unmapBuffer(additionalDataBuffer[currentFrame]);
-            // Increase iteration count
-            l++;
-            m_core->beginCommands(commandBuffers[currentFrame]);
-            commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eHost, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
+            k++;
         }
-        
-        simulationMetrics.averageDensityError.append(additionalData.averageDensityError);
-
-        timestampLabels[currentFrame].push_back("Compute pressure force");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForcePass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(computeInternalForcePass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
-        }
-
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);      
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-
 
         timestampLabels[currentFrame].push_back("Integrate");
         {
@@ -583,31 +607,31 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         
     }
     else{
-        m_core->endCommands(commandBuffers[currentFrame]);
+        // m_core->endCommands(commandBuffers[currentFrame]);
 
-        //Submit Commandbuffer and wait for execution to finish
-        {
-            std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
-                commandBuffers[currentFrame]
-            }; 
+        // //Submit Commandbuffer and wait for execution to finish
+        // {
+        //     std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
+        //         commandBuffers[currentFrame]
+        //     }; 
 
-            std::vector<vk::Semaphore> signalComputeSemaphores = {iisphSemaphores[currentFrame]};
+        //     std::vector<vk::Semaphore> signalComputeSemaphores = {iisphSemaphores[currentFrame]};
 
-            vk::SubmitInfo computeSubmitInfo{
-                {},
-                {},
-                submitComputeCommandBuffers,
-                signalComputeSemaphores
-            };
+        //     vk::SubmitInfo computeSubmitInfo{
+        //         {},
+        //         {},
+        //         submitComputeCommandBuffers,
+        //         signalComputeSemaphores
+        //     };
 
-            m_core->getDevice().resetFences(iisphFences[currentFrame]);
-            m_core->getComputeQueue().submit(computeSubmitInfo, iisphFences[currentFrame]);
+        //     m_core->getDevice().resetFences(iisphFences[currentFrame]);
+        //     m_core->getComputeQueue().submit(computeSubmitInfo, iisphFences[currentFrame]);
         
-            vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
-            m_core->getDevice().resetFences(iisphFences[currentFrame]);
-        }
+        //     vk::Result result = m_core->getDevice().waitForFences(iisphFences[currentFrame], VK_TRUE, UINT64_MAX);
+        //     m_core->getDevice().resetFences(iisphFences[currentFrame]);
+        // }
 
-        m_core->beginCommands(commandBuffers[currentFrame]);
+        // m_core->beginCommands(commandBuffers[currentFrame]);
 
     }
     
@@ -783,6 +807,7 @@ void GranularMatter::destroy(){
     vk::Device device = m_core->getDevice();
 
     initPass.destroy();
+    predictPass.destroy();
     bitonicSortPass.destroy();
     startingIndicesPass.destroy();
     computeDensityPass.destroy();

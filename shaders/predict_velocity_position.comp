@@ -161,17 +161,9 @@ vec3 gradW(vec3 r, float h){
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = ssbo.particles[particleID];
-
-    p.externalForce.xyz = settings.g.xyz * settings.mass;
-    p.internalForce.xyz = vec3(0.0);
     
+    p.d.xyz = p.velocity.xyz + (p.externalForce.xyz + p.internalForce.xyz) * settings.dt;
+    p.dijpj.xyz = p.position.xyz + p.d.xyz * settings.dt;
+
     ssbo.particles[particleID] = p;
-
-    ivec3 gridCell = ivec3(floor(vec3(p.position / settings.h_LR)));
-    
-    uint cellKey = calculateCellKey(gridCell);
-
-    gridLookup.entries[particleID].particleIndex = particleID;
-    gridLookup.entries[particleID].cellKey = cellKey;
-    startingIndices[particleID] = UINT_MAX;
 }
