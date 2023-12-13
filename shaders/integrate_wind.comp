@@ -80,24 +80,31 @@ void main(){
     }
     WindParticle p = ssboWind.particles[particleID];
 
+    
+    // if(p.position.x <= R_WIND){
+    //     p.velocity.xyz = vec3(0,0,0);
+    //     p.position.y = p.initialPosition.y;
+    //     p.position.z = p.initialPosition.z;
+    // }
+
     // Forward Euler
-    // p.velocity.xyz += (settings.g.xyz + (p.internalForce.xyz / settings.mass)) * settings.dt;
-    p.velocity.xyz += (p.internalForce.xyz / (V_WIND * settings.rhoAir)) * settings.dt;
+    // p.velocity.xyz += (settings.g.xyz + (p.internalForce.xyz / (V_WIND * settings.rhoAir))) * settings.dt;
+    // p.velocity.xyz += (p.internalForce.xyz / (V_WIND * settings.rhoAir)) * settings.dt;
     
     // p.position += p.velocity * settings.dt;
-    p.position.xyz += p.velocity.xyz * settings.dt;
+    // p.position.xyz += p.velocity.xyz * settings.dt;
 
     // p.velocity.x = p.position.x <= (0) ? 0.9 * -p.velocity.x : p.velocity.x;
     // p.velocity.x = p.position.x >= (settings.DOMAIN_WIDTH) ? 0.9 * -p.velocity.x : p.velocity.x;
-    p.velocity.y = p.position.y <= (0) ? 0.9 * -p.velocity.y : p.velocity.y;
-    p.velocity.y = p.position.y >= (settings.DOMAIN_HEIGHT) ? 0.9 * -p.velocity.y : p.velocity.y;
+    // p.velocity.y = p.position.y <= (0) ? 0.9 * -p.velocity.y : p.velocity.y;
+    // p.velocity.y = p.position.y >= (settings.DOMAIN_HEIGHT) ? 0.9 * -p.velocity.y : p.velocity.y;
     // p.velocity.z = p.position.z <= (0) ? 0.9 * -p.velocity.z : p.velocity.z;
     // p.velocity.z = p.position.z >= (settings.DOMAIN_WIDTH) ? 0.9 * -p.velocity.z : p.velocity.z;
     
     // p.position.x = max(p.position.x, (0) );
     // p.position.x = min(p.position.x, (settings.DOMAIN_WIDTH ));
-    // p.position.y = max(p.position.y, (0));
-    // p.position.y = min(p.position.y, (settings.DOMAIN_HEIGHT));
+    // p.position.y = max(p.position.y, (0 + R_WIND));
+    // p.position.y = min(p.position.y, (settings.DOMAIN_HEIGHT - R_WIND));
     // p.position.z = max(p.position.z, (0)) ;
     // p.position.z = min(p.position.z, (settings.DOMAIN_WIDTH));
 
@@ -107,18 +114,18 @@ void main(){
 
     
 
-    p.position.xyz = vec3(
-        mod(p.position.x, settings.DOMAIN_WIDTH),
-        p.position.y,//mod(p.position.y, settings.DOMAIN_HEIGHT),
-        mod(p.position.z, settings.DOMAIN_WIDTH)
-    );
+    // p.position.xyz = vec3(
+    //     mod(p.position.x, settings.DOMAIN_WIDTH),
+    //     p.position.y,//mod(p.position.y, settings.DOMAIN_HEIGHT),
+    //     mod(p.position.z, settings.DOMAIN_WIDTH)
+    // );
 
-    if(p.position.x <= H_WIND){
-        p.velocity.xyz = vec3(10,0,0);
-        p.position.y = p.initialPosition.y;
-    }
+    // p.position.x = p.position.x < 0 ? p.position.x + settings.DOMAIN_WIDTH : p.position.x;
+    // p.position.x = p.position.x > settings.DOMAIN_WIDTH ? p.position.x - settings.DOMAIN_WIDTH : p.position.x;
+    // p.position.z = p.position.z < 0 ? p.position.z + settings.DOMAIN_WIDTH : p.position.z;
+    // p.position.z = p.position.z > settings.DOMAIN_WIDTH ? p.position.z - settings.DOMAIN_WIDTH : p.position.z;
 
-    p.position.z = 0.5 * settings.DOMAIN_WIDTH; //2D
+    // p.position.z = 0.5 * settings.DOMAIN_WIDTH; //2D
 
 
 

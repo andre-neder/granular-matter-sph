@@ -208,10 +208,10 @@ void main(){
     }
     WindParticle p = ssboWind.particles[particleID];
 
-    // vec3 internalForce = vec3(0.f);
+    vec3 internalForce = vec3(0.f);
 
    
-    // float pRhoSq = p.rho * p.rho;
+    float pRhoSq = p.rho * p.rho;
 
     for_all_fluid_neighbors(
        
@@ -219,19 +219,27 @@ void main(){
         // float piRhoSq =  pi.rho *  pi.rho;
         vec3 gradient = gradW(p_pi, settings.h_LR);
         
-        // internalForce += settings.mass * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
-        p.velocity.xyz += p_pi;
-        // internalForce += gradient;
-   
+        // internalForce += (V_WIND * settings.rhoAir) * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+
+        p.velocity.xyz += gradient;
     )
 
     p.velocity.xyz = normalize(p.velocity.xyz);
+    p.velocity.xyz -= dot(settings.windDirection.xyz, p.velocity.xyz);
+
+    // vec3 up = vec3(0,1,0);
+    // vec3 dir = vec3(1, 0, 0);
+    // vec3 right = cross(dir, up);
+
+    // vec3 normal = length(p.velocity) < EPSILON ? -up : p.velocity.xyz;
+
+    // p.velocity.xyz = cross(right, normal);
 
     // for_all_wind_particles(
     //     float piRhoSq =  pi.rho *  pi.rho;
     //     vec3 gradient = gradW(p_pi, H_WIND);
 
-    //     internalForce += (V_WIND * settings.rhoAir) * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
+    //     // internalForce += (V_WIND * settings.rhoAir) * ((p.p / pRhoSq) + (pi.p / piRhoSq)) * gradient;
     // )
 
     // for_all_volume_maps(
@@ -241,6 +249,12 @@ void main(){
     // )
 
     // internalForce *= -(V_WIND * settings.rhoAir);
+
+
+    // p.internalForce.xyz = vec3(0,0,0);
+    // if(p.position.x <= H_WIND){
+    //    p.internalForce.xyz += vec3(10,0,0) * (V_WIND * settings.rhoAir);
+    // }
 
     // p.internalForce.xyz = internalForce; 
 

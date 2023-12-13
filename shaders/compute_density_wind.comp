@@ -218,10 +218,9 @@ void main(){
 
     // for_all_fluid_neighbors(
     //     //* Density
-    //     // rho2 += W(r, settings.h_LR); 
+    //     rho2 += W(r, settings.h_LR); 
        
     // )
-    p.velocity.xyz = vec3(0);
     // rho2 *= (V_WIND * settings.rhoAir);//settings.mass;
 
     // for_all_wind_particles(
@@ -235,6 +234,8 @@ void main(){
     // for_all_volume_maps(
     //     rho += (volume * settings.rhoAir) * W(r, H_WIND);
     // )
+
+    p.velocity.xyz = vec3(0);
 
     // p.rho = max(rho, settings.rhoAir);
     // p.V = (V_WIND * settings.rhoAir) / rho;
