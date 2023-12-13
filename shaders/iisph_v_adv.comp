@@ -18,6 +18,7 @@ struct LRParticle{
     vec4 d;
     vec4 dijpj;
     mat4 stress;
+    mat4 deviatoricStress;
 
     float rho;
     float p;
@@ -166,40 +167,6 @@ void main(){
     vec3 dii = vec3(0);
 
     float pRhoSq = p.rho  * p.rho;
-
-    vec3 frictionalForce = vec3(0);
-
-    for_all_fluid_neighbors(
-        if(particleIndex == particleID){
-            continue;
-        }
-       
-        //* Pressure calculation
-        float piRhoSq =  pi.rho *  pi.rho;
-        vec3 gradient = gradW(p_pi, settings.h_LR);
-        frictionalForce += (settings.mass * ((p.stress / pRhoSq) + (pi.stress / piRhoSq)) * vec4(gradient, 0)).xyz;
-        
-    )
-
-    for_all_volume_maps(
-        vec3 gradient = gradW(p_pi, settings.h_LR);
-        vec3 F_f = ((volume * settings.rho0) * (p.stress / pRhoSq) * vec4(gradient, 0)).xyz;
-
-        float c_s = settings.v_max;
-        float eps = 0.01;
-        float sigma = 100.0;
-        // float ny = (sigma * settings.h_LR * c_s) / (2.f * p.rho); 
-        float ny = (2.0 * sigma * settings.h_LR * c_s) / (settings.rho0 + p.rho); 
-        float pi = -ny * (min(dot((p.velocity.xyz - vec3(0)), p_pi), 0.f) / ((r * r) + (eps * settings.h_LR * settings.h_LR)));
-        vec3 F_v = (volume * settings.rho0) * pi * gradient; 
-
-        frictionalForce += F_f; //length(F_f) > length(F_v) ? F_f : F_v;
-    )
-
-    frictionalForce *= -settings.mass; 
-
-    p.externalForce.xyz += frictionalForce.xyz;
-
 
     p.velocity.xyz += settings.dt * (p.externalForce.xyz / settings.mass); 
 

@@ -23,6 +23,7 @@ struct LRParticle{
     vec4 d;
     vec4 dijpj;
     mat4 stress;
+    mat4 deviatoricStress;
 
     float rho;
     float p;

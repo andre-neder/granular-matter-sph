@@ -18,6 +18,7 @@ struct LRParticle{
     vec4 d;
     vec4 dijpj;
     mat4 stress;
+    mat4 deviatoricStress;
 
     float rho;
     float p;
@@ -185,6 +186,18 @@ void main(){
     
     float newDensity = p.p != 0.0 ? abs(p.p * denom - tmp) + settings.rho0 : settings.rho0;
     atomicAdd(additionalData.averageDensityError, newDensity);
+
+    // float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
+    float yield = sqrt(2.f) * sin(settings.theta) * p.p; //* Drucker-Prager yield criterion
+
+    mat3 stress = mat3(0);
+    mat3 deviatoricStressTensor = mat3(p.deviatoricStress);
+    float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);
+    if(p.p > EPSILON && normDeviatoricStressTensor > EPSILON){
+        stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
+    }
+
+    p.stress = mat4(stress);
 
     ssbo.particles[particleID] = p;
 }

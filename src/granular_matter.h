@@ -60,7 +60,8 @@ struct LRParticle{
     glm::vec4 internalForce = glm::vec4(0);
     glm::vec4 d = glm::vec4(0);
     glm::vec4 dijpj = glm::vec4(0);
-    glm::mat4 stress = glm::mat4(1.0);
+    glm::mat4 stress = glm::mat4(0.0);
+    glm::mat4 deviatoricStress = glm::mat4(0.0);
 
     float rho = settings.rho0;
     float p = 0.0;

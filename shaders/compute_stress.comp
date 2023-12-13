@@ -18,6 +18,7 @@ struct LRParticle{
     vec4 d;
     vec4 dijpj;
     mat4 stress;
+    mat4 deviatoricStress;
 
     float rho;
     float p;
@@ -207,19 +208,19 @@ void main(){
 
     mat3 meanHydrostaticStressTensor = 0.5f * trace(stressTensor) * mat3(1.f);
     mat3 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
-    mat3 stress = mat3(0);
     
-    float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
-    float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
+    p.deviatoricStress = mat4(deviatoricStressTensor);
+    
+    // float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
+    // float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
 
+    // mat3 stress = mat3(0);
+    // float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);
+    // if(p.p > EPSILON && normDeviatoricStressTensor > EPSILON){
+    //     stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
+    // }
 
-
-    float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);
-    if(p.p > EPSILON && normDeviatoricStressTensor > EPSILON){
-        stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
-    }
-
-    p.stress = mat4(stress);
+    // p.stress = mat4(stress);
     
     // float maxCohesion = _beta * _beta * _C;
     // mat3 cohesion = mat3(0);
