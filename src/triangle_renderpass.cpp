@@ -12,15 +12,24 @@ using namespace gpu;
     }
     void TriangleRenderPass::init(){
 
+        hourglassModel = Model();
+        hourglassModel.load_from_glb(ASSETS_PATH "/models/dump_truck.glb");
+        indexBuffer = m_core->bufferFromData(hourglassModel._indices.data(), hourglassModel._indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+        vertexBuffer = m_core->bufferFromData(hourglassModel._vertices.data(), hourglassModel._vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+
+        // vertexBuffer = m_core->bufferFromData((void*)vertices.data(), sizeof(TriangleVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
+        // indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+        
+
         vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.vert");
         fragShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.frag");
         // geomShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.geom");
  
-        vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(TriangleVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
-        }
-        indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+        // vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        //     vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(TriangleVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
+        // }
+        // indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
         
 
         createDescriptorSetLayout();
@@ -78,14 +87,23 @@ using namespace gpu;
 
         commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[currentFrame]};
+            // std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[currentFrame]};
+            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
             std::vector<vk::DeviceSize> offsets = {0};
             commandBuffers[currentFrame].bindVertexBuffers(0, vertexBuffers, offsets);
             commandBuffers[currentFrame].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
+            // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+
+            for (auto node : hourglassModel._linearNodes)
+            {
+                for (auto primitive : node->primitives)
+                {
+                    commandBuffers[currentFrame].drawIndexed(primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+                }
+            }
 
         commandBuffers[currentFrame].endRenderPass();
         try{
@@ -113,15 +131,22 @@ using namespace gpu;
 
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo}; // geomShaderStageInfo
 
-        auto bindingDescription = TriangleVertex::getBindingDescription();
-        auto attributeDescriptions = TriangleVertex::getAttributeDescriptions();
+        // auto bindings = TriangleVertex::getBindingDescription();
+        // auto attributes = TriangleVertex::getAttributeDescriptions();
 
-        vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindingDescription, attributeDescriptions);
+        auto vertexDescription = Vertex::get_vertex_description();
+        std::vector<vk::VertexInputBindingDescription> bindings;
+        bindings.insert(bindings.end(), vertexDescription.bindings.begin(), vertexDescription.bindings.end());
+        std::vector<vk::VertexInputAttributeDescription> attributes;
+        attributes.insert(attributes.end(), vertexDescription.attributes.begin(), vertexDescription.attributes.end());
+
+        vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindings, attributes);
+
         vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
         vk::Viewport viewport(0.0f, 0.0f, (float) m_core->getSwapChainExtent().width, (float) m_core->getSwapChainExtent().height, 0.0f, 1.0f);
         vk::Rect2D scissor(vk::Offset2D(0, 0),m_core->getSwapChainExtent());
         vk::PipelineViewportStateCreateInfo viewportState({}, viewport, scissor);
-        vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
+        vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eLine, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
         vk::PipelineMultisampleStateCreateInfo multisampling({}, vk::SampleCountFlagBits::e1, VK_FALSE);
         vk::PipelineColorBlendAttachmentState colorBlendAttachment(VK_FALSE, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
         vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
@@ -191,9 +216,11 @@ using namespace gpu;
         // device.destroyShaderModule(geomShaderModule);
 
         m_core->destroyBuffer(indexBuffer);
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            m_core->destroyBuffer(vertexBuffer[i]);
-        }
+        m_core->destroyBuffer(vertexBuffer);
+        hourglassModel.destroy();
+        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        //     m_core->destroyBuffer(vertexBuffer[i]);
+        // }
 
         m_core->destroyDescriptorSetLayout(descriptorSetLayout);
     }

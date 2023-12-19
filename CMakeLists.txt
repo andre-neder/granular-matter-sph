@@ -80,4 +80,5 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}/vendor/vma-hpp
     ${PROJECT_SOURCE_DIR}/vendor/tinygltf
     ${PROJECT_SOURCE_DIR}/vendor/imgui
+    ${PROJECT_SOURCE_DIR}/vendor/TriangleMeshDistance/TriangleMeshDistance/include
 )

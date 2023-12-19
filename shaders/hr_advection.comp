@@ -115,7 +115,7 @@ layout(set = 0, binding = 6) uniform texture3D sdfTexture[];
                     LRParticle pi = ssbo_lr.particles[particleIndex]; \
                     vec3 p_pi = p.position.xyz - pi.position.xyz;\
                     float r = length(p_pi); \
-                    if (r < settings.h_LR){\
+                    if (r < settings.h_HR){\
                         code \
                     }\
                 } \
@@ -127,7 +127,7 @@ layout(set = 0, binding = 6) uniform texture3D sdfTexture[];
 
 #define for_all_volume_maps(code) { \
     for (int i = 0; i < volumeMaps.transform.length(); i++){ \
-        vec3 samplePosition = (p.position.xyz - volumeMaps.transform[i].position.xyz) / volumeMaps.transform[i].scale.xyz; \
+        vec3 samplePosition = ((p.position.xyz - volumeMaps.transform[i].position.xyz)  * volumeMaps.transform[i].scale.xyz) + 0.5; \
         vec4 vM = texture(sampler3D(sdfTexture[i], volumeMapSampler), samplePosition); \
         vec3 p_pi = vM.rgb; \
         float volume = vM.a; \
@@ -183,14 +183,13 @@ void main(){
     )
 
     overallWeight = max(EPSILON, overallWeight);
-    float nanFactor = overallWeight <= EPSILON ? 0.0 : 1.0;
 
-    vec3 velocity = nanFactor * (1.0 / overallWeight) * averageWeightedVelocity;
-    rho = nanFactor * (1.0 / overallWeight) * rho;
+    vec3 velocity = (1.0 / overallWeight) * averageWeightedVelocity;
+    rho = (1.0 / overallWeight) * rho;
 
     float c1 = w(settings.r_LR);
     float c2 = 0.6;
-    float alpha = (maxWeight <= c1 || nanFactor * maxWeight / overallWeight >= c2) ? 1.0 - maxWeight : 0.0;
+    float alpha = (maxWeight <= c1 || maxWeight / overallWeight >= c2) ? 1.0 - maxWeight : 0.0;
 
     vec3 externalForce = settings.g.xyz * settings.mass;// + dragForce;
 

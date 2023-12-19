@@ -179,7 +179,7 @@ vec3 infiniteDomainOffsets[9] = {
 
 #define for_all_volume_maps(code) { \
     for (int i = 0; i < volumeMaps.transform.length(); i++){ \
-        vec3 samplePosition = (p.position.xyz - volumeMaps.transform[i].position.xyz) / volumeMaps.transform[i].scale.xyz; \
+        vec3 samplePosition = ((p.position.xyz - volumeMaps.transform[i].position.xyz)  * volumeMaps.transform[i].scale.xyz) + 0.5; \
         vec4 vM = texture(sampler3D(sdfTexture[i], volumeMapSampler), samplePosition); \
         vec3 p_pi = vM.rgb; \
         float volume = vM.a; \

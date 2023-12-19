@@ -82,10 +82,17 @@ GranularMatter::GranularMatter(gpu::Core* core)
         for(int j = 0;j < computeSpace.y ; j++){
             for(int k = 0;k < computeSpace.z ; k++){
                 //  + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2)
+                // glm::vec3 lrPosition = glm::vec3(
+                //     i * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2),
+                //     j * initialDistance + settings.r_LR, 
+                //     k * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.z / 2));
+
                 glm::vec3 lrPosition = glm::vec3(
-                    i * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.x / 2),
-                    j * initialDistance + settings.r_LR, 
-                    k * initialDistance + settings.h_LR + (settings.DOMAIN_WIDTH / 2 - initialDistance * computeSpace.z / 2));
+                    -(initialDistance * computeSpace.x / 2) + i * initialDistance + (initialDistance / 2.f),
+                     (initialDistance * computeSpace.y / 2) + j * initialDistance + (initialDistance / 2.f) + settings.r_LR, //  
+                    -(initialDistance * computeSpace.z / 2) + k * initialDistance + (initialDistance / 2.f)
+                );
+
                 lrParticles.push_back(LRParticle(
                     lrPosition.x,// + RandomFloat(-settings.r_LR, settings.r_LR), 
                     lrPosition.y,// + RandomFloat(-settings.r_LR, settings.r_LR), 
@@ -332,40 +339,40 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
 
         
-        timestampLabels[currentFrame].push_back("Density Pressure wind");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(densityWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        }
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+        // timestampLabels[currentFrame].push_back("Density Pressure wind");
+        // {
+        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipeline);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].pushConstants(densityWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+        //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
+        // }
+        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
 
-        timestampLabels[currentFrame].push_back("Internal Force wind");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(computeInternalForceWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        }
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+        // timestampLabels[currentFrame].push_back("Internal Force wind");
+        // {
+        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipeline);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].pushConstants(computeInternalForceWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+        //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
+        // }
+        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
 
         
-        timestampLabels[currentFrame].push_back("Integrate wind");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipelineLayout, 0, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(integrateWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        }
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+        // timestampLabels[currentFrame].push_back("Integrate wind");
+        // {
+        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipeline);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipelineLayout, 0, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].pushConstants(integrateWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+        //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
+        // }
+        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
 
 
@@ -566,18 +573,18 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         
-        timestampLabels[currentFrame].push_back("Advect HR particles");
-        {
-            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-            commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-            commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
-        }
+        // timestampLabels[currentFrame].push_back("Advect HR particles");
+        // {
+        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+        //     commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+        //     commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
+        // }
 
-        // * Wait for copy action
-        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
-        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+        // // * Wait for copy action
+        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
+        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         simulationStepForward = false;
         
@@ -698,67 +705,72 @@ float cubicExtension(float r){
     }
 }
 
-glm::vec4 adjustKernelRadiusOffset(glm::vec3 position){
-    return glm::vec4(position - 2 * settings.h_LR, 1.0);
-}
-glm::vec4 adjustKernelRadiusScale(glm::vec3 scale){
-    return glm::vec4(scale + 4 * settings.h_LR, 1.0);
-}
+// glm::vec4 adjustKernelRadiusOffset(glm::vec3 position){
+//     return glm::vec4(position - 2 * settings.h_LR, 1.0);
+// }
+// glm::vec4 adjustKernelRadiusScale(glm::vec3 scale){
+//     return glm::vec4(scale + 2 * settings.h_LR, 1.0);
+// }
 
 void GranularMatter::createSignedDistanceFields()
 {
 
     //* Setup rigid bodies
-    float halfBoxSize = settings.DOMAIN_WIDTH / 2;
+    // float halfBoxSize = 2.f;
     // Box3D box{ 
-    //     // glm::vec3(settings.DOMAIN_WIDTH / 2 - halfBoxSize / 2, halfBoxSize),
-    //     glm::vec3(halfBoxSize, settings.r_LR, halfBoxSize)
+    //     glm::vec3(halfBoxSize, halfBoxSize, halfBoxSize)
     // };
-    // box.position = glm::vec3(0, -settings.r_LR, 0);
-    // box.scale = glm::vec3(2 * halfBoxSize, 2 * settings.r_LR, 2 * halfBoxSize);
+    // box.position = glm::vec3(0, halfBoxSize, 0);
+    // box.scale = glm::vec3(1, 0.5, 1);
     // rigidBodies.push_back(&box);
 
-    Plane3D floor{ glm::vec3(0, 1, 0), settings.h_LR};
+    Plane3D floor{ glm::vec3(0, 1, 0), 0};
+    floor.position = glm::vec3(0, -9.75, 0);
     rigidBodies.push_back(&floor);
 
-    Plane3D wallLeft{ glm::vec3(1, 0, 0), settings.h_LR};
+    Plane3D wallLeft{ glm::vec3(1, 0, 0), 0};
+    wallLeft.position = glm::vec3(-settings.DOMAIN_WIDTH / 2.f, 0, 0);
     rigidBodies.push_back(&wallLeft);
 
     Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
-    wallRight.position = glm::vec3(settings.DOMAIN_WIDTH, 0, 0);
+    wallRight.position = glm::vec3(settings.DOMAIN_WIDTH / 2.f, 0, 0);
     rigidBodies.push_back(&wallRight);
 
-    Plane3D wallBack{ glm::vec3(0, 0, 1), settings.h_LR};
+    Plane3D wallBack{ glm::vec3(0, 0, 1), 0};
+    wallBack.position = glm::vec3(0, 0, -settings.DOMAIN_WIDTH / 2);
     rigidBodies.push_back(&wallBack);
 
     Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
-    wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH);
+    wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH / 2);
     rigidBodies.push_back(&wallFront);
 
+    Mesh3D hourglasRB(ASSETS_PATH"/models/dump_truck.glb");
+    rigidBodies.push_back(&hourglasRB);
 
-    glm::vec3 h_LR(settings.h_LR);
-    glm::vec3 textureSize = { 21, 21, 21 };
-
+    glm::vec3 textureSize = { 32, 32, 32 };
+    std::cout << "Generating volume maps...";
     for(auto rb : rigidBodies){
         //* Extend area by kernel radius
         AABB aabb = rb->aabb;
-        aabb.min -= 2.f * h_LR;
-        aabb.max += 2.f * h_LR;
+        aabb.min -= 2.f * settings.h_LR;
+        aabb.max += 2.f * settings.h_LR;
         //* Get Sampling Step Size
-        glm::vec3 stepSize = (aabb.max - aabb.min) / (textureSize);
+        glm::vec3 stepSize =  (aabb.max - aabb.min) / (textureSize);
         std::vector<glm::vec4> volumeMap;
-        for(int z = (int)-(textureSize.z / 2); z <= (textureSize.z / 2); z++){
-            for(int y = (int)-(textureSize.y / 2); y <= (textureSize.y / 2); y++){
-                for(int x = (int)-(textureSize.x / 2); x <= (textureSize.x / 2); x++){
+        for(int z = 0; z < textureSize.z; z++){
+            for(int y = 0; y < textureSize.y; y++){
+                for(int x = 0; x < textureSize.x; x++){
                     glm::vec3 samplePoint = glm::vec3{
-                        x * stepSize.x, 
-                        y * stepSize.y, 
-                        z * stepSize.z  
+                        aabb.min.x + x * stepSize.x + (0.5 * stepSize.x), 
+                        aabb.min.y + y * stepSize.y + (0.5 * stepSize.y), 
+                        aabb.min.z + z * stepSize.z + (0.5 * stepSize.z)  
                     };
-                    float sd = rb->signedDistance(samplePoint);
+                    // samplePoint -= glm::normalize(samplePoint) * settings.r_LR * 1.f;
+                    float sd = rb->signedDistance(samplePoint) + settings.r_LR * 2.f;// ;
                     float volume = cubicExtension(sd);
+
                     glm::vec3 nearestPoint = rb->signedDistanceGradient(samplePoint);
-                    nearestPoint -= glm::normalize(rb->signedDistanceGradient(samplePoint)) * settings.r_LR * 1.f;
+                    nearestPoint += glm::normalize(rb->signedDistanceGradient(samplePoint)) * settings.r_LR * 2.f;
                     volumeMap.push_back(glm::vec4(nearestPoint.x, nearestPoint.y, nearestPoint.z, volume));
                 }
             }
@@ -769,12 +781,12 @@ void GranularMatter::createSignedDistanceFields()
         auto view = m_core->createImageView3D(image, vk::Format::eR32G32B32A32Sfloat); 
         signedDistanceFieldViews.push_back(view);
         auto transform = VolumeMapTransform();
-        transform.position = adjustKernelRadiusOffset(rb->position);
-        transform.scale = adjustKernelRadiusScale(rb->scale);
+        transform.position = glm::vec4(rb->position, 1.0);
+        transform.scale = glm::vec4((glm::vec3(1.0) / (rb->scale * (aabb.max - aabb.min))), 1.0);
         volumeMapTransforms.push_back(transform);
     }
-
-    volumeMapSampler = m_core->createSampler(vk::SamplerAddressMode::eClampToEdge); //, vk::BorderColor::eFloatOpaqueWhite
+    std::cout << " done." << std::endl;
+    volumeMapSampler = m_core->createSampler(vk::SamplerAddressMode::eClampToEdge);
 
 }
 

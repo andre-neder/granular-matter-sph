@@ -55,23 +55,11 @@ layout(location = 1) out vec3 eye;
 layout(location = 2) out vec3 outVelocity;
 layout(location = 3) out vec3 outPosition;
 
-vec4 transformScreenSpace(vec3 v){
-    return vec4(
-        (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) - 1.0, 
-        (v.y / settings.DOMAIN_HEIGHT) * 2.0, 
-        (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.z / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) - 1.0, 
-        1.0
-    );
-}
-
-
-
-
 void main() {
     gl_PointSize = 1;
     // vec3 scale = inVelocity; // LR
     vec3 scale = vec3(settings.r_LR); // LR
-    // float scale = settings.r_LR / 7; // HR
+    // vec3 scale = vec3(settings.r_LR / 7); // HR
 
     mat4 model = mat4(1.0);
     model[0] = vec4(scale.x,0,0,0);
@@ -80,7 +68,7 @@ void main() {
     model[3] = vec4(inPosition,1.0);
     eye = ubo.view[3].xyz;
     outNormal = (ubo.proj * ubo.view * vec4(vNormal, 0)).xyz;
-    gl_Position = ubo.proj * ubo.view * transformScreenSpace( (model * vec4(vPosition, 1.0)).xyz) ;
+    gl_Position = ubo.proj * ubo.view * model * vec4(vPosition, 1.0);
 
     outPosition = inPosition;
     outVelocity = inVelocity;

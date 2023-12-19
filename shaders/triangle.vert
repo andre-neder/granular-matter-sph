@@ -32,18 +32,15 @@ layout( push_constant ) uniform Settings{
     float scale_GradW;           
 } settings;
 
-layout(location = 0) in vec3 inPosition;
-
-vec4 transformScreenSpace(vec3 v){
-    return vec4(
-        (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) - 1.0, 
-        (v.y / settings.DOMAIN_HEIGHT) * 2.0, 
-        (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.z / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) - 1.0, 
-        1.0
-    );
-}
+layout (location = 0) in vec3 vPosition;
+layout (location = 1) in vec3 vNormal;
+layout (location = 2) in vec2 vUV;
+layout (location = 3) in vec4 vColor;
+layout (location = 4) in vec4 vJoint;
+layout (location = 5) in vec4 vWeight;
+layout (location = 6) in vec4 vTangent;
 
 void main() {
     gl_PointSize = 1;
-    gl_Position = ubo.proj * ubo.view * ubo.model * transformScreenSpace(inPosition);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(vPosition, 1.0);
 }

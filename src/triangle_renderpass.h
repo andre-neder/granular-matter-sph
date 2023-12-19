@@ -6,6 +6,7 @@
 
 #include "global.h"
 #include "camera.h"
+#include "model.h"
 
 struct TriangleVertex {
     glm::vec4 pos;
@@ -25,11 +26,12 @@ struct TriangleVertex {
 };
 
 const float halfBoxSize = settings.DOMAIN_HEIGHT / 4.f;
+const float halfDomainWidth = settings.DOMAIN_WIDTH / 2.f;
 const std::vector<TriangleVertex> vertices = {
-    {{0.f,0.f, 0.f, 1.f}},
-    {{settings.DOMAIN_WIDTH, 0.f, 0.f, 1.f}},
-    {{0.f, 0.f, settings.DOMAIN_WIDTH, 1.f}},
-    {{settings.DOMAIN_WIDTH, 0.f, settings.DOMAIN_WIDTH, 1.f}},
+    {{-halfDomainWidth, 0.f,-halfDomainWidth, 1.f}},
+    {{halfDomainWidth, 0.f, -halfDomainWidth, 1.f}},
+    {{-halfDomainWidth, 0.f, halfDomainWidth, 1.f}},
+    {{halfDomainWidth, 0.f, halfDomainWidth, 1.f}},
     // {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , 0 , 0.f, 0.f}},
     // {{(settings.DOMAIN_WIDTH / 2 + halfBoxSize) , 0 , 0.f, 0.f}},
     // {{(settings.DOMAIN_WIDTH / 2 - halfBoxSize) , halfBoxSize * 2 , 0.f, 0.f}},
@@ -64,7 +66,10 @@ namespace gpu{
         private:
             gpu::Camera* m_camera;
 
-            std::vector<vk::Buffer> vertexBuffer;
+            Model hourglassModel;
+
+            // std::vector<vk::Buffer> vertexBuffer;
+            vk::Buffer vertexBuffer;
             vk::Buffer indexBuffer;
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;

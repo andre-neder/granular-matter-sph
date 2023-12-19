@@ -46,20 +46,11 @@ layout( push_constant ) uniform Settings{
     float pad1;           
 } settings;
 
-vec4 transformScreenSpace(vec3 v){
-    return vec4(
-        (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.x / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) - 1.0, 
-        (v.y / settings.DOMAIN_HEIGHT) * 2.0, 
-        (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) * (v.z / settings.DOMAIN_WIDTH) * 2.0 - (settings.DOMAIN_WIDTH / settings.DOMAIN_HEIGHT) - 1.0, 
-        1.0
-    );
-}
-
 void main() {    
-    gl_Position = ubo.proj * ubo.view * transformScreenSpace(inPosition[0]);
+    gl_Position = ubo.proj * ubo.view * vec4(inPosition[0], 1.0);
     EmitVertex();
 
-    gl_Position = ubo.proj * ubo.view * transformScreenSpace(inPosition[0] + inVelocity[0]);
+    gl_Position = ubo.proj * ubo.view * vec4(inPosition[0] + inVelocity[0], 1.0);
     EmitVertex();
 
     EndPrimitive();
