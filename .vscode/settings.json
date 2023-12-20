@@ -88,6 +88,8 @@
         "all": "cpp",
         "*.inc": "cpp",
         "variant": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "bitset": "cpp",
+        "cinttypes": "cpp"
     }
 }

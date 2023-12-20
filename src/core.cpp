@@ -1,5 +1,7 @@
 #include "core.h"
 
+#include "shader_utils.h"
+
 #define MAX_VARIABLE_DESCRIPTOR_COUNT 32
 
 using namespace gpu;
@@ -912,31 +914,70 @@ vk::ShaderModule Core::createShaderModule(const std::vector<uint32_t> code) {
 }
 
 vk::ShaderModule Core::loadShaderModule(std::string src) {
-    vk::ShaderModule shaderModule;
-    glslang::InitializeProcess();
-    std::vector<uint32_t> shaderCodeSPIRV;
-    std::string fileExtension = src.substr(src.find_last_of('.'));
-    vk::ShaderStageFlagBits stage;
+    // vk::ShaderModule shaderModule;
+    // glslang::InitializeProcess();
+    // std::vector<uint32_t> shaderCodeSPIRV;
+    auto fileExtension = src.substr(src.find_last_of('.'));
+    // vk::ShaderStageFlagBits stage;
+    shaderc_shader_kind stage;
     if (fileExtension == ".vert"){
-        stage = vk::ShaderStageFlagBits::eVertex;
+        // stage = vk::ShaderStageFlagBits::eVertex;
+        stage = shaderc_glsl_vertex_shader;
     }
     else if (fileExtension == ".frag"){
-        stage = vk::ShaderStageFlagBits::eFragment;
+        // stage = vk::ShaderStageFlagBits::eFragment;
+        stage = shaderc_glsl_fragment_shader;
     }
     else if (fileExtension == ".comp"){
-        stage = vk::ShaderStageFlagBits::eCompute;
+        // stage = vk::ShaderStageFlagBits::eCompute;
+        stage = shaderc_glsl_compute_shader;
     }
     else if (fileExtension == ".geom"){
-        stage = vk::ShaderStageFlagBits::eGeometry;
+        // stage = vk::ShaderStageFlagBits::eGeometry;
+        stage = shaderc_glsl_geometry_shader;
     }
-    SpirvHelper::GLSLtoSPV(stage, src, shaderCodeSPIRV);
-    try{
-        shaderModule = createShaderModule(shaderCodeSPIRV);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
+
+    // SpirvHelper::GLSLtoSPV(stage, src, shaderCodeSPIRV);
+    // try{
+    //     shaderModule = createShaderModule(shaderCodeSPIRV);
+    // }catch(std::exception& e) {
+    //     std::cerr << "Exception Thrown: " << e.what();
+    // }
+    // glslang::FinalizeProcess();
+    // return shaderModule;
+
+    std::ifstream input_file(src);
+    if (!input_file.is_open()) {
+        std::cerr << "Could not open the file - '" << src << "'" << std::endl;
+        exit(EXIT_FAILURE);
     }
-    glslang::FinalizeProcess();
-    return shaderModule;
+    std::string shaderCodeGlsl = std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
+
+    // const char kShaderSource[] = shaderCodeGlsl.c_str();
+
+    // {  // Preprocessing
+    //     auto preprocessed = preprocess_shader("shader_src", stage, kShaderSource);
+    //     std::cout << "Compiled a vertex shader resulting in preprocessed text:" << std::endl  << preprocessed << std::endl;
+    // }
+
+    // {  // Compiling
+        // auto assembly = compile_file_to_assembly("shader_src", stage, kShaderSource);
+        // std::cout << "SPIR-V assembly:" << std::endl << assembly << std::endl;
+
+        auto spirv = compile_file("shader_src", stage, shaderCodeGlsl.c_str());
+        std::cout << "Compiled to a binary module with " << spirv.size() << " words." << std::endl;
+    // }
+
+    // {  // Compiling with optimizing
+    //     auto assembly = compile_file_to_assembly("shader_src", stage, kShaderSource, /* optimize = */ true);
+    //     std::cout << "Optimized SPIR-V assembly:" << std::endl << assembly << std::endl;
+
+    //     auto spirv = compile_file("shader_src", stage, kShaderSource, /* optimize = */ true);
+    //     std::cout << "Compiled to an optimized binary module with " << spirv.size() << " words." << std::endl;
+    // }
+
+    return createShaderModule(spirv);
+
 }
 
 vk::Format Core::findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {

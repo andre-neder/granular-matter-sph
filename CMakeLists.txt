@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.7)
-project("VkBase" VERSION 1.0.0)
+project("GranularMatterSPH" VERSION 1.0.0)
 
 add_compile_definitions(
     SHADER_PATH="${PROJECT_SOURCE_DIR}/shaders" 
@@ -63,6 +63,12 @@ set(USE_BACKEND_VULKAN ON)
 set(USE_BACKEND_GLFW ON)
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/imgui)
 
+
+#shaderc
+set(SHADERC_SKIP_TESTS ON)
+set(SHADERC_SKIP_EXAMPLES ON)
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/shaderc)
+
 #add libraries
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
     glslang 
@@ -72,6 +78,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
     GPUOpen::VulkanMemoryAllocator 
     tinygltf
     imgui 
+    shaderc
 )
 
 #add include dirs
