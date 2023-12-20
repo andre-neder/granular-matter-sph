@@ -1,6 +1,5 @@
 #pragma once
 
-#include "spirv_utils.h"
 #include "vulkan_utils.h"
 #include "window.h"
 #include <map>

@@ -54,10 +54,6 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/VulkanMemoryAllocator)
 #add tinygltf & stb_image
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/tinygltf)
 
-#add glslang & spirv
-set(ENABLE_OPT OFF)
-add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/glslang)
-
 #add imgui
 set(USE_BACKEND_VULKAN ON)
 set(USE_BACKEND_GLFW ON)
@@ -71,8 +67,6 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/shaderc)
 
 #add libraries
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
-    glslang 
-    SPIRV 
     glm 
     glfw 
     GPUOpen::VulkanMemoryAllocator 
