@@ -189,8 +189,7 @@
         \caption{Full Simulation Frame}
         \begin{algorithmic}[1]
         \State find neighbors 
-        \State compute $\rho$
-        \State compute drag 
+        \State compute $\rho$ and $F^{drag}$ 
         \State compute $s$ 
         \State compute $v$ advection 
         \State compute $\rho$ advection 
@@ -199,9 +198,10 @@
             \State compute $d_{ij}p_{j}$
             \State compute $p^{l+1}$
             \State $p(t) = p^{l+1}$
+            \State apply yield criterion 
             \State $l = l+1$
         \EndWhile
-        \State compute $F^p$ 
+        \State compute $F^p$ and $F^f$ 
         \State integrate 
         \State advect HR particles 
         \end{algorithmic}

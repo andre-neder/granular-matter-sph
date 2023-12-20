@@ -573,18 +573,18 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         
-        // timestampLabels[currentFrame].push_back("Advect HR particles");
-        // {
-        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        //     commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
-        // }
+        timestampLabels[currentFrame].push_back("Advect HR particles");
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, advectionPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, advectionPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(advectionPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
+        }
 
-        // // * Wait for copy action
-        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
-        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+        // * Wait for copy action
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         simulationStepForward = false;
         
@@ -725,26 +725,27 @@ void GranularMatter::createSignedDistanceFields()
     // rigidBodies.push_back(&box);
 
     Plane3D floor{ glm::vec3(0, 1, 0), 0};
-    floor.position = glm::vec3(0, -9.75, 0);
+    // floor.position = glm::vec3(0, -9.75, 0);
     rigidBodies.push_back(&floor);
 
-    Plane3D wallLeft{ glm::vec3(1, 0, 0), 0};
-    wallLeft.position = glm::vec3(-settings.DOMAIN_WIDTH / 2.f, 0, 0);
-    rigidBodies.push_back(&wallLeft);
+    // Plane3D wallLeft{ glm::vec3(1, 0, 0), 0};
+    // wallLeft.position = glm::vec3(-settings.DOMAIN_WIDTH / 2.f, 0, 0);
+    // rigidBodies.push_back(&wallLeft);
 
-    Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
-    wallRight.position = glm::vec3(settings.DOMAIN_WIDTH / 2.f, 0, 0);
-    rigidBodies.push_back(&wallRight);
+    // Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
+    // wallRight.position = glm::vec3(settings.DOMAIN_WIDTH / 2.f, 0, 0);
+    // rigidBodies.push_back(&wallRight);
 
-    Plane3D wallBack{ glm::vec3(0, 0, 1), 0};
-    wallBack.position = glm::vec3(0, 0, -settings.DOMAIN_WIDTH / 2);
-    rigidBodies.push_back(&wallBack);
+    // Plane3D wallBack{ glm::vec3(0, 0, 1), 0};
+    // wallBack.position = glm::vec3(0, 0, -settings.DOMAIN_WIDTH / 2);
+    // rigidBodies.push_back(&wallBack);
 
-    Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
-    wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH / 2);
-    rigidBodies.push_back(&wallFront);
+    // Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
+    // wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH / 2);
+    // rigidBodies.push_back(&wallFront);
 
     Mesh3D hourglasRB(ASSETS_PATH"/models/dump_truck.glb");
+    hourglasRB.scale = glm::vec3(2.0);
     rigidBodies.push_back(&hourglasRB);
 
     glm::vec3 textureSize = { 32, 32, 32 };
@@ -781,7 +782,7 @@ void GranularMatter::createSignedDistanceFields()
         auto view = m_core->createImageView3D(image, vk::Format::eR32G32B32A32Sfloat); 
         signedDistanceFieldViews.push_back(view);
         auto transform = VolumeMapTransform();
-        transform.position = glm::vec4(rb->position, 1.0);
+        transform.position = glm::vec4(rb->position + (aabb.max + aabb.min), 1.0);
         transform.scale = glm::vec4((glm::vec3(1.0) / (rb->scale * (aabb.max - aabb.min))), 1.0);
         volumeMapTransforms.push_back(transform);
     }
