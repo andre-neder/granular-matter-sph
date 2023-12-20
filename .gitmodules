@@ -19,3 +19,6 @@
 [submodule "vendor/TriangleMeshDistance"]
 	path = vendor/TriangleMeshDistance
 	url = https://github.com/andre-neder/TriangleMeshDistance.git
+[submodule "vendor/shaderc"]
+	path = vendor/shaderc
+	url = https://github.com/andre-neder/shaderc
