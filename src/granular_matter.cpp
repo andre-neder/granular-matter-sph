@@ -863,3 +863,14 @@ void GranularMatter::destroy(){
 
     m_core->destroySampler(volumeMapSampler);
 }
+
+//Todo: mass * exp(p.position.y - 0)
+//Todo: check https://gamma.cs.unc.edu/granular/narain-2010-granular.pdf
+//Todo: check https://www.oofem.org/resources/doc/matlibmanual/html/node13.html
+//Todo: check https://animation.rwth-aachen.de/media/papers/67/2020-TVCG-ImplicitBoundaryHandling.pdf
+//Todo: check https://arxiv.org/pdf/2308.01629.pdf
+//Todo: check https://ieeexplore.ieee.org/document/
+//Todo: check https://dds.sciengine.com/cfs/files/pdfs/view/1674-7321/ezZupMJ5Tme8nR78c.pdf
+//Todo: check Real-Time Simulation of Aeolian Sand Movement and Sand Ripple Evolution: A Method Based on the Physics of Blown Sand
+//Todo: check https://cs.dartmouth.edu/~wjarosz/publications/meng15granular.html
+//Todo: check https://cg.informatik.uni-freiburg.de/publications/2019_CGF_CompressedNeighbors.pdf
