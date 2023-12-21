@@ -778,11 +778,11 @@ void GranularMatter::createSignedDistanceFields()
                         aabb.min.z + z * stepSize.z + (0.5 * stepSize.z)  
                     };
                     // samplePoint -= glm::normalize(samplePoint) * settings.r_LR * 1.f;
-                    float sd = rb->signedDistance(samplePoint) + settings.r_LR * 2.f;// ;
+                    float sd = rb->signedDistance(samplePoint) + settings.r_LR * 1.f;// ;
                     float volume = cubicExtension(sd);
 
                     glm::vec3 nearestPoint = rb->signedDistanceGradient(samplePoint);
-                    nearestPoint += glm::normalize(rb->signedDistanceGradient(samplePoint)) * settings.r_LR * 2.f;
+                    nearestPoint += glm::normalize(rb->signedDistanceGradient(samplePoint)) * settings.r_LR * 1.f;
                     volumeMap.push_back(glm::vec4(nearestPoint.x, nearestPoint.y, nearestPoint.z, volume));
                 }
             }
