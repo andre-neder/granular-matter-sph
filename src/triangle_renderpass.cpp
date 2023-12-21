@@ -14,11 +14,11 @@ using namespace gpu;
 
         hourglassModel = Model();
         hourglassModel.load_from_glb(ASSETS_PATH "/models/dump_truck.glb");
-        indexBuffer = m_core->bufferFromData(hourglassModel._indices.data(), hourglassModel._indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
-        vertexBuffer = m_core->bufferFromData(hourglassModel._vertices.data(), hourglassModel._vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+        // indexBuffer = m_core->bufferFromData(hourglassModel._indices.data(), hourglassModel._indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+        // vertexBuffer = m_core->bufferFromData(hourglassModel._vertices.data(), hourglassModel._vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice);
 
-        // vertexBuffer = m_core->bufferFromData((void*)vertices.data(), sizeof(TriangleVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
-        // indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+        vertexBuffer = m_core->bufferFromData((void*)vertices.data(), sizeof(TriangleVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
+        indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
         
 
         vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.vert");
@@ -95,15 +95,15 @@ using namespace gpu;
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings), &settings);
 
-            // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
-            for (auto node : hourglassModel._linearNodes)
-            {
-                for (auto primitive : node->primitives)
-                {
-                    commandBuffers[currentFrame].drawIndexed(primitive->indexCount, 1, primitive->firstIndex, 0, 0);
-                }
-            }
+            // for (auto node : hourglassModel._linearNodes)
+            // {
+            //     for (auto primitive : node->primitives)
+            //     {
+            //         commandBuffers[currentFrame].drawIndexed(primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+            //     }
+            // }
 
         commandBuffers[currentFrame].endRenderPass();
         try{
@@ -131,14 +131,14 @@ using namespace gpu;
 
         std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo}; // geomShaderStageInfo
 
-        // auto bindings = TriangleVertex::getBindingDescription();
-        // auto attributes = TriangleVertex::getAttributeDescriptions();
+        auto bindings = TriangleVertex::getBindingDescription();
+        auto attributes = TriangleVertex::getAttributeDescriptions();
 
-        auto vertexDescription = Vertex::get_vertex_description();
-        std::vector<vk::VertexInputBindingDescription> bindings;
-        bindings.insert(bindings.end(), vertexDescription.bindings.begin(), vertexDescription.bindings.end());
-        std::vector<vk::VertexInputAttributeDescription> attributes;
-        attributes.insert(attributes.end(), vertexDescription.attributes.begin(), vertexDescription.attributes.end());
+        // auto vertexDescription = Vertex::get_vertex_description();
+        // std::vector<vk::VertexInputBindingDescription> bindings;
+        // bindings.insert(bindings.end(), vertexDescription.bindings.begin(), vertexDescription.bindings.end());
+        // std::vector<vk::VertexInputAttributeDescription> attributes;
+        // attributes.insert(attributes.end(), vertexDescription.attributes.begin(), vertexDescription.attributes.end());
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindings, attributes);
 

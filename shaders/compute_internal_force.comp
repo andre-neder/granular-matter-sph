@@ -187,7 +187,7 @@ void main(){
         
         internalForce += (volume * settings.rho0) * (p.p / pRhoSq) * gradient; 
         
-        internalForce += ((volume * settings.rho0) * (p.stress / pRhoSq) * vec4(gradient, 1.0)).xyz;
+        internalForce += ((volume * settings.rho0) * (p.stress / pRhoSq) * vec4(gradient, 0.0)).xyz;
     )
 
     internalForce *= -settings.mass;

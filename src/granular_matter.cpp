@@ -89,7 +89,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
                 glm::vec3 lrPosition = glm::vec3(
                     -(initialDistance * computeSpace.x / 2) + i * initialDistance + (initialDistance / 2.f),
-                     (initialDistance * computeSpace.y / 2) + j * initialDistance + (initialDistance / 2.f) + settings.r_LR, //  
+                     j * initialDistance + (initialDistance / 2.f) + settings.r_LR, //  (initialDistance * computeSpace.y / 2) + 
                     -(initialDistance * computeSpace.z / 2) + k * initialDistance + (initialDistance / 2.f)
                 );
 
@@ -755,9 +755,9 @@ void GranularMatter::createSignedDistanceFields()
     // wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH / 2);
     // rigidBodies.push_back(&wallFront);
 
-    Mesh3D hourglasRB(ASSETS_PATH"/models/dump_truck.glb");
-    hourglasRB.scale = glm::vec3(2.0);
-    rigidBodies.push_back(&hourglasRB);
+    // Mesh3D hourglasRB(ASSETS_PATH"/models/dump_truck.glb");
+    // hourglasRB.scale = glm::vec3(2.0);
+    // rigidBodies.push_back(&hourglasRB);
 
     glm::vec3 textureSize = { 32, 32, 32 };
     std::cout << "Generating volume maps...";
