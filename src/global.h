@@ -14,6 +14,7 @@
 
 extern bool simulationRunning;
 extern bool simulationStepForward;
+extern bool resetSimulation;
 
 struct SPHSettings{
     glm::vec4 g = glm::vec4(0.f, -9.81f, 0.f, 0.f);          //* m/s^2

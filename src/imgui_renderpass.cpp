@@ -2,6 +2,7 @@
 #include "global.h"
 #include <glm/gtc/type_ptr.hpp>
 bool simulationRunning = false;
+bool resetSimulation = false;
 
 SPHSettings settings = SPHSettings();
 extern std::vector<std::vector<std::string>> timestampLabels;
@@ -282,6 +283,10 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     ImGui::End();
 
     ImGui::Begin("Simulation", &showSimulationSettings);
+        if (ImGui::Button("Reset"))
+        {
+            resetSimulation = true;
+        }
         ImGui::Checkbox("Simulation running", &simulationRunning);
         ImGui::DragFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 0.1f, 2000.f);
         // ImGui::DragFloat("Pressure maxCompression", &settings.maxCompression, 1.f, 100.f, 50000.f);

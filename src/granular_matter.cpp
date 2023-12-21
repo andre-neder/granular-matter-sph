@@ -232,6 +232,17 @@ void GranularMatter::initFrameResources(){
 
 void GranularMatter::update(int currentFrame, int imageIndex, float dt){ 
 
+    if(resetSimulation){
+        simulationRunning = false;
+        resetSimulation = false;
+        simulationStepForward = false;
+      
+        m_core->updateBufferData(particlesBufferB, lrParticles.data(), sizeof(LRParticle) * lrParticles.size());
+
+        m_core->updateBufferData(particlesBufferHR, hrParticles.data(), sizeof(HRParticle) * hrParticles.size());
+        
+    }
+
     //Read timesteps
     timestamps[currentFrame] = m_core->getTimestampQueryPoolResults(&timeQueryPools[currentFrame]);
 

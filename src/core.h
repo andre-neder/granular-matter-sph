@@ -81,6 +81,7 @@ namespace gpu
             //* Buffers
             vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {});
             vk::Buffer bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {});
+            void updateBufferData(vk::Buffer buffer, void* data, size_t size);
             void* mapBuffer(vk::Buffer buffer);
             void unmapBuffer(vk::Buffer buffer);
             void flushBuffer(vk::Buffer buffer, size_t offset, size_t size);

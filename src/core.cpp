@@ -262,7 +262,20 @@ vk::Buffer Core::bufferFromData(void* data, size_t size, vk::BufferUsageFlags bu
 
     return buffer;
 }
-void* Core::mapBuffer(vk::Buffer buffer){
+void gpu::Core::updateBufferData(vk::Buffer buffer, void *data, size_t size)
+{
+
+    vk::Buffer stagingBuffer = createBuffer(size, vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAuto, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
+
+    void* mappedData = mapBuffer(stagingBuffer);
+    memcpy(mappedData, data, (size_t) size);
+    unmapBuffer(stagingBuffer);
+
+    copyBufferToBuffer(stagingBuffer, buffer, size);
+    destroyBuffer(stagingBuffer);
+}
+void *Core::mapBuffer(vk::Buffer buffer)
+{
     void* mappedData = allocator.mapMemory(m_bufferAllocations[buffer]);
     return mappedData;
 }
