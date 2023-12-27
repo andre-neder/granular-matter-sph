@@ -44,7 +44,9 @@
     \tableofcontents
     \newpage
     \section{Introduction}
-    
+
+    Granular matter consists of discrete, macroscopic particles that interact through contact forces, exhibiting unique behaviors such as flowing, layering or piling. Simulating such behaviors in realistic scenarios is especially challenging, due to the necessity of employing a very high number of discrete elements to achieve visually plausible simulations. Granular materials find diverse applications across geophysics, civil engineering, pharmaceuticals, and other industries, playing crucial roles in phenomena such as landslides, construction, powder mixing, storage and transportation. A powerful technique for simulating such materials is Smoothed Particle Hydrodynamics (SPH). SPH is a meshless Lagrangian method that has been employed a lot in fluid dynamics and can also be used to simulate granular behavior. By combining well-established SPH techniques for simulating granular materials with the latest developments in SPH research, real-time simulations might become achievable. In the pages ahead, I will assess the doability of real-time simulations for granular matter, by combining established methods and recent advancements to achieve a dynamic and interactive implementation.
+
     \section{Related Work}
     
     \section{Basics}
@@ -52,6 +54,13 @@
     
     \section{Method}
     \subsection{Smoothed Particle Hydrodynamics}
+    Smoothed Particle Hydrodynamics (SPH) is a computational technique widely employed in fluid dynamics and other fields for simulating complex physical phenomena.SPH represents the fluid or material as a collection of discrete particles. Each particle has physical properties such as density, pressure, and velocity. The key innovation lies in smoothing these properties over neighboring particles, allowing for a continuous representation of the material and facilitating the simulation of intricate behaviors, including fluid flow, collisions, and deformations. SPH's versatility extends beyond fluids, making it applicable to problems involving granular materials, astrophysics, and even solid mechanics. 
+
+    
+    \subsection{Vulkan}
+    
+    \section{Implementation}
+    
     Density neighbors
     \begin{equation}
         \rho_i = \sum_j V_j \rho_j W(x_i - x_j, h)
@@ -175,10 +184,6 @@
         
         \end{tabular}
     \end{center}
-    
-    \subsection{Vulkan}
-    
-    \section{Implementation}
     
     \subsection{Libraries \& NewTechnologies}
     
