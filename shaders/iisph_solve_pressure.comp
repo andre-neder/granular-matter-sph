@@ -158,6 +158,16 @@ vec3 gradW(vec3 r, float h){
     }\
 }
 
+mat3 limitStress(mat3 s, float smax){
+    mat3 limited = mat3(0);
+    for (int i = 0; i < 3; i++){
+       for (int j = 0; j < 3; j++){
+            limited[i][j] = clamp(s[i][j], -smax, smax);
+        } 
+    }
+    return limited;
+}
+
 void main(){
 
     uint particleID = gl_GlobalInvocationID.x;;
@@ -187,14 +197,19 @@ void main(){
     float newDensity = p.p != 0.0 ? abs(p.p * denom - tmp) + settings.rho0 : settings.rho0;
     atomicAdd(additionalData.averageDensityError, newDensity);
 
-    // float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
-    float yield = sqrt(2.f) * sin(settings.theta) * p.p; //* Drucker-Prager yield criterion
+    float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
+    // float alpha = sqrt(2.f) * sin(settings.theta); //* frictional coefficient
+    float yield =  alpha * p.p; //* Drucker-Prager yield criterion
+
+    
+
+    mat3 deviatoricStressTensor = mat3(p.deviatoricStress);
+    // mat3 stress = limitStress(deviatoricStressTensor, yield);
 
     mat3 stress = mat3(0);
-    mat3 deviatoricStressTensor = mat3(p.deviatoricStress);
     float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);
     if(p.p > EPSILON && normDeviatoricStressTensor > EPSILON){
-        stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
+        stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : limitStress(deviatoricStressTensor, yield); // deviatoricStressTensor * (yield / normDeviatoricStressTensor);
     }
 
     p.stress = mat4(stress);

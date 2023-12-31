@@ -184,13 +184,32 @@ void main(){
 
     for_all_volume_maps(
         vec3 gradient = gradW(p_pi, settings.h_LR);
+        vec3 n = normalize(p_pi);
+        vec3 v = p.velocity.xyz - vec3(0.0);
+        vec3 v_t = v - dot(v, n) * n;
         
         internalForce += (volume * settings.rho0) * (p.p / pRhoSq) * gradient; 
         
-        internalForce += ((volume * settings.rho0) * (p.stress / pRhoSq) * vec4(gradient, 0.0)).xyz;
+        vec3 F_f = ((volume * settings.rho0) * (p.stress / pRhoSq) * vec4(gradient, 0.0)).xyz;
+        
+
+        // float sigma = 8.0; // settings.pad0;
+        // float nu = (sigma * settings.h_LR * settings.v_max) / (2.0 * p.rho); 
+        // float nu = (2 * sigma * settings.h_LR * settings.v_max) / (settings.rho0 + p.rho); 
+        // float mu = 0.1;
+        // float nu = mu * 2.0 * (3.0 + 2.0); //? https://animation.rwth-aachen.de/media/papers/67/2020-TVCG-ImplicitBoundaryHandling.pdf
+
+        // float x_norm = sqrt(dot(p_pi, p_pi));
+        // float pi = -nu * (dot(v_t, p_pi)) / ((r * r) + (0.01 * settings.h_LR * settings.h_LR));
+        // vec3 F_v = volume * pi * gradient; 
+
+        internalForce += F_f;
+        // internalForce += F_v;
+        // internalForce += length(F_v) > length(F_f) ? F_v : F_f;
+        // internalForce += F_v + F_f;
     )
 
-    internalForce *= -settings.mass;
+    internalForce *= -settings.mass; // * exp(p.position.y - 0);
 
     p.internalForce.xyz = internalForce; 
 
