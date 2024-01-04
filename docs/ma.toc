@@ -1,41 +1,32 @@
 \babel@toc {ngerman}{}\relax 
 \contentsline {section}{\numberline {1}Introduction}{1}{section.1}%
-\contentsline {section}{\numberline {2}Related Work}{1}{section.2}%
-\contentsline {section}{\numberline {3}Basics}{1}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Navier-Stokes equations}{1}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Granular Matter}{1}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Signed Distance Functions}{1}{subsection.3.3}%
-\contentsline {section}{\numberline {4}Method}{1}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Smoothed Particle Hydrodynamics}{1}{subsection.4.1}%
-\contentsline {subsubsection}{\numberline {4.1.1}Weakly Compressible SPH}{2}{subsubsection.4.1.1}%
-\contentsline {subsubsection}{\numberline {4.1.2}Predictive-Corrective Incompressble SPH}{2}{subsubsection.4.1.2}%
-\contentsline {subsubsection}{\numberline {4.1.3}Implicity Incompressble SPH}{3}{subsubsection.4.1.3}%
-\contentsline {subsection}{\numberline {4.2}Libraries \& Technologies}{3}{subsection.4.2}%
-\contentsline {subsubsection}{\numberline {4.2.1}C++ \& Vulkan}{3}{subsubsection.4.2.1}%
-\contentsline {subsubsection}{\numberline {4.2.2}CMake}{3}{subsubsection.4.2.2}%
-\contentsline {subsubsection}{\numberline {4.2.3}Vulkan Memory Allocator}{3}{subsubsection.4.2.3}%
-\contentsline {subsubsection}{\numberline {4.2.4}shaderc}{3}{subsubsection.4.2.4}%
-\contentsline {subsubsection}{\numberline {4.2.5}TinyGLTF \& STB Image}{4}{subsubsection.4.2.5}%
-\contentsline {subsubsection}{\numberline {4.2.6}Dear ImGui}{4}{subsubsection.4.2.6}%
-\contentsline {subsubsection}{\numberline {4.2.7}glfw3}{4}{subsubsection.4.2.7}%
-\contentsline {subsubsection}{\numberline {4.2.8}glm}{4}{subsubsection.4.2.8}%
-\contentsline {subsubsection}{\numberline {4.2.9}TriangleMeshDistance}{4}{subsubsection.4.2.9}%
-\contentsline {section}{\numberline {5}Implementation}{4}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Neighborhood Search}{4}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Density}{4}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Unilateral incompressibility}{5}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}External forces}{5}{subsection.5.4}%
-\contentsline {subsection}{\numberline {5.5}Gravity}{5}{subsection.5.5}%
-\contentsline {subsection}{\numberline {5.6}Drag}{6}{subsection.5.6}%
-\contentsline {subsection}{\numberline {5.7}Strain \& Stress}{6}{subsection.5.7}%
-\contentsline {subsection}{\numberline {5.8}Pressure}{7}{subsection.5.8}%
-\contentsline {subsection}{\numberline {5.9}Internal Forces}{8}{subsection.5.9}%
-\contentsline {subsection}{\numberline {5.10}Integration}{9}{subsection.5.10}%
-\contentsline {subsection}{\numberline {5.11}Boundary Handling}{9}{subsection.5.11}%
-\contentsline {subsubsection}{\numberline {5.11.1}Particle-Based Approaches}{9}{subsubsection.5.11.1}%
-\contentsline {subsubsection}{\numberline {5.11.2}Volume Maps}{9}{subsubsection.5.11.2}%
-\contentsline {subsection}{\numberline {5.12}Upscaling}{10}{subsection.5.12}%
-\contentsline {subsection}{\numberline {5.13}Visualization}{10}{subsection.5.13}%
-\contentsline {section}{\numberline {6}Evaluation}{10}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Performance}{10}{subsection.6.1}%
-\contentsline {section}{\numberline {7}Conclusion \& Future Work}{10}{section.7}%
+\contentsline {section}{\numberline {2}Related Work}{2}{section.2}%
+\contentsline {section}{\numberline {3}Basics}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Navier-Stokes equations}{3}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Granular Matter}{3}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Signed Distance Functions}{3}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Method}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Smoothed Particle Hydrodynamics}{4}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}Weakly Compressible SPH}{4}{subsubsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.2}Predictive-Corrective Incompressble SPH}{4}{subsubsection.4.1.2}%
+\contentsline {subsubsection}{\numberline {4.1.3}Implicity Incompressble SPH}{5}{subsubsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.2}Libraries \& Technologies}{5}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Implementation}{7}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Neighborhood Search}{7}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Density}{7}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Unilateral incompressibility}{7}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}External forces}{8}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}Gravity}{8}{subsection.5.5}%
+\contentsline {subsection}{\numberline {5.6}Drag}{8}{subsection.5.6}%
+\contentsline {subsection}{\numberline {5.7}Strain \& Stress}{9}{subsection.5.7}%
+\contentsline {subsection}{\numberline {5.8}Pressure}{10}{subsection.5.8}%
+\contentsline {subsection}{\numberline {5.9}Internal Forces}{11}{subsection.5.9}%
+\contentsline {subsection}{\numberline {5.10}Integration}{11}{subsection.5.10}%
+\contentsline {subsection}{\numberline {5.11}Boundary Handling}{11}{subsection.5.11}%
+\contentsline {subsubsection}{\numberline {5.11.1}Particle-Based Approaches}{11}{subsubsection.5.11.1}%
+\contentsline {subsubsection}{\numberline {5.11.2}Volume Maps}{12}{subsubsection.5.11.2}%
+\contentsline {subsection}{\numberline {5.12}Upscaling}{12}{subsection.5.12}%
+\contentsline {subsection}{\numberline {5.13}Visualization}{12}{subsection.5.13}%
+\contentsline {section}{\numberline {6}Evaluation}{13}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Performance}{13}{subsection.6.1}%
+\contentsline {section}{\numberline {7}Conclusion \& Future Work}{14}{section.7}%

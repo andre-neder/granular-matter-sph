@@ -47,9 +47,10 @@
     \section{Introduction}
 
     Granular matter consists of discrete, macroscopic particles that interact through contact forces, exhibiting unique behaviors such as flowing, layering or piling. Simulating such behaviors in realistic scenarios is especially challenging, due to the necessity of employing a very high number of discrete elements to achieve visually plausible simulations. Granular materials find diverse applications across geophysics, civil engineering, pharmaceuticals, and other industries, playing crucial roles in phenomena such as landslides, construction, powder mixing, storage and transportation. A powerful technique for simulating such materials is Smoothed Particle Hydrodynamics (SPH). SPH is a meshless Lagrangian method that has been employed a lot in fluid dynamics and can also be used to simulate granular behavior. By combining well-established SPH techniques for simulating granular materials with the latest developments in SPH research, real-time simulations might become achievable. In the pages ahead, I will assess the doability of real-time simulations for granular matter, by combining established methods and recent advancements to achieve a dynamic and interactive implementation.
-
+    \pagebreak
     \section{Related Work}
     \dots
+    \pagebreak
     
     \section{Basics}
     \subsection{Navier-Stokes equations}
@@ -60,7 +61,7 @@
 
     \subsection{Signed Distance Functions}
     \dots
-    
+    \pagebreak
     \section{Method}
     \subsection{Smoothed Particle Hydrodynamics}
     Smoothed Particle Hydrodynamics (SPH) is a computational technique widely employed in fluid dynamics and other fields for simulating complex physical phenomena.SPH represents the fluid or material as a collection of discrete particles. Each particle has physical properties such as density, pressure and velocity. 
@@ -93,34 +94,34 @@
         
     \subsection{Libraries \& Technologies}
 
-    \subsubsection{C++ \& Vulkan}
+    \subsubsection*{C++ \& Vulkan}
     When choosing a framework for a fluid simulation using SPH most papers use C++ in combination with OpenMP to achieve parallelization, other implementations involve Cuda to use the massive parallel compute performance of GPUs.(SRC) For rendering these simulations, dedicated renderers are used. In this implementation Vulkan is used to simulate and visualize the granular material on the GPU using a combination of compute shaders and the rasterization pipeline. This allows for massive parallel computation of the simulation togehter with the visualization in real time, giving maximum flexibility and extensibility by for example a raytraced visualisation. Vulkan uses SPIRV Shaders, which allows the use of any shading language, that can be compiled to it. I opted for GLSL for its well known C like structure.
 
-    \subsubsection{CMake}    
+    \subsubsection*{CMake}    
     CMake is a popular choice in software development for its role as a cross-platform build system and project configuration tool, streamlining the build process, enhancing code portability, and offering flexibility in managing diverse project structures and dependencies.
 
-    \subsubsection{Vulkan Memory Allocator}   
+    \subsubsection*{Vulkan Memory Allocator}   
     In difference to other Graphics APIs Vulkan requires the programmer to do the memory management on the GPU. Vulkan Memory Allocator (VMA) is employed to achive efficient management and optimization of GPU memory, simplifying memory allocation and deallocation processes and improving overall performance.
 
-    \subsubsection{shaderc}   
+    \subsubsection*{shaderc}   
     Shaderc is utilized for the compilation and linking of shaders due to its user-friendly interface and simplicity in handling these processes. This made is straight foward to compile the GLSL shaders to SPIRV.
 
-    \subsubsection{TinyGLTF \& STB Image}  
+    \subsubsection*{TinyGLTF \& STB Image}  
     In computer graphics, TinyGLTF is often used for seamless glTF asset loading, and STB Image is favored for its straightforward approach to handling and processing images, both known for their efficiency and ease of use across different applications.
 
-    \subsubsection{Dear ImGui}
+    \subsubsection*{Dear ImGui}
     Dear ImGui is a popular immediate mode graphical user interface (GUI) library. It simplifies the process of creating and integrating user interfaces into applications by providing an intuitive and efficient framework and has implementations for nearly every common graphics API and windowing library. It also supports features like multiple viewports and docking elements to them.
 
-    \subsubsection{glfw3}
+    \subsubsection*{glfw3}
     GLFW3 is a widely-used windowing library that simplifies the creation and management of windows, handling user input and facilitating cross-platform development for OpenGL- and Vulkan-based applications.
 
-    \subsubsection{glm}
+    \subsubsection*{glm}
     GLM is a versatile C++ mathematics library designed for graphics programming, providing a comprehensive set of functions and classes for vector and matrix operations commonly used in computer graphics.
 
-    \subsubsection{TriangleMeshDistance}
+    \subsubsection*{TriangleMeshDistance}
     TriangleMeshDistance offers a user-friendly programming interface for effortlessly creating signed distance fields of adjustible resolution from 3D meshes.
 
-
+    \pagebreak
     \section{Implementation}
     \dots
     
@@ -331,16 +332,16 @@
     
     \subsection{Visualization}
     \dots
-    
+    \pagebreak
     \section{Evaluation}
     \dots
     
     \subsection{Performance}
     \dots
-    
+    \pagebreak
     \section{Conclusion \& Future Work}
     \dots
     
-    \newpage
+    \pagebreak
     \printbibliography
 \end{document}
