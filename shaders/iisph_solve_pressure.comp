@@ -203,7 +203,7 @@ void main(){
 
     
 
-    mat3 deviatoricStressTensor = mat3(p.deviatoricStress);
+    mat3 deviatoricStressTensor = mat3(p.stress + p.deviatoricStress);
     // mat3 stress = limitStress(deviatoricStressTensor, yield);
 
     mat3 stress = mat3(0);
