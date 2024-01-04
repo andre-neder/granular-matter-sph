@@ -91,5 +91,6 @@
         "any": "cpp",
         "bitset": "cpp",
         "cinttypes": "cpp"
-    }
+    },
+    "editor.wordWrap": "on"
 }

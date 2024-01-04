@@ -43,105 +43,221 @@
     \newpage
     \tableofcontents
     \newpage
+    \pagenumbering{arabic}
     \section{Introduction}
 
     Granular matter consists of discrete, macroscopic particles that interact through contact forces, exhibiting unique behaviors such as flowing, layering or piling. Simulating such behaviors in realistic scenarios is especially challenging, due to the necessity of employing a very high number of discrete elements to achieve visually plausible simulations. Granular materials find diverse applications across geophysics, civil engineering, pharmaceuticals, and other industries, playing crucial roles in phenomena such as landslides, construction, powder mixing, storage and transportation. A powerful technique for simulating such materials is Smoothed Particle Hydrodynamics (SPH). SPH is a meshless Lagrangian method that has been employed a lot in fluid dynamics and can also be used to simulate granular behavior. By combining well-established SPH techniques for simulating granular materials with the latest developments in SPH research, real-time simulations might become achievable. In the pages ahead, I will assess the doability of real-time simulations for granular matter, by combining established methods and recent advancements to achieve a dynamic and interactive implementation.
 
     \section{Related Work}
+    \dots
     
     \section{Basics}
+    \subsection{Navier-Stokes equations}
+    \dots
+
     \subsection{Granular Matter}
+    \dots
+
+    \subsection{Signed Distance Functions}
+    \dots
     
     \section{Method}
     \subsection{Smoothed Particle Hydrodynamics}
-    Smoothed Particle Hydrodynamics (SPH) is a computational technique widely employed in fluid dynamics and other fields for simulating complex physical phenomena.SPH represents the fluid or material as a collection of discrete particles. Each particle has physical properties such as density, pressure, and velocity. The key innovation lies in smoothing these properties over neighboring particles, allowing for a continuous representation of the material and facilitating the simulation of intricate behaviors, including fluid flow, collisions, and deformations. SPH's versatility extends beyond fluids, making it applicable to problems involving granular materials, astrophysics, and even solid mechanics. 
+    Smoothed Particle Hydrodynamics (SPH) is a computational technique widely employed in fluid dynamics and other fields for simulating complex physical phenomena.SPH represents the fluid or material as a collection of discrete particles. Each particle has physical properties such as density, pressure and velocity. 
 
-    
-    \subsection{Vulkan}
-    
+    These interact through a kernel function $W$ with radius $h$, which smoothes these properties over neighboring particles, allowing for a continuous representation of the material and facilitating the simulation of intricate behaviors, including fluid flow, collisions, and deformations. An arbitrary field $A$ can be approximated as shown, with an error in the order of $h^2$.
+
+    \begin{equation}
+        A(r) \approx \int A(r') W(|r - r'|, h) d(r')
+    \end{equation}
+    % https://www.sfu.ca/math-coursenotes/Math%20158%20Course%20Notes/sec_riemann.html
+    The integral is then approximated using a Riemann summation over the neighboring particles.
+
+    \begin{equation}
+        A(r) \approx \sum_j A_j W(|r - r_j|, h)
+    \end{equation}
+
+    This concept is then applied to calculate the properties of a given particle. SPH's versatility extends beyond fluids, making it applicable to problems involving granular materials, astrophysics, and even solid mechanics. 
+
+    \dots more about the kernel
+
+    \subsubsection{Weakly Compressible SPH}
+    Weakly Compressible Smoothed Particle Hydrodynamics (WCSPH) is a variant of the traditional SPH method where, the incompressibility constraint is relaxed, allowing for a more computationally efficient simulation while still capturing the essential fluid behaviors. This approach is particularly useful in scenarios where the fully incompressible SPH formulation might be computationally expensive and it finds a sweet spot between precision and computational efficiency.This is especially usefull in the context of large-scale simulations or real-time applications.
+
+    \subsubsection{Predictive-Corrective Incompressble SPH} 
+    Predictive-Corrective Incompressible Smoothed Particle Hydrodynamics (PCISPH) is an advancement in the SPH method designed to address issues related to incompressibility in fluid simulations. It employs a two-step process where a predictive step estimates particle velocities and a corrective step which iteratively adjusts these velocities to enforce incompressibility. This technique is particularly useful in scenarios where traditional SPH methods such as WCSPH struggle with maintaining fluid volume conservation, providing more accurate and stable simulations, especially for scenarios involving complex fluid interactions, like fluid splashes or turbulent flows.
+
+    \subsubsection{Implicity Incompressble SPH}
+    Implicit Incompressible Smoothed Particle Hydrodynamics (IISPH) is a variant of the SPH method that also addresses the challenge of maintaining incompressibility in fluid simulations. Unlike traditional SPH methods, IISPH employs an implicit formulation for the pressure term in the Navier-Stokes equations, allowing for larger time steps and improved stability. %This method is particularly useful in simulating incompressible fluid flows where maintaining constant density is essential, providing a more efficient and stable approach compared to explicit methods in certain scenarios, such as large-scale simulations or real-time applications.%
+
+        
+    \subsection{Libraries \& Technologies}
+
+    \subsubsection{C++ \& Vulkan}
+    When choosing a framework for a fluid simulation using SPH most papers use C++ in combination with OpenMP to achieve parallelization, other implementations involve Cuda to use the massive parallel compute performance of GPUs.(SRC) For rendering these simulations, dedicated renderers are used. In this implementation Vulkan is used to simulate and visualize the granular material on the GPU using a combination of compute shaders and the rasterization pipeline. This allows for massive parallel computation of the simulation togehter with the visualization in real time, giving maximum flexibility and extensibility by for example a raytraced visualisation. Vulkan uses SPIRV Shaders, which allows the use of any shading language, that can be compiled to it. I opted for GLSL for its well known C like structure.
+
+    \subsubsection{CMake}    
+    CMake is a popular choice in software development for its role as a cross-platform build system and project configuration tool, streamlining the build process, enhancing code portability, and offering flexibility in managing diverse project structures and dependencies.
+
+    \subsubsection{Vulkan Memory Allocator}   
+    In difference to other Graphics APIs Vulkan requires the programmer to do the memory management on the GPU. Vulkan Memory Allocator (VMA) is employed to achive efficient management and optimization of GPU memory, simplifying memory allocation and deallocation processes and improving overall performance.
+
+    \subsubsection{shaderc}   
+    Shaderc is utilized for the compilation and linking of shaders due to its user-friendly interface and simplicity in handling these processes. This made is straight foward to compile the GLSL shaders to SPIRV.
+
+    \subsubsection{TinyGLTF \& STB Image}  
+    In computer graphics, TinyGLTF is often used for seamless glTF asset loading, and STB Image is favored for its straightforward approach to handling and processing images, both known for their efficiency and ease of use across different applications.
+
+    \subsubsection{Dear ImGui}
+    Dear ImGui is a popular immediate mode graphical user interface (GUI) library. It simplifies the process of creating and integrating user interfaces into applications by providing an intuitive and efficient framework and has implementations for nearly every common graphics API and windowing library. It also supports features like multiple viewports and docking elements to them.
+
+    \subsubsection{glfw3}
+    GLFW3 is a widely-used windowing library that simplifies the creation and management of windows, handling user input and facilitating cross-platform development for OpenGL- and Vulkan-based applications.
+
+    \subsubsection{glm}
+    GLM is a versatile C++ mathematics library designed for graphics programming, providing a comprehensive set of functions and classes for vector and matrix operations commonly used in computer graphics.
+
+    \subsubsection{TriangleMeshDistance}
+    TriangleMeshDistance offers a user-friendly programming interface for effortlessly creating signed distance fields of adjustible resolution from 3D meshes.
+
+
     \section{Implementation}
+    \dots
     
-    Density neighbors
+    \begin{algorithm}
+        \caption{Full Simulation Frame}
+        \begin{algorithmic}[1]
+        \State find neighbors 
+        \State compute $\rho$ and $F^{drag}$ 
+        \State compute $s$ 
+        \State compute $v$ advection 
+        \State compute $\rho$ advection 
+        \State $l = 0$
+        \While {$l < 2$ $||$ $\rho_{avg} - \rho_0 < \eta $}
+            \State compute $d_{ij}p_{j}$
+            \State compute $p^{l+1}$
+            \State $p(t) = p^{l+1}$
+            \State apply yield criterion 
+            \State $l = l+1$
+        \EndWhile
+        \State compute $F^p$ and $F^f$ 
+        \State integrate 
+        \State advect HR particles 
+        \end{algorithmic}
+    \end{algorithm}
+
+    \subsection{Neighborhood Search}
+    \dots
+
+    \subsection{Density}  
+    When implementing a SPH simulation the first thing to do is calculate the density $\rho$ of a particle. It is determined by a sum over the neighboring particles. The volume $V$ of each particle within the smoothing length $h$ is multiplied with the density of it and the weighting kernel $ W_{ij} \equiv W(x_i - x_j, h)$. As the volume can be expressed as $V = \frac{m}{\rho}$ we can simplify the equation to only the sum of weighted masses. (SRC)
+
     \begin{equation}
-        \rho_i = \sum_j V_j \rho_j W(x_i - x_j, h)
-        = \sum_j m_j W(x_i - x_j, h)
+        \rho_i = \sum_j V_j \rho_j W_{ij}
+        = \sum_j m_j W_{ij}
     \end{equation}
-    $ W_{ij} \equiv W(x_i - x_j, h)$\\
-    
-    Density boundaries
-    \begin{equation}
-        \rho_i = \sum_b V_b \rho_0 W_{ib}
-    \end{equation}
-    Unilateral incompressibility 
+
+    \subsection{Unilateral incompressibility}  
+    The next step of the simulation is to compute a pressure that compensates the difference in density between particles. The density and pressure underlie the principle of unilaterial incompressibility, which can be expressed in the form: 
     \begin{equation}
         \rho_i \leq \rho_0 \; \bot \;  p \geq 0
     \end{equation}
-    Velocity relative to the air
+    This says that the density of a given particle $i$ can not be greater than the rest density of the material and the pressure can not become negative.
+
+    \subsection{External forces}
+    A change in density can be achived by applying external forces to the particles. 
+    \subsection{Gravity}
+    Gravity is given as a fixed acceleration in a given direction in 3D space. Multiplied with the weight of a given particle we get an actual force.
+    \subsection{Drag}
+    As an additional force that approximated the interaction with air a drag force $F^{drag}$ was applied. Which uses a simplified implementation of the drag by (SRC). For this the relative velocity difference of a particle to the surrounding air is computed and its length squared. (SRC)
+
     \begin{equation}
         v^2_{i,rel} = |v_a - v_i|^2\ \frac{v_a - v_i}{|v_a - v_i|}
     \end{equation}
-    Drag
+
+    The velocity of the air $v_a$ can be set to 0 or could be taken from a velocity field of some kind. Computing the drag force, to apply to each particle, involves determining the crosssecional area $A_i$ of a particle. This can be represented by the area of a circle. Then the actual area exposed to oncomming air needs to be determined. For this a cone which is defined by the direction of the relative velocity differnce and a set angle is used to check if there are any other particles that shield the current particle form the air. This is done by a dot product of the relative velocity difference and the vector to the neighboring particles, which returns the angle between them. To not only get a boolean value for the shielding, an occlusion value is introduced, which is set to the smallest angle between neighboring particles in the cone. This value is then subtracted from 1 and added to the drag formulation as weight $\omega$. Further parameters for the equation are $\rho_a$ the density of the air or the medium that surrounds the particles and $C_{D,i}$ the drag coefficient for shape of the particle. The whole formula is then composed as: 
+
     \begin{equation}
         F^{drag}_i = \frac{1}{2}\rho_a v^2_{i,rel} C_{D,i}  \omega  A_i
     \end{equation}
-    Velocity gradient
+
+    The deformation of a particle by the surrounding air is left out in this implementation.
+
+    \subsection{Strain \& Stress}
+    
+    To simulate friction between the particles of the granular material we first need to calculate the strain $\varepsilon$, which measures the deformation of a material under external forces and is represented as a tensor of rank 3. This involves determining the velocity gradient $\nabla u_i$ by an outer product with the kernel gradient $\nabla W_{ij}$. 
+    
     \begin{equation}
         \nabla u_i = \sum_j V_j \nabla W_{ij} u_j^T
     \end{equation}
-    Strain
+
+    The strain is then computed as:
     \begin{equation}
         \varepsilon = \frac{1}{2} (\nabla u_i + \nabla u_i^T)
     \end{equation}
-    D
+
+    What is stress...
+    For the computation of the frictional stress a parameter $D$, which relates the frictional stress $s$ to the dissipation of strain, is calculated as:
+
     \begin{equation}
         D_i = \frac{2 m_i^2 \Delta t}{\rho_i^2} \sum_j \frac{1}{\rho_j} \nabla W_{ij}  \nabla W_{ij}^T
     \end{equation}
-    $\nabla W_{ij}  \nabla W_{ij}^T \equiv W_{ij} \otimes W_{ij}$\\
-    Stress
+    % $\nabla W_{ij}  \nabla W_{ij}^T \equiv W_{ij} \otimes W_{ij}$\\
+    The paramter can be precomputed for a prototype particle with a filled neighborhood, to make the compution more efficient.
+    The stress is obtained by multiplying the strain tensor with the inverse of $D$. 
+    
     \begin{equation}
         s_i = D^{-1} \varepsilon
     \end{equation}
+
+    For most dry granular materials there is no or neglectable cohesion (The tendency of particles to stick to each other). This means that we can subtract the mean hydrostatic stress $s_{i, hydrostatic}$ from the stress computed above, enforcing a traceless deviatoric stress $s_{i, deviatoric}$, which will further be used as $s_i$. 
+
     \begin{equation}
         s_{i, hydrostatic} = \frac{1}{2} \Tr s_i 
     \end{equation}
     \begin{equation}
         s_{i, deviatoric} = s_i - s_{i, hydrostatic} 
     \end{equation}
-    $s_i$ refers to $s_{i, deviatoric}$ for further equations
 
-    Drucker-Prager Yield Criterion
-    \begin{equation}
-        ||s_i|| \leq p_i \sqrt{2} \sin \Theta
-    \end{equation}
+    Cohesion can be handled similarly to friction. (...)
 
-    Friction Force
+    The amount of friction that can be applied is limited by the pressure. This is expressed by the Drucker-Prager yield criterion:
+
     \begin{equation}
-        F_i^f = -m_i \sum_{j \neq i} m_j (\frac{s_i}{\rho_i^2} + \frac{s_j}{\rho_j^2})  \nabla W_{ij}
-    \end{equation}
-    \begin{equation}
-        F_i^f = -m_i \sum_{b} V_b \rho_0 (\frac{s_i}{\rho_i^2}) \nabla W_{ib}
+        ||s_i|| \leq p_i \alpha
     \end{equation}
 
-    Todo: EOS
-    Pressure Force
     \begin{equation}
-        F_i^p = -m_i \sum_{j \neq i} m_j (\frac{p_i}{\rho_i^2} + \frac{p_j}{\rho_j^2})  \nabla W_{ij}
-    \end{equation}
-    \begin{equation}
-        F_i^p = -m_i \sum_{b} V_b \rho_0 (\frac{p_i}{\rho_i^2}) \nabla W_{ib}
+        \alpha = \sqrt{2} \sin \Theta
     \end{equation}
 
-    Non pressure forces
+    where $\alpha$ is the frictional coefficient for an angle of repose $\theta$ (the maximum angle a material can pile before slipping) and $||s_i||$ the frobenius norm of $s_i$.The yield constraint can be approximated in a piecewise linear manner by applying it to each component of $s$
+
+    \subsection{Pressure}
+    In traditional SPH methods the pressure $p$ is calculated by an equation of state like the ideal gas equation
     \begin{equation}
-        F_i^{adv} = F^g + F_i^f + f_i^{drag}
+        p_i = k * (\rho_i - \rho_0)
+    \end{equation}
+    or Tait's equation % float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
+    \begin{equation}
+        p_i = \frac{\rho_0 * B}{n} n \frac{\rho_i}{\rho_0}^n
+    \end{equation}
+    where $k$, $B$ and $n$ are parameters controlling the stiffness of the pressure calculation, which means the scaling of a density error and the resulting pressure.
+    PCISPH then tries to minimize the mean density error by doing multiple iterations, correcting the pressure to apply. As WCSPH does not provide a good enough incompressibility for stable friction calculations and PCISPH can take a lot of iterations to converge, I opted for IISPH as it provides pressures that result in a very small mean density error, after only few iterations and supports larger timesteps as other variants of SPH.
+
+
+    The IISPH implemetation consist of two parts. The first being the advection of the velocities and densities and the second, the iterations to solve for the pressure. For the advection all external forces are summed up and the particle velocities are advanced in time to get an intermediate velocity $v_i^{adv}$.
+
+    \begin{equation}
+        F_i^{adv} = F^g + f_i^{drag}
     \end{equation}
 
-    intermediate velocity
     \begin{equation}
         v_i^{adv} = v_i + \Delta t \frac{F_i^{adv}}{m_i}
     \end{equation}
 
-    intermediate density
+    The intermediate velocity is then used to calculate predicted densities $\rho_i^{adv}$ for all particles.
+
     \begin{equation}
         \rho_i^{adv} = \rho_i + \Delta t \sum_j m_j v_{ij}^{adv} \nabla W_{ij}
     \end{equation}
@@ -164,7 +280,25 @@
     \begin{equation}
         a_{ii} = \sum_j m_j (d_{ii} - d_{ji}) \nabla W_{ij}
     \end{equation}
-    Integration
+
+    \subsection{Internal Forces}
+    
+    For the calculation of the pressure force of a given particle the SPH concept is applied. 
+
+    \begin{equation}
+        F_i^p = -m_i \sum_{j \neq i} m_j (\frac{p_i}{\rho_i^2} + \frac{p_j}{\rho_j^2})  \nabla W_{ij}
+    \end{equation}
+    
+    A similar formulation can be used to determine the frictional force of that particle.
+
+    \begin{equation}
+        F_i^f = -m_i \sum_{j \neq i} m_j (\frac{s_i}{\rho_i^2} + \frac{s_j}{\rho_j^2})  \nabla W_{ij}
+    \end{equation}
+
+    
+
+    \subsection{Integration}
+    For the integration of the simulation the Euler integration has been used. It could be exchanged for a more advanced integrations scheme such as Leap-Frog or Verlet.
     \begin{equation}
         v_i(t + \Delta t) = v_i^{adv} + \Delta t \frac{F_i^p}{m_i}
     \end{equation}
@@ -172,69 +306,40 @@
         x_i(t + \Delta t) = x_i + \Delta t v_i(t + \Delta t)
     \end{equation}
 
-    \begin{center} 
-        \begin{tabular}{|l|l|l|}
-        \hline
-        Symbol & Unit & Name \\
-        \hline
-        $\rho_i$ & $kg/m^3$ & Density of particle $i$ at position $x$ for time $t$ \\
-        $\rho_0$ & $kg/m^3$ & Rest density of the simulated material \\
-        $V_i$ & $m^3$ & Volume of particle $i$ at position $x$ for time $t$ \\
-        \hline
-        
-        \end{tabular}
-    \end{center}
+    \subsection{Boundary Handling}
     
-    \subsection{Libraries \& NewTechnologies}
+    \subsubsection{Particle-Based Approaches}
+    Most implementations of SPH use the concept of AK et al. when implementing boundary handling and rigidbody interactions. The idea is to represent boundaries and rigidbodys by sampling their surface or volume with a dense mesh of particles, which can then be incoporated into the normal simulation. For static objects the boundary particles are not integrated in time. For dynamic rigidbodies the particles representing them, collect the counteracting forces, they excert onto the fluid. The collected forces can then be integrated by a rigidbody physics solver.
+    This method presents some drawbacks. One of them being the amount of particles required to sample the 3D models in the scene, which then have to be checked for each neighboring fluid particle.
+
+    \subsubsection{Volume Maps}
+    In this implementation the concept of Volume Maps is employed. The try to represent an object by a signed distance field which is 
     
-    \subsection{Datastructures}
+    \begin{equation}
+        \rho_i = \sum_b V_b \rho_0 W_{ib}
+    \end{equation}
+
+    \begin{equation}
+        F_i^f = -m_i \sum_{b} V_b \rho_0 (\frac{s_i}{\rho_i^2}) \nabla W_{ib}
+    \end{equation}
+    \begin{equation}
+        F_i^p = -m_i \sum_{b} V_b \rho_0 (\frac{p_i}{\rho_i^2}) \nabla W_{ib}
+    \end{equation}
+
+    \subsection{Upscaling}
+    \dots
     
-    \subsection{Algorithm}
-    \begin{algorithm}
-        \caption{Full Simulation Frame}
-        \begin{algorithmic}[1]
-        \State find neighbors 
-        \State compute $\rho$ and $F^{drag}$ 
-        \State compute $s$ 
-        \State compute $v$ advection 
-        \State compute $\rho$ advection 
-        \State $l = 0$
-        \While {$l < 2$ $||$ $\rho_{avg} - \rho_0 < \eta $}
-            \State compute $d_{ij}p_{j}$
-            \State compute $p^{l+1}$
-            \State $p(t) = p^{l+1}$
-            \State apply yield criterion 
-            \State $l = l+1$
-        \EndWhile
-        \State compute $F^p$ and $F^f$ 
-        \State integrate 
-        \State advect HR particles 
-        \end{algorithmic}
-    \end{algorithm}
-    
-    \subsubsection{Neighborhood Search}
-    
-    \subsubsection{Density \& Pressure}
-    
-    \subsubsection{Stress \& Strain}
-    
-    \subsubsection{Force}
-    
-    \subsubsection{Rigidbody Interactions}
-    
-    \subsubsection{Integration}
-    
-    \subsubsection{Upscaling}
-    
-    \subsubsection{Visualization}
-    
-    \subsubsection{User Interface}
+    \subsection{Visualization}
+    \dots
     
     \section{Evaluation}
+    \dots
     
     \subsection{Performance}
+    \dots
     
     \section{Conclusion \& Future Work}
+    \dots
     
     \newpage
     \printbibliography

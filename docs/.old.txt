@@ -1,0 +1,13 @@
+\begin{center} 
+        \begin{tabular}{|l|l|l|}
+        \hline
+        Symbol & Unit & Name \\
+        \hline
+        $\rho_i$ & $kg/m^3$ & Density of particle $i$ at position $x$ for time $t$ \\
+        $\rho_0$ & $kg/m^3$ & Rest density of the simulated material \\
+        $V_i$ & $m^3$ & Volume of particle $i$ at position $x$ for time $t$ \\
+        $h$ & $m$ & Smoothing length of the kernel function\\
+        \hline
+        
+        \end{tabular}
+    \end{center}

@@ -199,37 +199,10 @@ void main(){
 
     mat3 stressTensor = inverse(D) * strainTensor;
 
-    // Piola-Kirchhoff stress tensor
-    // float lambda = 1.0;
-    // float mu = 1.0;
-    // float G = 44;//mu;
-    // float K = 38;//lambda + 2 * mu / 3;
-    // mat3 P = 2 * G * strainTensor + (K - 2.0/3.0 * G) * trace(strainTensor) * mat3(1.0);
-
     mat3 meanHydrostaticStressTensor = 0.5f * trace(stressTensor) * mat3(1.f);
     mat3 deviatoricStressTensor = stressTensor - meanHydrostaticStressTensor;
     
     p.deviatoricStress = mat4(deviatoricStressTensor);
-    
-    // float alpha = sqrt(2.f / 3.f) * sin(settings.theta); //* frictional coefficient
-    // float yield = sqrt(3.f) * alpha * p.p; //* Drucker-Prager yield criterion
-
-    // mat3 stress = mat3(0);
-    // float normDeviatoricStressTensor = frobenius(deviatoricStressTensor);
-    // if(p.p > EPSILON && normDeviatoricStressTensor > EPSILON){
-    //     stress = normDeviatoricStressTensor <= yield ? deviatoricStressTensor : deviatoricStressTensor * (yield / normDeviatoricStressTensor);
-    // }
-
-    // p.stress = mat4(stress);
-    
-    // float maxCohesion = _beta * _beta * _C;
-    // mat3 cohesion = mat3(0);
-    // float normStressTensor = frobenius(stressTensor);
-    // if(p.p > EPSILON && normStressTensor > EPSILON){
-    //     cohesion = normStressTensor <= maxCohesion ? stressTensor : stressTensor * (maxCohesion / normStressTensor);
-    // }
-    // p.pad0 = normStressTensor;
-    // p.stress = frobenius(stress) > frobenius(cohesion) ? stress : cohesion;
 
     ssbo.particles[particleID] = p;
 }

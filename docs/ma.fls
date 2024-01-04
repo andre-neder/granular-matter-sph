@@ -1,6 +1,6 @@
-PWD c:\Users\andre\Documents\vulkan_khr_dynamic_rendering\docs
+PWD c:\Users\andre\Documents\granular-matter-sph\docs
 INPUT C:\Users\andre\AppData\Local\MiKTeX\miktex\data\le\pdftex\pdflatex.fmt
-INPUT c:\Users\andre\Documents\vulkan_khr_dynamic_rendering\docs\ma.tex
+INPUT c:\Users\andre\Documents\granular-matter-sph\docs\ma.tex
 OUTPUT ma.log
 INPUT .\cgMA.cls
 INPUT cgMA.cls
