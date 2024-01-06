@@ -314,8 +314,24 @@
     This method presents some drawbacks. One of them being the amount of particles required to sample the 3D models in the scene, which then have to be checked for each neighboring fluid particle.
 
     \subsubsection{Volume Maps}
-    In this implementation the concept of Volume Maps is employed. The try to represent an object by a signed distance field which is 
-    
+    In this implementation the concept of Volume Maps is employed. They are an implicit boundary representation, inspired by the density maps concept. They use signed distance functions to determine the volume of the intersection of the kernel function around a particle and the boundary. For this, the boundary or bounding box of any arbitrary mesh is extended by the kernel radius and then sampled on a grid with a set resolution. Here the TriangleMeshDistance library is used to create a signed distance representation of any triangle based mesh. For each sample a vector to the nearest point on the surface of the object is stored aswell as the intersection volume $V_B$, which is calculated by the signed distance $\Phi$, treated by a cubic extension function $\gamma^*$, to get a continuos differentiable function, which results in a smooth transition at $x = h$. \cite{10.1145/3359566.3360077}
+
+    \begin{equation}
+        V_b(x) = \int_{N(x)}\gamma^*(\Phi(x'))dx'
+    \end{equation}
+
+    \begin{equation}
+        \gamma^*(x) = 
+        \begin{cases}
+            \frac{C(x)}{C(0)},& \text{if } 0 < x < h \\
+            1,& \text{if } x \leq 0 \\
+            0,              & \text{otherwise}
+        \end{cases}
+    \end{equation}
+
+    For this cubic extension function the cubic spline kernel $C(x)$ \cite{doi:10.1146/annurev.aa.30.090192.002551} is used. The use of this function does not enforce the use of the same function for the SPH approximation, where any kind of kernel function can be used. \cite{10.1145/3359566.3360077}
+    The grid is then stored as a 32-bit 4-channel floating point 3-dimensional image and uploaded to the GPU. As Vulkan does not support arrays of 3D images, as it does for 2D, the descriptor indexing extension has to be used to allow for multiple 3D textures being bound dynamically. When sampling the texture in the shader, the nearest position on the surface and the intersection volume can be determined using only one texture read access instead of iterating all neighboring boundary particles as done in the particle-based approach. After transforming the volume map from its texture space into world space inside of the shader, a smooth value for both required properties is can be determined by the sampler. These values can the be used in any of the above mentioned equations, by subsituting the mass for the determined volume $V_b$ and the reference density of the simulated material $\rho_0$.
+
     \begin{equation}
         \rho_i = \sum_b V_b \rho_0 W_{ib}
     \end{equation}
@@ -327,8 +343,20 @@
         F_i^p = -m_i \sum_{b} V_b \rho_0 (\frac{p_i}{\rho_i^2}) \nabla W_{ib}
     \end{equation}
 
-    \subsection{Upscaling}
-    \dots
+    For the calculation of the resulting boundary forces only the pressure and stress of the particle is used, other than in the calculation of the forces between particles, where both particles contribute to the force. At this point the boundary forces can be applied to the actual rigidbody the volume map represents, to allow for two way coupling of the simulation and the boundaries.
+
+    \subsection{Upsampling}
+    As granular matter consists of vast number of grains, simulating them all as individual particles, would not only make the computational cost and memory consuption incredibly high, but would also result in a very restricted time step due to the CFL condition. To achive real time results, the simulation is done for a set of low-resolution (LR) particles which approximate the granular flow, which are then upsampled to another set of high-resolution (HR) particles. \cite{10.2312:PE:vriphys:vriphys12:053-060}
+    % The volume of each low-resolution particle is initially sampled with a special pattern of high-resolution particles, which tries to minimize the effect of clumping. For this pattern, 
+
+    After the above described algorithm is executed on the low-resoltion particles, the high resolution particles are advected based on the velocity field of the low-resolution simulation. This is again done by the SPH concept, but with a different smoothing length $h_{HR}$ which is set to $h_{HR} = 3h_{LR}$. As the LR particles should be able to not only follow the flow of the granular material, but react to gravity when there are no LR particles in its range, a blending weight $w$ is introduced, to define the contributions of the simulation and external forces.
+
+    \begin{equation}
+        w(d_{ij}) = \max(0, (1 - \frac{d_{ij}^2}{h_{HR}^2})^3)
+    \end{equation}
+
+    In this equation $i$ refers to a high-resolution particle and $j$ to a low-resoltion particle or a boundary and $d_{ij}$ to the distance between them. 
+
     
     \subsection{Visualization}
     \dots

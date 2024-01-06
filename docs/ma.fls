@@ -315,6 +315,8 @@ INPUT C:\Users\andre\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\ecbx109
 OUTPUT ma.toc
 INPUT C:\Users\andre\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\ecbx1200.tfm
 INPUT C:\Users\andre\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\ecrm0900.tfm
+INPUT C:\Users\andre\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\ecrm0800.tfm
+INPUT C:\Users\andre\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\ecrm0600.tfm
 INPUT C:\Users\andre\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\ecti1095.tfm
 INPUT C:\Users\andre\AppData\Local\Programs\MiKTeX\fonts\tfm\jknappen\ec\eccc1095.tfm
 INPUT C:\Users\andre\AppData\Local\Programs\MiKTeX\tex\latex\base\t1cmtt.fd

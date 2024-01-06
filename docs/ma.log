@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  4 JAN 2024 23:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  6 JAN 2024 17:00
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -862,38 +862,38 @@ Overfull \hbox (30.6345pt too wide) in paragraph at lines 89--90
 
 [4] [5] [6]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 129.
- [7] [8] [9] [10] [11] [12] [13] [14]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 346.
+ [7] [8] [9] [10] [11] [12] [13] [14] [15]
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 374.
  (C:\Users\andre\AppData\Local\Programs\MiKTeX\tex/latex/base\t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
-) [15]
-Overfull \hbox (15.47778pt too wide) in paragraph at lines 347--347
+) [16]
+Overfull \hbox (15.47778pt too wide) in paragraph at lines 375--375
 []\T1/cmr/m/n/10.95 A. Som-mer, U. Schwan-e-cke und E. Schoe-mer, ^^R  In-ter-ac-ti-ve High-Resolution
  []
 
-[16] [17] (ma.aux)
+[17] [18] (ma.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-08-29>
  ***********
 Package rerunfilecheck Info: File `ma.out' has not changed.
-(rerunfilecheck)             Checksum: 7F079185494F65FE65C690461D5E302A;4369.
+(rerunfilecheck)             Checksum: E3A0499FEC94B5FD103B7199878C5B99;4374.
 Package logreq Info: Writing requests to 'ma.run.xml'.
 \openout1 = `ma.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 25101 strings out of 475248
- 447299 string characters out of 5757812
+ 25116 strings out of 475248
+ 447722 string characters out of 5757812
  1933785 words of memory out of 5000000
- 46187 multiletter control sequences out of 15000+600000
- 575897 words of font info for 79 fonts, out of 8000000 for 9000
+ 46195 multiletter control sequences out of 15000+600000
+ 577427 words of font info for 81 fonts, out of 8000000 for 9000
  1143 hyphenation exceptions out of 8191
  75i,12n,81p,1757b,2383s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on ma.pdf (20 pages, 700037 bytes).
+Output written on ma.pdf (21 pages, 713201 bytes).
 PDF statistics:
- 877 PDF objects out of 1000 (max. 8388607)
- 116 named destinations out of 1000 (max. 500000)
+ 896 PDF objects out of 1000 (max. 8388607)
+ 121 named destinations out of 1000 (max. 500000)
  254 words of extra memory for PDF output out of 10000 (max. 10000000)
 

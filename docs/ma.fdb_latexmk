@@ -1,12 +1,12 @@
 # Fdb version 4
-["biber ma"] 0 "ma.bcf" "ma.bbl" "ma" 1704406407 -1
-  "./sources.bib" 1703068688 21779 8c74c7d9745d4aa9a2f9684177057f4d ""
-  "ma.bcf" 1704406406 107212 bccf7dc038c4ba22ab4e81da111ac510 "pdflatex"
+["biber ma"] 1704555652 "ma.bcf" "ma.bbl" "ma" 1704556809 0
+  "./sources.bib" 1704551994 22273 a52caa44eaecd82bb9ab1ac255f0cad2 ""
+  "ma.bcf" 1704556809 107553 2e26ce5142a8dd55cde3e1f51a3f815d "pdflatex"
   (generated)
   "ma.bbl"
   "ma.blg"
   (rewritten before read)
-["pdflatex"] 1704406405 "c:/Users/andre/Documents/granular-matter-sph/docs/ma.tex" "ma.pdf" "ma" 1704406407 0
+["pdflatex"] 1704556808 "c:/Users/andre/Documents/granular-matter-sph/docs/ma.tex" "ma.pdf" "ma" 1704556809 0
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1701460665 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1095.pk" 1699881222 28976 c34833c39db940283120029e0f30ac59 ""
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1200.pk" 1699881116 31952 207bf74559838a2fb9e148adba2ec160 ""
@@ -27,6 +27,8 @@
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/tfm/jknappen/ec/ecbx1440.tfm" 993061960 3196 0b37fa3083e15c57cfa8c4ff52f2807a ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/tfm/jknappen/ec/ecbx2074.tfm" 993061964 3208 da5ec29ca7c2f5f55c296dd6713d4a74 ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/tfm/jknappen/ec/eccc1095.tfm" 993061982 2800 704ac1d706443507d1542715b89923fc ""
+  "C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/tfm/jknappen/ec/ecrm0600.tfm" 993062116 3160 116e21835795bb29209ae8bb4682382f ""
+  "C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/tfm/jknappen/ec/ecrm0800.tfm" 993062118 3152 11ecf5aad6aacf00ff18f394ab23a8b5 ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/tfm/jknappen/ec/ecrm0900.tfm" 993062120 3156 6d4f5755d77638125f6f89de4f3bb757 ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/tfm/jknappen/ec/ecrm1000.tfm" 993062122 3148 7e594c8240c71e432203f65ab5f95a51 ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/tfm/jknappen/ec/ecrm1095.tfm" 993062124 3172 eb6efaa83c6c52473a1c403f376eab0f ""
@@ -178,15 +180,15 @@
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/tex/latex/tools/tabularx.sty" 1686255640 7147 d80d8cf72d313443d08c13c1af59c90f ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/tex/latex/tools/xspace.sty" 1686255640 4545 9f5ea23ab1c91476c42749893f790666 ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
-  "c:/Users/andre/Documents/granular-matter-sph/docs/ma.tex" 1704406403 21392 59119a8d40122be7f699a2ac4fd1fef7 ""
+  "c:/Users/andre/Documents/granular-matter-sph/docs/ma.tex" 1704556808 25645 9f7ef42f103b09a7733e56091a4cd220 ""
   "cgMA.cls" 1704387325 7765 f86dc020406331fbb3238194226885ef ""
   "logos/UniLogoNeu.pdf" 1703068688 392138 4e35de66af7d6acc4cf42595fff19d29 ""
-  "ma.aux" 1704406406 6157 86ad5aaafbff2a2486f23ab15a62ae5a "pdflatex"
-  "ma.bbl" 1704029938 47460 adad1a3d3b295f77bb0b500d21048b5c "biber ma"
-  "ma.out" 1704406406 4369 7f079185494f65fe65c690461d5e302a "pdflatex"
-  "ma.run.xml" 1704406406 2480 8ec515c28285954c9f4ffa52cef637a4 "pdflatex"
-  "ma.tex" 1704406403 21392 59119a8d40122be7f699a2ac4fd1fef7 ""
-  "ma.toc" 1704406406 2588 16ea7886d7297411a88d68966915b53f "pdflatex"
+  "ma.aux" 1704556809 6663 71444f4e6474fa2da8f5a16fccf51aa6 "pdflatex"
+  "ma.bbl" 1704555653 48963 86d4e469c57d5a4a4c553cb548978b64 "biber ma"
+  "ma.out" 1704556809 4374 e3a0499fec94b5fd103b7199878c5b99 "pdflatex"
+  "ma.run.xml" 1704556809 2480 8ec515c28285954c9f4ffa52cef637a4 "pdflatex"
+  "ma.tex" 1704556808 25645 9f7ef42f103b09a7733e56091a4cd220 ""
+  "ma.toc" 1704556809 2589 f6f21b70b633c72e96e22465b4548f83 "pdflatex"
   (generated)
   "ma.aux"
   "ma.bcf"
