@@ -61,6 +61,10 @@
 
     \subsection{Signed Distance Functions}
     \dots
+
+    \subsection{Bitonic Sort}
+    \dots
+
     \pagebreak
     \section{Method}
     \subsection{Smoothed Particle Hydrodynamics}
@@ -148,7 +152,36 @@
     \end{algorithm}
 
     \subsection{Neighborhood Search}
-    \dots
+    Using the SPH approximation involves finding all neighboring particles within the smooting length $h$. In a naive implamentation this means iterating all other particles and check their distance to each other. With a runntime of $O(n^2)$ this is not an option for a realtime scenario. To improve the neighborhood search a number of algorithms could be employed. In this implementation a grid based approach has been used, where every particle is first segmented into a spatial grid with cell size of $h$. This provides the possibility to find every neighbor of a given particle, by finding its cell and iterating over its members and all adjacent cells. This dramatically decreses the amount of particles that have to be checked every frame. To get a list of particles for each cell, all grid entries, consisting of a cell key and a particle ID, are first sorted by the cell key. As this sorting has to be done at the beginning of every frame, this has to be done as fast as possible. To achive this, a parallel sorting algorithm, such as radix sort or in this case bitonic merge sort is used. After the list of grid entries has been sorted, the start of every cells entries has to be found, by checking if the cell key of an entry and its predecessor are the same. The starting index of the cell is then stored in an array of length of $n$, being the particle count, at the position of the cellkey. This implies that all cell keys have to be within the range $0$ to $(n - 1)$. 
+    When iterating over a given cells entries, the entries particle ID is used to check if the particle is within the smoothing length. A cell is found by calculating a particles cell key an the keys of its neighboring cells, and looking up the starting index of that cells entries. The entries can then be iterated until the cell key changes. In the below examples a list of 8 grid entries is shown, first in their unsorted state, then after they have been sorted and lastly the list of starting indices of each cell, where $-1$ denotes entries where no cell starts. In the actual implementation unsigned integers are used to represent the starting indices and the maximum unsigned integer is used for empty cells. 
+    
+    \begin{table}[ht]
+        \centering
+        \caption{Example of unsorted list of grid entries }
+        \begin{tabular}{ l c c c c c c c c }
+            Cell key    & 2 & 7 & 5 & 3 & 7 & 7 & 5 & 2 \\ 
+            Particle ID & 0 & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\   
+        \end{tabular}
+    \end{table}
+
+    \begin{table}[ht]
+        \centering
+        \caption{Example of sorted list of grid entries }
+        \begin{tabular}{ l c c c c c c c c }
+            Cell key    & 2 & 2 & 3 & 5 & 5 & 7 & 7 & 7 \\ 
+            Particle ID & 0 & 7 & 3 & 2 & 6 & 1 & 4 & 5 \\   
+        \end{tabular}
+    \end{table}
+
+    \begin{table}[ht]
+        \centering
+        \caption{Example of list of starting indices }
+        \begin{tabular}{ l c c c c c c c c }
+            Starting indices    & -1 & -1 & 0 & 2 & -1 & 3 & -1 & 4 \\ 
+        \end{tabular}
+    \end{table}
+
+    This approach allows the grid to have an undefined size as only the amount of particles matters for the creation of it. 
 
     \subsection{Density}  
     When implementing a SPH simulation the first thing to do is calculate the density $\rho$ of a particle. It is determined by a sum over the neighboring particles. The volume $V$ of each particle within the smoothing length $h$ is multiplied with the density of it and the weighting kernel $ W_{ij} \equiv W(x_i - x_j, h)$. As the volume can be expressed as $V = \frac{m}{\rho}$ we can simplify the equation to only the sum of weighted masses. (SRC)
@@ -239,7 +272,7 @@
     \begin{equation}
         p_i = k * (\rho_i - \rho_0)
     \end{equation}
-    or Tait's equation % float pressure = (settings.rho0 * B) / exponent * (pow(p.rho / settings.rho0, exponent) - 1.f); 
+    or Tait's equation 
     \begin{equation}
         p_i = \frac{\rho_0 * B}{n} n \frac{\rho_i}{\rho_0}^n
     \end{equation}
@@ -248,6 +281,8 @@
 
 
     The IISPH implemetation consist of two parts. The first being the advection of the velocities and densities and the second, the iterations to solve for the pressure. For the advection all external forces are summed up and the particle velocities are advanced in time to get an intermediate velocity $v_i^{adv}$.
+
+    // TODO: Pressure calculation
 
     \begin{equation}
         F_i^{adv} = F^g + f_i^{drag}
@@ -299,7 +334,7 @@
     
 
     \subsection{Integration}
-    For the integration of the simulation the Euler integration has been used. It could be exchanged for a more advanced integrations scheme such as Leap-Frog or Verlet.
+    For the integration of the simulation a simple Euler integration has been used. It could be exchanged for a more advanced integrations scheme such as Leap-Frog or Verlet.
     \begin{equation}
         v_i(t + \Delta t) = v_i^{adv} + \Delta t \frac{F_i^p}{m_i}
     \end{equation}
@@ -348,15 +383,38 @@
     \subsection{Upsampling}
     As granular matter consists of vast number of grains, simulating them all as individual particles, would not only make the computational cost and memory consuption incredibly high, but would also result in a very restricted time step due to the CFL condition. To achive real time results, the simulation is done for a set of low-resolution (LR) particles which approximate the granular flow, which are then upsampled to another set of high-resolution (HR) particles. \cite{10.2312:PE:vriphys:vriphys12:053-060}
     % The volume of each low-resolution particle is initially sampled with a special pattern of high-resolution particles, which tries to minimize the effect of clumping. For this pattern, 
+    \\// TODO: Sampling
 
-    After the above described algorithm is executed on the low-resoltion particles, the high resolution particles are advected based on the velocity field of the low-resolution simulation. This is again done by the SPH concept, but with a different smoothing length $h_{HR}$ which is set to $h_{HR} = 3h_{LR}$. As the LR particles should be able to not only follow the flow of the granular material, but react to gravity when there are no LR particles in its range, a blending weight $w$ is introduced, to define the contributions of the simulation and external forces.
+    After the above described algorithm is executed on the low-resoltion particles, the high resolution particles are advected based on the velocity field of the low-resolution simulation. This is again done by the SPH concept, but with a different smoothing length $h_{HR}$ which is set to $h_{HR} = 3h_{LR}$. To find the velocity of a HR particle a distance based weight $w$ is introduced.
 
     \begin{equation}
         w(d_{ij}) = \max(0, (1 - \frac{d_{ij}^2}{h_{HR}^2})^3)
     \end{equation}
 
-    In this equation $i$ refers to a high-resolution particle and $j$ to a low-resoltion particle or a boundary and $d_{ij}$ to the distance between them. 
+    In this equation $i$ refers to a high-resolution particle and $j$ to a low-resoltion particle or a boundary and $d_{ij}$ to the distance between them. The velocity is the computed as the weighted average velocity over the neighboring LR particles.\cite{10.2312:PE:vriphys:vriphys12:053-060}
 
+    \begin{equation}
+        v_i^*(t + \Delta t) = \frac{1}{\sum_j w(d_{ij})}\sum_j w(d_{ij})v_j
+    \end{equation}
+
+    As the LR particles should be able to not only follow the flow of the granular material, but react to gravity when there are no LR particles in its range, a blending weight $\alpha$ is introduced, to define the contributions of the simulation and external forces. The final velocity of each HR particle is then computed as:
+
+    \begin{equation}
+        v_i(t + \Delta t)  = (1 - \alpha)v_i^*(t + \Delta t) + \alpha(v(t) + \Delta t \frac{F^g}{m})
+    \end{equation}
+
+    where $\alpha$ is:
+
+    \begin{equation}
+        \alpha = 
+        \begin{cases}
+            1 - \arg \max_j w(d_{ij}),& \text{if } \frac{\arg \max_j w(d_{ij})}{\sum_j w(d_{ij})} \geq 0.6 \\
+            1 - \arg \max_j w(d_{ij}),& \text{if } \arg \max_j w(d_{ij}) \leq w(r_{LR}) \\
+            0,              & \text{otherwise}
+        \end{cases}
+    \end{equation}
+
+    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060}
     
     \subsection{Visualization}
     \dots
