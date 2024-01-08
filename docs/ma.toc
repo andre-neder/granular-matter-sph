@@ -21,12 +21,13 @@
 \contentsline {subsection}{\numberline {5.7}Strain \& Stress}{11}{subsection.5.7}%
 \contentsline {subsection}{\numberline {5.8}Pressure}{12}{subsection.5.8}%
 \contentsline {subsection}{\numberline {5.9}Internal Forces}{13}{subsection.5.9}%
-\contentsline {subsection}{\numberline {5.10}Integration}{13}{subsection.5.10}%
-\contentsline {subsection}{\numberline {5.11}Boundary Handling}{13}{subsection.5.11}%
-\contentsline {subsubsection}{\numberline {5.11.1}Particle-Based Approaches}{13}{subsubsection.5.11.1}%
+\contentsline {subsection}{\numberline {5.10}Integration}{14}{subsection.5.10}%
+\contentsline {subsection}{\numberline {5.11}Boundary Handling}{14}{subsection.5.11}%
+\contentsline {subsubsection}{\numberline {5.11.1}Particle-Based Approaches}{14}{subsubsection.5.11.1}%
 \contentsline {subsubsection}{\numberline {5.11.2}Volume Maps}{14}{subsubsection.5.11.2}%
-\contentsline {subsection}{\numberline {5.12}Upsampling}{15}{subsection.5.12}%
+\contentsline {subsection}{\numberline {5.12}Upsampling}{16}{subsection.5.12}%
 \contentsline {subsection}{\numberline {5.13}Visualization}{16}{subsection.5.13}%
-\contentsline {section}{\numberline {6}Evaluation}{17}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Performance}{17}{subsection.6.1}%
-\contentsline {section}{\numberline {7}Conclusion \& Future Work}{18}{section.7}%
+\contentsline {subsection}{\numberline {5.14}User interface}{17}{subsection.5.14}%
+\contentsline {section}{\numberline {6}Evaluation}{18}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Performance}{18}{subsection.6.1}%
+\contentsline {section}{\numberline {7}Conclusion \& Future Work}{19}{section.7}%

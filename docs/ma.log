@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  8 JAN 2024 12:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  8 JAN 2024 14:53
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -809,7 +809,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 
 pdfTeX warning: pdflatex (file ./logos/UniLogoNeu.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-<logos/UniLogoNeu.pdf, id=127, 962.63638pt x 285.2256pt>
+<logos/UniLogoNeu.pdf, id=131, 962.63638pt x 285.2256pt>
 File: logos/UniLogoNeu.pdf Graphic file (type pdf)
 <use logos/UniLogoNeu.pdf>
 Package pdftex.def Info: logos/UniLogoNeu.pdf  used on input line 43.
@@ -856,12 +856,12 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.}) has be
                    \relax 
 l.45     \newpage
                   [2] [1] [2]
-<figures/gfx00.png, id=197, 256.96pt x 180.675pt>
+<figures/gfx00.png, id=202, 256.96pt x 180.675pt>
 File: figures/gfx00.png Graphic file (type png)
 <use figures/gfx00.png>
 Package pdftex.def Info: figures/gfx00.png  used on input line 76.
 (pdftex.def)             Requested size: 180.0pt x 126.56535pt.
-<figures/gfx02.png, id=198, 256.96pt x 180.675pt>
+<figures/gfx02.png, id=203, 256.96pt x 180.675pt>
 File: figures/gfx02.png Graphic file (type png)
 <use figures/gfx02.png>
 Package pdftex.def Info: figures/gfx02.png  used on input line 77.
@@ -872,55 +872,60 @@ Overfull \hbox (2.42162pt too wide) in paragraph at lines 76--78
  []
 
 [3 <./figures/gfx00.png> <./figures/gfx02.png>]
-<figures/bitonic_sort.png, id=221, 2007.5pt x 815.045pt>
+<figures/bitonic_sort.png, id=226, 2007.5pt x 815.045pt>
 File: figures/bitonic_sort.png Graphic file (type png)
 <use figures/bitonic_sort.png>
 Package pdftex.def Info: figures/bitonic_sort.png  used on input line 87.
 (pdftex.def)             Requested size: 360.0pt x 146.15456pt.
  [4 <./figures/bitonic_sort.png>]
-Overfull \hbox (30.6345pt too wide) in paragraph at lines 117--118
+Overfull \hbox (30.6345pt too wide) in paragraph at lines 111--112
 \T1/cmr/m/n/10.95 Predictive-Corrective In-com-pres-si-ble Smoo-thed Par-tic-le Hy-dro-dy-na-mics (PCISPH)
  []
 
 [5]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 126.
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 120.
  (C:\Users\andre\AppData\Local\Programs\MiKTeX\tex/latex/base\t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 ) [6]
-Overfull \hbox (19.11086pt too wide) in paragraph at lines 150--151
+Overfull \hbox (19.11086pt too wide) in paragraph at lines 144--145
 []$\T1/cmtt/m/n/10.95 https : / / github . com / InteractiveComputerGraphics / TriangleMeshDistance$[] 
  []
 
 [7]
-Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 157.
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 151.
  [8] [9] [10] [11] [12] [13] [14] [15] [16] [17] [18] [19]
-Overfull \hbox (15.47778pt too wide) in paragraph at lines 454--454
+Overfull \hbox (0.16078pt too wide) in paragraph at lines 473--473
+\T1/cmr/m/n/10.95 cia-ti-on for Com-pu-ting Ma-chi-ne-ry, 2011, S. 25^^U32, \T1/cmr/m/sc/10.95 isbn\T1/cmr/m/n/10.95 : 9781450309233.
+ []
+
+[20]
+Overfull \hbox (15.47778pt too wide) in paragraph at lines 473--473
 []\T1/cmr/m/n/10.95 A. Som-mer, U. Schwan-e-cke und E. Schoe-mer, ^^R  In-ter-ac-ti-ve High-Resolution
  []
 
-[20] [21] (ma.aux)
+[21] [22] [23] (ma.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-08-29>
  ***********
 Package rerunfilecheck Info: File `ma.out' has not changed.
-(rerunfilecheck)             Checksum: 7C4B7E4F36729701AB18613D05622A21;4354.
+(rerunfilecheck)             Checksum: 42E912930E8AEB1A6BCC31DA9FBDFF2B;4486.
 Package logreq Info: Writing requests to 'ma.run.xml'.
 \openout1 = `ma.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 25181 strings out of 475248
- 449366 string characters out of 5757812
+ 25212 strings out of 475248
+ 450451 string characters out of 5757812
  1934785 words of memory out of 5000000
- 46241 multiletter control sequences out of 15000+600000
+ 46262 multiletter control sequences out of 15000+600000
  578203 words of font info for 82 fonts, out of 8000000 for 9000
  1143 hyphenation exceptions out of 8191
- 75i,12n,81p,1757b,2383s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,12n,81p,1559b,2383s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on ma.pdf (24 pages, 890294 bytes).
+Output written on ma.pdf (26 pages, 906319 bytes).
 PDF statistics:
- 1026 PDF objects out of 1200 (max. 8388607)
- 139 named destinations out of 1000 (max. 500000)
- 269 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1097 PDF objects out of 1200 (max. 8388607)
+ 149 named destinations out of 1000 (max. 500000)
+ 277 words of extra memory for PDF output out of 10000 (max. 10000000)
 

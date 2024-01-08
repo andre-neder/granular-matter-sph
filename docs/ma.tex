@@ -94,36 +94,30 @@
     \subsection{Smoothed Particle Hydrodynamics}
     Smoothed Particle Hydrodynamics (SPH) is a computational technique widely employed in fluid dynamics and other fields for simulating complex physical phenomena.SPH represents the fluid or material as a collection of discrete particles. Each particle has physical properties such as density, pressure and velocity. 
 
-    These interact through a kernel function $W$ with radius $h$, which smoothes these properties over neighboring particles, allowing for a continuous representation of the material and facilitating the simulation of intricate behaviors, including fluid flow, collisions, and deformations. An arbitrary field $A$ can be approximated as shown, with an error in the order of $h^2$.
+    These interact through a kernel function $W$ with radius $h$, which smoothes these properties over neighboring particles, allowing for a continuous representation of the material and facilitating the simulation of intricate behaviors, including fluid flow, collisions, and deformations. An arbitrary field $A$ can be approximated as following, with $m$ being the mass and $\rho$ the density of a particle \cite{wcsph}. 
 
     \begin{equation}
-        A(r) \approx \int A(r') W(|r - r'|, h) d(r')
-    \end{equation}
-    
-    The integral is then approximated using a Riemann summation over the neighboring particles.
-
-    \begin{equation}
-        A(r) \approx \sum_j A_j W(|r - r_j|, h)
+        A(x) = \sum_j m_j \frac{A_j}{\rho_j} W(|x - x_j|, h)
     \end{equation}
 
     This concept is then applied to calculate the properties of a given particle. SPH's versatility extends beyond fluids, making it applicable to problems involving granular materials, astrophysics, and even solid mechanics. 
 
-    //Todo: more about the kernel ?
+    A typical implementation for a kernel function is the cubic spline kernel \cite{doi:10.1146/annurev.aa.30.090192.002551}. I this work a spiky kernel \cite{seblague} is used as it provided better results for granular matter.
 
     \subsubsection{Weakly Compressible SPH}
-    Weakly Compressible Smoothed Particle Hydrodynamics (WCSPH) is a variant of the traditional SPH method where, the incompressibility constraint is relaxed, allowing for a more computationally efficient simulation while still capturing the essential fluid behaviors. This approach is particularly useful in scenarios where the fully incompressible SPH formulation might be computationally expensive and it finds a sweet spot between precision and computational efficiency.This is especially usefull in the context of large-scale simulations or real-time applications.
+    Weakly Compressible Smoothed Particle Hydrodynamics (WCSPH) is a variant of the traditional SPH method where, the incompressibility constraint is relaxed, allowing for a more computationally efficient simulation while still capturing the essential fluid behaviors. This approach is particularly useful in scenarios where the fully incompressible SPH formulation might be computationally expensive and it finds a sweet spot between precision and computational efficiency.This is especially usefull in the context of large-scale simulations or real-time applications.\cite{wcsph}
 
     \subsubsection{Predictive-Corrective Incompressble SPH} 
-    Predictive-Corrective Incompressible Smoothed Particle Hydrodynamics (PCISPH) is an advancement in the SPH method designed to address issues related to incompressibility in fluid simulations. It employs a two-step process where a predictive step estimates particle velocities and a corrective step which iteratively adjusts these velocities to enforce incompressibility. This technique is particularly useful in scenarios where traditional SPH methods such as WCSPH struggle with maintaining fluid volume conservation, providing more accurate and stable simulations, especially for scenarios involving complex fluid interactions, like fluid splashes or turbulent flows.
+    Predictive-Corrective Incompressible Smoothed Particle Hydrodynamics (PCISPH) is an advancement in the SPH method designed to address issues related to incompressibility in fluid simulations. It employs a two-step process where a predictive step estimates particle velocities and a corrective step which iteratively adjusts these velocities to enforce incompressibility. This technique is particularly useful in scenarios where traditional SPH methods such as WCSPH struggle with maintaining fluid volume conservation, providing more accurate and stable simulations, especially for scenarios involving complex fluid interactions, like fluid splashes or turbulent flows. \cite{10.1145/1576246.1531346}
 
     \subsubsection{Implicity Incompressble SPH}
-    Implicit Incompressible Smoothed Particle Hydrodynamics (IISPH) is a variant of the SPH method that also addresses the challenge of maintaining incompressibility in fluid simulations. Unlike traditional SPH methods, IISPH employs an implicit formulation for the pressure term in the Navier-Stokes equations, allowing for larger time steps and improved stability. %This method is particularly useful in simulating incompressible fluid flows where maintaining constant density is essential, providing a more efficient and stable approach compared to explicit methods in certain scenarios, such as large-scale simulations or real-time applications.%
+    Implicit Incompressible Smoothed Particle Hydrodynamics (IISPH) is a variant of the SPH method that also addresses the challenge of maintaining incompressibility in fluid simulations. Unlike traditional SPH methods, IISPH employs an implicit formulation for the pressure term in the Navier-Stokes equations, allowing for larger time steps and improved stability.\cite{6570475} %This method is particularly useful in simulating incompressible fluid flows where maintaining constant density is essential, providing a more efficient and stable approach compared to explicit methods in certain scenarios, such as large-scale simulations or real-time applications.%
 
         
     \subsection{Libraries \& Technologies}
 
     \subsubsection*{C++ \& Vulkan}
-    When choosing a framework for a fluid simulation using SPH most papers use C++ in combination with OpenMP to achieve parallelization, other implementations involve Cuda to use the massive parallel compute performance of GPUs.(SRC) For rendering these simulations, dedicated renderers are used. In this implementation Vulkan is used to simulate and visualize the granular material on the GPU using a combination of compute shaders and the rasterization pipeline. This allows for massive parallel computation of the simulation togehter with the visualization in real time, giving maximum flexibility and extensibility by for example a raytraced visualisation. Vulkan uses SPIRV Shaders, which allows the use of any shading language, that can be compiled to it. I opted for GLSL for its well known C like structure. \url{https://www.vulkan.org/}
+    When choosing a framework for a fluid simulation using SPH most implementations (for example: \cite{splishsplash} \cite{dualsphysics}) use C++ in combination with OpenMP to achieve parallelization, other implementations involve Cuda to use the massive parallel compute performance of GPUs \cite{dualsphysics}. For rendering these simulations, dedicated renderers are used. In this implementation Vulkan is used to simulate and visualize the granular material on the GPU using a combination of compute shaders and the rasterization pipeline. This allows for massive parallel computation of the simulation togehter with the visualization in real time, giving maximum flexibility and extensibility by for example a raytraced visualisation. Vulkan uses SPIRV Shaders, which allows the use of any shading language, that can be compiled to it. I opted for GLSL for its well known C like structure. \url{https://www.vulkan.org/}
 
     \subsubsection*{CMake}    
     CMake is a popular choice in software development for its role as a cross-platform build system and project configuration tool, streamlining the build process, enhancing code portability, and offering flexibility in managing diverse project structures and dependencies. \url{https://cmake.org/}
@@ -177,7 +171,7 @@
 
     \subsection{Neighborhood Search}
     Using the SPH approximation involves finding all neighboring particles within the smooting length $h$. In a naive implamentation this means iterating all other particles and check their distance to each other. With a runntime of $O(n^2)$ this is not an option for a realtime scenario. To improve the neighborhood search a number of algorithms could be employed. In this implementation a grid based approach has been used, where every particle is first segmented into a spatial grid with cell size of $h$. This provides the possibility to find every neighbor of a given particle, by finding its cell and iterating over its members and all adjacent cells. This dramatically decreses the amount of particles that have to be checked every frame. To get a list of particles for each cell, all grid entries, consisting of a cell key and a particle ID, are first sorted by the cell key. As this sorting has to be done at the beginning of every frame, this has to be done as fast as possible. To achive this, a parallel sorting algorithm, such as radix sort or in this case bitonic merge sort is used. After the list of grid entries has been sorted, the start of every cells entries has to be found, by checking if the cell key of an entry and its predecessor are the same. The starting index of the cell is then stored in an array of length of $n$, being the particle count, at the position of the cellkey. This implies that all cell keys have to be within the range $0$ to $(n - 1)$. 
-    When iterating over a given cells entries, the entries particle ID is used to check if the particle is within the smoothing length. A cell is found by calculating a particles cell key an the keys of its neighboring cells, and looking up the starting index of that cells entries. The entries can then be iterated until the cell key changes. In the below examples a list of 8 grid entries is shown, first in their unsorted state, then after they have been sorted and lastly the list of starting indices of each cell, where $-1$ denotes entries where no cell starts. In the actual implementation unsigned integers are used to represent the starting indices and the maximum unsigned integer is used for empty cells. 
+    When iterating over a given cells entries, the entries particle ID is used to check if the particle is within the smoothing length. A cell is found by calculating a particles cell key an the keys of its neighboring cells, and looking up the starting index of that cells entries. The entries can then be iterated until the cell key changes. In the below examples a list of 8 grid entries is shown, first in their unsorted state, then after they have been sorted and lastly the list of starting indices of each cell, where $-1$ denotes entries where no cell starts. In the actual implementation unsigned integers are used to represent the starting indices and the maximum unsigned integer is used for empty cells. \cite{psuc} \cite{seblague} \cite{bitonic}
     
     \begin{table}[ht]
         \centering
@@ -208,11 +202,10 @@
     This approach allows the grid to have an undefined size as only the amount of particles matters for the creation of it. 
 
     \subsection{Density}  
-    When implementing a SPH simulation the first thing to do is calculate the density $\rho$ of a particle. It is determined by a sum over the neighboring particles. The volume $V$ of each particle within the smoothing length $h$ is multiplied with the density of it and the weighting kernel $ W_{ij} \equiv W(x_i - x_j, h)$. As the volume can be expressed as $V = \frac{m}{\rho}$ we can simplify the equation to only the sum of weighted masses. (SRC)
+    When implementing a SPH simulation the first thing to do is calculate the density $\rho$ of a particle. It is determined by a sum over the neighboring particles. The volume $V$ of each particle within the smoothing length $h$ is multiplied with the density of it and the weighting kernel $ W_{ij} \equiv W(x_i - x_j, h)$. As the volume can be expressed as $V = \frac{m}{\rho}$ we can simplify the equation to only the sum of weighted masses. \cite{wcsph}
 
     \begin{equation}
-        \rho_i = \sum_j V_j \rho_j W_{ij}
-        = \sum_j m_j W_{ij}
+        \rho_i = \sum_j m_j W_{ij}
     \end{equation}
 
     \subsection{Unilateral incompressibility}  
@@ -220,20 +213,20 @@
     \begin{equation}
         \rho_i \leq \rho_0 \; \bot \;  p \geq 0
     \end{equation}
-    This says that the density of a given particle $i$ can not be greater than the rest density of the material and the pressure can not become negative.
+    This says that the density of a given particle $i$ can not be greater than the rest density of the material and the pressure can not become negative. \cite{10.1145/2019406.2019410}
 
     \subsection{External forces}
     A change in density can be achived by applying external forces to the particles. 
     \subsection{Gravity}
     Gravity is given as a fixed acceleration in a given direction in 3D space. Multiplied with the weight of a given particle we get an actual force.
     \subsection{Drag}
-    As an additional force that approximated the interaction with air a drag force $F^{drag}$ was applied. Which uses a simplified implementation of the drag by (SRC). For this the relative velocity difference of a particle to the surrounding air is computed and its length squared. (SRC)
+    As an additional force that approximated the interaction with air a drag force $F^{drag}$ was applied. Which uses a simplified implementation of the drag by Gissler et al.. For this the relative velocity difference of a particle to the surrounding air is computed and its length squared. \cite{10.1016/j.cag.2017.09.002}
 
     \begin{equation}
         v^2_{i,rel} = |v_a - v_i|^2\ \frac{v_a - v_i}{|v_a - v_i|}
     \end{equation}
 
-    The velocity of the air $v_a$ can be set to 0 or could be taken from a velocity field of some kind. Computing the drag force, to apply to each particle, involves determining the crosssecional area $A_i$ of a particle. This can be represented by the area of a circle. Then the actual area exposed to oncomming air needs to be determined. For this a cone which is defined by the direction of the relative velocity differnce and a set angle is used to check if there are any other particles that shield the current particle form the air. This is done by a dot product of the relative velocity difference and the vector to the neighboring particles, which returns the angle between them. To not only get a boolean value for the shielding, an occlusion value is introduced, which is set to the smallest angle between neighboring particles in the cone. This value is then subtracted from 1 and added to the drag formulation as weight $\omega$. Further parameters for the equation are $\rho_a$ the density of the air or the medium that surrounds the particles and $C_{D,i}$ the drag coefficient for shape of the particle. The whole formula is then composed as: 
+    The velocity of the air $v_a$ can be set to 0 or could be taken from a velocity field of some kind. Computing the drag force, to apply to each particle, involves determining the crosssecional area $A_i$ of a particle. This can be represented by the area of a circle. Then the actual area exposed to oncomming air needs to be determined. For this a cone which is defined by the direction of the relative velocity differnce and a set angle is used to check if there are any other particles that shield the current particle form the air. This is done by a dot product of the relative velocity difference and the vector to the neighboring particles, which returns the angle between them. To not only get a boolean value for the shielding, an occlusion value is introduced, which is set to the smallest angle between neighboring particles in the cone. This value is then subtracted from 1 and added to the drag formulation as weight $\omega$. Further parameters for the equation are $\rho_a$ the density of the air or the medium that surrounds the particles and $C_{D,i}$ the drag coefficient for shape of the particle. \cite{10.1016/j.cag.2017.09.002} The whole formula is then composed as : 
 
     \begin{equation}
         F^{drag}_i = \frac{1}{2}\rho_a v^2_{i,rel} C_{D,i}  \omega  A_i
@@ -289,18 +282,18 @@
         \alpha = \sqrt{2} \sin \Theta
     \end{equation}
 
-    where $\alpha$ is the frictional coefficient for an angle of repose $\theta$ (the maximum angle a material can pile before slipping) and $||s_i||$ the frobenius norm of $s_i$.The yield constraint can be approximated in a piecewise linear manner by applying it to each component of $s$
+    where $\alpha$ is the frictional coefficient for an angle of repose $\theta$ (the maximum angle a material can pile before slipping) and $||s_i||$ the frobenius norm of $s_i$.The yield constraint can be approximated in a piecewise linear manner by applying it to each component of $s$. \cite{10.1145/2019406.2019410} \cite{10.2312:PE:vriphys:vriphys12:053-060} \cite{10.2312:LocalChapterEvents:CEIG:CEIG09:011-018} \cite{10.1145/1866158.1866195}
 
     \subsection{Pressure}
-    In traditional SPH methods the pressure $p$ is calculated by an equation of state like the ideal gas equation
+    In traditional SPH methods the pressure $p$ is calculated by an equation of state like the ideal gas equation \cite{wcsph}
     \begin{equation}
         p_i = k * (\rho_i - \rho_0)
     \end{equation}
-    or Tait's equation 
+    or Tait's equation \cite{wcsph}
     \begin{equation}
-        p_i = \frac{\rho_0 * B}{n} n \frac{\rho_i}{\rho_0}^n
+        p_i = B ((\frac{\rho_i}{\rho_0})^{\gamma} - 1)
     \end{equation}
-    where $k$, $B$ and $n$ are parameters controlling the stiffness of the pressure calculation, which means the scaling of a density error and the resulting pressure.
+    where $k$, $B$ and $\gamma$ are parameters controlling the stiffness of the pressure calculation, which means the scaling from the density error to the resulting pressure.
     PCISPH then tries to minimize the mean density error by doing multiple iterations, correcting the pressure to apply. As WCSPH does not provide a good enough incompressibility for stable friction calculations and PCISPH can take a lot of iterations to converge, I opted for IISPH as it provides pressures that result in a very small mean density error, after only few iterations and supports larger timesteps as other variants of SPH.
 
     The IISPH implemetation consist of two parts. The first being the advection of the velocities and densities and the second, the iterations to solve for the pressure. For the advection all external forces are summed up and the particle velocities are advanced in time to get an intermediate velocity $v_i^{adv}$. \cite{6570475}
@@ -318,35 +311,58 @@
     \begin{equation}
         \rho_i^{adv} = \rho_i + \Delta t \sum_j m_j v_{ij}^{adv} \nabla W_{ij}
     \end{equation}
-    // TODO: Pressure calculation
-    pressure
+    
+    At this point the base pressure to use for the upcoming steps is set to $p_{last} = 0.5p$ \cite{6570475}. The following equation is then used to determine the pressure values.
+
     \begin{equation}
         p_i^{l+1} = (1 - \omega) p_i^l + \omega \frac{1}{a_{ii} * \Delta t^2} (\rho_0 - \rho_i^{adv} - \Delta t^2 \psi)
     \end{equation}
-    $\omega = 0.5$
-    \begin{equation}
-        \psi = \sum_j m_j (\sum_j d_{ij}p_j^l - d_{jj}p_j^l - \sum_{k \neq i} d_{jk}p_k^l) \nabla W_{ij}
-    \end{equation}
-    \begin{equation}
-        \sum_{k \neq i} d_{jk}p_k^l = \sum_{k} d_{jk}p_k^l - d_{ji}p_i^l
-    \end{equation}
-    \begin{equation}
-        \rho_i^{l+1} = |p * a_{ii} * \Delta t^2 - (\rho_0 - \rho_i^{adv} - \Delta t^2 \psi)| + \rho_0
-    \end{equation}
+
+    Here $l$ is the index of the current iteration of the algorithm. The factor $\omega$ is called the relaxation factor and is set ot $0.5$ as this value yields the best results \cite{6570475}. $a_{ii}$ is a coefficient that is computed per particle as: 
 
     \begin{equation}
         a_{ii} = \sum_j m_j (d_{ii} - d_{ji}) \nabla W_{ij}
     \end{equation}
 
+    , with $d_{ii}$ and $d_{ji}$ being the same parameter for particle $i$ and $j$ respectivly, which is computed as:
+
+    \begin{equation}
+        d_{ii} = \Delta t^2 \sum_j -\frac{m_j}{\rho_i^2} \nabla W_{ij}
+    \end{equation}
+
+    The before used value $\psi$ is calculated as shown below:
+
+    \begin{equation}
+        \psi = \sum_j m_j (\sum_j d_{ij}p_j^l - d_{jj}p_j^l - \sum_{k \neq i} d_{jk}p_k^l) \nabla W_{ij}
+    \end{equation}
+
+    \begin{equation}
+        \sum_{k \neq i} d_{jk}p_k^l = \sum_{k} d_{jk}p_k^l - d_{ji}p_i^l 
+    \end{equation}
+
+    , where $\sum_j d_{ij}p_j^l$ is computed every iteration as:
+
+    \begin{equation}
+        \sum_j d_{ij}p_j^l = \Delta t^2 \sum_{k} -\frac{m_j}{\rho_j^2} p_j^l \nabla W_{ij}
+    \end{equation}
+
+    At this point, the yield can be testet with the new pressure and a the new density is predicted as:
+
+    \begin{equation}
+        \rho_i^{l+1} = |p * a_{ii} * \Delta t^2 - (\rho_0 - \rho_i^{adv} - \Delta t^2 \psi)| + \rho_0
+    \end{equation}
+
+    This is then being used to determine the overall average density error of all particles. For this the Vulkan Shader Atomic Float Extension is utilized to sum up the density error over all particles on the GPU and then divide it by the number of particles on the CPU. This value then determines if another iteration is required to achieve the desired threshold. Always at least two iterations are performed before using the average density error as a termination criterion. The implementation of the whole pressure calculation was guided by \cite{splishsplash}.
+
     \subsection{Internal Forces}
     
-    For the calculation of the pressure force of a given particle the SPH concept is applied. 
+    For the calculation of the pressure force of a given particle the SPH concept is applied \cite{10.2312:PE:vriphys:vriphys12:053-060}. 
 
     \begin{equation}
         F_i^p = -m_i \sum_{j \neq i} m_j (\frac{p_i}{\rho_i^2} + \frac{p_j}{\rho_j^2})  \nabla W_{ij}
     \end{equation}
     
-    A similar formulation can be used to determine the frictional force of that particle.
+    A similar formulation can be used to determine the frictional force of that particle \cite{10.2312:PE:vriphys:vriphys12:053-060}.
 
     \begin{equation}
         F_i^f = -m_i \sum_{j \neq i} m_j (\frac{s_i}{\rho_i^2} + \frac{s_j}{\rho_j^2})  \nabla W_{ij}
@@ -366,8 +382,8 @@
     \subsection{Boundary Handling}
     
     \subsubsection{Particle-Based Approaches}
-    Most implementations of SPH use the concept of AK et al. when implementing boundary handling and rigidbody interactions. The idea is to represent boundaries and rigidbodys by sampling their surface or volume with a dense mesh of particles, which can then be incoporated into the normal simulation. For static objects the boundary particles are not integrated in time. For dynamic rigidbodies the particles representing them, collect the counteracting forces, they excert onto the fluid. The collected forces can then be integrated by a rigidbody physics solver.
-    This method presents some drawbacks. One of them being the amount of particles required to sample the 3D models in the scene, which then have to be checked for each neighboring fluid particle.
+    Most implementations of SPH use the concept of Akinci et al. \cite{boundary_handling} when implementing boundary handling and rigidbody interactions. This first implementation of this work also used this method, but later the concept of Volume maps was implemented due to multiple advantages. The idea is to represent boundaries and rigidbodys by sampling their surface or volume with a dense mesh of particles, which can then be incoporated into the normal simulation. For static objects the boundary particles are not integrated in time. For dynamic rigidbodies the particles representing them, collect the counteracting forces, they excert onto the fluid. The collected forces can then be summed up and integrated by a rigidbody physics solver.
+    This method presents some drawbacks. One of them being the amount of particles required to sample the 3D models in the scene, which then have to be checked for each neighboring fluid particle. \cite{10.1145/3359566.3360077} \cite{10.2312:PE:vriphys:vriphys12:053-060} \cite{boundary_handling} \cite{10.1145/2185520.2185558}
 
     \subsubsection{Volume Maps}
     In this implementation the concept of Volume Maps is employed. They are an implicit boundary representation, inspired by the density maps concept. They use signed distance functions to determine the volume of the intersection of the kernel function around a particle and the boundary. For this, the boundary or bounding box of any arbitrary mesh is extended by the kernel radius and then sampled on a grid with a set resolution. Here the TriangleMeshDistance library is used to create a signed distance representation of any triangle based mesh. For each sample a vector to the nearest point on the surface of the object is stored aswell as the intersection volume $V_B$, which is calculated by the signed distance $\Phi$, treated by a cubic extension function $\gamma^*$, to get a continuos differentiable function, which results in a smooth transition at $x = h$. \cite{10.1145/3359566.3360077}
@@ -435,9 +451,12 @@
         \end{cases}
     \end{equation}
 
-    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060}
+    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060} 
     
     \subsection{Visualization}
+    \dots
+
+    \subsection{User interface}
     \dots
     \pagebreak
     \section{Evaluation}
