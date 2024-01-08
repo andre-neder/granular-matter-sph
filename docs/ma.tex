@@ -53,17 +53,41 @@
     \pagebreak
     
     \section{Basics}
-    \subsection{Navier-Stokes equations}
-    \dots
 
-    \subsection{Granular Matter}
-    \dots
+    \subsection{Navier-Stokes equation}
+    The basic concept behind most fluid simulations lies in the Navier-Stokes equations, which describe the motion of fluids and deformable solids. As granular flow can be interpreted as a kind of fluid they will be employed here aswell. One of the most important parts is the continuity of mass equation, which \enquote{describes the evolution of an object's mass density $\rho$ over time, i.e.,} \cite{survey_on_sph}
+    
+    \begin{equation}
+        \frac{D \rho}{D t} = -\rho(\nabla v)
+    \end{equation}
+
+    with $v$ beeing the velocity and $\nabla$ the gradient operator. It states that the mass of fluid entering a given region must be equal to the mass leaving that region, accounting for any change in density within the fluid. The second part is the incompressible Navier-Stokes equation
+
+    \begin{equation}
+        \rho \frac{D v}{D t} = -\nabla p + \mu \nabla^2 v + f_{ext}
+    \end{equation}
+
+    which describes the conservation of momentum. Here \enquote{the pressure $p$ can be interpreted as a Lagrange multiplier that has to be chosen such that the}\cite{survey_on_sph} conservation of mass is fulfilled. $\mu$ denotes the dynamic viscosity of the fluid and $f_{ext}$ the influence of external forces.
 
     \subsection{Signed Distance Functions}
-    \dots
+    Signed distance functions (SDF) are a versatile tool in computer graphics. They determine the shorted distance of a point in space to the surface of geometric object, while preserving information about if the point is inside or outside the object. This allows for precise implicit reconstruction of surfaces. A greate source for understanding and utilizing SDFs has been \cite{iquilezles}. 
+
+    \begin{figure}[H]
+            \includegraphics[width=0.5\textwidth]{figures/gfx00.png}
+            \includegraphics[width=0.5\textwidth]{figures/gfx02.png}
+        \caption{SDF of a circle and a box in 2D \cite{iquilezles2}}
+    \end{figure}
 
     \subsection{Bitonic Sort}
-    \dots
+
+    Bitonic merge sort is a sorting algorithm with a performance complexity of $O(\log^2(n))$. The algorithm can be implmented on the GPU to achieve a massive performance increase by parallelization. In this work, a modified version of the implementation by \href{https://twitter.com/tgfrerer}{@tgfrerer} has been used \cite{bitonic}. The algorithm uses a pattern of comparison to sort a list of elements in parallel. The algorithm has been modified to use Vulkan's Push Constants to select the type of comparison inside of the shader provided by \cite{bitonic}. Another change is the use of Specialization Constants to set the local workgroup size of the compute shader invocation.
+
+    \begin{figure}[H]
+        \begin{center}
+            \includegraphics[width=1\textwidth]{figures/bitonic_sort.png}
+        \end{center}
+        \caption{Sorting diagram for 16 sortable elements. Horizontal lines represent array indices into our array of sortable elements, each vertical line represents one worker thread performing a compare-and-swap operation. \cite{bitonic}}
+    \end{figure}
 
     \pagebreak
     \section{Method}
@@ -75,7 +99,7 @@
     \begin{equation}
         A(r) \approx \int A(r') W(|r - r'|, h) d(r')
     \end{equation}
-    % https://www.sfu.ca/math-coursenotes/Math%20158%20Course%20Notes/sec_riemann.html
+    
     The integral is then approximated using a Riemann summation over the neighboring particles.
 
     \begin{equation}
@@ -84,7 +108,7 @@
 
     This concept is then applied to calculate the properties of a given particle. SPH's versatility extends beyond fluids, making it applicable to problems involving granular materials, astrophysics, and even solid mechanics. 
 
-    \dots more about the kernel
+    //Todo: more about the kernel ?
 
     \subsubsection{Weakly Compressible SPH}
     Weakly Compressible Smoothed Particle Hydrodynamics (WCSPH) is a variant of the traditional SPH method where, the incompressibility constraint is relaxed, allowing for a more computationally efficient simulation while still capturing the essential fluid behaviors. This approach is particularly useful in scenarios where the fully incompressible SPH formulation might be computationally expensive and it finds a sweet spot between precision and computational efficiency.This is especially usefull in the context of large-scale simulations or real-time applications.
@@ -99,31 +123,31 @@
     \subsection{Libraries \& Technologies}
 
     \subsubsection*{C++ \& Vulkan}
-    When choosing a framework for a fluid simulation using SPH most papers use C++ in combination with OpenMP to achieve parallelization, other implementations involve Cuda to use the massive parallel compute performance of GPUs.(SRC) For rendering these simulations, dedicated renderers are used. In this implementation Vulkan is used to simulate and visualize the granular material on the GPU using a combination of compute shaders and the rasterization pipeline. This allows for massive parallel computation of the simulation togehter with the visualization in real time, giving maximum flexibility and extensibility by for example a raytraced visualisation. Vulkan uses SPIRV Shaders, which allows the use of any shading language, that can be compiled to it. I opted for GLSL for its well known C like structure.
+    When choosing a framework for a fluid simulation using SPH most papers use C++ in combination with OpenMP to achieve parallelization, other implementations involve Cuda to use the massive parallel compute performance of GPUs.(SRC) For rendering these simulations, dedicated renderers are used. In this implementation Vulkan is used to simulate and visualize the granular material on the GPU using a combination of compute shaders and the rasterization pipeline. This allows for massive parallel computation of the simulation togehter with the visualization in real time, giving maximum flexibility and extensibility by for example a raytraced visualisation. Vulkan uses SPIRV Shaders, which allows the use of any shading language, that can be compiled to it. I opted for GLSL for its well known C like structure. \url{https://www.vulkan.org/}
 
     \subsubsection*{CMake}    
-    CMake is a popular choice in software development for its role as a cross-platform build system and project configuration tool, streamlining the build process, enhancing code portability, and offering flexibility in managing diverse project structures and dependencies.
+    CMake is a popular choice in software development for its role as a cross-platform build system and project configuration tool, streamlining the build process, enhancing code portability, and offering flexibility in managing diverse project structures and dependencies. \url{https://cmake.org/}
 
     \subsubsection*{Vulkan Memory Allocator}   
-    In difference to other Graphics APIs Vulkan requires the programmer to do the memory management on the GPU. Vulkan Memory Allocator (VMA) is employed to achive efficient management and optimization of GPU memory, simplifying memory allocation and deallocation processes and improving overall performance.
+    In difference to other Graphics APIs Vulkan requires the programmer to do the memory management on the GPU. Vulkan Memory Allocator (VMA) is employed to achive efficient management and optimization of GPU memory, simplifying memory allocation and deallocation processes and improving overall performance. \url{https://gpuopen.com/vulkan-memory-allocator/}
 
     \subsubsection*{shaderc}   
-    Shaderc is utilized for the compilation and linking of shaders due to its user-friendly interface and simplicity in handling these processes. This made is straight foward to compile the GLSL shaders to SPIRV.
+    Shaderc is utilized for the compilation and linking of shaders due to its user-friendly interface and simplicity in handling these processes. This made is straight foward to compile the used GLSL shaders to SPIRV for Vulkan to use. \url{https://github.com/google/shaderc}
 
     \subsubsection*{TinyGLTF \& STB Image}  
-    In computer graphics, TinyGLTF is often used for seamless glTF asset loading, and STB Image is favored for its straightforward approach to handling and processing images, both known for their efficiency and ease of use across different applications.
+    In computer graphics, TinyGLTF is often used for seamless glTF asset loading, and STB Image is favored for its straightforward approach to handling and processing images, both known for their efficiency and ease of use across different applications. \url{https://github.com/syoyo/tinygltf}
 
     \subsubsection*{Dear ImGui}
-    Dear ImGui is a popular immediate mode graphical user interface (GUI) library. It simplifies the process of creating and integrating user interfaces into applications by providing an intuitive and efficient framework and has implementations for nearly every common graphics API and windowing library. It also supports features like multiple viewports and docking elements to them.
+    Dear ImGui is a popular immediate mode graphical user interface (GUI) library. It simplifies the process of creating and integrating user interfaces into applications by providing an intuitive and efficient framework and has implementations for nearly every common graphics API and windowing library. It also supports features like multiple viewports and docking elements to them. \url{https://github.com/ocornut/imgui}
 
-    \subsubsection*{glfw3}
-    GLFW3 is a widely-used windowing library that simplifies the creation and management of windows, handling user input and facilitating cross-platform development for OpenGL- and Vulkan-based applications.
+    \subsubsection*{GLFW}
+    GLFW is a widely-used windowing library that simplifies the creation and management of windows, handling user input and facilitating cross-platform development for OpenGL- and Vulkan-based applications. \url{https://www.glfw.org/}
 
     \subsubsection*{glm}
-    GLM is a versatile C++ mathematics library designed for graphics programming, providing a comprehensive set of functions and classes for vector and matrix operations commonly used in computer graphics.
+    GLM is a versatile C++ mathematics library designed for graphics programming, providing a comprehensive set of functions and classes for vector and matrix operations commonly used in computer graphics. \url{https://github.com/g-truc/glm}
 
     \subsubsection*{TriangleMeshDistance}
-    TriangleMeshDistance offers a user-friendly programming interface for effortlessly creating signed distance fields of adjustible resolution from 3D meshes.
+    TriangleMeshDistance offers a user-friendly programming interface for effortlessly creating signed distance fields of adjustible resolution from 3D meshes. \url{https://github.com/InteractiveComputerGraphics/TriangleMeshDistance}
 
     \pagebreak
     \section{Implementation}
@@ -279,25 +303,22 @@
     where $k$, $B$ and $n$ are parameters controlling the stiffness of the pressure calculation, which means the scaling of a density error and the resulting pressure.
     PCISPH then tries to minimize the mean density error by doing multiple iterations, correcting the pressure to apply. As WCSPH does not provide a good enough incompressibility for stable friction calculations and PCISPH can take a lot of iterations to converge, I opted for IISPH as it provides pressures that result in a very small mean density error, after only few iterations and supports larger timesteps as other variants of SPH.
 
-
-    The IISPH implemetation consist of two parts. The first being the advection of the velocities and densities and the second, the iterations to solve for the pressure. For the advection all external forces are summed up and the particle velocities are advanced in time to get an intermediate velocity $v_i^{adv}$.
-
-    // TODO: Pressure calculation
+    The IISPH implemetation consist of two parts. The first being the advection of the velocities and densities and the second, the iterations to solve for the pressure. For the advection all external forces are summed up and the particle velocities are advanced in time to get an intermediate velocity $v_i^{adv}$. \cite{6570475}
 
     \begin{equation}
-        F_i^{adv} = F^g + f_i^{drag}
+        F_i^{adv} = F^g + F_i^{drag}
     \end{equation}
 
     \begin{equation}
         v_i^{adv} = v_i + \Delta t \frac{F_i^{adv}}{m_i}
     \end{equation}
 
-    The intermediate velocity is then used to calculate predicted densities $\rho_i^{adv}$ for all particles.
+    The intermediate velocity is then used to calculate predicted densities $\rho_i^{adv}$ for all particles. \cite{6570475}
 
     \begin{equation}
         \rho_i^{adv} = \rho_i + \Delta t \sum_j m_j v_{ij}^{adv} \nabla W_{ij}
     \end{equation}
-
+    // TODO: Pressure calculation
     pressure
     \begin{equation}
         p_i^{l+1} = (1 - \omega) p_i^l + \omega \frac{1}{a_{ii} * \Delta t^2} (\rho_0 - \rho_i^{adv} - \Delta t^2 \psi)
