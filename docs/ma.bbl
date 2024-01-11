@@ -302,8 +302,8 @@
       \strng{authorbibnamehash}{5274c78f22b52b36f4e982cca136e931}
       \strng{authornamehash}{5274c78f22b52b36f4e982cca136e931}
       \strng{authorfullhash}{5274c78f22b52b36f4e982cca136e931}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{ACM SIGGRAPH 2009 Papers}
@@ -352,8 +352,8 @@
       \strng{authorbibnamehash}{df961ab73dbb14f710c6c2f0c6952f76}
       \strng{authornamehash}{df961ab73dbb14f710c6c2f0c6952f76}
       \strng{authorfullhash}{df961ab73dbb14f710c6c2f0c6952f76}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{ACM SIGGRAPH Asia 2010 Papers}
@@ -844,8 +844,8 @@
       \strng{authorbibnamehash}{3bcf259cae23a65d38d665249a3e987a}
       \strng{authornamehash}{13dd4ff882722cd7b3c281a050df9b02}
       \strng{authorfullhash}{3bcf259cae23a65d38d665249a3e987a}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Computer Graphics Forum}
@@ -897,8 +897,8 @@
       \strng{authorbibnamehash}{54c8ff20cee08a7c875688e9f5ded670}
       \strng{authornamehash}{54c8ff20cee08a7c875688e9f5ded670}
       \strng{authorfullhash}{54c8ff20cee08a7c875688e9f5ded670}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{issn}{1213-6964}
@@ -1116,6 +1116,7 @@
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Inigo Quilez :: computer graphics, mathematics, shaders, fractals, demoscene and more}
+      \true{nocite}
       \verb{urlraw}
       \verb https://iquilezles.org/articles/distfunctions2d/
       \endverb
@@ -1202,8 +1203,8 @@
       \endverb
     \endentry
     \entry{dualsphysics}{article}{}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labeltitlesource}{title}
       \field{title}{DualSPHysics}
       \verb{urlraw}
@@ -1232,8 +1233,8 @@
       \strng{authorbibnamehash}{85db3254c458a47ee735fd18c5ed0d7b}
       \strng{authornamehash}{85db3254c458a47ee735fd18c5ed0d7b}
       \strng{authorfullhash}{85db3254c458a47ee735fd18c5ed0d7b}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Proceedings of the 2007 ACM SIGGRAPH/Eurographics Symposium on Computer Animation}
@@ -1314,6 +1315,80 @@
       \endverb
       \verb{url}
       \verb https://web.archive.org/web/20140725014123/https://docs.nvidia.com/cuda/samples/5_Simulations/particles/doc/particles.pdf
+      \endverb
+    \endentry
+    \entry{Springel_2010}{article}{}
+      \name{author}{1}{}{%
+        {{hash=d673f4b06bc18145fb87123390b4948f}{%
+           family={Springel},
+           familyi={S\bibinitperiod},
+           given={Volker},
+           giveni={V\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Annual Reviews}%
+      }
+      \strng{namehash}{d673f4b06bc18145fb87123390b4948f}
+      \strng{fullhash}{d673f4b06bc18145fb87123390b4948f}
+      \strng{bibnamehash}{d673f4b06bc18145fb87123390b4948f}
+      \strng{authorbibnamehash}{d673f4b06bc18145fb87123390b4948f}
+      \strng{authornamehash}{d673f4b06bc18145fb87123390b4948f}
+      \strng{authorfullhash}{d673f4b06bc18145fb87123390b4948f}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issn}{1545-4282}
+      \field{journaltitle}{Annual Review of Astronomy and Astrophysics}
+      \field{month}{8}
+      \field{number}{1}
+      \field{title}{Smoothed Particle Hydrodynamics in Astrophysics}
+      \field{volume}{48}
+      \field{year}{2010}
+      \field{pages}{391\bibrangedash 430}
+      \range{pages}{40}
+      \verb{doi}
+      \verb 10.1146/annurev-astro-081309-130914
+      \endverb
+      \verb{urlraw}
+      \verb http://dx.doi.org/10.1146/annurev-astro-081309-130914
+      \endverb
+      \verb{url}
+      \verb http://dx.doi.org/10.1146/annurev-astro-081309-130914
+      \endverb
+    \endentry
+    \entry{solid_mechanics}{article}{}
+      \name{author}{2}{}{%
+        {{hash=c38173276923dc6cbd91f9754ba2c04d}{%
+           family={Shutov},
+           familyi={S\bibinitperiod},
+           given={Alexey},
+           giveni={A\bibinitperiod}}}%
+        {{hash=ea2d03a46f146e34acd7d919ea5a147b}{%
+           family={Klyuchantsev},
+           familyi={K\bibinitperiod},
+           given={Vladislav},
+           giveni={V\bibinitperiod}}}%
+      }
+      \strng{namehash}{2717efab6b9326f78c89f5eb56350149}
+      \strng{fullhash}{2717efab6b9326f78c89f5eb56350149}
+      \strng{bibnamehash}{2717efab6b9326f78c89f5eb56350149}
+      \strng{authorbibnamehash}{2717efab6b9326f78c89f5eb56350149}
+      \strng{authornamehash}{2717efab6b9326f78c89f5eb56350149}
+      \strng{authorfullhash}{2717efab6b9326f78c89f5eb56350149}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Physics: Conference Series}
+      \field{month}{07}
+      \field{title}{On the application of SPH to solid mechanics}
+      \field{volume}{1268}
+      \field{year}{2019}
+      \field{pages}{012077}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1088/1742-6596/1268/1/012077
       \endverb
     \endentry
   \enddatalist

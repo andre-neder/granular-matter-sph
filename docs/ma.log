@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  8 JAN 2024 14:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  11 JAN 2024 18:52
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -871,39 +871,43 @@ Overfull \hbox (2.42162pt too wide) in paragraph at lines 76--78
 [][] [] 
  []
 
-[3 <./figures/gfx00.png> <./figures/gfx02.png>]
-<figures/bitonic_sort.png, id=226, 2007.5pt x 815.045pt>
+[3]
+<figures/bitonic_sort.png, id=224, 2007.5pt x 815.045pt>
 File: figures/bitonic_sort.png Graphic file (type png)
 <use figures/bitonic_sort.png>
-Package pdftex.def Info: figures/bitonic_sort.png  used on input line 87.
+Package pdftex.def Info: figures/bitonic_sort.png  used on input line 88.
 (pdftex.def)             Requested size: 360.0pt x 146.15456pt.
- [4 <./figures/bitonic_sort.png>]
-Overfull \hbox (30.6345pt too wide) in paragraph at lines 111--112
+ [4 <./figures/gfx00.png> <./figures/gfx02.png> <./figures/bitonic_sort.png>]
+Overfull \hbox (30.6345pt too wide) in paragraph at lines 113--114
 \T1/cmr/m/n/10.95 Predictive-Corrective In-com-pres-si-ble Smoo-thed Par-tic-le Hy-dro-dy-na-mics (PCISPH)
  []
 
 [5]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 120.
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 122.
  (C:\Users\andre\AppData\Local\Programs\MiKTeX\tex/latex/base\t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 ) [6]
-Overfull \hbox (19.11086pt too wide) in paragraph at lines 144--145
+Overfull \hbox (19.11086pt too wide) in paragraph at lines 146--147
 []$\T1/cmtt/m/n/10.95 https : / / github . com / InteractiveComputerGraphics / TriangleMeshDistance$[] 
  []
 
 [7]
-Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 151.
- [8] [9] [10] [11] [12] [13] [14] [15] [16] [17] [18] [19]
-Overfull \hbox (0.16078pt too wide) in paragraph at lines 473--473
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 153.
+ [8] [9] [10] [11] [12] [13] [14] [15] [16] [17] [18] [19] (ma.lof)
+\tf@lof=\write6
+\openout6 = `ma.lof'.
+
+ [20]
+Overfull \hbox (0.16078pt too wide) in paragraph at lines 476--476
 \T1/cmr/m/n/10.95 cia-ti-on for Com-pu-ting Ma-chi-ne-ry, 2011, S. 25^^U32, \T1/cmr/m/sc/10.95 isbn\T1/cmr/m/n/10.95 : 9781450309233.
  []
 
-[20]
-Overfull \hbox (15.47778pt too wide) in paragraph at lines 473--473
+[21]
+Overfull \hbox (15.47778pt too wide) in paragraph at lines 476--476
 []\T1/cmr/m/n/10.95 A. Som-mer, U. Schwan-e-cke und E. Schoe-mer, ^^R  In-ter-ac-ti-ve High-Resolution
  []
 
-[21] [22] [23] (ma.aux)
+[22] [23] [24] (ma.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-08-29>
@@ -915,17 +919,17 @@ Package logreq Info: Writing requests to 'ma.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 25212 strings out of 475248
- 450451 string characters out of 5757812
+ 25235 strings out of 475248
+ 451004 string characters out of 5757812
  1934785 words of memory out of 5000000
- 46262 multiletter control sequences out of 15000+600000
+ 46279 multiletter control sequences out of 15000+600000
  578203 words of font info for 82 fonts, out of 8000000 for 9000
  1143 hyphenation exceptions out of 8191
- 75i,12n,81p,1559b,2383s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,12n,81p,1559b,2626s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on ma.pdf (26 pages, 906319 bytes).
+Output written on ma.pdf (27 pages, 912665 bytes).
 PDF statistics:
- 1097 PDF objects out of 1200 (max. 8388607)
- 149 named destinations out of 1000 (max. 500000)
+ 1119 PDF objects out of 1200 (max. 8388607)
+ 152 named destinations out of 1000 (max. 500000)
  277 words of extra memory for PDF output out of 10000 (max. 10000000)
 
