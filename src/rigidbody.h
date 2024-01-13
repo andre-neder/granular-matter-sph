@@ -7,6 +7,13 @@
 struct AABB{
     glm::vec3 min = glm::vec3(0.0);
     glm::vec3 max = glm::vec3(0.0);
+
+    glm::vec3 size(){
+        return max - min;
+    };
+    glm::vec3 center(){
+        return (max + min) / 2.f;
+    };
 };
 
 struct RigidBody2D{

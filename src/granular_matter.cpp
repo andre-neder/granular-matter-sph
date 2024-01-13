@@ -89,7 +89,7 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
                 glm::vec3 lrPosition = glm::vec3(
                     -(initialDistance * computeSpace.x / 2) + i * initialDistance + (initialDistance / 2.f),
-                     j * initialDistance + (initialDistance / 2.f) + settings.r_LR, //  (initialDistance * computeSpace.y / 2) + 
+                     j * initialDistance + (initialDistance / 2.f) + settings.r_LR + 8.f, //  (initialDistance * computeSpace.y / 2) + 
                     -(initialDistance * computeSpace.z / 2) + k * initialDistance + (initialDistance / 2.f)
                 );
 
@@ -755,19 +755,28 @@ void GranularMatter::createSignedDistanceFields()
     // wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH / 2);
     // rigidBodies.push_back(&wallFront);
 
-    // Mesh3D hourglasRB(ASSETS_PATH"/models/dump_truck.glb");
-    // hourglasRB.scale = glm::vec3(2.0);
-    // rigidBodies.push_back(&hourglasRB);
+    Mesh3D hourglasRB(ASSETS_PATH"/models/dump_truck.glb");
+    rigidBodies.push_back(&hourglasRB);
 
-    glm::vec3 textureSize = { 32, 32, 32 };
+
+
+    glm::vec3 baseTextureSize = { 32, 32, 32 };
     std::cout << "Generating volume maps...";
     for(auto rb : rigidBodies){
         //* Extend area by kernel radius
         AABB aabb = rb->aabb;
+
         aabb.min -= 2.f * settings.h_LR;
         aabb.max += 2.f * settings.h_LR;
+    
+        auto baseSize = aabb.size();
+        auto smallestDimension = std::min(baseSize.x, std::min(baseSize.y, baseSize.z));
+        auto sizeRatio = baseSize / smallestDimension;
+        glm::vec3 textureSize = glm::ceil(baseTextureSize * sizeRatio);
+        std::cout << textureSize.x << " " << textureSize.y << " " << textureSize.z << std::endl;
+     
         //* Get Sampling Step Size
-        glm::vec3 stepSize =  (aabb.max - aabb.min) / (textureSize);
+        glm::vec3 stepSize =  aabb.size() / (textureSize);
         std::vector<glm::vec4> volumeMap;
         for(int z = 0; z < textureSize.z; z++){
             for(int y = 0; y < textureSize.y; y++){
@@ -777,8 +786,8 @@ void GranularMatter::createSignedDistanceFields()
                         aabb.min.y + y * stepSize.y + (0.5 * stepSize.y), 
                         aabb.min.z + z * stepSize.z + (0.5 * stepSize.z)  
                     };
-                    // samplePoint -= glm::normalize(samplePoint) * settings.r_LR * 1.f;
-                    float sd = rb->signedDistance(samplePoint) + settings.r_LR * 1.f;// ;
+                    
+                    float sd = rb->signedDistance(samplePoint) + settings.r_LR * 1.f;
                     float volume = cubicExtension(sd);
 
                     glm::vec3 nearestPoint = rb->signedDistanceGradient(samplePoint);
@@ -793,8 +802,8 @@ void GranularMatter::createSignedDistanceFields()
         auto view = m_core->createImageView3D(image, vk::Format::eR32G32B32A32Sfloat); 
         signedDistanceFieldViews.push_back(view);
         auto transform = VolumeMapTransform();
-        transform.position = glm::vec4(rb->position + (aabb.max + aabb.min), 1.0);
-        transform.scale = glm::vec4((glm::vec3(1.0) / (rb->scale * (aabb.max - aabb.min))), 1.0);
+        transform.position = glm::vec4(rb->position + aabb.center(), 1.0);
+        transform.scale = glm::vec4((glm::vec3(1.0) / (rb->scale * aabb.size())), 1.0);
         volumeMapTransforms.push_back(transform);
     }
     std::cout << " done." << std::endl;
