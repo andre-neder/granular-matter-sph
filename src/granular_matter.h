@@ -22,37 +22,6 @@ struct ParticleGridEntry{
     uint32_t cellKey = UINT32_MAX;
 };
 
-struct WindParticle{
-    glm::vec4 position = glm::vec4(0);
-    glm::vec4 initialPosition = glm::vec4(0);
-    glm::vec4 velocity = glm::vec4(0,0,0, 1);
-    glm::vec4 internalForce = glm::vec4(0);
-    float rho = 0.0;
-    float p = 0.0;
-    float V = 0.0;
-    float pad0 = 0.0;
-
-    WindParticle(){};
-    inline WindParticle(float x, float y , float z) { 
-        position = glm::vec4(x, y, z, 1.0); 
-        initialPosition = glm::vec4(x, y, z, 1.0); 
-    }
-    static const uint32_t BINDING = 1;
-    static std::array<vk::VertexInputBindingDescription, 1> getBindingDescription() {
-        std::array<vk::VertexInputBindingDescription, 1> bindingDescriptions = {
-            vk::VertexInputBindingDescription(BINDING, sizeof(WindParticle), vk::VertexInputRate::eInstance)
-        };
-        return bindingDescriptions;
-    }
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
-        std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
-            vk::VertexInputAttributeDescription(7, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(WindParticle, position)),
-            vk::VertexInputAttributeDescription(8, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(WindParticle, velocity)),
-        };
-        return attributeDescriptions;
-    }
-};
-
 struct LRParticle{
     glm::vec4 position = glm::vec4(0);
     glm::vec4 velocity = glm::vec4(0);
@@ -129,10 +98,8 @@ public:
     GranularMatter(gpu::Core* core);
     ~GranularMatter();
 
-    std::vector<WindParticle> windParticles;
     std::vector<LRParticle> lrParticles;
     std::vector<HRParticle> hrParticles;
-    vk::Buffer windParticlesBuffer;
     vk::Buffer particlesBufferB;
     vk::Buffer particlesBufferHR;
 
@@ -166,11 +133,9 @@ private:
 
     std::vector<vk::DescriptorSet> descriptorSetsGrid;
     std::vector<vk::DescriptorSet> descriptorSetsParticles;
-    std::vector<vk::DescriptorSet> descriptorSetsWind;
 
     vk::DescriptorSetLayout descriptorSetLayoutGrid;
     vk::DescriptorSetLayout descriptorSetLayoutParticles;
-    vk::DescriptorSetLayout descriptorSetLayoutWind;
 
     vk::DescriptorPool descriptorPool;
  
@@ -189,10 +154,6 @@ private:
     gpu::ComputePass computeInternalForcePass;
     gpu::ComputePass integratePass;
     gpu::ComputePass advectionPass;
-
-    gpu::ComputePass integrateWindPass;
-    gpu::ComputePass densityWindPass;
-    gpu::ComputePass computeInternalForceWindPass;
 
     std::vector<RigidBody2D*> rigidBodies;
     std::vector<vk::Image> signedDistanceFields;

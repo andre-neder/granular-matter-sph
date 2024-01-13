@@ -12,7 +12,6 @@ uint32_t n;
 uint32_t workGroupCountSort;
 uint32_t workGroupCountLR;
 uint32_t workGroupCountHR;
-uint32_t workGroupCountWind;
 
 glm::ivec3 computeSpace = glm::ivec3(16, 32, 16);
 
@@ -53,31 +52,6 @@ GranularMatter::GranularMatter(gpu::Core* core)
         {0, 0, -settings.r_LR},
     };
 
-    float windParticleRadius = 0.5f;
-    float windKernelRadius = windParticleRadius * 4;
-    float windEquilibriumDistance = 0.5 * windKernelRadius;
-    for(int i = 0;i < settings.DOMAIN_WIDTH / windEquilibriumDistance ; i++){
-        for(int j = 0;j < settings.DOMAIN_HEIGHT / windEquilibriumDistance ; j++){
-            for(int k = 0;k < settings.DOMAIN_WIDTH / windEquilibriumDistance ; k++){
-            // for(int k = 0;k < 1 ; k++){
-                glm::vec3 position = glm::vec3(
-                    i * windEquilibriumDistance + windParticleRadius,
-                    j * windEquilibriumDistance + windParticleRadius, 
-                    k * windEquilibriumDistance + windParticleRadius
-                    // 0.5 * settings.DOMAIN_WIDTH
-                );
-                windParticles.push_back(WindParticle(
-                    position.x, 
-                    position.y,
-                    position.z
-                ));
-
-                
-            }
-        }
-    }
-    std::cout << "WindParticle count: " << windParticles.size() << " " << pow(2, ceil(log(windParticles.size())/log(2))) << std::endl;
-    
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
             for(int k = 0;k < computeSpace.z ; k++){
@@ -124,7 +98,6 @@ GranularMatter::GranularMatter(gpu::Core* core)
 
     volumeMapTransformsBuffer = m_core->bufferFromData(volumeMapTransforms.data(), volumeMapTransforms.size() * sizeof(VolumeMapTransform),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
 
-    windParticlesBuffer = m_core->bufferFromData(windParticles.data(),sizeof(WindParticle) * windParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
     particlesBufferB = m_core->bufferFromData(lrParticles.data(),sizeof(LRParticle) * lrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
     particlesBufferHR = m_core->bufferFromData(hrParticles.data(),sizeof(HRParticle) * hrParticles.size(),vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc, vma::MemoryUsage::eAutoPreferDevice);
     
@@ -160,16 +133,6 @@ GranularMatter::GranularMatter(gpu::Core* core)
         descriptorSetLayoutGrid
     };
 
-    std::vector<vk::DescriptorSetLayout> descriptorSetLayoutsParticleCellWind{
-        descriptorSetLayoutParticles,
-        descriptorSetLayoutGrid,
-        descriptorSetLayoutWind
-    };
-
-    std::vector<vk::DescriptorSetLayout> descriptorSetLayoutsWind{
-        descriptorSetLayoutWind
-    };
-    
     n = (uint32_t)particleCells.size();
     std::cout << "LRParticle count: " << n << std::endl;
     std::cout << "HRParticle count: " << n * settings.n_HR << std::endl;
@@ -185,7 +148,6 @@ GranularMatter::GranularMatter(gpu::Core* core)
     workGroupCountSort = n / ( workGroupSize * 2 );
     workGroupCountLR = n / workGroupSize;
     workGroupCountHR = (uint32_t)hrParticles.size() / workGroupSize;
-    workGroupCountWind = std::ceil((float)windParticles.size() / workGroupSize);
     initPass = gpu::ComputePass(m_core, SHADER_PATH"/init.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     bitonicSortPass = gpu::ComputePass(m_core, SHADER_PATH"/bitonic_sort.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(BitonicSortParameters));
     startingIndicesPass = gpu::ComputePass(m_core, SHADER_PATH"/start_indices.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workGroupSize) }); // , { gpu::SpecializationConstant(1, workGroupSize) }
@@ -203,10 +165,6 @@ GranularMatter::GranularMatter(gpu::Core* core)
     computeInternalForcePass = gpu::ComputePass(m_core, SHADER_PATH"/compute_internal_force.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     integratePass = gpu::ComputePass(m_core, SHADER_PATH"/integrate.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     advectionPass = gpu::ComputePass(m_core, SHADER_PATH"/hr_advection.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
-
-    integrateWindPass = gpu::ComputePass(m_core, SHADER_PATH"/integrate_wind.comp", descriptorSetLayoutsWind, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
-    densityWindPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_density_wind.comp", descriptorSetLayoutsParticleCellWind, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
-    computeInternalForceWindPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_internal_force_wind.comp", descriptorSetLayoutsParticleCellWind, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
 }
 
 GranularMatter::~GranularMatter()
@@ -348,44 +306,6 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         //* wait for compute pass
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-
-        
-        // timestampLabels[currentFrame].push_back("Density Pressure wind");
-        // {
-        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipeline);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, densityWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].pushConstants(densityWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        // }
-        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-
-        // timestampLabels[currentFrame].push_back("Internal Force wind");
-        // {
-        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipeline);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeInternalForceWindPass.m_pipelineLayout, 2, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].pushConstants(computeInternalForceWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        // }
-        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-
-        
-        // timestampLabels[currentFrame].push_back("Integrate wind");
-        // {
-        //     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipeline);
-        //     commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, integrateWindPass.m_pipelineLayout, 0, 1, &descriptorSetsWind[currentFrame], 0, nullptr);
-        //     commandBuffers[currentFrame].pushConstants(integrateWindPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
-        //     commandBuffers[currentFrame].dispatch(workGroupCountWind, 1, 1);
-        // }
-        // commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
-        // commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
-        
-
 
         timestampLabels[currentFrame].push_back("Compute density");
         {
@@ -558,6 +478,7 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         }
         
         simulationMetrics.averageDensityError.append(additionalData.averageDensityError);
+        simulationMetrics.iterationCount.append(l);
 
         timestampLabels[currentFrame].push_back("Compute pressure force");
         {
@@ -658,17 +579,12 @@ void GranularMatter::createDescriptorSetLayout() {
         {6, vk::DescriptorType::eSampledImage, (uint32_t)signedDistanceFieldViews.size(), vk::ShaderStageFlagBits::eCompute, vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound }
     });
 
-    descriptorSetLayoutWind = m_core->createDescriptorSetLayout({
-        {0, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eCompute}
-    });
-    
 }
 
 void GranularMatter::createDescriptorSets() {
 
     descriptorSetsGrid = m_core->allocateDescriptorSets(descriptorSetLayoutGrid, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
     descriptorSetsParticles = m_core->allocateDescriptorSets(descriptorSetLayoutParticles, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
-    descriptorSetsWind = m_core->allocateDescriptorSets(descriptorSetLayoutWind, descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
     
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->addDescriptorWrite(descriptorSetsGrid[i], { 0, vk::DescriptorType::eStorageBuffer, particleCellBuffer, sizeof(ParticleGridEntry) * particleCells.size() });
@@ -682,9 +598,6 @@ void GranularMatter::createDescriptorSets() {
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 5, vk::DescriptorType::eSampler, volumeMapSampler, {}, {} });
         m_core->addDescriptorWrite(descriptorSetsParticles[i], { 6, vk::DescriptorType::eSampledImage, {}, signedDistanceFieldViews, vk::ImageLayout::eShaderReadOnlyOptimal });
         m_core->updateDescriptorSet(descriptorSetsParticles[i]);
-
-        m_core->addDescriptorWrite(descriptorSetsWind[i], { 0, vk::DescriptorType::eStorageBuffer, windParticlesBuffer, sizeof(WindParticle) * windParticles.size() });
-        m_core->updateDescriptorSet(descriptorSetsWind[i]);
     }
 }
 
@@ -830,9 +743,6 @@ void GranularMatter::destroy(){
     computeInternalForcePass.destroy();
     integratePass.destroy();
     advectionPass.destroy();
-    integrateWindPass.destroy();
-    densityWindPass.destroy();
-    computeInternalForceWindPass.destroy();
     
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         m_core->getDevice().destroyQueryPool(timeQueryPools[i]);
@@ -844,7 +754,6 @@ void GranularMatter::destroy(){
     }
 
     m_core->destroyBuffer(volumeMapTransformsBuffer);
-    m_core->destroyBuffer(windParticlesBuffer);
     m_core->destroyBuffer(particlesBufferB);
     m_core->destroyBuffer(particlesBufferHR);
     m_core->destroyBuffer(particleCellBuffer);
@@ -852,7 +761,6 @@ void GranularMatter::destroy(){
 
     m_core->destroyDescriptorSetLayout(descriptorSetLayoutGrid);
     m_core->destroyDescriptorSetLayout(descriptorSetLayoutParticles);
-    m_core->destroyDescriptorSetLayout(descriptorSetLayoutWind);
     
     m_core->destroyDescriptorPool(descriptorPool);
 
