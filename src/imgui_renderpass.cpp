@@ -188,6 +188,7 @@ void ImguiRenderPass::createRenderPass(){
     }
 }
 float drawAverageDensityError(void*, int i) { return simulationMetrics.averageDensityError.get(i) / settings.rho0; };
+float drawIterationCount(void*, int i) { return simulationMetrics.iterationCount.get(i); };
 
 void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     
@@ -252,6 +253,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
 
     ImGui::Begin("Metrics", &showGPUInfo); 
         ImGui::PlotLines("Average density error", drawAverageDensityError, NULL, SimulationMetrics::MAX_VALUES_PER_METRIC, 0, NULL, 0.0f, settings.maxCompression, ImVec2(0, 80));
+        ImGui::PlotLines("IISPH Iteration count", drawIterationCount, NULL, SimulationMetrics::MAX_VALUES_PER_METRIC, 0, NULL, 0, 20, ImVec2(0, 80));
 
         if (ImGui::BeginTable("Timings", 2))
         {

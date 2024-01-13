@@ -58,8 +58,8 @@ layout(location = 3) out vec3 outPosition;
 void main() {
     gl_PointSize = 1;
     // vec3 scale = inVelocity; // LR
-    vec3 scale = vec3(settings.r_LR); // LR
-    // vec3 scale = vec3(settings.r_LR / 7); // HR
+    // vec3 scale = vec3(settings.r_LR); // LR
+    vec3 scale = vec3(settings.r_LR / 5); // HR
 
     mat4 model = mat4(1.0);
     model[0] = vec4(scale.x,0,0,0);

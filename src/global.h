@@ -75,6 +75,7 @@ struct ShiftingArray{
 struct SimulationMetrics{
     static const uint32_t MAX_VALUES_PER_METRIC = 100;
     ShiftingArray<float> averageDensityError = ShiftingArray(100, 0.f);
+    ShiftingArray<int> iterationCount = ShiftingArray(100, 2);
 };
 
 extern SimulationMetrics simulationMetrics;
