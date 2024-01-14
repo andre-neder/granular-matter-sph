@@ -2,6 +2,10 @@
 #include "rigidbody.h"
 #include "model.h"
 
+Mesh3D::Mesh3D()
+{
+}
+
 Mesh3D::Mesh3D(std::string src)
 {  
         Model model = Model();

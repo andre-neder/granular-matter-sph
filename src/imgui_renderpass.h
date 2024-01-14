@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+#include <functional> 
 #include "renderpass.h"
 
 static void check_vk_result(VkResult err)
@@ -26,6 +27,8 @@ namespace gpu{
             void destroy(); 
 
             void additionalWindows();
+
+            std::function<void(int)> changeSceneCallback;
 
         private:
             vk::DescriptorPool descriptorPool;

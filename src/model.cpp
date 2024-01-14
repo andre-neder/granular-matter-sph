@@ -73,7 +73,19 @@ VertexInputDescription Vertex::get_vertex_description()
 
 Model::Model(): core(){}
 
-Model::Model(gpu::Core* core): core(core){}
+void Model::createBuffers(gpu::Core *core)
+{
+	
+	indexBuffer = core->bufferFromData(_indices.data(), _indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+	vertexBuffer = core->bufferFromData(_vertices.data(), _vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+}
+
+
+void Model::destroyBuffers(gpu::Core *core)
+{
+	core->destroyBuffer(indexBuffer);
+	core->destroyBuffer(vertexBuffer);
+}
 
 void Model::destroy()
 {

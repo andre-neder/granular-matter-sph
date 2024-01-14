@@ -42,6 +42,8 @@ struct LRParticle{
     float densityAdv = 0.0;
     float pad0 = 0.0;
 
+    glm::vec4 averageN;
+
     LRParticle(){};
     inline LRParticle(float x, float y , float z) { position = glm::vec4(x, y, z, 1.0); }
     static const uint32_t BINDING = 1;
@@ -54,7 +56,7 @@ struct LRParticle{
     static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
         std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
             vk::VertexInputAttributeDescription(7, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, position)),
-            vk::VertexInputAttributeDescription(8, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, velocity)),
+            vk::VertexInputAttributeDescription(8, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, averageN)),
         };
         return attributeDescriptions;
     }
@@ -84,6 +86,9 @@ struct HRParticle{
 struct VolumeMapTransform{
     glm::vec4 position = glm::vec4(0.0);
     glm::vec4 scale = glm::vec4(1.0);
+
+    inline void disable(){ position.w = 0.0; };
+    inline void enable(){ position.w = 1.0; };
 };
 
 struct AdditionalData{
@@ -108,9 +113,16 @@ public:
     void update(int currentFrame, int imageIndex, float dt);
     void destroyFrameResources();
     void destroy(); 
+    void init();
+
+    void createSignedDistanceFields();
 
     std::vector<vk::Semaphore> iisphSemaphores;
 
+    std::vector<RigidBody2D*> rigidBodies;
+    std::vector<VolumeMapTransform> volumeMapTransforms;
+    void createDescriptorSets();
+    void updateVolumeMapTransforms();
 private:
     gpu::Core* m_core;
     
@@ -122,7 +134,6 @@ private:
 
     std::vector<vk::CommandBuffer> commandBuffers;
     
-    std::vector<VolumeMapTransform> volumeMapTransforms;
     vk::Buffer volumeMapTransformsBuffer;
     
     std::vector<ParticleGridEntry> particleCells; // particle (index) is in cell (value)
@@ -155,7 +166,6 @@ private:
     gpu::ComputePass integratePass;
     gpu::ComputePass advectionPass;
 
-    std::vector<RigidBody2D*> rigidBodies;
     std::vector<vk::Image> signedDistanceFields;
     std::vector<vk::ImageView> signedDistanceFieldViews;
     vk::Sampler volumeMapSampler;
@@ -163,8 +173,7 @@ private:
     void createCommandBuffers();
     void createDescriptorSetLayout();
     void createDescriptorPool();
-    void createDescriptorSets();
-    void createSignedDistanceFields();
+    
 
 };
 

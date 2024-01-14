@@ -52,6 +52,14 @@ private:
 
     GranularMatter simulation;
 
+    Model dumpTruckModel;
+    Model planeModel;
+    Model hourglasModel;
+
+    Mesh3D dumpTruck;
+    Mesh3D plane;
+    Mesh3D hourglas;
+
 
     std::vector<vk::Fence> computeInFlightFences;
     std::vector<vk::Semaphore> computeFinishedSemaphores;
@@ -66,6 +74,42 @@ private:
         camera = gpu::Camera(gpu::Camera::Type::eTrackBall, window.getGLFWWindow(), WIDTH, HEIGHT, glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     }
 
+    
+    void loadScene(int scene){
+        // simulation.rigidBodies.clear();
+        triangleRenderPass.models.clear();
+        switch (scene)
+        {
+        case 0: // Dump truck scene
+            triangleRenderPass.models.push_back(dumpTruckModel);
+            triangleRenderPass.models.push_back(planeModel);
+
+            simulation.volumeMapTransforms[0].enable(); // enable dump_truck
+            simulation.volumeMapTransforms[1].enable(); // enable plane
+            simulation.volumeMapTransforms[2].disable(); // disable hourglas
+            break;
+        case 1: // Plane only
+            triangleRenderPass.models.push_back(planeModel);
+
+            simulation.volumeMapTransforms[0].disable(); // disable dump_truck
+            simulation.volumeMapTransforms[1].enable(); // enable plane
+            simulation.volumeMapTransforms[2].disable(); // disable hourglas
+            break;
+        case 2: // hourglas scene
+            triangleRenderPass.models.push_back(hourglasModel);
+
+            simulation.volumeMapTransforms[0].disable(); // disable dump_truck
+            simulation.volumeMapTransforms[1].disable(); // disable plane
+            simulation.volumeMapTransforms[2].enable(); // hourglas hourglas
+            break;
+        
+        default:
+            break;
+        }
+        simulation.updateVolumeMapTransforms();
+    }
+
+
     void initVulkan(){
         core = gpu::Core(true, &window);
         physicalDevice = core.getPhysicalDevice();
@@ -74,24 +118,57 @@ private:
         particleRenderPass = gpu::ParticleRenderPass(&core, &camera);
         triangleRenderPass = gpu::TriangleRenderPass(&core, &camera);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
+        using std::placeholders::_1;
+        imguiRenderPass.changeSceneCallback = std::bind(&Application::loadScene, this, _1);
 
         simulation = GranularMatter(&core);
 
+        
+
+        // Load rigidbodies for simulation
+        dumpTruck = Mesh3D(ASSETS_PATH"/models/dump_truck.glb");
+        plane = Mesh3D(ASSETS_PATH"/models/plane.glb");
+        hourglas = Mesh3D(ASSETS_PATH"/models/hourglas.glb");
+
+        // create signed distance fields
+        simulation.rigidBodies.push_back(&dumpTruck);
+        simulation.rigidBodies.push_back(&plane);
+        simulation.rigidBodies.push_back(&hourglas);
+        simulation.createSignedDistanceFields();
+        
+        simulation.init();
+
+        // Load models
+        dumpTruckModel.load_from_glb(ASSETS_PATH "/models/dump_truck.glb");
+        dumpTruckModel.createBuffers(&core);
+
+        planeModel.load_from_glb(ASSETS_PATH "/models/plane.glb");
+        planeModel.createBuffers(&core);
+
+        hourglasModel.load_from_glb(ASSETS_PATH "/models/hourglas.glb");
+        hourglasModel.createBuffers(&core);
+
+        loadScene(0);
+        
+
+
+
+        
         particleRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
 
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            particleRenderPass.vertexBuffer[i] = simulation.particlesBufferHR;
-        }
-        particleRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
-        particleRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
-        particleRenderPass.bindingDescription = HRParticle::getBindingDescription();
-
         // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        //     particleRenderPass.vertexBuffer[i] = simulation.particlesBufferB;
+        //     particleRenderPass.vertexBuffer[i] = simulation.particlesBufferHR;
         // }
-        // particleRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
-        // particleRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
-        // particleRenderPass.bindingDescription = LRParticle::getBindingDescription();
+        // particleRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
+        // particleRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
+        // particleRenderPass.bindingDescription = HRParticle::getBindingDescription();
+
+        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+            particleRenderPass.vertexBuffer[i] = simulation.particlesBufferB;
+        }
+        particleRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
+        particleRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
+        particleRenderPass.bindingDescription = LRParticle::getBindingDescription();
 
         particleRenderPass.init();
         triangleRenderPass.init();
@@ -302,6 +379,14 @@ private:
         particleRenderPass.initFrameResources();
         triangleRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
+
+        hourglasModel.destroyBuffers(&core);
+        dumpTruckModel.destroyBuffers(&core);
+        planeModel.destroyBuffers(&core);
+
+        hourglasModel.destroy();
+        dumpTruckModel.destroy();
+        planeModel.destroy();
 
         imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 

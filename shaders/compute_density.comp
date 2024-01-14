@@ -28,6 +28,7 @@ struct LRParticle{
     float lastP;
     float densityAdv;
     float pad0;
+    vec4 averageN;
 };
 
 struct ParticleGridEntry{
@@ -147,6 +148,9 @@ vec3 gradW(vec3 r, float h){
 
 #define for_all_volume_maps(code) { \
     for (int i = 0; i < volumeMaps.transform.length(); i++){ \
+    if(volumeMaps.transform[i].position.w == 0.0){\
+        continue;\
+    }\
         vec3 samplePosition = ((p.position.xyz - volumeMaps.transform[i].position.xyz)  * volumeMaps.transform[i].scale.xyz) + 0.5; \
         vec4 vM = texture(sampler3D(sdfTexture[i], volumeMapSampler), samplePosition); \
         vec3 p_pi = vM.rgb; \
@@ -167,6 +171,9 @@ void main(){
     float occluded = 0.866; //* 30° cone 0.966;
 
 
+    int neighborCount = 0;
+    vec3 averageParticleDirection = vec3(0);
+
     //* Density
     float rho = 0.f;
 
@@ -179,16 +186,31 @@ void main(){
             continue;
         }
         occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
+
+        neighborCount++;
+        averageParticleDirection += normalize(p_pi);
     )
+
+
 
     rho *= settings.mass;
 
     for_all_volume_maps(
         rho += (volume * settings.rho0) * W(r, settings.h_LR);
+
+        neighborCount++;
+        averageParticleDirection += normalize(p_pi);
     )
 
     p.rho = rho;
     p.V = settings.mass / rho;
+
+    averageParticleDirection /= neighborCount;
+    // averageParticleDirection *= -1;
+
+    vec3 airDir = settings.windDirection.xyz - dot(settings.windDirection.xyz, averageParticleDirection);
+
+    p.averageN.xyz = airDir;
 
     //? https://cg.informatik.uni-freiburg.de/publications/2017_CAG_generalizedDragForce_v2.pdf
     float dragWeight = max(0, min(1, 1 - occluded)); 

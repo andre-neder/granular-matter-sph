@@ -12,25 +12,9 @@ using namespace gpu;
     }
     void TriangleRenderPass::init(){
 
-        hourglassModel = Model();
-        hourglassModel.load_from_glb(ASSETS_PATH "/models/dump_truck.glb");
-        indexBuffer = m_core->bufferFromData(hourglassModel._indices.data(), hourglassModel._indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
-        vertexBuffer = m_core->bufferFromData(hourglassModel._vertices.data(), hourglassModel._vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice);
-
-        // vertexBuffer = m_core->bufferFromData((void*)vertices.data(), sizeof(TriangleVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
-        // indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
-        
-
         vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.vert");
         fragShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.frag");
-        // geomShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.geom");
- 
-        // vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        //     vertexBuffer[i] = m_core->bufferFromData((void*)vertices.data(), sizeof(TriangleVertex) * vertices.size(), vk::BufferUsageFlagBits::eVertexBuffer,vma::MemoryUsage::eAutoPreferDevice);
-        // }
-        // indexBuffer = m_core->bufferFromData((void*)indices.data(), sizeof(indices[0]) * indices.size(), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
-        
+
 
         createDescriptorSetLayout();
         initFrameResources();
@@ -86,26 +70,27 @@ using namespace gpu;
         vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
 
         commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
             commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-            // std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[currentFrame]};
-            std::vector<vk::Buffer> vertexBuffers = {vertexBuffer};
-            std::vector<vk::DeviceSize> offsets = {0};
-            commandBuffers[currentFrame].bindVertexBuffers(0, vertexBuffers, offsets);
-            commandBuffers[currentFrame].bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
+            
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings), &settings);
 
             // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-
-            for (auto node : hourglassModel._linearNodes)
-            {
-                for (auto primitive : node->primitives)
+            for (auto model : models){
+                std::vector<vk::Buffer> vertexBuffers = {model.vertexBuffer};
+                std::vector<vk::DeviceSize> offsets = {0};
+                commandBuffers[currentFrame].bindVertexBuffers(0, vertexBuffers, offsets);
+                commandBuffers[currentFrame].bindIndexBuffer(model.indexBuffer, 0, vk::IndexType::eUint32);
+                for (auto node : model._linearNodes)
                 {
-                    commandBuffers[currentFrame].drawIndexed(primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+                    for (auto primitive : node->primitives)
+                    {
+                        commandBuffers[currentFrame].drawIndexed(primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+                    }
                 }
             }
-
-        commandBuffers[currentFrame].endRenderPass();
+            commandBuffers[currentFrame].endRenderPass();
         try{
             commandBuffers[currentFrame].end();
         }catch(std::exception& e) {
@@ -215,9 +200,9 @@ using namespace gpu;
         device.destroyShaderModule(vertShaderModule);
         // device.destroyShaderModule(geomShaderModule);
 
-        m_core->destroyBuffer(indexBuffer);
-        m_core->destroyBuffer(vertexBuffer);
-        hourglassModel.destroy();
+        // m_core->destroyBuffer(indexBuffer);
+        // m_core->destroyBuffer(vertexBuffer);
+        // hourglassModel.destroy();
         // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         //     m_core->destroyBuffer(vertexBuffer[i]);
         // }

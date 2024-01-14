@@ -101,14 +101,19 @@ public:
 	vk::Sampler _sampler;
 	gpu::Core* core;
 	Model();
-	Model(gpu::Core* core);
+	void createBuffers(gpu::Core* core);
+	void destroyBuffers(gpu::Core* core);
 	void destroy();
 	bool load_from_glb(const char *filename);
 	// std::vector<vk::DescriptorImageInfo> getTextureDescriptors();
+	vk::Buffer vertexBuffer;
+	vk::Buffer indexBuffer;
 private:
 	void loadImages(tinygltf::Model &input);
 	void loadMaterials(tinygltf::Model &input);
 	void loadNode(const tinygltf::Node &inputNode, const tinygltf::Model &input, Node *parent, std::vector<uint32_t> &indexBuffer, std::vector<Vertex> &vertexBuffer);
 	void loadMaterials(const tinygltf::Model &input);
 	uint32_t getTextureIndex(uint32_t index);
+
+	
 };

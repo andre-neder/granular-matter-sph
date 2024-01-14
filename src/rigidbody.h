@@ -63,7 +63,7 @@ struct Plane3D : public RigidBody2D{
 
 
 struct Mesh3D : public RigidBody2D{
-
+    Mesh3D();
     std::vector<std::array<double, 3>> vertices;
     std::vector<std::array<int, 3>> triangles;
     tmd::TriangleMeshDistance mesh_distance;

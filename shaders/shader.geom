@@ -50,7 +50,7 @@ void main() {
     gl_Position = ubo.proj * ubo.view * vec4(inPosition[0], 1.0);
     EmitVertex();
 
-    gl_Position = ubo.proj * ubo.view * vec4(inPosition[0] + inVelocity[0], 1.0);
+    gl_Position = ubo.proj * ubo.view * vec4(inPosition[0] + normalize(inVelocity[0]) * 0.2, 1.0);
     EmitVertex();
 
     EndPrimitive();

@@ -63,14 +63,15 @@ namespace gpu{
             void destroy(); 
             void init();
 
+            std::vector<Model> models;
         private:
             gpu::Camera* m_camera;
 
-            Model hourglassModel;
+            // Model hourglassModel;
 
             // std::vector<vk::Buffer> vertexBuffer;
-            vk::Buffer vertexBuffer;
-            vk::Buffer indexBuffer;
+            // vk::Buffer vertexBuffer;
+            // vk::Buffer indexBuffer;
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;
 
