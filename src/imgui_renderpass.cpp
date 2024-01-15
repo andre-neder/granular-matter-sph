@@ -284,24 +284,32 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         }
     ImGui::End();
 
-    ImGui::Begin("Simulation", &showSimulationSettings);
-        if (ImGui::Button("Scene 0"))
+    ImGui::Begin("Scene"); 
+        if (ImGui::Button("0"))
         {
             changeSceneCallback(0);
         }
-        if (ImGui::Button("Scene 1"))
+        if (ImGui::Button("1"))
         {
             changeSceneCallback(1);
         }
-        if (ImGui::Button("Scene 2"))
+        if (ImGui::Button("2"))
         {
             changeSceneCallback(2);
         }
+    ImGui::End();
+
+
+    ImGui::Begin("Simulation", &showSimulationSettings);
+        
         if (ImGui::Button("Reset"))
         {
             resetSimulation = true;
         }
-        ImGui::Checkbox("Simulation running", &simulationRunning);
+        if (ImGui::Button(simulationRunning ? "Pause" : "Play"))
+        {
+           simulationRunning = simulationRunning ? false : true;
+        }
         ImGui::SliderFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 3000.f );
         // ImGui::DragFloat("Pressure maxCompression", &settings.maxCompression, 1.f, 100.f, 50000.f);
         ImGui::SliderFloat("Mass (kg)", &settings.mass, 1.f, 100.f);

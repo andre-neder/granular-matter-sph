@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  12 JAN 2024 10:59
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  15 JAN 2024 11:26
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -893,17 +893,33 @@ Overfull \hbox (19.11086pt too wide) in paragraph at lines 146--147
 
 [7]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 153.
- [8] [9] [10] [11] [12] [13] [14] [15] [16] [17] [18] [19] (ma.lof)
+ [8] [9] [10] [11] [12] [13] [14]
+<figures/volume_map_slice_xyz.png, id=385, 24.09pt x 25.59563pt>
+File: figures/volume_map_slice_xyz.png Graphic file (type png)
+<use figures/volume_map_slice_xyz.png>
+Package pdftex.def Info: figures/volume_map_slice_xyz.png  used on input line 423.
+(pdftex.def)             Requested size: 180.0pt x 191.34369pt.
+<figures/volume_map_slice_w.png, id=386, 355.3275pt x 379.4175pt>
+File: figures/volume_map_slice_w.png Graphic file (type png)
+<use figures/volume_map_slice_w.png>
+Package pdftex.def Info: figures/volume_map_slice_w.png  used on input line 424.
+(pdftex.def)             Requested size: 180.0pt x 192.2093pt.
+
+Overfull \hbox (2.42162pt too wide) in paragraph at lines 423--425
+[][] [] 
+ []
+
+[15] [16 <./figures/volume_map_slice_xyz.png (PNG copy)> <./figures/volume_map_slice_w.png>] [17] [18] [19] (ma.lof)
 \tf@lof=\write6
 \openout6 = `ma.lof'.
 
  [20]
-Overfull \hbox (0.16078pt too wide) in paragraph at lines 477--477
+Overfull \hbox (0.16078pt too wide) in paragraph at lines 485--485
 \T1/cmr/m/n/10.95 cia-ti-on for Com-pu-ting Ma-chi-ne-ry, 2011, S. 25^^U32, \T1/cmr/m/sc/10.95 isbn\T1/cmr/m/n/10.95 : 9781450309233.
  []
 
 [21]
-Overfull \hbox (15.47778pt too wide) in paragraph at lines 477--477
+Overfull \hbox (15.47778pt too wide) in paragraph at lines 485--485
 []\T1/cmr/m/n/10.95 A. Som-mer, U. Schwan-e-cke und E. Schoe-mer, ^^R  In-ter-ac-ti-ve High-Resolution
  []
 
@@ -919,17 +935,17 @@ Package logreq Info: Writing requests to 'ma.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 25232 strings out of 475248
- 450875 string characters out of 5757812
+ 25249 strings out of 475248
+ 451450 string characters out of 5757812
  1934785 words of memory out of 5000000
- 46281 multiletter control sequences out of 15000+600000
+ 46297 multiletter control sequences out of 15000+600000
  578203 words of font info for 82 fonts, out of 8000000 for 9000
  1143 hyphenation exceptions out of 8191
  75i,12n,81p,1908b,2626s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on ma.pdf (27 pages, 913176 bytes).
+Output written on ma.pdf (27 pages, 924259 bytes).
 PDF statistics:
- 1104 PDF objects out of 1200 (max. 8388607)
- 147 named destinations out of 1000 (max. 500000)
- 237 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1111 PDF objects out of 1200 (max. 8388607)
+ 148 named destinations out of 1000 (max. 500000)
+ 247 words of extra memory for PDF output out of 10000 (max. 10000000)
 
