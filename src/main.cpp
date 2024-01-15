@@ -342,6 +342,15 @@ private:
         triangleRenderPass.destroy();
         imguiRenderPass.destroy();
 
+        
+        hourglasModel.destroyBuffers(&core);
+        dumpTruckModel.destroyBuffers(&core);
+        planeModel.destroyBuffers(&core);
+
+        hourglasModel.destroy();
+        dumpTruckModel.destroy();
+        planeModel.destroy();
+
         simulation.destroy();
 
         cleanupSwapchain();
@@ -380,13 +389,6 @@ private:
         triangleRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
 
-        hourglasModel.destroyBuffers(&core);
-        dumpTruckModel.destroyBuffers(&core);
-        planeModel.destroyBuffers(&core);
-
-        hourglasModel.destroy();
-        dumpTruckModel.destroy();
-        planeModel.destroy();
 
         imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 
