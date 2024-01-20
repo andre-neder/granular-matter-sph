@@ -3,6 +3,8 @@
 #include <glm/gtc/type_ptr.hpp>
 bool simulationRunning = false;
 bool resetSimulation = false;
+int pauseOnFrame = -1;
+int currentFrameCount = 0;
 
 SPHSettings settings = SPHSettings();
 extern std::vector<std::vector<std::string>> timestampLabels;
@@ -310,6 +312,15 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         {
            simulationRunning = simulationRunning ? false : true;
         }
+        ImGui::BeginTable("", 2);
+        ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::Text("Current Frame");
+            ImGui::TableSetColumnIndex(1);
+            ImGui::Text(std::to_string(currentFrameCount).c_str());
+        ImGui::EndTable();
+        
+        ImGui::InputInt("Pause on frame", &pauseOnFrame, -1,10000);
         ImGui::SliderFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 3000.f );
         // ImGui::DragFloat("Pressure maxCompression", &settings.maxCompression, 1.f, 100.f, 50000.f);
         ImGui::SliderFloat("Mass (kg)", &settings.mass, 1.f, 100.f);

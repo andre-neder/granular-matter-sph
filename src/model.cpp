@@ -497,7 +497,7 @@ void Model::createDescriptorSet()
 		auto view = core->createImageView2D(image, vk::Format::eR8G8B8A8Unorm); 
         views.push_back(view);
 	}
-	std::cout << views.size() << std::endl;
+	
 	// create descriptor set for all textures
 	descriptorPool = core->createDescriptorPool({
         { vk::DescriptorType::eSampler, 1 * gpu::MAX_FRAMES_IN_FLIGHT },

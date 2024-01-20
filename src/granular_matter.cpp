@@ -59,7 +59,7 @@ void GranularMatter::init(){
 
                 glm::vec3 lrPosition = glm::vec3(
                     -(initialDistance * computeSpace.x / 2) + i * initialDistance + (initialDistance / 2.f),
-                     j * initialDistance + (initialDistance / 2.f) + settings.r_LR + 8.f, //  (initialDistance * computeSpace.y / 2) + // 
+                     j * initialDistance + (initialDistance / 2.f) + settings.r_LR , //  (initialDistance * computeSpace.y / 2) + // + 8.f
                     -(initialDistance * computeSpace.z / 2) + k * initialDistance + (initialDistance / 2.f)
                 );
 
@@ -186,9 +186,15 @@ void GranularMatter::initFrameResources(){
     createCommandBuffers();
 }
 
+
 void GranularMatter::update(int currentFrame, int imageIndex, float dt){ 
 
+    if(pauseOnFrame == currentFrameCount){
+        simulationRunning = false;
+    }
+
     if(resetSimulation){
+        currentFrameCount = 0;
         simulationRunning = false;
         resetSimulation = false;
         simulationStepForward = false;
@@ -517,7 +523,7 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         simulationStepForward = false;
-        
+        currentFrameCount++;
     }
     else{
         m_core->endCommands(commandBuffers[currentFrame]);
@@ -549,6 +555,7 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
     }
     
     m_core->endCommands(commandBuffers[currentFrame]);
+
 }
 
 
@@ -781,7 +788,7 @@ void GranularMatter::destroy(){
         m_core->getDevice().destroySemaphore(iisphSemaphores[i]);
     }
         
-
+    
 }
 
 //Todo: mass * exp(p.position.y - 0)
