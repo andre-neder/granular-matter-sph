@@ -461,7 +461,7 @@
         \end{cases}
     \end{equation}
 
-    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060} 
+    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060} I then additionally modified the alpha value, by multiplying it with 1 minus the dot product of the external force and the vector to the boundary, clamped between 0 and 1, to prevent hr particles falling through the volume map based boundaries.
     
     \subsection{Visualization}
     \dots
@@ -471,9 +471,15 @@
     
     \pagebreak
     \section{Evaluation} \label{sec:results}
-    \dots
-    
-    \subsection{Performance}
+    - visually plausible
+    - realtime 
+    - mostly stable piles
+    problems:
+    - boiling problem 
+    - sticking of hr particles
+    - performance
+
+
     \dots
     \pagebreak
     \section{Conclusion \& Future Work}  \label{sec:end}

@@ -1,12 +1,12 @@
 # Fdb version 4
-["biber ma"] 1705051504 "ma.bcf" "ma.bbl" "ma" 1705314376 0
+["biber ma"] 1705051504 "ma.bcf" "ma.bbl" "ma" 1705316728 0
   "./sources.bib" 1705050828 14682 51de05757c9ffb414c3e001087f12b3c ""
-  "ma.bcf" 1705314375 111313 42eab3bf2060e7a1265ca3b03244aeee "pdflatex"
+  "ma.bcf" 1705316728 111313 42eab3bf2060e7a1265ca3b03244aeee "pdflatex"
   (generated)
   "ma.bbl"
   "ma.blg"
   (rewritten before read)
-["pdflatex"] 1705314374 "c:/Users/andre/Documents/granular-matter-sph/docs/ma.tex" "ma.pdf" "ma" 1705314376 0
+["pdflatex"] 1705316727 "c:/Users/andre/Documents/granular-matter-sph/docs/ma.tex" "ma.pdf" "ma" 1705316728 0
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map" 1704713499 80909 eab91d9745dd2edfd62a31d53cd5fe15 ""
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1000.pk" 1704643347 25420 64b827e490e94b0cf7751ba4288bdbb4 ""
   "C:/Users/andre/AppData/Local/MiKTeX/fonts/pk/ljfour/jknappen/ec/dpi600/ecbx1095.pk" 1699881222 28976 c34833c39db940283120029e0f30ac59 ""
@@ -184,7 +184,7 @@
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/tex/latex/tools/tabularx.sty" 1686255640 7147 d80d8cf72d313443d08c13c1af59c90f ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/tex/latex/tools/xspace.sty" 1686255640 4545 9f5ea23ab1c91476c42749893f790666 ""
   "C:/Users/andre/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
-  "c:/Users/andre/Documents/granular-matter-sph/docs/ma.tex" 1705314374 40184 9d1a86cbc7ed13a112696a9de54a1f31 ""
+  "c:/Users/andre/Documents/granular-matter-sph/docs/ma.tex" 1705316726 40545 f638496fbd653bbaac05f97b423c7670 ""
   "cgMA.cls" 1704387325 7765 f86dc020406331fbb3238194226885ef ""
   "figures/bitonic_sort.png" 1704713710 33289 aa6f11f78084d3c30e60a868eb452685 ""
   "figures/gfx00.png" 1704709523 79441 c05751988c56a6b61dfe08aebadc1f49 ""
@@ -192,13 +192,13 @@
   "figures/volume_map_slice_w.png" 1705314367 10622 1122394aa6053fbebb44fccbd1c27cc5 ""
   "figures/volume_map_slice_xyz.png" 1705312862 1279 dd05e7bd25e0f52110288b7c66af683a ""
   "logos/UniLogoNeu.pdf" 1703068688 392138 4e35de66af7d6acc4cf42595fff19d29 ""
-  "ma.aux" 1705314375 13388 401397a2f7df2b1836db447d6f26724a "pdflatex"
+  "ma.aux" 1705316728 13269 6284e94a1694011f382df1aaedad95a5 "pdflatex"
   "ma.bbl" 1705051506 54833 41597ee16e1baf43a6d7b59aa30ac026 "biber ma"
-  "ma.lof" 1705314375 507 9ceee4c52244315e9ebfc905dfe3e78f "pdflatex"
-  "ma.out" 1705314375 3503 1a8a938e17a1fe95632af401161169fc "pdflatex"
-  "ma.run.xml" 1705314375 2480 8ec515c28285954c9f4ffa52cef637a4 "pdflatex"
-  "ma.tex" 1705314374 40184 9d1a86cbc7ed13a112696a9de54a1f31 ""
-  "ma.toc" 1705314375 2163 b1b7e7e9e5b1439828a98e43c1a0d9a9 "pdflatex"
+  "ma.lof" 1705316728 507 9ceee4c52244315e9ebfc905dfe3e78f "pdflatex"
+  "ma.out" 1705316728 3390 65f22b8c449dab430d72aaea4ae3b5a6 "pdflatex"
+  "ma.run.xml" 1705316728 2480 8ec515c28285954c9f4ffa52cef637a4 "pdflatex"
+  "ma.tex" 1705316726 40545 f638496fbd653bbaac05f97b423c7670 ""
+  "ma.toc" 1705316728 2085 c51fd6a97dfc7163049233869ac38d9c "pdflatex"
   (generated)
   "ma.aux"
   "ma.bcf"
