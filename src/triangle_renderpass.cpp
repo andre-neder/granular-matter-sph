@@ -76,20 +76,22 @@ using namespace gpu;
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             commandBuffers[currentFrame].pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings), &settings);
 
-            // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-            for (auto model : models){
+            for (auto&& model : models){
                 std::vector<vk::Buffer> vertexBuffers = {model.vertexBuffer};
                 std::vector<vk::DeviceSize> offsets = {0};
                 commandBuffers[currentFrame].bindVertexBuffers(0, vertexBuffers, offsets);
                 commandBuffers[currentFrame].bindIndexBuffer(model.indexBuffer, 0, vk::IndexType::eUint32);
-                for (auto node : model._linearNodes)
+                commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &model.descriptorSets[currentFrame], 0, nullptr);
+                for (auto&& node : model._linearNodes)
                 {
-                    for (auto primitive : node->primitives)
+                    for (auto&& primitive : node->primitives)
                     {
+                        commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 2, 1, &model.materialDescriptorSets[primitive->materialIndex][currentFrame], 0, nullptr);
                         commandBuffers[currentFrame].drawIndexed(primitive->indexCount, 1, primitive->firstIndex, 0, 0);
                     }
                 }
             }
+            // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
             commandBuffers[currentFrame].endRenderPass();
         try{
             commandBuffers[currentFrame].end();
@@ -114,10 +116,11 @@ using namespace gpu;
         // vk::PipelineShaderStageCreateInfo geomShaderStageInfo({}, vk::ShaderStageFlagBits::eGeometry, geomShaderModule, "main");
         vk::PipelineShaderStageCreateInfo fragShaderStageInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main");
 
-        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo}; // geomShaderStageInfo
-
-        // auto bindings = TriangleVertex::getBindingDescription();
-        // auto attributes = TriangleVertex::getAttributeDescriptions();
+        std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {
+            vertShaderStageInfo, 
+            // geomShaderStageInfo,
+            fragShaderStageInfo
+        }; 
 
         auto vertexDescription = Vertex::get_vertex_description();
         std::vector<vk::VertexInputBindingDescription> bindings;
@@ -131,12 +134,17 @@ using namespace gpu;
         vk::Viewport viewport(0.0f, 0.0f, (float) m_core->getSwapChainExtent().width, (float) m_core->getSwapChainExtent().height, 0.0f, 1.0f);
         vk::Rect2D scissor(vk::Offset2D(0, 0),m_core->getSwapChainExtent());
         vk::PipelineViewportStateCreateInfo viewportState({}, viewport, scissor);
-        vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eLine, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
+        vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
         vk::PipelineMultisampleStateCreateInfo multisampling({}, vk::SampleCountFlagBits::e1, VK_FALSE);
         vk::PipelineColorBlendAttachmentState colorBlendAttachment(VK_FALSE, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
         vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
         vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings)};
-        vk::PipelineLayoutCreateInfo pipelineLayoutInfo({} ,1 , &descriptorSetLayout, 1, &pushConstantRange, nullptr);
+        std::vector<vk::DescriptorSetLayout> allLayouts = {
+            descriptorSetLayout,
+            Model::getTexturesLayout(m_core),
+            Model::getMaterialLayout(m_core)
+        };
+        vk::PipelineLayoutCreateInfo pipelineLayoutInfo({}, allLayouts.size(), allLayouts.data(), 1, &pushConstantRange, nullptr);
         vk::PipelineDepthStencilStateCreateInfo depthStencil({}, VK_TRUE, VK_TRUE, vk::CompareOp::eLess, VK_FALSE, VK_FALSE);
         try{
             pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
@@ -199,13 +207,6 @@ using namespace gpu;
         device.destroyShaderModule(fragShaderModule);
         device.destroyShaderModule(vertShaderModule);
         // device.destroyShaderModule(geomShaderModule);
-
-        // m_core->destroyBuffer(indexBuffer);
-        // m_core->destroyBuffer(vertexBuffer);
-        // hourglassModel.destroy();
-        // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        //     m_core->destroyBuffer(vertexBuffer[i]);
-        // }
 
         m_core->destroyDescriptorSetLayout(descriptorSetLayout);
     }

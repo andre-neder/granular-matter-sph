@@ -16,10 +16,8 @@ struct VertexInputDescription
 
 struct Texture
 {
-	// vkutils::AllocatedImage image;
     vk::Image image;
 	uint32_t index;
-	vk::DescriptorImageInfo descriptor;
 };
 
 struct Material
@@ -44,6 +42,7 @@ struct Material
 	float roughnessFactor = 1.0f;
 	float emissiveStrength = 0.0f;
 	AlphaMode alphaMode = ALPHAMODE_OPAQUE;
+
 };
 
 struct Primitive
@@ -52,9 +51,9 @@ struct Primitive
 	uint32_t indexCount;
 	uint32_t firstVertex;
 	uint32_t vertexCount;
-	Material& material;
+	uint32_t materialIndex;
 
-	Primitive(uint32_t firstIndex, uint32_t indexCount, uint32_t firstVertex, uint32_t vertexCount, Material& material) : firstIndex(firstIndex), indexCount(indexCount), firstVertex(firstVertex), vertexCount(vertexCount), material(material) {};
+	Primitive(uint32_t firstIndex, uint32_t indexCount, uint32_t firstVertex, uint32_t vertexCount, uint32_t materialIndex) : firstIndex(firstIndex), indexCount(indexCount), firstVertex(firstVertex), vertexCount(vertexCount), materialIndex(materialIndex) {};
 };
 
 struct Node
@@ -90,30 +89,50 @@ struct Vertex
 class Model
 {
 public:
+	static vk::DescriptorSetLayout getTexturesLayout(gpu::Core* core);
+	static vk::DescriptorSetLayout getMaterialLayout(gpu::Core* core);
+
+	static void cleanupDescriptorSetLayouts(gpu::Core* core);
+
 	std::vector<Node *> _nodes{};
 	std::vector<Node *> _linearNodes{};
 	std::vector<uint32_t> _indices{};
 	std::vector<Vertex> _vertices{};
     
-	std::vector<Texture> _textures{};
+	std::vector<vk::Image> images{};
+	std::vector<vk::ImageView> views;
 	std::vector<Material> _materials{};
+
+	vk::DescriptorPool materialDescriptorPool;
+	std::vector<std::vector<vk::DescriptorSet>> materialDescriptorSets;
+	std::vector<vk::Buffer> materialBuffers;
+
 	std::vector<vk::TransformMatrixKHR> _transforms{};
 	vk::Sampler _sampler;
-	gpu::Core* core;
+	gpu::Core* core = nullptr;
 	Model();
-	void createBuffers(gpu::Core* core);
-	void destroyBuffers(gpu::Core* core);
+	Model(gpu::Core* core);
+	void createBuffers();
 	void destroy();
 	bool load_from_glb(const char *filename);
-	// std::vector<vk::DescriptorImageInfo> getTextureDescriptors();
+	void createDescriptorSet();
+	
 	vk::Buffer vertexBuffer;
 	vk::Buffer indexBuffer;
+
+	vk::DescriptorPool descriptorPool;
+	std::vector<vk::DescriptorSet> descriptorSets;
+	vk::Sampler textureSampler;
 private:
 	void loadImages(tinygltf::Model &input);
 	void loadMaterials(tinygltf::Model &input);
 	void loadNode(const tinygltf::Node &inputNode, const tinygltf::Model &input, Node *parent, std::vector<uint32_t> &indexBuffer, std::vector<Vertex> &vertexBuffer);
 	void loadMaterials(const tinygltf::Model &input);
-	uint32_t getTextureIndex(uint32_t index);
-
 	
+	
+
+	uint32_t getTextureIndex(uint32_t index);
+	
+	static vk::DescriptorSetLayout texturesLayout;
+	static vk::DescriptorSetLayout materialLayout;
 };

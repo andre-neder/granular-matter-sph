@@ -1,6 +1,9 @@
 #include <model.h>
 #include <iostream>
 
+vk::DescriptorSetLayout Model::texturesLayout = VK_NULL_HANDLE;
+vk::DescriptorSetLayout Model::materialLayout = VK_NULL_HANDLE;
+
 VertexInputDescription Vertex::get_vertex_description()
 {
 	VertexInputDescription description;
@@ -71,9 +74,42 @@ VertexInputDescription Vertex::get_vertex_description()
 	return description;
 }
 
-Model::Model(): core(){}
+vk::DescriptorSetLayout Model::getTexturesLayout(gpu::Core *core)
+{
+	if(Model::texturesLayout == VK_NULL_HANDLE){
+		Model::texturesLayout = core->createDescriptorSetLayout({
+			{0, vk::DescriptorType::eSampler, vk::ShaderStageFlagBits::eFragment},
+			{1, vk::DescriptorType::eSampledImage, 7, vk::ShaderStageFlagBits::eFragment, vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound }
+		});
+	}
+	
+	return Model::texturesLayout;
+}
 
-void Model::createBuffers(gpu::Core *core)
+vk::DescriptorSetLayout Model::getMaterialLayout(gpu::Core *core)
+{
+    if(Model::materialLayout == VK_NULL_HANDLE){
+		Model::materialLayout = core->createDescriptorSetLayout({
+        	{	0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eFragment}
+		});
+	}
+	return Model::materialLayout;
+}
+
+void Model::cleanupDescriptorSetLayouts(gpu::Core *core)
+{
+	if(Model::texturesLayout != VK_NULL_HANDLE){
+		core->destroyDescriptorSetLayout(Model::texturesLayout);
+	}
+	if(Model::materialLayout != VK_NULL_HANDLE){
+		core->destroyDescriptorSetLayout(Model::materialLayout);
+	}
+}
+
+Model::Model() : core() {}
+Model::Model(gpu::Core* core): core(core){}
+
+void Model::createBuffers()
 {
 	
 	indexBuffer = core->bufferFromData(_indices.data(), _indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
@@ -81,41 +117,34 @@ void Model::createBuffers(gpu::Core *core)
 }
 
 
-void Model::destroyBuffers(gpu::Core *core)
-{
-	core->destroyBuffer(indexBuffer);
-	core->destroyBuffer(vertexBuffer);
-}
-
 void Model::destroy()
 {
-	for(Texture &texture : _textures){
-		// core->_device.destroyImageView(texture.image._view);
-		core->destroyImage(texture.image);
+	if(core != nullptr){
+		core->destroySampler(textureSampler);
+		core->destroyDescriptorPool(descriptorPool);
+		for(auto&& image : images){
+			core->destroyImage(image);
+		}
+		for(auto&& view : views){
+			core->destroyImageView(view);
+		}
+		int index = 0;
+		core->destroyDescriptorPool(materialDescriptorPool);
+		for(auto material : _materials){
+
+			core->destroyBuffer(materialBuffers[index]);
+			index++;
+		}
+
+		core->destroyBuffer(indexBuffer);
+		core->destroyBuffer(vertexBuffer);
 	}
-	// core->destroyBuffer(_vertices);
-	// core->destroyBuffer(_indices);
-	// core->destroySampler(_sampler);
 }
 
 void Model::loadImages(tinygltf::Model &input)
 {
-	// vk::SamplerCreateInfo samplerInfo;
-	// samplerInfo.magFilter = vk::Filter::eLinear;
-	// samplerInfo.minFilter = vk::Filter::eNearest;
-	// samplerInfo.mipmapMode = vk::SamplerMipmapMode::eNearest;
-	// samplerInfo.addressModeU = vk::SamplerAddressMode::eMirroredRepeat;
-	// samplerInfo.addressModeV = vk::SamplerAddressMode::eMirroredRepeat;
-	// samplerInfo.addressModeW = vk::SamplerAddressMode::eMirroredRepeat;
-	// samplerInfo.compareOp = vk::CompareOp::eNever;
-	// samplerInfo.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-	// samplerInfo.maxLod = 1;
-	// samplerInfo.maxAnisotropy = 8.0f;
-	// samplerInfo.anisotropyEnable = true;
-	// _sampler = core->_device.createSampler(samplerInfo);
 
 	for (tinygltf::Image &image : input.images) {
-		Texture texture;
 		unsigned char* buffer = nullptr;
 		vk::DeviceSize bufferSize = 0;
 		
@@ -149,59 +178,28 @@ void Model::loadImages(tinygltf::Model &input)
 			throw std::runtime_error("unsported Image Format!");
 		}
 
-		// vk::ImageCreateInfo imageCreateInfo;
-		// imageCreateInfo.imageType = vk::ImageType::e2D;
-		// imageCreateInfo.format = format;
-		// imageCreateInfo.mipLevels = 1;
-		// imageCreateInfo.arrayLayers = 1;
-		// imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
-		// imageCreateInfo.extent = vk::Extent3D{ width, height, 1 };
-		// imageCreateInfo.usage = vk::ImageUsageFlagBits::eSampled;
-		// texture.image = vkutils::imageFromData(*core, buffer, imageCreateInfo, vk::ImageAspectFlagBits::eColor, vma::MemoryUsage::eAutoPreferDevice);
-        texture.image = core->image2DFromData(buffer, vk::ImageUsageFlagBits::eSampled, vma::MemoryUsage::eAutoPreferDevice, {}, width, height, format);
-		
-        // vk::DescriptorImageInfo imageInfo;
-		// imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-		// imageInfo.imageView = texture.image._view;
-		// imageInfo.sampler = _sampler;
-		// texture.descriptor = imageInfo;
+        auto image = core->image2DFromData(buffer, vk::ImageUsageFlagBits::eSampled, vma::MemoryUsage::eAutoPreferDevice, {}, 1, 1, vk::Format::eR8G8B8A8Unorm);
+		images.push_back(image);
 
-		texture.index = static_cast<uint32_t>(_textures.size());
-		_textures.push_back(texture);
 		if (deleteBuffer) {
             delete[] buffer;
         }
 	}
 
-	Texture emptyTexture;
 	unsigned char* buffer = new unsigned char[4];
 	memset(buffer, 0, 4);
 
-	// vk::ImageCreateInfo imageCreateInfo;
-	// imageCreateInfo.imageType = vk::ImageType::e2D;
-	// imageCreateInfo.format = vk::Format::eR8G8B8A8Unorm;
-	// imageCreateInfo.mipLevels = 1;
-	// imageCreateInfo.arrayLayers = 1;
-	// imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
-	// imageCreateInfo.extent = vk::Extent3D{ 1, 1, 1 };
-	// imageCreateInfo.usage = vk::ImageUsageFlagBits::eSampled;
-	// emptyTexture.image = vkutils::imageFromData(*core, buffer, imageCreateInfo, vk::ImageAspectFlagBits::eColor, vma::MemoryUsage::eAutoPreferDevice);
-    emptyTexture.image = core->image2DFromData(buffer, vk::ImageUsageFlagBits::eSampled, vma::MemoryUsage::eAutoPreferDevice, {}, 1, 1, vk::Format::eR8G8B8A8Unorm);
-
-	emptyTexture.index = static_cast<uint32_t>(_textures.size());
-	// vk::DescriptorImageInfo imageInfo;
-	// imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-	// imageInfo.imageView = emptyTexture.image._view;
-	// imageInfo.sampler = _sampler;
-	// emptyTexture.descriptor = imageInfo;
-	_textures.push_back(emptyTexture);
+	
+    auto image = core->image2DFromData(buffer, vk::ImageUsageFlagBits::eSampled, vma::MemoryUsage::eAutoPreferDevice, {}, 1, 1, vk::Format::eR8G8B8A8Unorm);
+	images.push_back(image);
 }
 
 void Model::loadMaterials(tinygltf::Model &input)
 {
-	uint32_t texture_count = static_cast<uint32_t>(_textures.size() - 1);
+	uint32_t texture_count = static_cast<uint32_t>(images.size() - 1);
 	for (tinygltf::Material &mat : input.materials)
 	{
+
 		Material material;
 
 		if (mat.values.find("roughnessFactor") != mat.values.end())
@@ -265,7 +263,6 @@ void Model::loadMaterials(tinygltf::Model &input)
 		if (mat.values.find("diffuseTexture") != mat.values.end()) {
 			int32_t diffuseTextureIndex = getTextureIndex(input.textures[mat.values["diffuseTexture"].TextureIndex()].source);
 		}
-
 		_materials.push_back(material);
 	}
 	_materials.push_back(Material());
@@ -273,21 +270,11 @@ void Model::loadMaterials(tinygltf::Model &input)
 
 uint32_t Model::getTextureIndex(uint32_t index)
 {
-	if (index < _textures.size() && index >= 0) {
+	if (index < images.size() && index >= 0) {
 		return index;
 	}
-	return static_cast<uint32_t>(_textures.size() - 1);
+	return static_cast<uint32_t>(images.size() - 1);
 }
-
-// std::vector<vk::DescriptorImageInfo> Model::getTextureDescriptors()
-// {
-// 	std::vector<vk::DescriptorImageInfo> descriptorImageInfos(_textures.size());
-//     for (size_t i = 0; i < _textures.size(); i++)
-//     {
-//         descriptorImageInfos[i] = _textures[i].descriptor;
-//     }
-//     return descriptorImageInfos;
-// }
 
 void Model::loadNode(const tinygltf::Node &inputNode, const tinygltf::Model &input, Node *parent, std::vector<uint32_t> &indexBuffer, std::vector<Vertex> &vertexBuffer)
 {
@@ -431,7 +418,8 @@ void Model::loadNode(const tinygltf::Node &inputNode, const tinygltf::Model &inp
 					return;
 				}
 			}
-			Primitive *primitive = new Primitive(firstIndex, indexCount, firstVertex, vertexCount, glTFPrimitive.material > -1 ? _materials[glTFPrimitive.material] : _materials.back());
+			uint32_t materialIndex = glTFPrimitive.material > -1 ? glTFPrimitive.material : _materials.size() - 1;
+			Primitive *primitive = new Primitive(firstIndex, indexCount, firstVertex, vertexCount, materialIndex);
 			node->primitives.push_back(primitive);
 		}
 	}
@@ -457,7 +445,9 @@ bool Model::load_from_glb(const char *filename)
 
 	if (fileLoaded)
 	{
-		// loadImages(glTFInput);
+		if(core != nullptr){
+			loadImages(glTFInput);
+		}
 		loadMaterials(glTFInput);
 		const tinygltf::Scene &scene = glTFInput.scenes[0];
 		for (size_t i = 0; i < scene.nodes.size(); i++)
@@ -482,12 +472,72 @@ bool Model::load_from_glb(const char *filename)
 				}
 			}
 		}
+		
+		if(core != nullptr){
+			createBuffers();
+			createDescriptorSet();
+		}
 	}
 	else
 	{
 		return false;
 	}
 	return true;
+}
+
+
+void Model::createDescriptorSet()
+{
+
+	// create sampler
+	textureSampler = core->createSampler(vk::SamplerAddressMode::eRepeat);
+
+	// create texture views
+	for(auto image : images){
+		auto view = core->createImageView2D(image, vk::Format::eR8G8B8A8Unorm); 
+        views.push_back(view);
+	}
+	std::cout << views.size() << std::endl;
+	// create descriptor set for all textures
+	descriptorPool = core->createDescriptorPool({
+        { vk::DescriptorType::eSampler, 1 * gpu::MAX_FRAMES_IN_FLIGHT },
+        { vk::DescriptorType::eSampledImage, (uint32_t)views.size()  * gpu::MAX_FRAMES_IN_FLIGHT },
+    }, (uint32_t)(views.size() + 1) * gpu::MAX_FRAMES_IN_FLIGHT);
+
+	descriptorSets = core->allocateDescriptorSets(Model::getTexturesLayout(core), descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
+
+
+	for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        core->addDescriptorWrite(descriptorSets[i], 
+			{ 0, vk::DescriptorType::eSampler, textureSampler, {}, {} }
+		);
+		core->addDescriptorWrite(descriptorSets[i], 
+			{ 1, vk::DescriptorType::eSampledImage, {}, views, vk::ImageLayout::eShaderReadOnlyOptimal }
+		);
+
+        core->updateDescriptorSet(descriptorSets[i]);
+	}
+	// create descriptorset for each material
+	materialDescriptorPool = core->createDescriptorPool({
+			{ vk::DescriptorType::eUniformBuffer, (uint32_t)(1 * _materials.size()) * gpu::MAX_FRAMES_IN_FLIGHT }, 
+		}, (2 * _materials.size()) * gpu::MAX_FRAMES_IN_FLIGHT);
+	
+	int index = 0;
+	materialDescriptorSets.resize(_materials.size());
+	materialBuffers.resize(_materials.size());
+	for(auto material : _materials){
+
+		materialDescriptorSets[index] = core->allocateDescriptorSets(Model::getMaterialLayout(core), materialDescriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
+		materialBuffers[index] = core->bufferFromData(&material, sizeof(Material), vk::BufferUsageFlagBits::eUniformBuffer, vma::MemoryUsage::eAutoPreferDevice);
+		
+		for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+			core->addDescriptorWrite(materialDescriptorSets[index][i], 
+				{ 0, vk::DescriptorType::eUniformBuffer, materialBuffers[index], sizeof(Material) }
+			);
+			core->updateDescriptorSet(materialDescriptorSets[index][i]);
+		}
+		index++;
+	}
 }
 
 glm::mat4 Node::localMatrix()

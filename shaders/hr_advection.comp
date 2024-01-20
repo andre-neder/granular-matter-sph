@@ -168,7 +168,7 @@ void main(){
         rho += weight * pi.rho;
 
         overallWeight += weight;   
-        if(weight > maxWeight){
+        if((weight) > maxWeight){
             maxWeight = weight;
             argMaxWeight = r;
         } 
@@ -177,14 +177,18 @@ void main(){
 
     float boundary = 0.0;
     for_all_volume_maps(
+
         float weight = w(r);
-        // averageWeightedVelocity += weight * vec3(0);
+        averageWeightedVelocity += weight * vec3(0);
+        rho += weight * settings.rho0;
+
         overallWeight += weight;   
-        boundary = clamp(dot(settings.g.xyz, p_pi), 0.0, 1.0);
         if(weight > maxWeight){
             maxWeight = weight;
             argMaxWeight = r;
         }
+        
+        boundary = max(clamp(dot(settings.g.xyz, p_pi), 0.0, 1.0), boundary);
     )
 
     overallWeight = max(EPSILON, overallWeight);
@@ -194,10 +198,11 @@ void main(){
 
     float c1 = w(settings.r_LR);
     float c2 = 0.6;
-    float alpha = (maxWeight <= c1 || maxWeight / overallWeight >= c2) ? 1.0 - maxWeight : 0.0;
+    float alpha = (maxWeight <= c1 || maxWeight / overallWeight >= c2) ? (1.0 - maxWeight) : 0.0;
 
-    vec3 externalForce = (1.0 - boundary) * settings.g.xyz * settings.mass;// + dragForce;
+    vec3 externalForce = settings.g.xyz * settings.mass;// + dragForce;
 
+    alpha *= (1.0 - boundary);
 
     // vec3 vel = (p.position + p.velocity * settings.dt) - (p.position);
     // if(length(vel) > settings.sleepingSpeed){

@@ -574,6 +574,9 @@ vk::Image Core::image2DFromData(void *data, vk::ImageUsageFlags imageUsage, vma:
         case vk::Format::eR32G32B32A32Sfloat:
             formatSize = 4 * 4;
             break;
+        case vk::Format::eR8G8B8A8Unorm:
+            formatSize = 1 * 4;
+            break;
         default:
             break;
     }

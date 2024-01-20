@@ -40,7 +40,13 @@ layout (location = 4) in vec4 vJoint;
 layout (location = 5) in vec4 vWeight;
 layout (location = 6) in vec4 vTangent;
 
+layout (location = 0) out vec3 outPosition;
+layout (location = 1) out vec3 outNormal;
+layout (location = 2) out vec2 outUV;
 void main() {
     gl_PointSize = 1;
+    outUV = vUV;
+    outPosition = (ubo.model * vec4(vPosition, 1.0)).xyz;
+    outNormal = (transpose(inverse(ubo.model)) * vec4(vNormal, 0.0)).xyz;
     gl_Position = ubo.proj * ubo.view * ubo.model * vec4(vPosition, 1.0);
 }

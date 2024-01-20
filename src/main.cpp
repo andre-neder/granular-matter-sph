@@ -123,7 +123,7 @@ private:
 
         simulation = GranularMatter(&core);
 
-        
+        Model::getTexturesLayout(&core);
 
         // Load rigidbodies for simulation
         dumpTruck = Mesh3D(ASSETS_PATH"/models/dump_truck.glb");
@@ -139,20 +139,16 @@ private:
         simulation.init();
 
         // Load models
+        dumpTruckModel = Model(&core);
         dumpTruckModel.load_from_glb(ASSETS_PATH "/models/dump_truck.glb");
-        dumpTruckModel.createBuffers(&core);
 
+        planeModel = Model(&core);
         planeModel.load_from_glb(ASSETS_PATH "/models/plane.glb");
-        planeModel.createBuffers(&core);
 
+        hourglasModel = Model(&core);
         hourglasModel.load_from_glb(ASSETS_PATH "/models/hourglas.glb");
-        hourglasModel.createBuffers(&core);
 
         loadScene(0);
-        
-
-
-
         
         particleRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
 
@@ -342,16 +338,14 @@ private:
         triangleRenderPass.destroy();
         imguiRenderPass.destroy();
 
-        
-        hourglasModel.destroyBuffers(&core);
-        dumpTruckModel.destroyBuffers(&core);
-        planeModel.destroyBuffers(&core);
 
         hourglasModel.destroy();
         dumpTruckModel.destroy();
         planeModel.destroy();
 
         simulation.destroy();
+
+        Model::cleanupDescriptorSetLayouts(&core);
 
         cleanupSwapchain();
 

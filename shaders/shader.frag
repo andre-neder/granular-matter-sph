@@ -43,11 +43,12 @@ layout(location = 1) in vec3 eye;
 layout(location = 2) in vec3 inVelocity;
 layout(location = 3) in vec3 inPosition;
 
+vec3 lightVec = vec3(1.0, 1.0, 1.0);
 void main() {
     vec4 sand = vec4(246.f / 255.f,215.f / 255.f,176.f / 255.f, 1.0); // vec4(inVelocity, 1.0); //vec4(vec3(length(inVelocity), 0.0, 1 - length(inVelocity)),1.0); //
     vec4 lightColor = vec4(1.0);
     vec4 ambient = vec4(0.3);
-    vec3 lightVec = vec3(-1.0, -2.0, -1.0);
+
     float phi = max(dot(normalize(inNormal), normalize(eye)), 0.0);
     outColor = sand * ambient + sand * cos(1 - phi) * lightColor;
     
