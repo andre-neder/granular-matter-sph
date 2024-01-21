@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  15 JAN 2024 12:05
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  21 JAN 2024 16:44
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -809,7 +809,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 
 pdfTeX warning: pdflatex (file ./logos/UniLogoNeu.pdf): PDF inclusion: found PDF version <1.7>, but at most version <1.5> allowed
-<logos/UniLogoNeu.pdf, id=107, 962.63638pt x 285.2256pt>
+<logos/UniLogoNeu.pdf, id=103, 962.63638pt x 285.2256pt>
 File: logos/UniLogoNeu.pdf Graphic file (type pdf)
 <use logos/UniLogoNeu.pdf>
 Package pdftex.def Info: logos/UniLogoNeu.pdf  used on input line 43.
@@ -856,96 +856,110 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.}) has be
                    \relax 
 l.45     \newpage
                   [2] [1] [2]
-<figures/gfx00.png, id=190, 256.96pt x 180.675pt>
+<figures/gfx00.png, id=185, 256.96pt x 180.675pt>
 File: figures/gfx00.png Graphic file (type png)
 <use figures/gfx00.png>
-Package pdftex.def Info: figures/gfx00.png  used on input line 76.
+Package pdftex.def Info: figures/gfx00.png  used on input line 81.
 (pdftex.def)             Requested size: 180.0pt x 126.56535pt.
-<figures/gfx02.png, id=191, 256.96pt x 180.675pt>
+<figures/gfx02.png, id=186, 256.96pt x 180.675pt>
 File: figures/gfx02.png Graphic file (type png)
 <use figures/gfx02.png>
-Package pdftex.def Info: figures/gfx02.png  used on input line 77.
+Package pdftex.def Info: figures/gfx02.png  used on input line 82.
 (pdftex.def)             Requested size: 180.0pt x 126.56535pt.
 
-Overfull \hbox (2.42162pt too wide) in paragraph at lines 76--78
+Overfull \hbox (2.42162pt too wide) in paragraph at lines 81--83
 [][] [] 
  []
 
 [3]
-<figures/bitonic_sort.png, id=212, 2007.5pt x 815.045pt>
+<figures/bitonic_sort.png, id=207, 2007.5pt x 815.045pt>
 File: figures/bitonic_sort.png Graphic file (type png)
 <use figures/bitonic_sort.png>
-Package pdftex.def Info: figures/bitonic_sort.png  used on input line 88.
+Package pdftex.def Info: figures/bitonic_sort.png  used on input line 93.
 (pdftex.def)             Requested size: 360.0pt x 146.15456pt.
  [4 <./figures/gfx00.png> <./figures/gfx02.png> <./figures/bitonic_sort.png>]
-Overfull \hbox (30.6345pt too wide) in paragraph at lines 113--114
+Overfull \hbox (30.6345pt too wide) in paragraph at lines 120--121
 \T1/cmr/m/n/10.95 Predictive-Corrective In-com-pres-si-ble Smoo-thed Par-tic-le Hy-dro-dy-na-mics (PCISPH)
  []
 
 [5]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 122.
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 129.
  (C:\Users\andre\AppData\Local\Programs\MiKTeX\tex/latex/base\t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
 ) [6]
-Overfull \hbox (19.11086pt too wide) in paragraph at lines 146--147
+Overfull \hbox (19.11086pt too wide) in paragraph at lines 153--154
 []$\T1/cmtt/m/n/10.95 https : / / github . com / InteractiveComputerGraphics / TriangleMeshDistance$[] 
  []
 
-[7]
-Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 153.
- [8] [9] [10] [11] [12] [13] [14]
-<figures/volume_map_slice_xyz.png, id=380, 24.09pt x 25.59563pt>
+[7] [8]
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 160.
+ [9] [10] [11] [12] [13] [14] [15] [16]
+<figures/volume_map_slice_xyz.png, id=386, 24.09pt x 25.59563pt>
 File: figures/volume_map_slice_xyz.png Graphic file (type png)
 <use figures/volume_map_slice_xyz.png>
-Package pdftex.def Info: figures/volume_map_slice_xyz.png  used on input line 423.
+Package pdftex.def Info: figures/volume_map_slice_xyz.png  used on input line 431.
 (pdftex.def)             Requested size: 180.0pt x 191.34369pt.
-<figures/volume_map_slice_w.png, id=381, 355.3275pt x 379.4175pt>
+<figures/volume_map_slice_w.png, id=387, 355.3275pt x 379.4175pt>
 File: figures/volume_map_slice_w.png Graphic file (type png)
 <use figures/volume_map_slice_w.png>
-Package pdftex.def Info: figures/volume_map_slice_w.png  used on input line 424.
+Package pdftex.def Info: figures/volume_map_slice_w.png  used on input line 432.
 (pdftex.def)             Requested size: 180.0pt x 192.2093pt.
 
-Overfull \hbox (2.42162pt too wide) in paragraph at lines 423--425
+Overfull \hbox (2.42162pt too wide) in paragraph at lines 431--433
 [][] [] 
  []
 
-[15] [16 <./figures/volume_map_slice_xyz.png (PNG copy)> <./figures/volume_map_slice_w.png>] [17] [18] [19] (ma.lof)
+[17] [18 <./figures/volume_map_slice_xyz.png (PNG copy)> <./figures/volume_map_slice_w.png>] [19]
+<figures/placeholder.png, id=425, 1204.5pt x 803.0pt>
+File: figures/placeholder.png Graphic file (type png)
+<use figures/placeholder.png>
+Package pdftex.def Info: figures/placeholder.png  used on input line 494.
+(pdftex.def)             Requested size: 108.0011pt x 71.99731pt.
+File: figures/placeholder.png Graphic file (type png)
+<use figures/placeholder.png>
+Package pdftex.def Info: figures/placeholder.png  used on input line 495.
+(pdftex.def)             Requested size: 108.0011pt x 71.99731pt.
+File: figures/placeholder.png Graphic file (type png)
+<use figures/placeholder.png>
+Package pdftex.def Info: figures/placeholder.png  used on input line 496.
+(pdftex.def)             Requested size: 108.0011pt x 71.99731pt.
+ [20 <./figures/placeholder.png>] [21] (ma.lof)
 \tf@lof=\write6
 \openout6 = `ma.lof'.
 
- [20]
-Overfull \hbox (0.16078pt too wide) in paragraph at lines 491--491
+ [22]
+Overfull \hbox (0.16078pt too wide) in paragraph at lines 514--514
 \T1/cmr/m/n/10.95 cia-ti-on for Com-pu-ting Ma-chi-ne-ry, 2011, S. 25^^U32, \T1/cmr/m/sc/10.95 isbn\T1/cmr/m/n/10.95 : 9781450309233.
  []
 
-[21]
-Overfull \hbox (15.47778pt too wide) in paragraph at lines 491--491
+[23]
+Overfull \hbox (15.47778pt too wide) in paragraph at lines 514--514
 []\T1/cmr/m/n/10.95 A. Som-mer, U. Schwan-e-cke und E. Schoe-mer, ^^R  In-ter-ac-ti-ve High-Resolution
  []
 
-[22] [23] [24] (ma.aux)
+[24] [25] [26] (ma.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-08-29>
  ***********
 Package rerunfilecheck Info: File `ma.out' has not changed.
-(rerunfilecheck)             Checksum: 65F22B8C449DAB430D72AAEA4AE3B5A6;3390.
+(rerunfilecheck)             Checksum: 5D7576CC29CB36ECB7061AB931755F55;3301.
 Package logreq Info: Writing requests to 'ma.run.xml'.
 \openout1 = `ma.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 25247 strings out of 475248
- 451420 string characters out of 5757812
+ 25258 strings out of 475248
+ 451676 string characters out of 5757812
  1934785 words of memory out of 5000000
- 46296 multiletter control sequences out of 15000+600000
+ 46305 multiletter control sequences out of 15000+600000
  578203 words of font info for 82 fonts, out of 8000000 for 9000
  1143 hyphenation exceptions out of 8191
- 75i,12n,81p,1908b,2626s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,12n,81p,1853b,2626s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on ma.pdf (27 pages, 923932 bytes).
+Output written on ma.pdf (29 pages, 939415 bytes).
 PDF statistics:
- 1106 PDF objects out of 1200 (max. 8388607)
- 147 named destinations out of 1000 (max. 500000)
- 239 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1126 PDF objects out of 1200 (max. 8388607)
+ 149 named destinations out of 1000 (max. 500000)
+ 236 words of extra memory for PDF output out of 10000 (max. 10000000)
 

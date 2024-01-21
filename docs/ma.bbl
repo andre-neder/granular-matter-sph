@@ -471,8 +471,8 @@
       \strng{authorbibnamehash}{61b56c782e2b8fe4384809c85e393ccd}
       \strng{authornamehash}{caa162124f28a8205d9d4e661b0ccb9e}
       \strng{authorfullhash}{61b56c782e2b8fe4384809c85e393ccd}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{Proceedings of the 12th ACM SIGGRAPH Conference on Motion, Interaction and Games}
@@ -520,8 +520,8 @@
       \strng{authorbibnamehash}{6fd2243e61977610fa99d47f2b42ff2b}
       \strng{authornamehash}{468a3cbe7072722d48a303b660d1f841}
       \strng{authorfullhash}{6fd2243e61977610fa99d47f2b42ff2b}
-      \field{sortinit}{5}
-      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{sortinit}{6}
+      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Computer Graphics Forum}
@@ -996,8 +996,8 @@
       \strng{authorbibnamehash}{441fe88aa55fb5b33be74d8641d0d091}
       \strng{authornamehash}{441fe88aa55fb5b33be74d8641d0d091}
       \strng{authorfullhash}{441fe88aa55fb5b33be74d8641d0d091}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Annual Review of Astronomy and Astrophysics}
@@ -1054,8 +1054,8 @@
       \strng{authorbibnamehash}{b2dcd3056593cfcace21e4c5211a9804}
       \strng{authornamehash}{71be45d7d28530e2945fb1a3832a68e8}
       \strng{authorfullhash}{b2dcd3056593cfcace21e4c5211a9804}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Transactions on Visualization and Computer Graphics}
@@ -1304,8 +1304,8 @@
       \strng{authorbibnamehash}{43d4028764737f96da619eec9e803be5}
       \strng{authornamehash}{43d4028764737f96da619eec9e803be5}
       \strng{authorfullhash}{43d4028764737f96da619eec9e803be5}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Particle Simulation using CUDA}
@@ -1333,8 +1333,8 @@
       \strng{authorbibnamehash}{d673f4b06bc18145fb87123390b4948f}
       \strng{authornamehash}{d673f4b06bc18145fb87123390b4948f}
       \strng{authorfullhash}{d673f4b06bc18145fb87123390b4948f}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{issn}{1545-4282}

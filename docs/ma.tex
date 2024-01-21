@@ -46,15 +46,20 @@
     \pagenumbering{arabic}
     \section{Introduction}
 
-    Granular matter consists of discrete, macroscopic particles that interact through contact forces, exhibiting unique behaviors such as flowing, layering or piling. Simulating such behaviors in realistic scenarios is especially challenging, due to the necessity of employing a very high number of discrete elements to achieve visually plausible simulations. Granular materials find diverse applications across geophysics, civil engineering, pharmaceuticals, and other industries, playing crucial roles in phenomena such as landslides, construction, powder mixing, storage and transportation. A powerful technique for simulating such materials is Smoothed Particle Hydrodynamics (SPH). SPH is a meshless Lagrangian method that has been employed a lot in fluid dynamics and can also be used to simulate granular behavior. By combining well-established SPH techniques for simulating granular materials with the latest developments in SPH research, real-time simulations might become achievable. In the pages ahead, I will assess the achievability of real-time simulations for granular matter, by combining established methods and recent advancements to achieve a dynamic and interactive implementation. On the upcoming pages an algorithm, composed of different techniques from the field of Smoothed Particle Hydrodynamics, is presented. Firsly, in section \ref{sec:basics} some basic concepts are explained. Then in section \ref{sec:method} the idea of Smoothed Particle Hydrodynamics, and some of its different variations are presented, aswell as the utilized programming framework. Then, in section \ref{sec:impl} the actual implementations are explained, followed by some results \ref{sec:results}. In the end a conclusion on what has been achived and an outlook over possible improvements and expansions is given \ref{sec:end}.
+    Granular matter consists of discrete, macroscopic particles that interact through contact forces, exhibiting unique behaviors such as flowing, layering or piling. Simulating such behaviors in realistic scenarios is especially challenging, due to the necessity of employing a very high number of discrete elements to achieve visually plausible simulations. Granular materials find diverse applications across geophysics, civil engineering, pharmaceuticals, and other industries, playing crucial roles in phenomena such as landslides, construction, powder mixing, storage and transportation. A powerful technique for simulating such materials is Smoothed Particle Hydrodynamics (SPH). SPH is a meshless Lagrangian method that has been employed a lot in fluid dynamics and can also be used to simulate granular behavior. By combining well-established SPH techniques for simulating granular materials with the latest developments in SPH research, real-time simulations might become achievable. In the pages ahead, I will assess the achievability of real-time simulations for granular matter, by combining established methods and recent advancements to achieve a dynamic and interactive implementation. On the upcoming pages an algorithm, composed of different techniques from the field of Smoothed Particle Hydrodynamics, is presented. 
+    Firsly, in section \ref{sec:basics} some basic concepts of some used techniques are explained. Then in section \ref{sec:method} the idea of Smoothed Particle Hydrodynamics, and some of its different variations are presented, aswell as the utilized programming framework. Then, in section \ref{sec:impl} the actual implementations are explained. In the final chapter \ref{sec:end}, a conclusion on what has been achived and an outlook over possible improvements and expansions is given. % , followed by some results in chapter \ref{sec:results}
     \pagebreak
-    \section{Related Work}
-    There have been a lot of publications about the simulation of granular matter. Some using grid based approaches, others using particle based methods like Smoothed Particle Hydrodynamics, which have first been introduces by Müller et al. \cite{10.5555/846276.846298}. One of the most interesting articles, that tries to simulate granular materials, have been the works of Narain et al. \cite{10.1145/1866158.1866195}. In their paper \enquote{Free-Flowing Granular Materials with Two-Way Solid Coupling} they describe a hybrid algorithm, which transfers particle data on to an eulerian grid, where the pressure and friction calculations are performed. The resulting forces are then applied to the particles. Later, in the works by Alduán et al., \enquote{SPH Granular Flow with Friction and Cohesion} \cite{10.1145/2019406.2019410}, the ideas presented by Narain et al. \cite{10.1145/1866158.1866195} are picked up and transfered to the, Predictive-Corrective Smoothed Particle Hydrodynamics method by Solenthaler and Pajarola \cite{10.1145/1576246.1531346}. Later on, Ihmsen et al. \cite{10.2312:PE:vriphys:vriphys12:053-060} improved the alogithm, by refining concept of upsampling the simulation, which has been proposed by Alduán el al. \cite{10.2312:LocalChapterEvents:CEIG:CEIG09:011-018} in their paper \enquote{Simulation of High-Resolution Granular Media}. 
+    \section{Related Work}\label{sec:related}
+    There have been a lot of publications about the simulation of granular matter. Some using grid based approaches \cite{10.1145/1866158.1866195}, others using particle based methods like Smoothed Particle Hydrodynamics, which have first been introduces by Müller et al. \cite{10.5555/846276.846298}. 
+    One of the most interesting articles, that tries to simulate granular materials, have been the works of Narain et al. \cite{10.1145/1866158.1866195}. In their paper \enquote{Free-Flowing Granular Materials with Two-Way Solid Coupling} they describe a hybrid algorithm, which transfers particle data on to an eulerian grid, where the pressure and friction calculations are performed. The resulting forces are then applied to the particles. Two-Way Coupling beeing the combination of the particle simulation influencing rigidbodies and the other way around. 
+    Later, in the works by Alduán et al., titled \enquote{SPH Granular Flow with Friction and Cohesion} \cite{10.1145/2019406.2019410}, the ideas presented by Narain et al. \cite{10.1145/1866158.1866195} are picked up and transfered to the Predictive-Corrective Smoothed Particle Hydrodynamics method by Solenthaler and Pajarola \cite{10.1145/1576246.1531346}. Later on, Ihmsen et al. \cite{10.2312:PE:vriphys:vriphys12:053-060} improved the alogithm, by refining the concept of upsampling the simulation, by blending between the simulation and external forces, which has been proposed by Alduán el al. \cite{10.2312:LocalChapterEvents:CEIG:CEIG09:011-018} in their paper \enquote{Simulation of High-Resolution Granular Media}. 
+    In contrast to the mentioned works, which all simulate the behavior of granular matter in a non realtime fashion, I want to run the simulation with interactable framerates.
     \pagebreak
     
     \section{Basics}\label{sec:basics}
+    Some of the basic concepts of the utilized methods are the Navier-Stokes equations, Signed Distance Functions and Bitonic Sort, which will be briefly explained in this chapter.
 
-    \subsection{Navier-Stokes equation}
+    \subsection{Navier-Stokes equations}
     The basic concept behind most fluid simulations lies in the Navier-Stokes equations, which describe the motion of fluids and deformable solids. As granular flow can be interpreted as a kind of fluid they will be employed here aswell. One of the most important parts is the continuity of mass equation, which \enquote{describes the evolution of an object's mass density $\rho$ over time $t$, i.e.,} \cite{survey_on_sph}
     
     \begin{equation}
@@ -93,6 +98,8 @@
 
     \pagebreak
     \section{Method} \label{sec:method}
+    To understand the implemented algorithms it is neccessary to be familiar with Smoothed Particle Hydrodynamics, which will be explained in this chapter. I will also list the used libraries and APIs and explain their purpose and why they were employed.
+
     \subsection{Smoothed Particle Hydrodynamics}
     Smoothed Particle Hydrodynamics (SPH) is a computational technique widely employed in fluid dynamics and other fields for simulating complex physical phenomena.SPH represents the fluid or material as a collection of discrete particles. Each particle has physical properties such as density, pressure and velocity. 
 
@@ -147,16 +154,17 @@
 
     \pagebreak
     \section{Implementation}\label{sec:impl}
-    \dots
-    
-    \begin{algorithm}
+    The whole implementation consists of a simple abstraction over the Vulkan API, I created, to speed up the creation of all required objects, such as buffers, descriptor sets and pipelines. I first create all the particles on the CPU side and store them as a storage buffer on the GPU. This buffer can later be bound as vertex buffer to be used in the rendering. The rigid bodies are loaded from the glTF files and processed into buffers and textures to be used by a dedicated renderpass. To incorporate them into the simulation, they are converted into a signed distance representation stored as 3D textures. With this, all the major data of the simulation is accessable on the GPU.
+    The actual algorithm \ref*{alg:main} consits of 13 different compute shaders, which execute the different steps. First, the particles are grouped into their grid cells and the external force for each particle is set to the gravity. Then the resulting grid entries are sorted and then the start indices of all cells are determined. After that, $\rho$, $F^{drag}$, $s$, $v_{adv}$ and $\rho_{adv}$ will be calulated in separat shaders. Their purpose will be explained in detail later on. All steps of the simulation are separated by pipeline barriers to ensure a property has been calculated for all particles before accessing them in the next step. After the computation of $\rho_{adv}$ has been issued, the first command buffer is send to the gpu for processing and its completion is awaited, as the next steps will need to be executed for a dynamic amount of iterations. These iterations consist of computing $d_{ij}p_{j}$, $p^{l+1}$, $p(t)$ and applying the yield criterion for the stress. After these steps have been executed the average density error determines if another iteration is required. For this, its value needs to be transfered from the GPU to the CPU. All other computations happen exclusivly on the GPU by accessing the particles stored in the storage buffer. After the IISPH iterations are done, the resulting forces are computed and integrated over the elapsed time. In the last step the simulation is visually enhanced by advecting a set of high resolution particles based on the flow of the before computed low resolution behavior and external forces. After this step the storage buffer containing the high resolution particles is bound to a renderpass for drawing and the algorithm starts from the beginning. All steps will now be explained in detail.
+    \begin{algorithm}[H]
         \caption{Full Simulation Frame}
+        \label{alg:main}
         \begin{algorithmic}[1]
         \State find neighbors 
         \State compute $\rho$ and $F^{drag}$ 
         \State compute $s$ 
-        \State compute $v$ advection 
-        \State compute $\rho$ advection 
+        \State compute $v_{adv}$
+        \State compute $\rho_{adv}$
         \State $l = 0$
         \While {$l < 2$ $||$ $\rho_{avg} - \rho_0 < \eta $}
             \State compute $d_{ij}p_{j}$
@@ -218,7 +226,7 @@
     This says that the density of a given particle $i$ can not be greater than the rest density of the material and the pressure can not become negative. \cite{10.1145/2019406.2019410}
 
     \subsection{External forces}
-    A change in density can be achived by applying external forces to the particles. 
+    A change in density can be achived by applying external forces to the particles. In this simulation a gravitational force and an approximated drag force are employed.
     \subsection{Gravity}
     Gravity is given as a fixed acceleration in a given direction in 3D space. Multiplied with the weight of a given particle we get an actual force.
     \subsection{Drag}
@@ -354,7 +362,7 @@
         \rho_i^{l+1} = |p * a_{ii} * \Delta t^2 - (\rho_0 - \rho_i^{adv} - \Delta t^2 \psi)| + \rho_0
     \end{equation}
 
-    This is then being used to determine the overall average density error of all particles. For this the Vulkan Shader Atomic Float Extension is utilized to sum up the density error over all particles on the GPU and then divide it by the number of particles on the CPU. This value then determines if another iteration is required to achieve the desired threshold. Always at least two iterations are performed before using the average density error as a termination criterion. The implementation of the whole pressure calculation was guided by the open source library SPlisHSPlasH \cite{splishsplash}.
+    This is then being used to determine the overall average density error of all particles. For this the Vulkan Shader Atomic Float Extension is utilized to sum up the density error over all particles on the GPU and then divide it by the number of particles on the CPU. This value then determines if another iteration is required to achieve the desired threshold. Always at least two iterations are performed before using the average density error as a termination criterion. The implementation of the whole pressure calculation was guided by the open source library SPlisHSPlasH \cite{splishsplash}. For more detailes on how the IISPH algorithm works, see the paper, Implicit Incompressible SPH, by Ihmsen et al. \cite{6570475}.
 
     \subsection{Internal Forces}
     
@@ -464,26 +472,41 @@
     The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060} I then additionally modified the alpha value, by multiplying it with 1 minus the dot product of the external force and the vector to the boundary, clamped between 0 and 1, to prevent hr particles falling through the volume map based boundaries.
     
     \subsection{Visualization}
-    \dots
+    As the visualisation is not the main focus of this work, it has been kept simple. To visualize the simulation, all particles are rendered as instanced meshes, as the number of particles to draw can become quite large and in this way all of them can be rendered in just one draw call. A detailed explanation of instanced rendering can be found on \url{https://learnopengl.com/Advanced-OpenGL/Instancing}. The rigidbodies are rendered by drawing each node of the model with its associated material, as its own draw call and are shaded with a simple diffuse lighting model.
 
     \subsection{User interaction}
     For the user to experience the simulation in 3D space, a camera controller has been implemented, that allows to explore the simulation from every angle. The simulation can be paused and reset to its initial state by buttons provided via the user interface. It also allows to modify some of the simulations parameters, such as the density, gravity or air velocity. Another purpose the UI serves is to provide infomation about the perfomance, such as timing, iteration count or framerate. The UI has been implemented in a way that allows the user to rearange all the windows, inside and outside of the main window. There for the docking and multi-viewport features of Dear ImGui have been utilized.
-    
-    \pagebreak
-    \section{Evaluation} \label{sec:results}
-    - visually plausible
-    - realtime 
-    - mostly stable piles
-    problems:
-    - boiling problem 
-    - sticking of hr particles
-    - performance
+   
+    % problems:
+    % - boiling problem 
+    % - sticking of hr particles
+    % - performance
 
 
-    \dots
+    % \dots
     \pagebreak
     \section{Conclusion \& Future Work}  \label{sec:end}
-    \dots
+    % intro
+    When comparing this work with some of the related works presented in section \ref{sec:related}, the major difference lies in the time a frame takes to compute, as they mostly run on the CPU. My implementation combines the basic concepts, of simulating granular matter using SPH, from the works of Ihmsen et al. \cite{10.2312:PE:vriphys:vriphys12:053-060} and Alduan el al. \cite{10.1145/2019406.2019410} with the boundary handling introduced by Bender el al. \cite{10.1145/3359566.3360077}, the IISPH algorithm by Ihmsen et al. \cite{6570475} for the pressure calculation and the approximation of drag forces by Gissler et al. \cite{10.1016/j.cag.2017.09.002}. All of this results in a simulation, that achieves the same effects as in the mentioned papers, while running with interactable framerates. 
+    % piles
+    The simulation achieves the accumulation of stable piles with different angles of repose, while keeping them stable for an extended amount of time, as shown in figure \ref{fig:piles}.
+    \begin{figure}[H]
+        \includegraphics[width=0.3\textwidth]{figures/placeholder.png}
+        \includegraphics[width=0.3\textwidth]{figures/placeholder.png}
+        \includegraphics[width=0.3\textwidth]{figures/placeholder.png}
+        \caption[]{Three piles with different angles of repose, simulated for x frames. TODO}
+        \label[fig]{fig:piles}
+    \end{figure}
+    After a longer simulation time the piles will eventually melt down, due to a which results in a \enquote{bubbling} effect, which is caused by minor inaccuracy in the pressure calculation. This problem can be improved by lowering the default maximum allowed compression of 0.5\%, which I found being a good compromise between performance and accuracy. The maximum timestep was set to 16ms as this results in a framerate of 60 frames per second, while keeping the iterations required in a order of magniture that can be computed within that timeframe. These values were determined for a simulation with 8192 low resolution and about half a million high resolution particles for the piling scenario. For other scenarios the maximum compression needs to be even higher, at 1\% to maintain a stable framerate.
+    % IISPH
+    These large timesteps are only possible because of the IISPH algorithm, as the CFL condition, which determines the maximum viable timestep based on the simulation parameters, would only allow few or even sub millisecond timesteps with WCSPH or PCISPH. (Todo: Improvements?)
+    % volume maps
+    The above mentioned \enquote{bubbling} effect gets even worse when combining a large compression of 1\% with low resolution volume maps, as they can not handle complex objects. Creating higher resolution volume maps improves this by some margin, but introduces longer loading times and higher memory consumption. The longer loading times could be countered by parallelization or precomputing the volume maps and loading them from files. To improve the memory consumption the rigid body model could be separated into multiple volume maps with resolutions according to the required complexity of the part or to work around large empty areas for concave objects. Combined with some kind of hirarchical respresentation of the object, the sample time for one rigidbody should not increase by too much.
+    % upsampling
+    Throught the upsampling of the low resolution simulation a visually plausible representation of vast amounts of granular material, comparable to other papers, is achieved. A major problem that Ihmsen et al. \cite{10.2312:PE:vriphys:vriphys12:053-060} already tried to solve by their upsampling approach, is the clumping of high resolution particles, which is still visible. Another problem is the sticking of particles to some shapes. This seems to come from the use of the volume maps, as the kernel used for the upsampling does not capture the contribution of the boundary quite right.
+    %two way coupling
+    One feature missing from my implementation compared to other implementations is two-way coupling, as the simulation only reacts to static boundaries and does not influence them. This could be implemented in the future by collecting the forces for each rigidbody and feeding them into a dedicated solver.
+
     \pagebreak
     \listoffigures
     \pagebreak

@@ -321,8 +321,10 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         ImGui::EndTable();
         
         ImGui::InputInt("Pause on frame", &pauseOnFrame, -1,10000);
+
         ImGui::SliderFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 3000.f );
-        // ImGui::DragFloat("Pressure maxCompression", &settings.maxCompression, 1.f, 100.f, 50000.f);
+        ImGui::InputFloat("Maximum compression", &settings.maxCompression, 0.0001f, 0.001f);
+        ImGui::InputFloat("Maximum timestep", &settings.maxTimestep, 0.001);
         ImGui::SliderFloat("Mass (kg)", &settings.mass, 1.f, 100.f);
         // ImGui::DragFloat("Kernel Radius (m)", &settings.h_LR, 1.f, 0.1f, 100.f);
         // ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);

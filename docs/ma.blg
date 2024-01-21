@@ -1,21 +1,21 @@
 [0] Config.pm:307> INFO - This is Biber 2.19
 [0] Config.pm:310> INFO - Logfile is 'ma.blg'
-[73] biber-MSWIN64:340> INFO - === 
-[101] Biber.pm:419> INFO - Reading 'ma.bcf'
-[182] Biber.pm:976> INFO - Using all citekeys in bib section 0
-[190] Biber.pm:4419> INFO - Processing section 0
-[199] Biber.pm:4610> INFO - Looking for bibtex file 'sources.bib' for section 0
-[252] bibtex.pm:1713> INFO - LaTeX decoding ...
-[286] bibtex.pm:1519> INFO - Found BibTeX data source 'sources.bib'
-[409] UCollate.pm:68> INFO - Overriding locale 'en_US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[409] UCollate.pm:68> INFO - Overriding locale 'en_US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[409] Biber.pm:4239> INFO - Sorting list 'none/global//global/global' of type 'entry' with template 'none' and locale 'en_US'
-[409] Biber.pm:4245> INFO - No sort tailoring available for locale 'en_US'
-[423] bbl.pm:660> INFO - Writing 'ma.bbl' with encoding 'UTF-8'
-[434] bbl.pm:763> INFO - Output to ma.bbl
-[435] Biber.pm:131> WARN - Duplicate entry key: '10.5555/846276.846298' in file 'sources.bib', skipping ...
-[435] Biber.pm:131> WARN - legacy month field 'feb' in entry '10.1145/3180486' is not an integer - this will probably not sort properly.
-[435] Biber.pm:131> WARN - legacy month field 'dec' in entry '10.1016/j.cag.2017.09.002' is not an integer - this will probably not sort properly.
-[435] Biber.pm:131> WARN - legacy month field 'jul' in entry '10.1145/2185520.2185558' is not an integer - this will probably not sort properly.
-[435] Biber.pm:131> WARN - legacy month field 'jul' in entry '10.1145/2601097.2601152' is not an integer - this will probably not sort properly.
-[435] Biber.pm:133> INFO - WARNINGS: 5
+[74] biber-MSWIN64:340> INFO - === 
+[104] Biber.pm:419> INFO - Reading 'ma.bcf'
+[180] Biber.pm:976> INFO - Using all citekeys in bib section 0
+[188] Biber.pm:4419> INFO - Processing section 0
+[197] Biber.pm:4610> INFO - Looking for bibtex file 'sources.bib' for section 0
+[247] bibtex.pm:1713> INFO - LaTeX decoding ...
+[279] bibtex.pm:1519> INFO - Found BibTeX data source 'sources.bib'
+[400] UCollate.pm:68> INFO - Overriding locale 'en_US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[400] UCollate.pm:68> INFO - Overriding locale 'en_US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[400] Biber.pm:4239> INFO - Sorting list 'none/global//global/global' of type 'entry' with template 'none' and locale 'en_US'
+[400] Biber.pm:4245> INFO - No sort tailoring available for locale 'en_US'
+[414] bbl.pm:660> INFO - Writing 'ma.bbl' with encoding 'UTF-8'
+[426] bbl.pm:763> INFO - Output to ma.bbl
+[426] Biber.pm:131> WARN - Duplicate entry key: '10.5555/846276.846298' in file 'sources.bib', skipping ...
+[426] Biber.pm:131> WARN - legacy month field 'jul' in entry '10.1145/2601097.2601152' is not an integer - this will probably not sort properly.
+[426] Biber.pm:131> WARN - legacy month field 'feb' in entry '10.1145/3180486' is not an integer - this will probably not sort properly.
+[426] Biber.pm:131> WARN - legacy month field 'dec' in entry '10.1016/j.cag.2017.09.002' is not an integer - this will probably not sort properly.
+[426] Biber.pm:131> WARN - legacy month field 'jul' in entry '10.1145/2185520.2185558' is not an integer - this will probably not sort properly.
+[426] Biber.pm:133> INFO - WARNINGS: 5

@@ -26,7 +26,7 @@ struct SPHSettings{
     float rho0 = 1450.f;                                //* kg/m^3
     float mass = (4.f / 3.f * (float) M_PI * (r_LR * r_LR * r_LR)) * rho0;                //* kg
 
-    float maxCompression = 0.01f;	  
+    float maxCompression = 0.005f;	  
     float dt = 0.0006f;	                                //* s
     float DOMAIN_WIDTH = 12.f;                         //* m
     float DOMAIN_HEIGHT = 8.f;                        //* m
@@ -44,7 +44,7 @@ struct SPHSettings{
     float scale_GradW = 60.f / (pow(h_LR, 6.0) * M_PI);    
     float A_LR = r_LR * r_LR * M_PI;                               
     float v_max = ((2.f * mass * glm::length(g)) / (rhoAir * A_LR * dragCoefficient));       
-    float pad0;                        
+    float maxTimestep=0.016f;                        
     float pad1;                        
 };
 
