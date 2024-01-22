@@ -645,38 +645,6 @@ float cubicExtension(float r){
 void GranularMatter::createSignedDistanceFields()
 {
 
-    //* Setup rigid bodies
-    // float halfBoxSize = 2.f;
-    // Box3D box{ 
-    //     glm::vec3(halfBoxSize, halfBoxSize, halfBoxSize)
-    // };
-    // box.position = glm::vec3(0, halfBoxSize, 0);
-    // box.scale = glm::vec3(1, 0.5, 1);
-    // rigidBodies.push_back(&box);
-
-    // Plane3D floor{ glm::vec3(0, 1, 0), 0};
-    // floor.position = glm::vec3(0, -9.75, 0);
-    // rigidBodies.push_back(&floor);
-
-    // Plane3D wallLeft{ glm::vec3(1, 0, 0), 0};
-    // wallLeft.position = glm::vec3(-settings.DOMAIN_WIDTH / 2.f, 0, 0);
-    // rigidBodies.push_back(&wallLeft);
-
-    // Plane3D wallRight{ glm::vec3(-1, 0, 0), 0};
-    // wallRight.position = glm::vec3(settings.DOMAIN_WIDTH / 2.f, 0, 0);
-    // rigidBodies.push_back(&wallRight);
-
-    // Plane3D wallBack{ glm::vec3(0, 0, 1), 0};
-    // wallBack.position = glm::vec3(0, 0, -settings.DOMAIN_WIDTH / 2);
-    // rigidBodies.push_back(&wallBack);
-
-    // Plane3D wallFront{ glm::vec3(0, 0, -1), 0};
-    // wallFront.position = glm::vec3(0, 0, settings.DOMAIN_WIDTH / 2);
-    // rigidBodies.push_back(&wallFront);
-
-    // Mesh3D hourglasRB(ASSETS_PATH"/models/dump_truck.glb");
-    // rigidBodies.push_back(&hourglasRB);
-
     glm::vec3 baseTextureSize = { 32, 32, 32 };
     std::cout << "Generating volume maps..." << std::endl;
     for(auto rb : rigidBodies){
