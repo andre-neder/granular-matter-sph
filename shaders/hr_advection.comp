@@ -168,10 +168,10 @@ void main(){
         rho += weight * pi.rho;
 
         overallWeight += weight;   
-        if((weight) > maxWeight){
-            maxWeight = weight;
-            argMaxWeight = r;
-        } 
+
+        bool weightIsGreater = weight > maxWeight;
+        maxWeight = weightIsGreater ? weight : maxWeight;
+        argMaxWeight =  weightIsGreater ? r : argMaxWeight;
         
     )
 
@@ -183,10 +183,10 @@ void main(){
         rho += weight * settings.rho0;
 
         overallWeight += weight;   
-        if(weight > maxWeight){
-            maxWeight = weight;
-            argMaxWeight = r;
-        }
+        
+        bool weightIsGreater = weight > maxWeight;
+        maxWeight = weightIsGreater ? weight : maxWeight;
+        argMaxWeight =  weightIsGreater ? r : argMaxWeight;
         
         boundary = max(clamp(dot(settings.g.xyz, p_pi), 0.0, 1.0), boundary);
     )

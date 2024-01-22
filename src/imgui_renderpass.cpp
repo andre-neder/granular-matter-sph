@@ -336,7 +336,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         ImGui::DragFloat("Drag Coefficient", &settings.dragCoefficient, 1.f, 0.01f, 10.f);
     ImGui::End();
 
-    ImGui::ShowDemoWindow(&show_demo_window);
+    // ImGui::ShowDemoWindow(&show_demo_window);
 
     ImGui::End();
 

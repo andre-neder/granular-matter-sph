@@ -32,7 +32,7 @@ std::vector<uint32_t> compile_file(const std::string& source_name, shaderc_shade
   shaderc::CompileOptions options;
 
   options.SetOptimizationLevel(optimization);
-  // options.SetGenerateDebugInfo();
+  options.SetGenerateDebugInfo();
 
   shaderc::SpvCompilationResult module = compiler.CompileGlslToSpv(source, kind, source_name.c_str(), options);
 

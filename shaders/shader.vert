@@ -61,11 +61,7 @@ void main() {
     // vec3 scale = vec3(settings.r_LR); // LR
     vec3 scale = vec3(settings.r_LR / 5); // HR
 
-    mat4 model = mat4(1.0);
-    model[0] = vec4(scale.x,0,0,0);
-    model[1] = vec4(0,scale.y,0,0);
-    model[2] = vec4(0,0,scale.z,0);
-    model[3] = vec4(inPosition,1.0);
+    mat4 model = mat4(vec4(scale.x,0,0,0),vec4(0,scale.y,0,0),vec4(0,0,scale.z,0),vec4(inPosition,1.0));
     eye = ubo.view[3].xyz;
     outNormal = (ubo.proj * ubo.view * vec4(vNormal, 0)).xyz;
     gl_Position = ubo.proj * ubo.view * model * vec4(vPosition, 1.0);
