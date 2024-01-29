@@ -22,7 +22,7 @@ void ParticleRenderPass::init()
 
     vertShaderModule = m_core->loadShaderModule(SHADER_PATH "/shader.vert");
     fragShaderModule = m_core->loadShaderModule(SHADER_PATH "/shader.frag");
-    // geomShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.geom");
+    geomShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.geom");
 
     createDescriptorSetLayout();
     initFrameResources();
@@ -134,7 +134,7 @@ void ParticleRenderPass::createGraphicsPipeline()
 
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {
         vertShaderStageInfo, 
-        // geomShaderStageInfo , 
+        geomShaderStageInfo , 
         fragShaderStageInfo
     }; // 
 
@@ -233,7 +233,7 @@ void ParticleRenderPass::destroy()
 
     device.destroyShaderModule(fragShaderModule);
     device.destroyShaderModule(vertShaderModule);
-    // device.destroyShaderModule(geomShaderModule);
+    device.destroyShaderModule(geomShaderModule);
 
     particleModel.destroy();
     m_core->destroyBuffer(particleModelIndexBuffer);

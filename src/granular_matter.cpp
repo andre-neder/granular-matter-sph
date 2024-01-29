@@ -149,6 +149,7 @@ void GranularMatter::init(){
     startingIndicesPass = gpu::ComputePass(m_core, SHADER_PATH"/start_indices.comp", descriptorSetLayoutsCell, { gpu::SpecializationConstant(1, workGroupSize) }); 
 
     computeDensityPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_density.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
+    computeSurfaceNormalPass = gpu::ComputePass(m_core, SHADER_PATH"/compute_surface_normal.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     
     iisphvAdvPass = gpu::ComputePass(m_core, SHADER_PATH"/iisph_v_adv.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     iisphRhoAdvPass = gpu::ComputePass(m_core, SHADER_PATH"/iisph_rho_adv.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
@@ -317,6 +318,19 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
             commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeDensityPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
             commandBuffers[currentFrame].pushConstants(computeDensityPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
+            commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
+        }
+
+        //* wait for compute pass
+        commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eComputeShader, {}, writeReadBarrier, nullptr, nullptr);
+        commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
+
+        timestampLabels[currentFrame].push_back("Compute surface normal");
+        {
+            commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eCompute, computeSurfaceNormalPass.m_pipeline);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeSurfaceNormalPass.m_pipelineLayout, 0, 1, &descriptorSetsParticles[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].bindDescriptorSets(vk::PipelineBindPoint::eCompute, computeSurfaceNormalPass.m_pipelineLayout, 1, 1, &descriptorSetsGrid[currentFrame], 0, nullptr);
+            commandBuffers[currentFrame].pushConstants(computeSurfaceNormalPass.m_pipelineLayout, vk::ShaderStageFlagBits::eCompute, 0, sizeof(SPHSettings), &settings);
             commandBuffers[currentFrame].dispatch(workGroupCountLR, 1, 1);
         }
 
@@ -711,6 +725,7 @@ void GranularMatter::destroy(){
     bitonicSortPass.destroy();
     startingIndicesPass.destroy();
     computeDensityPass.destroy();
+    computeSurfaceNormalPass.destroy();
     
     iisphvAdvPass.destroy();
     iisphRhoAdvPass.destroy();

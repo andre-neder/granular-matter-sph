@@ -154,6 +154,7 @@ private:
     gpu::ComputePass bitonicSortPass;
     gpu::ComputePass startingIndicesPass;
     gpu::ComputePass computeDensityPass;
+    gpu::ComputePass computeSurfaceNormalPass;
 
     gpu::ComputePass iisphvAdvPass;
     gpu::ComputePass iisphRhoAdvPass;
