@@ -431,18 +431,26 @@ void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite w
 {
     //Todo: Cleanup
     std::vector<vk::DescriptorImageInfo>* imageInfos = new std::vector<vk::DescriptorImageInfo>(); 
-    if(write.imageViews.size() == 0){
+    if(write.type == vk::DescriptorType::eSampler){
         imageInfos->push_back(vk::DescriptorImageInfo(write.sampler, {}, {}));
     }
-    else{
+    else if(write.type == vk::DescriptorType::eSampledImage){
+        for(auto view : write.imageViews){
+            imageInfos->push_back(vk::DescriptorImageInfo({}, view, write.imageLayout));
+        }
+    }
+    else if(write.type == vk::DescriptorType::eCombinedImageSampler){
         for(auto view : write.imageViews){
             imageInfos->push_back(vk::DescriptorImageInfo(write.sampler, view, write.imageLayout));
         }
-        
+    }
+    else{
+        throw "Unsupported write type";
     }
     vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, (uint32_t)imageInfos->size(), write.type, imageInfos->data());
     m_descriptorWrites.at(set).push_back(descriptorWrite);
 }
+
 
 
 vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<DescriptorSetBinding> bindings)
