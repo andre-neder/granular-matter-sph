@@ -1,4 +1,4 @@
-\babel@toc {ngerman}{}\relax 
+\babel@toc {english}{}\relax 
 \contentsline {section}{\numberline {1}Introduction}{1}{section.1}%
 \contentsline {section}{\numberline {2}Related Work}{2}{section.2}%
 \contentsline {section}{\numberline {3}Basics}{3}{section.3}%
@@ -15,12 +15,12 @@
 \contentsline {subsection}{\numberline {5.4}External forces}{12}{subsection.5.4}%
 \contentsline {subsection}{\numberline {5.5}Gravity}{12}{subsection.5.5}%
 \contentsline {subsection}{\numberline {5.6}Drag}{12}{subsection.5.6}%
-\contentsline {subsection}{\numberline {5.7}Strain \& Stress}{12}{subsection.5.7}%
+\contentsline {subsection}{\numberline {5.7}Strain \& Stress}{13}{subsection.5.7}%
 \contentsline {subsection}{\numberline {5.8}Pressure}{14}{subsection.5.8}%
-\contentsline {subsection}{\numberline {5.9}Internal Forces}{15}{subsection.5.9}%
+\contentsline {subsection}{\numberline {5.9}Internal Forces}{16}{subsection.5.9}%
 \contentsline {subsection}{\numberline {5.10}Integration}{16}{subsection.5.10}%
 \contentsline {subsection}{\numberline {5.11}Boundary Handling}{16}{subsection.5.11}%
-\contentsline {subsection}{\numberline {5.12}Upsampling}{18}{subsection.5.12}%
-\contentsline {subsection}{\numberline {5.13}Visualization}{19}{subsection.5.13}%
-\contentsline {subsection}{\numberline {5.14}User interaction}{19}{subsection.5.14}%
-\contentsline {section}{\numberline {6}Conclusion \& Future Work}{20}{section.6}%
+\contentsline {subsection}{\numberline {5.12}Upsampling}{19}{subsection.5.12}%
+\contentsline {subsection}{\numberline {5.13}Visualization}{20}{subsection.5.13}%
+\contentsline {subsection}{\numberline {5.14}User interaction}{20}{subsection.5.14}%
+\contentsline {section}{\numberline {6}Conclusion \& Future Work}{22}{section.6}%

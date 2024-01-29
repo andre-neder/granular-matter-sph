@@ -134,7 +134,7 @@ void ParticleRenderPass::createGraphicsPipeline()
 
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {
         vertShaderStageInfo, 
-        geomShaderStageInfo , 
+        // geomShaderStageInfo , 
         fragShaderStageInfo
     }; // 
 

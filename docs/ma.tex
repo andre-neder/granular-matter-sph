@@ -155,7 +155,7 @@
     \pagebreak
     \section{Implementation}\label{sec:impl}
     The whole implementation consists of a simple abstraction over the Vulkan API, I created, to speed up the creation of all required objects, such as buffers, descriptor sets and pipelines. I first create all the particles on the CPU side and store them as a storage buffer on the GPU. This buffer can later be bound as vertex buffer to be used in the rendering. The rigid bodies are loaded from the glTF files and processed into buffers and textures to be used by a dedicated renderpass. To incorporate them into the simulation, they are converted into a signed distance representation stored as 3D textures. With this, all the major data of the simulation is accessable on the GPU.
-    The actual algorithm \ref*{alg:main} consits of 13 different compute shaders, which execute the different steps. First, the particles are grouped into their grid cells and the external force for each particle is set to the gravity. Then the resulting grid entries are sorted and then the start indices of all cells are determined. After that, $\rho$, $F^{drag}$, $s$, $v_{adv}$ and $\rho_{adv}$ will be calulated in separat shaders. Their purpose will be explained in detail later on. All steps of the simulation are separated by pipeline barriers to ensure a property has been calculated for all particles before accessing them in the next step. After the computation of $\rho_{adv}$ has been issued, the first command buffer is send to the gpu for processing and its completion is awaited, as the next steps will need to be executed for a dynamic amount of iterations. These iterations consist of computing $d_{ij}p_{j}$, $p^{l+1}$, $p(t)$ and applying the yield criterion for the stress. After these steps have been executed the average density error determines if another iteration is required. For this, its value needs to be transfered from the GPU to the CPU. All other computations happen exclusivly on the GPU by accessing the particles stored in the storage buffer. After the IISPH iterations are done, the resulting forces are computed and integrated over the elapsed time. In the last step the simulation is visually enhanced by advecting a set of high resolution particles based on the flow of the before computed low resolution behavior and external forces. After this step the storage buffer containing the high resolution particles is bound to a renderpass for drawing and the algorithm starts from the beginning. All steps will now be explained in detail.
+    The actual algorithm \ref*{alg:main} consits of 14 different compute shaders, which execute the different steps. First, the particles are grouped into their grid cells and the external force for each particle is set to the gravity. Then the resulting grid entries are sorted and then the start indices of all cells are determined. After that, $\rho$, $F^{drag}$, $s$, $v_{adv}$ and $\rho_{adv}$ will be calulated in separat shaders. Their purpose will be explained in detail later on. All steps of the simulation are separated by pipeline barriers to ensure a property has been calculated for all particles before accessing them in the next step. After the computation of $\rho_{adv}$ has been issued, the first command buffer is send to the gpu for processing and its completion is awaited, as the next steps will need to be executed for a dynamic amount of iterations. These iterations consist of computing $d_{ij}p_{j}$, $p^{l+1}$, $p(t)$ and applying the yield criterion for the stress. After these steps have been executed the average density error determines if another iteration is required. For this, its value needs to be transfered from the GPU to the CPU. All other computations happen exclusivly on the GPU by accessing the particles stored in the storage buffer. After the IISPH iterations are done, the resulting forces are computed and integrated over the elapsed time. In the last step the simulation is visually enhanced by advecting a set of high resolution particles based on the flow of the before computed low resolution behavior and external forces. After this step the storage buffer containing the high resolution particles is bound to a renderpass for drawing and the algorithm starts from the beginning. All steps will now be explained in detail.
     \begin{algorithm}[H]
         \caption{Full Simulation Frame}
         \label{alg:main}
@@ -233,16 +233,37 @@
     As an additional force that approximated the interaction with air a drag force $F^{drag}$ was applied. Which uses a simplified implementation of the drag by Gissler et al.. For this the relative velocity difference of a particle to the surrounding air is computed and its length squared. \cite{10.1016/j.cag.2017.09.002}
 
     \begin{equation}
+        \label{eq:v_rel}
         v^2_{i,rel} = |v_a - v_i|^2\ \frac{v_a - v_i}{|v_a - v_i|}
     \end{equation}
 
-    The velocity of the air $v_a$ can be set to 0 or could be taken from a velocity field of some kind. Computing the drag force, to apply to each particle, involves determining the crosssecional area $A_i$ of a particle. This can be represented by the area of a circle. Then the actual area exposed to oncomming air needs to be determined. For this a cone which is defined by the direction of the relative velocity differnce and a set angle is used to check if there are any other particles that shield the current particle form the air. This is done by a dot product of the relative velocity difference and the vector to the neighboring particles, which returns the angle between them. To not only get a boolean value for the shielding, an occlusion value is introduced, which is set to the smallest angle between neighboring particles in the cone. This value is then subtracted from 1 and added to the drag formulation as weight $\omega$. Further parameters for the equation are $\rho_a$ the density of the air or the medium that surrounds the particles and $C_{D,i}$ the drag coefficient for shape of the particle. \cite{10.1016/j.cag.2017.09.002} The whole formula is then composed as : 
+    The velocity of the air $v_a$ can be set to 0, to represent still air, or could be taken from a velocity field of some kind. Computing the drag force, to apply to each particle, involves determining the crosssecional area $A_i$ of a particle. This can be represented by the area of a circle. Then the actual area exposed to oncomming air needs to be determined. For this a cone which is defined by the direction of the relative velocity differnce and a set angle is used to check if there are any other particles that shield the current particle form the air. This is done by a dot product of the relative velocity difference and the vector to the neighboring particles, which returns the angle between them. To not only get a boolean value for the shielding, an occlusion value is introduced, which is set to the smallest angle between neighboring particles in the cone. This value is then subtracted from 1 and added to the drag formulation as weight $\omega$. Further parameters for the equation are $\rho_a$ the density of the air or the medium that surrounds the particles and $C_{D,i}$ the drag coefficient for shape of the particle. \cite{10.1016/j.cag.2017.09.002} The whole formula is then composed as : 
 
     \begin{equation}
         F^{drag}_i = \frac{1}{2}\rho_a v^2_{i,rel} C_{D,i}  \omega  A_i
     \end{equation}
 
-    The deformation of a particle by the surrounding air is left out in this implementation.
+    The deformation of a particle by the oncoming air is left out in this implementation.
+
+    To make not only the air influence the granular material, but make the air also flow over and around it, I added another compute pass to calculate the surface normal $n$ for each particle using the gradient of the so called smoothed color field $\nabla c^s$ as \cite{10.5555/846276.846298}:
+
+    \begin{equation}
+        n = -\nabla c^s
+    \end{equation}
+
+    with $\nabla c^s$ being computed as: 
+
+    \begin{equation}
+        \nabla c^s = \sum_j m_j \frac{1}{\rho_j} \nabla W_{ij}
+    \end{equation}
+
+    With this approximation of the surface of the granular matter, i calculated an approximate air flow along the surface, by projecting the incoming air velocity onto the plane, defined by the surface normal:
+
+    \begin{equation}
+        v_{a, i} = v_{a} - v_{a} \cdot n_i
+    \end{equation}
+
+    The rough approximation for the air flowing over the surface of the granular matierial $v_{air, i}$, was then plugged into equation \ref{eq:v_rel}.
 
     \subsection{Strain \& Stress}
     
@@ -392,8 +413,15 @@
     \subsection{Boundary Handling}
     
     \subsubsection*{Particle-Based Approaches}
-    Most implementations of SPH use the concept of Akinci et al. \cite{boundary_handling} when implementing boundary handling and rigidbody interactions. This first implementation of this work also used this method, but later the concept of Volume maps was implemented due to multiple advantages. The idea is to represent boundaries and rigidbodys by sampling their surface or volume with a dense mesh of particles, which can then be incoporated into the normal simulation. For static objects the boundary particles are not integrated in time. For dynamic rigidbodies the particles representing them, collect the counteracting forces, they excert onto the fluid. The collected forces can then be summed up and integrated by a rigidbody physics solver.
+    Most implementations of SPH use the concept of Akinci et al. \cite{boundary_handling} when implementing boundary handling and rigidbody interactions. The first implementation of this work also used this method, but later the concept of volume maps was adopted due to multiple advantages. The idea is to represent boundaries and rigidbodies by sampling their surface or volume with one or more layers of particles as shown in figure \ref{fig:particle_boundary}, which can then be incoporated into the normal particle simulation. For static objects the boundary particles are not integrated in time. For dynamic rigidbodies, the particles representing them collect the counteracting forces, they excert onto the fluid. The collected forces can then be summed up and integrated by a rigidbody physics solver.
     This method presents some drawbacks. One of them being the amount of particles required to sample the 3D models in the scene, which then have to be checked for each neighboring fluid particle. \cite{10.1145/3359566.3360077} \cite{10.2312:PE:vriphys:vriphys12:053-060} \cite{boundary_handling} \cite{10.1145/2185520.2185558}
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth]{figures/particle_boundary.png}
+        \caption[Example of a 2D boundary sampled with particle. On the left one layer and on the right a version with multiple layers. \cite{10.1145/2185520.2185558}]{Example of a 2D boundary sampled with particle. On the left one layer and on the right a version with multiple layers.}
+        \label[fig]{fig:particle_boundary}
+    \end{figure}
 
     \subsubsection*{Volume Maps}
     In this implementation the concept of Volume Maps is employed. They are an implicit boundary representation, inspired by the density maps concept. They use signed distance functions to determine the volume of the intersection of the kernel function around a particle and the boundary. For this, the boundary or bounding box of any arbitrary mesh is extended by the kernel radius and then sampled on a grid with a set resolution. Here the TriangleMeshDistance library is used to create a signed distance representation of any triangle based mesh. For each sample a vector to the nearest point on the surface of the object is stored aswell as the intersection volume $V_B$, which is calculated by the signed distance $\Phi$, treated by a cubic extension function $\gamma^*$, to get a continuos differentiable function, which results in a smooth transition at $x = h$. \cite{10.1145/3359566.3360077}
@@ -412,7 +440,7 @@
     \end{equation}
 
     For this cubic extension function the cubic spline kernel $C(x)$ \cite{doi:10.1146/annurev.aa.30.090192.002551} is used. The use of this function does not enforce the use of the same function for the SPH approximation, where any kind of kernel function can be used. \cite{10.1145/3359566.3360077}
-    The grid is then stored as a 32-bit 4-channel floating point 3-dimensional image and uploaded to the GPU. As Vulkan does not support arrays of 3D images, as it does for 2D, the descriptor indexing extension has to be used to allow for multiple 3D textures being bound dynamically. When sampling the texture in the shader, the nearest position on the surface and the intersection volume can be determined using only one texture read access instead of iterating all neighboring boundary particles as done in the particle-based approach. After transforming the volume map from its texture space into world space inside of the shader, a smooth value for both required properties is can be determined by the sampler. These values can the be used in any of the above mentioned equations, by subsituting the mass for the determined volume $V_b$ and the reference density of the simulated material $\rho_0$.
+    The grid is then stored as a 32-bit 4-channel floating point 3-dimensional image and uploaded to the GPU. As Vulkan does not support arrays of 3D images, as it does for 2D, the descriptor indexing extension has to be used to allow for multiple 3D textures being bound dynamically. When sampling the texture in the shader, the nearest position on the surface and the intersection volume can be determined using only one texture read access instead of iterating all neighboring boundary particles as done in the particle-based approach. After transforming the volume map from its texture space into world space inside of the shader, a smooth value for both required properties is can be determined by the sampler. These values can the be used in any of the above mentioned equations, by subsituting the mass for the determined volume $V_b$ and the reference density $\rho_0$ of the simulated material, resulting in the following equations.
 
     \begin{equation}
         \rho_i = \sum_b V_b \rho_0 W_{ib}
@@ -430,15 +458,22 @@
     \begin{figure}[H]
             \includegraphics[width=0.5\textwidth]{figures/volume_map_slice_xyz.png}
             \includegraphics[width=0.5\textwidth]{figures/volume_map_slice_w.png}
-        \caption[]{Slice of a volume map for a dump truck model, showing the nearest point and volume. Extracted using Nvidia Nsight Graphics.}
+        \caption[Slice of a volume map for a dump truck model, showing the nearest point and volume. Extracted using Nvidia Nsight Graphics.]{Slice of a volume map for a dump truck model, showing the nearest point and volume. Extracted using Nvidia Nsight Graphics.}
         \label[fig]{volume_map}
     \end{figure}
 
 
     \subsection{Upsampling}
     As granular matter consists of vast number of grains, simulating them all as individual particles, would not only make the computational cost and memory consuption incredibly high, but would also result in a very restricted time step due to the CFL condition. To achive real time results, the simulation is done for a set of low-resolution (LR) particles which approximate the granular flow, which are then upsampled to another set of high-resolution (HR) particles. \cite{10.2312:PE:vriphys:vriphys12:053-060}
-    % The volume of each low-resolution particle is initially sampled with a special pattern of high-resolution particles, which tries to minimize the effect of clumping. For this pattern, 
-    \\// TODO: Sampling
+    A volume around each low-resolution particle is initially sampled with a special pattern of high-resolution particles, which tries to minimize the effect of clumping. For this, each LR particles bounding box is sampled with $n$ HR particles. Then 6 bounding box sized volumes, offset in both positive and negativ X, Y and Z direction by the particle radius, are also sampled with $n$ particles, resulting in $7n$ HR particles for each LR particle. 
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.5\textwidth]{figures/sampling.png}
+        \caption[2D Example of the HR sampling of a LR particle (grey area) with $n = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.]{2D Example of the HR sampling of a LR particle (grey area) with $n = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.}
+        \label[fig]{fig:sampling}
+    \end{figure}
+
 
     After the above described algorithm is executed on the low-resoltion particles, the high resolution particles are advected based on the velocity field of the low-resolution simulation. This is again done by the SPH concept, but with a different smoothing length $h_{HR}$ which is set to $h_{HR} = 3h_{LR}$. To find the velocity of a HR particle a distance based weight $w$ is introduced.
 
@@ -469,21 +504,21 @@
         \end{cases}
     \end{equation}
 
-    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060} I then additionally modified the alpha value, by multiplying it with 1 minus the dot product of the external force and the vector to the boundary, clamped between 0 and 1, to prevent hr particles falling through the volume map based boundaries.
+    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060} I then additionally modified the alpha value, by multiplying it with 1 minus the dot product of the external force and the vector to the boundary, clamped between 0 and 1, to prevent hr particles falling through the volume map based boundaries, as the above presented method seems to be not fully applicable to volume map boundaries.
     
     \subsection{Visualization}
     As the visualisation is not the main focus of this work, it has been kept simple. To visualize the simulation, all particles are rendered as instanced meshes, as the number of particles to draw can become quite large and in this way all of them can be rendered in just one draw call. A detailed explanation of instanced rendering can be found on \url{https://learnopengl.com/Advanced-OpenGL/Instancing}. The rigidbodies are rendered by drawing each node of the model with its associated material, as its own draw call and are shaded with a simple diffuse lighting model.
 
     \subsection{User interaction}
-    For the user to experience the simulation in 3D space, a camera controller has been implemented, that allows to explore the simulation from every angle. The simulation can be paused and reset to its initial state by buttons provided via the user interface. It also allows to modify some of the simulations parameters, such as the density, gravity or air velocity. Another purpose the UI serves is to provide infomation about the perfomance, such as timing, iteration count or framerate. The UI has been implemented in a way that allows the user to rearange all the windows, inside and outside of the main window. There for the docking and multi-viewport features of Dear ImGui have been utilized.
-   
-    % problems:
-    % - boiling problem 
-    % - sticking of hr particles
-    % - performance
+    For the user to experience the simulation in 3D space, a camera controller has been implemented, that allows to explore the simulation from every angle. The simulation can be paused and reset to its initial state by buttons provided via the user interface. It also allows to modify some of the simulations parameters, such as the density, gravity or air velocity. Another purpose the UI serves is to provide infomation about the perfomance, such as timing, iteration count or framerate. The UI has been implemented in a way that allows the user to rearange all the windows, inside and outside of the main window. There for the docking and multi-viewport features of Dear ImGui have been utilized. The UI can be seen in figure \ref{fig:ui}
 
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=1\textwidth]{figures/placeholder.png}
+        \caption[Screenshot of the User interface.]{Screenshot of the User interface.}
+        \label[fig]{fig:ui}
+    \end{figure}
 
-    % \dots
     \pagebreak
     \section{Conclusion \& Future Work}  \label{sec:end}
     % intro
@@ -491,21 +526,40 @@
     % piles
     The simulation achieves the accumulation of stable piles with different angles of repose, while keeping them stable for an extended amount of time, as shown in figure \ref{fig:piles}.
     \begin{figure}[H]
-        \includegraphics[width=0.3\textwidth]{figures/placeholder.png}
-        \includegraphics[width=0.3\textwidth]{figures/placeholder.png}
-        \includegraphics[width=0.3\textwidth]{figures/placeholder.png}
-        \caption[]{Three piles with different angles of repose, simulated for x frames. TODO}
+        \centering
+        \includegraphics[width=0.32\textwidth]{figures/placeholder.png}
+        \includegraphics[width=0.32\textwidth]{figures/placeholder.png}
+        \includegraphics[width=0.32\textwidth]{figures/placeholder.png}
+        \caption[Three piles with different angles of repose, simulated for x frames.]{Three piles with different angles of repose, simulated for x frames. TODO}
         \label[fig]{fig:piles}
     \end{figure}
     After a longer simulation time the piles will eventually melt down, due to a which results in a \enquote{bubbling} effect, which is caused by minor inaccuracy in the pressure calculation. This problem can be improved by lowering the default maximum allowed compression of 0.5\%, which I found being a good compromise between performance and accuracy. The maximum timestep was set to 16ms as this results in a framerate of 60 frames per second, while keeping the iterations required in a order of magniture that can be computed within that timeframe. These values were determined for a simulation with 8192 low resolution and about half a million high resolution particles for the piling scenario. For other scenarios the maximum compression needs to be even higher, at 1\% to maintain a stable framerate.
     % IISPH
-    These large timesteps are only possible because of the IISPH algorithm, as the CFL condition, which determines the maximum viable timestep based on the simulation parameters, would only allow few or even sub millisecond timesteps with WCSPH or PCISPH. (Todo: Improvements?)
+    These large timesteps are only possible because of the IISPH algorithm, as the CFL condition, which determines the maximum viable timestep based on the simulation parameters, would only allow few or even sub millisecond timesteps with WCSPH or PCISPH. Another improvement might be the implementation of a divergence free solver, as proposed by Bender and Koschier in their paper Divergence-Free Smoothed Particle Hydrodynamics, as it achieved even better perfromance in their tests than IISPH \cite{10.1145/2786784.2786796}.
     % volume maps
-    The above mentioned \enquote{bubbling} effect gets even worse when combining a large compression of 1\% with low resolution volume maps, as they can not handle complex objects. Creating higher resolution volume maps improves this by some margin, but introduces longer loading times and higher memory consumption. The longer loading times could be countered by parallelization or precomputing the volume maps and loading them from files. To improve the memory consumption the rigid body model could be separated into multiple volume maps with resolutions according to the required complexity of the part or to work around large empty areas for concave objects. Combined with some kind of hirarchical respresentation of the object, the sample time for one rigidbody should not increase by too much.
+    The above mentioned \enquote{bubbling} effect gets even worse when combining a large compression of 1\% with low resolution volume maps, as they can not handle complex objects. Creating higher resolution volume maps improves this by some margin, but introduces longer loading times and higher memory consumption. The longer loading times could be countered by parallelization or precomputing the volume maps and loading them from files.
+    To improve the memory consumption, the rigid body model could be separated into multiple volume maps with resolutions according to the complexity of the part or to work around large empty areas for concave objects. Combined with some kind of hirarchical respresentation of the object, the sample time for one rigidbody should not increase by too much.
+    Another problem the volume maps introduced is a visual step between the first and the second layer of particles above the floor. This is especially noticable on the low resolution representation as shown in figure \ref{fig:layer_step}. This problem might be solvable by applying the modifications to the volume maps approach by Bender et al. in their work, Implicit Frictional Boundary Handling for SPH \cite{9123549}. Unfortunatly I had not enough time to test this approach in my implementation.
+    \begin{figure}[H]
+        \includegraphics[width=0.5\textwidth]{figures/placeholder.png}
+        \includegraphics[width=0.5\textwidth]{figures/placeholder.png}
+        \caption[Example of the step between the first and the second layer of particles above ground. On the left with LR particles and on the right with HR particles]{Example of the step between the first and the second layer of particles above ground. On the left with LR particles and on the right with HR particles}
+        \label[fig]{fig:layer_step}
+    \end{figure}
     % upsampling
-    Throught the upsampling of the low resolution simulation a visually plausible representation of vast amounts of granular material, comparable to other papers, is achieved. A major problem that Ihmsen et al. \cite{10.2312:PE:vriphys:vriphys12:053-060} already tried to solve by their upsampling approach, is the clumping of high resolution particles, which is still visible. Another problem is the sticking of particles to some shapes. This seems to come from the use of the volume maps, as the kernel used for the upsampling does not capture the contribution of the boundary quite right.
-    %two way coupling
+    Throught the upsampling of the low resolution simulation a visually plausible representation of vast amounts of granular material, comparable to other papers, is achieved. A major problem that Ihmsen et al. \cite{10.2312:PE:vriphys:vriphys12:053-060} already tried to solve by their upsampling approach, is the clumping of high resolution particles, which is still visible. Another problem is the sticking of particles to some shapes as visible in illustration \ref{fig:sticking}. This seems to come from the use of the volume maps, as the kernel used for the upsampling does not capture the contribution of the boundary quite right.
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{figures/placeholder.png}
+        \caption[Example of high resolution particles sticking to the wall of a dump truck.]{Example of high resolution particles sticking to the wall of a dump truck.}
+        \label[fig]{fig:sticking}
+    \end{figure}
+    % two way coupling
     One feature missing from my implementation compared to other implementations is two-way coupling, as the simulation only reacts to static boundaries and does not influence them. This could be implemented in the future by collecting the forces for each rigidbody and feeding them into a dedicated solver.
+
+    Todo: Performance
+
+    Todo: Final words
 
     \pagebreak
     \listoffigures

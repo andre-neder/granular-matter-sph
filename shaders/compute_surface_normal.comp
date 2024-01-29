@@ -182,7 +182,7 @@ void main(){
 
     for_all_fluid_neighbors(
         vec3 gradient = gradW(p_pi, settings.h_LR);
-        surfaceNormal += settings.mass * (1.0 / p.rho) * gradient; 
+        surfaceNormal += settings.mass * (1.0 / pi.rho) * gradient; 
     )
 
     for_all_volume_maps(
