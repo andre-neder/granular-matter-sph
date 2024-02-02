@@ -43,6 +43,7 @@ struct LRParticle{
     float pad0 = 0.0;
 
     glm::vec4 averageN;
+    glm::vec4 color;
 
     LRParticle(){};
     inline LRParticle(float x, float y , float z) { position = glm::vec4(x, y, z, 1.0); }
@@ -53,10 +54,11 @@ struct LRParticle{
         };
         return bindingDescriptions;
     }
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
-        std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
+    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 3> attributeDescriptions{
             vk::VertexInputAttributeDescription(7, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, position)),
             vk::VertexInputAttributeDescription(8, BINDING, vk::Format::eR32G32B32Sfloat, offsetof(LRParticle, averageN)),
+            vk::VertexInputAttributeDescription(9, BINDING, vk::Format::eR32G32B32A32Sfloat, offsetof(LRParticle, color)),
         };
         return attributeDescriptions;
     }
@@ -65,6 +67,7 @@ struct LRParticle{
 struct HRParticle{
     glm::vec4 position = glm::vec4(0);
     glm::vec4 velocity = glm::vec4(0);  
+    glm::vec4 color = glm::vec4(0);  
     HRParticle(){};
     inline HRParticle(float x, float y, float z) { position = glm::vec4(x, y, z, 1); }
     static const uint32_t BINDING = 1;
@@ -74,10 +77,11 @@ struct HRParticle{
         };
         return bindingDescriptions;
     }
-    static std::array<vk::VertexInputAttributeDescription, 2> getAttributeDescriptions() {
-        std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions{
+    static std::array<vk::VertexInputAttributeDescription, 3> getAttributeDescriptions() {
+        std::array<vk::VertexInputAttributeDescription, 3> attributeDescriptions{
             vk::VertexInputAttributeDescription(7, BINDING, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, position)),
             vk::VertexInputAttributeDescription(8, BINDING, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, velocity)),
+            vk::VertexInputAttributeDescription(9, BINDING, vk::Format::eR32G32B32A32Sfloat, offsetof(HRParticle, color)),
         };
         return attributeDescriptions;
     }

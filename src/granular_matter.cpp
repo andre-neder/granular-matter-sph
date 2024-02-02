@@ -53,6 +53,20 @@ void GranularMatter::init(){
         {0, 0, -settings.r_LR},
     };
 
+    std::vector<glm::vec4> colorPalette = {
+        glm::vec4(246.f / 255.f, 215.f / 255.f, 176.f / 255.f, 1.0),
+        glm::vec4(246.f / 255.f, 215.f / 255.f, 176.f / 255.f, 1.0),
+        glm::vec4(246.f / 255.f, 215.f / 255.f, 176.f / 255.f, 1.0),
+        glm::vec4(246.f / 255.f, 215.f / 255.f, 176.f / 255.f, 1.0),
+        glm::vec4(246.f / 255.f, 215.f / 255.f, 176.f / 255.f, 1.0),
+        glm::vec4(246.f / 255.f, 215.f / 255.f, 176.f / 255.f, 1.0),
+        glm::vec4(246.f / 255.f, 215.f / 255.f, 176.f / 255.f, 1.0),
+        glm::vec4( 83.f / 255.f,  68.f / 255.f,  56.f / 255.f, 1.0),
+        glm::vec4(251.f / 255.f, 225.f / 255.f, 187.f / 255.f, 1.0),
+        glm::vec4(251.f / 255.f, 225.f / 255.f, 187.f / 255.f, 1.0),
+       
+    };
+
     for(int i = 0;i < computeSpace.x ; i++){
         for(int j = 0;j < computeSpace.y ; j++){
             for(int k = 0;k < computeSpace.z ; k++){
@@ -62,20 +76,23 @@ void GranularMatter::init(){
                      j * initialDistance + (initialDistance / 2.f) + settings.r_LR + 8.f, //  (initialDistance * computeSpace.y / 2) + // 
                     -(initialDistance * computeSpace.z / 2) + k * initialDistance + (initialDistance / 2.f)
                 );
-
-                lrParticles.push_back(LRParticle(
+                auto p = LRParticle(
                     lrPosition.x,// + RandomFloat(-settings.r_LR, settings.r_LR), 
                     lrPosition.y,// + RandomFloat(-settings.r_LR, settings.r_LR), 
                     lrPosition.z// + RandomFloat(-settings.r_LR, settings.r_LR)
-                ));
+                );
+                p.color = colorPalette[std::floor((((float) rand()) / (float) RAND_MAX) * (colorPalette.size() - 1))];
+                lrParticles.push_back(p);
 
                 for(uint32_t l = 0; l < settings.n_HR; l++){
                     glm::vec3 offset = hrParticleOffsets[l % hrParticleOffsets.size()];
-                    hrParticles.push_back(HRParticle(
+                    auto p1 = HRParticle(
                         lrPosition.x + offset.x + RandomFloat(-settings.r_LR, settings.r_LR), 
                         lrPosition.y + offset.y + RandomFloat(-settings.r_LR, settings.r_LR),
                         lrPosition.z + offset.z + RandomFloat(-settings.r_LR, settings.r_LR)
-                    ));
+                    );
+                    p1.color = colorPalette[std::floor((((float) rand()) / (float) RAND_MAX) * (colorPalette.size() - 1))];
+                    hrParticles.push_back(p1);
                 }
                 
             }

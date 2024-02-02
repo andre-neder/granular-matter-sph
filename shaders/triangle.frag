@@ -59,6 +59,6 @@ vec3 lightDir = vec3(1.0, 1.0, 1.0);
 void main() {
     vec4 baseColor = material.baseColorTexture >= 0 ? texture(sampler2D(textures[material.baseColorTexture], textureSampler), vUV) : vec4(1.0);// vec4(1.0, 0.0, 1.0, 1.0);
     float diff = max(dot(vNormal, lightDir), 0.0);
-    outColor = (0.3 + diff) * vec4(material.baseColorFactor * baseColor);
+    outColor = (0.03 + diff) * vec4(material.baseColorFactor * baseColor);
     // outColor = vec4(1.0);
 }

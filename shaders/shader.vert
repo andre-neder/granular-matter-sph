@@ -49,11 +49,13 @@ layout (location = 6) in vec4 vTangent;
 
 layout(location = 7) in vec3 inPosition;
 layout(location = 8) in vec3 inVelocity;
+layout(location = 9) in vec4 inColor;
 
 layout(location = 0) out vec3 outNormal;
 layout(location = 1) out vec3 eye;
 layout(location = 2) out vec3 outVelocity;
 layout(location = 3) out vec3 outPosition;
+layout(location = 9) out vec4 outColor;
 
 void main() {
     gl_PointSize = 1;
@@ -63,9 +65,11 @@ void main() {
 
     mat4 model = mat4(vec4(scale.x,0,0,0),vec4(0,scale.y,0,0),vec4(0,0,scale.z,0),vec4(inPosition,1.0));
     eye = ubo.view[3].xyz;
-    outNormal = (ubo.proj * ubo.view * vec4(vNormal, 0)).xyz;
+    // outNormal = (ubo.proj * ubo.view * vec4(vNormal, 0)).xyz;
+    outNormal = (transpose(inverse(model)) * vec4(vNormal, 0.0)).xyz;
     gl_Position = ubo.proj * ubo.view * model * vec4(vPosition, 1.0);
 
     outPosition = inPosition;
     outVelocity = inVelocity;
+    outColor = inColor;
 }

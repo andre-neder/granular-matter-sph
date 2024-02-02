@@ -29,6 +29,7 @@ struct LRParticle{
     float densityAdv;
     float pad0;
     vec4 averageN;
+vec4 color;
 };
 
 struct ParticleGridEntry{

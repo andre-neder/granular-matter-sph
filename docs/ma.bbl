@@ -210,8 +210,8 @@
       \strng{authorbibnamehash}{4701af3e0eb200edddef5f2b9feb3130}
       \strng{authornamehash}{4701af3e0eb200edddef5f2b9feb3130}
       \strng{authorfullhash}{4701af3e0eb200edddef5f2b9feb3130}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{Proceedings of the 2005 ACM SIGGRAPH/Eurographics Symposium on Computer Animation}
@@ -745,8 +745,8 @@
       \strng{authorbibnamehash}{ac87ffff4ebdf03b96ccc0d2d542ed20}
       \strng{authornamehash}{98aa2ab967ae492ad9bc04abd7f7fbb9}
       \strng{authorfullhash}{ac87ffff4ebdf03b96ccc0d2d542ed20}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{issn}{1467-8659}
@@ -1163,8 +1163,8 @@
       \strng{authorbibnamehash}{082f0a20a5ae96d82e2f5df24e0fac8e}
       \strng{authornamehash}{082f0a20a5ae96d82e2f5df24e0fac8e}
       \strng{authorfullhash}{082f0a20a5ae96d82e2f5df24e0fac8e}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Fluid-Sim}

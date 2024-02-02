@@ -26,7 +26,7 @@ namespace gpu{
             uint32_t vertexCount;
 
             std::array<vk::VertexInputBindingDescription, 1> bindingDescription;
-            std::array<vk::VertexInputAttributeDescription, 2> attributeDescriptions;
+            std::array<vk::VertexInputAttributeDescription, 3> attributeDescriptions;
 
         private:
             gpu::Camera* m_camera;
