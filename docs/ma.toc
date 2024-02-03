@@ -7,7 +7,7 @@
 \contentsline {subsection}{\numberline {3.3}Bitonic Sort}{4}{subsection.3.3}%
 \contentsline {section}{\numberline {4}Method}{5}{section.4}%
 \contentsline {subsection}{\numberline {4.1}Smoothed Particle Hydrodynamics}{5}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Libraries \& Technologies}{6}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.2}Libraries \& Technologies}{7}{subsection.4.2}%
 \contentsline {section}{\numberline {5}Implementation}{9}{section.5}%
 \contentsline {subsection}{\numberline {5.1}Neighborhood Search}{10}{subsection.5.1}%
 \contentsline {subsection}{\numberline {5.2}Density}{11}{subsection.5.2}%
@@ -21,6 +21,6 @@
 \contentsline {subsection}{\numberline {5.10}Integration}{16}{subsection.5.10}%
 \contentsline {subsection}{\numberline {5.11}Boundary Handling}{16}{subsection.5.11}%
 \contentsline {subsection}{\numberline {5.12}Upsampling}{19}{subsection.5.12}%
-\contentsline {subsection}{\numberline {5.13}Visualization}{20}{subsection.5.13}%
-\contentsline {subsection}{\numberline {5.14}User interaction}{20}{subsection.5.14}%
-\contentsline {section}{\numberline {6}Conclusion \& Future Work}{22}{section.6}%
+\contentsline {subsection}{\numberline {5.13}Visualization}{21}{subsection.5.13}%
+\contentsline {subsection}{\numberline {5.14}User interaction}{21}{subsection.5.14}%
+\contentsline {section}{\numberline {6}Conclusion \& Future Work}{23}{section.6}%

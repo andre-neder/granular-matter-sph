@@ -71,8 +71,8 @@
       \strng{editorbibnamehash}{1e6c7b81c55a4046eb4861235f7e3146}
       \strng{editornamehash}{ad906bf6dd17012315aed408dfc588f6}
       \strng{editorfullhash}{1e6c7b81c55a4046eb4861235f7e3146}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{Workshop on Virtual Reality Interaction and Physical Simulation}
@@ -125,8 +125,8 @@
       \strng{editorbibnamehash}{e0fc0f539395013fe8ecff54c979c0b1}
       \strng{editornamehash}{e0fc0f539395013fe8ecff54c979c0b1}
       \strng{editorfullhash}{e0fc0f539395013fe8ecff54c979c0b1}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{CEIG 09 - Congreso Espanol de Informatica Grafica}
@@ -166,8 +166,8 @@
       \strng{authorbibnamehash}{d96c4295eea5b9c369e8cec9e243067e}
       \strng{authornamehash}{358c93a5ebe1a30566f1383f12bb142d}
       \strng{authorfullhash}{d96c4295eea5b9c369e8cec9e243067e}
-      \field{sortinit}{6}
-      \field{sortinithash}{b33bc299efb3c36abec520a4c896a66d}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{VRIPHYS'10}
@@ -575,8 +575,8 @@
       \strng{authorbibnamehash}{be0df0d2530a10d0ac6bdf1413b53527}
       \strng{authornamehash}{a8507637491345e2066e0eee0aad92f5}
       \strng{authorfullhash}{be0df0d2530a10d0ac6bdf1413b53527}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{issn}{0307-904X}
@@ -644,8 +644,8 @@
       \strng{authorbibnamehash}{678dd34ef215d7b3db7ba6d5053f83e9}
       \strng{authornamehash}{93c4b6f6acfb9e857317f2b7a8df1bfc}
       \strng{authorfullhash}{678dd34ef215d7b3db7ba6d5053f83e9}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{issn}{0730-0301}
@@ -686,8 +686,8 @@
       \strng{authorbibnamehash}{4ab55a42f313a25d922f62c564e48efd}
       \strng{authornamehash}{4ab55a42f313a25d922f62c564e48efd}
       \strng{authorfullhash}{4ab55a42f313a25d922f62c564e48efd}
-      \field{sortinit}{7}
-      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Computer Graphics Forum}
@@ -1085,8 +1085,8 @@
       \strng{authornamehash}{00f9bcdad45f435417911d040feff60a}
       \strng{authorfullhash}{00f9bcdad45f435417911d040feff60a}
       \field{extraname}{1}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Inigo Quilez :: computer graphics, mathematics, shaders, fractals, demoscene and more}
@@ -1112,8 +1112,8 @@
       \strng{authornamehash}{00f9bcdad45f435417911d040feff60a}
       \strng{authorfullhash}{00f9bcdad45f435417911d040feff60a}
       \field{extraname}{2}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Inigo Quilez :: computer graphics, mathematics, shaders, fractals, demoscene and more}
@@ -1137,8 +1137,8 @@
       \strng{authorbibnamehash}{19ebe6646743912ca4a5528a2fea4ea2}
       \strng{authornamehash}{19ebe6646743912ca4a5528a2fea4ea2}
       \strng{authorfullhash}{19ebe6646743912ca4a5528a2fea4ea2}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Implementing Bitonic Merge Sort in Vulkan Compute}
@@ -1376,8 +1376,8 @@
       \strng{authorbibnamehash}{2717efab6b9326f78c89f5eb56350149}
       \strng{authornamehash}{2717efab6b9326f78c89f5eb56350149}
       \strng{authorfullhash}{2717efab6b9326f78c89f5eb56350149}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{Journal of Physics: Conference Series}
@@ -1416,8 +1416,8 @@
       \strng{authorbibnamehash}{30c920b06ef5380c4a9b6a64d8e2c9b4}
       \strng{authornamehash}{30c920b06ef5380c4a9b6a64d8e2c9b4}
       \strng{authorfullhash}{30c920b06ef5380c4a9b6a64d8e2c9b4}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{Proceedings of the 14th ACM SIGGRAPH / Eurographics Symposium on Computer Animation}
@@ -1468,8 +1468,8 @@
       \strng{authornamehash}{caa162124f28a8205d9d4e661b0ccb9e}
       \strng{authorfullhash}{61b56c782e2b8fe4384809c85e393ccd}
       \field{extraname}{2}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{journaltitle}{IEEE Transactions on Visualization and Computer Graphics}
@@ -1483,6 +1483,37 @@
       \verb 10.1109/TVCG.2020.3004245
       \endverb
       \keyw{Solids;Kernel;Couplings;Standards;Friction;Hydrodynamics;Runtime;Smoothed particle hydrodynamics;fluid simulation;boundary handling}
+    \endentry
+    \entry{trianglemeshdistance}{article}{}
+      \name{author}{2}{}{%
+        {{hash=7bc108e8f9940d196efdbc95af395b68}{%
+           family={Fernandez\bibnamedelima Fernandez},
+           familyi={F\bibinitperiod\bibinitdelim F\bibinitperiod},
+           given={Jose\bibnamedelima Antonio},
+           giveni={J\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=c79a2095bf5d76acc271d53e7e4f2fdf}{%
+           family={Chang},
+           familyi={C\bibinitperiod},
+           given={Phil},
+           giveni={P\bibinitperiod}}}%
+      }
+      \strng{namehash}{9ccbe0b0dc4e391853ba8ff76d9d61b4}
+      \strng{fullhash}{9ccbe0b0dc4e391853ba8ff76d9d61b4}
+      \strng{bibnamehash}{9ccbe0b0dc4e391853ba8ff76d9d61b4}
+      \strng{authorbibnamehash}{9ccbe0b0dc4e391853ba8ff76d9d61b4}
+      \strng{authornamehash}{9ccbe0b0dc4e391853ba8ff76d9d61b4}
+      \strng{authorfullhash}{9ccbe0b0dc4e391853ba8ff76d9d61b4}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{TriangleMeshDistance}
+      \verb{urlraw}
+      \verb https://github.com/InteractiveComputerGraphics/TriangleMeshDistance
+      \endverb
+      \verb{url}
+      \verb https://github.com/InteractiveComputerGraphics/TriangleMeshDistance
+      \endverb
     \endentry
   \enddatalist
 \endrefsection

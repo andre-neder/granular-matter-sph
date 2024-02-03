@@ -2,9 +2,9 @@
 \contentsline {figure}{\numberline {1}{\ignorespaces SDF of a circle and a box in 2D \blx@tocontentsinit {0}\cite {iquilezles2}}}{4}{figure.caption.1}%
 \contentsline {figure}{\numberline {2}{\ignorespaces Sorting diagram for 16 sortable elements. Horizontal lines represent array indices into our array of sortable elements, each vertical line represents one worker thread performing a compare-and-swap operation. \blx@tocontentsinit {0}\cite {bitonic}}}{4}{figure.caption.2}%
 \contentsline {figure}{\numberline {3}{\ignorespaces Example of a 2D boundary sampled with particle. On the left one layer and on the right a version with multiple layers. \blx@tocontentsinit {0}\cite {10.1145/2185520.2185558}}}{17}{figure.caption.6}%
-\contentsline {figure}{\numberline {4}{\ignorespaces Slice of a volume map for a dump truck model, showing the nearest point and volume. Extracted using Nvidia Nsight Graphics.}}{18}{figure.caption.7}%
-\contentsline {figure}{\numberline {5}{\ignorespaces 2D Example of the HR sampling of a LR particle (grey area) with $n = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.}}{19}{figure.caption.8}%
-\contentsline {figure}{\numberline {6}{\ignorespaces Screenshot of the User interface.}}{21}{figure.caption.9}%
-\contentsline {figure}{\numberline {7}{\ignorespaces Three piles with different angles of repose, simulated for x frames.}}{22}{figure.caption.10}%
-\contentsline {figure}{\numberline {8}{\ignorespaces Example of the step between the first and the second layer of particles above ground. On the left with LR particles and on the right with HR particles}}{23}{figure.caption.11}%
-\contentsline {figure}{\numberline {9}{\ignorespaces Example of high resolution particles sticking to the wall of a dump truck.}}{24}{figure.caption.12}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Slice of a volume map for a dump truck model, showing the nearest point and volume. Extracted using Nvidia Nsight Graphics.}}{19}{figure.caption.7}%
+\contentsline {figure}{\numberline {5}{\ignorespaces 2D Example of the HR sampling of a LR particle (grey area) with $n = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.}}{20}{figure.caption.8}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Screenshot of the User interface.}}{22}{figure.caption.9}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Three piles with different angles of repose, simulated for x frames.}}{23}{figure.caption.10}%
+\contentsline {figure}{\numberline {8}{\ignorespaces Example of the step between the first and the second layer of particles above ground. On the left with LR particles and on the right with HR particles}}{24}{figure.caption.11}%
+\contentsline {figure}{\numberline {9}{\ignorespaces Example of high resolution particles sticking to the wall of a dump truck.}}{25}{figure.caption.12}%
