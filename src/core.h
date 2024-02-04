@@ -7,9 +7,29 @@
 
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <queue>
+#include <functional>
 
 namespace gpu
 {   
+    struct DeletionQueue
+    {
+        std::deque<std::function<void()>> deletors;
+
+        void push_function(std::function<void()>&& function) {
+            deletors.push_back(function);
+        }
+
+        void flush() {
+            // reverse iterate the deletion queue to execute all the functions
+            for (auto it = deletors.rbegin(); it != deletors.rend(); it++) {
+                (*it)(); //call the function
+            }
+
+            deletors.clear();
+        }
+    };
+
     struct DescriptorSetBinding{
         uint32_t binding;
         vk::DescriptorType type;
@@ -45,8 +65,8 @@ namespace gpu
 
             void destroy();
 
-            inline vk::Instance getInstance(){ return instance; };
-            inline vk::SurfaceKHR getSurface(){ return surface; };
+            inline vk::Instance getInstance(){ return _instance; };
+            inline vk::SurfaceKHR getSurface(){ return _surface; };
             inline vk::SurfaceFormatKHR getSurfaceFormat(){ return surfaceFormat; };
             inline vk::PhysicalDevice getPhysicalDevice(){ return physicalDevice; };
             inline vk::Device getDevice(){ return device; };
@@ -57,9 +77,9 @@ namespace gpu
 
             uint32_t getIdealWorkGroupSize();
 
-            inline vma::Allocator getAllocator(){ return allocator; };
+            inline vma::Allocator getAllocator(){ return _allocator; };
 
-            inline vk::CommandPool getCommandPool(){ return commandPool; };
+            inline vk::CommandPool getCommandPool(){ return _commandPool; };
             //* SwapChain
 
             inline vk::Format getSwapChainImageFormat(){ return swapChainImageFormat; };
@@ -69,6 +89,9 @@ namespace gpu
             inline vk::ImageView getSwapChainImageView(int index){ return swapChainImageViews[index]; };
             inline vk::ImageView getSwapChainDepthImageView(){ return swapChainDepthImageView; };
             inline vk::SwapchainKHR getSwapChain(){ return swapChain; };
+
+            DeletionQueue _mainDeletionQueue;
+
             //* Helpers
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
             SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
@@ -115,7 +138,6 @@ namespace gpu
 
             //* Descriptors
             std::vector<vk::DescriptorSet> allocateDescriptorSets(vk::DescriptorSetLayout layout, vk::DescriptorPool pool, uint32_t count = gpu::MAX_FRAMES_IN_FLIGHT);
-            // void updateDescriptorSet(vk::DescriptorSet set, std::vector<gpu::BufferDescriptorWrite> writes);
             void addDescriptorWrite(vk::DescriptorSet set, gpu::BufferDescriptorWrite write);
             void addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite write);
             void updateDescriptorSet(vk::DescriptorSet set);
@@ -145,17 +167,17 @@ namespace gpu
                 // VK_NV_COOPERATIVE_MATRIX_EXTENSION_NAME
             }; 
 
-            vk::Instance instance;
-            vk::DebugUtilsMessengerEXT m_debugMessenger;
-            vk::SurfaceKHR surface;
+            vk::Instance _instance;
+            vk::DebugUtilsMessengerEXT _debugMessenger;
+            vk::SurfaceKHR _surface;
             vk::SurfaceFormatKHR surfaceFormat;
             vk::PhysicalDevice physicalDevice;
             vk::Device device;
             vk::Queue graphicsQueue;
             vk::Queue computeQueue;
             vk::Queue presentQueue;
-            vma::Allocator allocator;
-            vk::CommandPool commandPool; 
+            vma::Allocator _allocator;
+            vk::CommandPool _commandPool; 
 
 
             vk::SwapchainKHR swapChain;

@@ -106,6 +106,8 @@ vk::Instance createInstance(bool enableValidation){
 
 	vk::ApplicationInfo applicationInfo("VulkanBase", VK_MAKE_VERSION(0, 0 ,1), "VulkanEngine", 1, VK_API_VERSION_1_1);
 
+	vk::Instance instance;
+
 	try {
 		if(enableValidation){
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -113,14 +115,16 @@ vk::Instance createInstance(bool enableValidation){
 				vk::InstanceCreateInfo(vk::InstanceCreateFlags(), &applicationInfo, validationLayers, extensions),
 				vk::DebugUtilsMessengerCreateInfoEXT({}, messageSeverityFlags, messageTypeFlags, debugCallback)
 			};
-			return vk::createInstance(instanceCreateInfoChain.get<vk::InstanceCreateInfo>());
+			instance = vk::createInstance(instanceCreateInfoChain.get<vk::InstanceCreateInfo>());
 		}else{
 			vk::InstanceCreateInfo instanceCreateInfo(vk::InstanceCreateFlags(), &applicationInfo, {}, extensions);
-			return vk::createInstance(instanceCreateInfo);
+			instance = vk::createInstance(instanceCreateInfo);
 		}
 	}catch(std::exception& e) {
 		std::cerr << "Exception Thrown: " << e.what();
 	}
+
+	return instance;
 }
 
 vk::DebugUtilsMessengerEXT createDebugMessenger(vk::Instance instance) {

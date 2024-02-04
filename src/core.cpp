@@ -14,12 +14,26 @@ bool hasStencilComponent(vk::Format format) {
 
 Core::Core(bool enableValidation, Window* window){
     m_enableValidation = enableValidation;
-    instance = createInstance(m_enableValidation);
-        if(m_enableValidation){
-        m_debugMessenger = createDebugMessenger(instance);
+    _instance = createInstance(m_enableValidation);
+
+    _mainDeletionQueue.push_function([=](){
+        _instance.destroy();
+    });
+
+    if(m_enableValidation){
+        _debugMessenger = createDebugMessenger(_instance);
+
+        _mainDeletionQueue.push_function([=](){
+           _instance.destroyDebugUtilsMessengerEXT(_debugMessenger);
+        });
     }
-    if (glfwCreateWindowSurface(instance, window->getGLFWWindow(), nullptr, reinterpret_cast<VkSurfaceKHR*>(&surface)) != VK_SUCCESS) {
+    if (glfwCreateWindowSurface(_instance, window->getGLFWWindow(), nullptr, reinterpret_cast<VkSurfaceKHR*>(&_surface)) != VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
+    }
+    else{
+        _mainDeletionQueue.push_function([=](){
+           _instance.destroySurfaceKHR(_surface);
+        });
     }
     pickPhysicalDevice();
     createLogicalDevice();
@@ -30,15 +44,18 @@ Core::Core(bool enableValidation, Window* window){
 }
 
 void Core::destroy(){
-    device.destroyCommandPool(commandPool);
 
-    allocator.destroy();
-    device.destroy();
-    instance.destroySurfaceKHR(surface);
-    if (m_enableValidation) {
-        instance.destroyDebugUtilsMessengerEXT(m_debugMessenger);
-    }
-    instance.destroy();
+    _mainDeletionQueue.flush();
+
+    // device.destroyCommandPool(commandPool);
+
+    // _allocator.destroy();
+    // device.destroy();
+    // _instance.destroySurfaceKHR(surface);
+    // if (m_enableValidation) {
+    //     _instance.destroyDebugUtilsMessengerEXT(_debugMessenger);
+    // }
+    // _instance.destroy();
 }
 
 uint32_t gpu::Core::getIdealWorkGroupSize()
@@ -63,7 +80,7 @@ uint32_t gpu::Core::getIdealWorkGroupSize()
 }
 
 void Core::pickPhysicalDevice() {
-    std::vector<vk::PhysicalDevice> devices = instance.enumeratePhysicalDevices();
+    std::vector<vk::PhysicalDevice> devices = _instance.enumeratePhysicalDevices();
     bool deviceFound = false;
     for (const auto& device : devices) {
         if (isDeviceSuitable(device)) {
@@ -75,6 +92,7 @@ void Core::pickPhysicalDevice() {
     if(!deviceFound){
         throw std::runtime_error("failed to find a suitable GPU!");
     }
+    
 }
 
 bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
@@ -116,7 +134,7 @@ QueueFamilyIndices Core::findQueueFamilies(vk::PhysicalDevice pDevice) {
         if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eCompute && queueFamilies[i].timestampValidBits > 0) {
             indices.computeFamily = i;
         }
-        if (pDevice.getSurfaceSupportKHR(i, surface)) {
+        if (pDevice.getSurfaceSupportKHR(i, _surface)) {
             indices.presentFamily = i;
         }
         if (indices.isComplete()) {
@@ -137,9 +155,9 @@ bool Core::checkDeviceExtensionSupport(vk::PhysicalDevice pDevice) {
 
 SwapChainSupportDetails Core::querySwapChainSupport(vk::PhysicalDevice pDevice) {
     SwapChainSupportDetails details;
-    details.capabilities = pDevice.getSurfaceCapabilitiesKHR(surface);
-    details.formats = pDevice.getSurfaceFormatsKHR(surface);
-    details.presentModes = pDevice.getSurfacePresentModesKHR(surface);
+    details.capabilities = pDevice.getSurfaceCapabilitiesKHR(_surface);
+    details.formats = pDevice.getSurfaceFormatsKHR(_surface);
+    details.presentModes = pDevice.getSurfacePresentModesKHR(_surface);
     return details;
 }
 
@@ -187,6 +205,11 @@ void Core::createLogicalDevice(){
     {
         std::cerr << "Exception Thrown: " << e.what();
     }
+
+    _mainDeletionQueue.push_function([=](){
+        device.destroy();
+    });
+
     graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
     computeQueue = device.getQueue(indices.computeFamily.value(), 0);
     presentQueue = device.getQueue(indices.presentFamily.value(), 0);
@@ -197,16 +220,20 @@ void Core::createAllocator(){
     allocatorInfo.flags = vma::AllocatorCreateFlagBits::eBufferDeviceAddress;
     allocatorInfo.physicalDevice = physicalDevice;
     allocatorInfo.device = device;
-    allocatorInfo.instance = instance;
+    allocatorInfo.instance = _instance;
     allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
 	try
 	{
-		allocator = vma::createAllocator(allocatorInfo);
+		_allocator = vma::createAllocator(allocatorInfo);
 	}
 	catch (std::exception &e)
 	{
 		std::cerr << "Exception Thrown: " << e.what();
 	}
+
+    _mainDeletionQueue.push_function([=](){
+        _allocator.destroy();
+    });
 }
 
 vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags){
@@ -223,7 +250,7 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
 
     try
     {
-        std::tie(buffer, allocation) = allocator.createBuffer(bufferInfo, bufferAllocInfo);
+        std::tie(buffer, allocation) = _allocator.createBuffer(bufferInfo, bufferAllocInfo);
     }
     catch (std::exception &e)
     {
@@ -276,18 +303,18 @@ void gpu::Core::updateBufferData(vk::Buffer buffer, void *data, size_t size)
 }
 void *Core::mapBuffer(vk::Buffer buffer)
 {
-    void* mappedData = allocator.mapMemory(m_bufferAllocations[buffer]);
+    void* mappedData = _allocator.mapMemory(m_bufferAllocations[buffer]);
     return mappedData;
 }
 void Core::unmapBuffer(vk::Buffer buffer){
-    allocator.unmapMemory(m_bufferAllocations[buffer]);
+    _allocator.unmapMemory(m_bufferAllocations[buffer]);
 }
 void Core::destroyBuffer(vk::Buffer buffer){
-    allocator.destroyBuffer(buffer, m_bufferAllocations[buffer]);
+    _allocator.destroyBuffer(buffer, m_bufferAllocations[buffer]);
     m_bufferAllocations.erase(buffer);
 }
 void Core::flushBuffer(vk::Buffer buffer, size_t offset, size_t size){
-    allocator.flushAllocation(m_bufferAllocations[buffer], offset, size);
+    _allocator.flushAllocation(m_bufferAllocations[buffer], offset, size);
 }
 void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -298,7 +325,7 @@ void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::De
     endSingleTimeCommands(commandBuffer);
 }
 vk::CommandBuffer Core::beginSingleTimeCommands() {
-    vk::CommandBufferAllocateInfo allocInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1);
+    vk::CommandBufferAllocateInfo allocInfo(_commandPool, vk::CommandBufferLevel::ePrimary, 1);
     vk::CommandBuffer commandBuffer;
     try{
         commandBuffer = device.allocateCommandBuffers(allocInfo)[0];
@@ -325,7 +352,7 @@ void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
     vk::SubmitInfo submitInfoCopy({}, {}, commandBuffer, {});
     graphicsQueue.submit(submitInfoCopy, {});
     graphicsQueue.waitIdle();
-    device.freeCommandBuffers(commandPool, 1, &commandBuffer);
+    device.freeCommandBuffers(_commandPool, 1, &commandBuffer);
 }
 
 void gpu::Core::beginCommands(vk::CommandBuffer commandBuffer, vk::CommandBufferBeginInfo beginInfo)
@@ -553,10 +580,14 @@ void Core::createCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
     vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());
     try{
-        commandPool = device.createCommandPool(poolInfo);
+        _commandPool = device.createCommandPool(poolInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
+    
+    _mainDeletionQueue.push_function([=](){
+       device.destroyCommandPool(_commandPool);
+    });
 }
 
 void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height, uint32_t depth) {
@@ -721,7 +752,7 @@ vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
 
     try
     {
-        std::tie(image, allocation) = allocator.createImage(imageInfo, imageAllocInfo);
+        std::tie(image, allocation) = _allocator.createImage(imageInfo, imageAllocInfo);
     }
     catch (std::exception &e)
     {
@@ -750,7 +781,7 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
 
     try
     {
-        std::tie(image, allocation) = allocator.createImage(imageInfo, imageAllocInfo);
+        std::tie(image, allocation) = _allocator.createImage(imageInfo, imageAllocInfo);
     }
     catch (std::exception &e)
     {
@@ -761,7 +792,7 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
 }
 
 void Core::destroyImage(vk::Image image){
-    allocator.destroyImage(image, m_imageAllocations[image]);
+    _allocator.destroyImage(image, m_imageAllocations[image]);
     m_imageAllocations.erase(image);
 }
 
@@ -875,7 +906,7 @@ void Core::createSwapChain(Window* window) {
     
     vk::SwapchainCreateInfoKHR createInfo;
     createInfo.flags = {};
-    createInfo.surface = surface;
+    createInfo.surface = _surface;
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
