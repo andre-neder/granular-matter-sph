@@ -999,7 +999,7 @@ vk::ShaderModule Core::loadShaderModule(std::string src) {
     //  std::cout << "Compiled a vertex shader resulting in preprocessed text:" << std::endl  << preprocessed << std::endl;
 
     std::cout << "Compiling shader  " << src << "" << std::endl;
-    auto spirv = compile_file("shader_src", stage, shaderCodeGlsl.c_str(), shaderc_optimization_level_performance); //, shaderc_optimization_level_performance
+    auto spirv = compile_file("shader_src", stage, shaderCodeGlsl.c_str()); //, shaderc_optimization_level_performance
 
     return createShaderModule(spirv);
 }

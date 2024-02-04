@@ -198,6 +198,11 @@ void GranularMatter::createCommandBuffers(){
 void GranularMatter::destroyFrameResources(){
     vk::Device device = m_core->getDevice();
     device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
+
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        m_core->getDevice().destroyFence(iisphFences[i]);
+        m_core->getDevice().destroySemaphore(iisphSemaphores[i]);
+    }
 }
 
 void GranularMatter::initFrameResources(){
@@ -786,10 +791,4 @@ void GranularMatter::destroy(){
     }
     m_core->destroySampler(volumeMapSampler);
 
-    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        m_core->getDevice().destroyFence(iisphFences[i]);
-        m_core->getDevice().destroySemaphore(iisphSemaphores[i]);
-    }
-        
-    
 }
