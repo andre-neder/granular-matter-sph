@@ -195,8 +195,7 @@ private:
     }
 
     void drawFrame(float dt){
-        vk::Result result;
-        result = device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         device.resetFences(computeInFlightFences[currentFrame]);
 
@@ -207,7 +206,9 @@ private:
         }; 
         
         {
-            std::vector<vk::Semaphore> signalComputeSemaphores = {computeFinishedSemaphores[currentFrame]};
+            std::vector<vk::Semaphore> signalComputeSemaphores = {
+                computeFinishedSemaphores[currentFrame]
+            };
 
             std::vector<vk::Semaphore> waitSemaphores = {
                 simulation.iisphSemaphores[currentFrame]
@@ -226,21 +227,27 @@ private:
             core.getComputeQueue().submit(computeSubmitInfo, computeInFlightFences[currentFrame]);
         }
 
-        result = device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;
         
+        vk::Result accuireNextImageResult;
+
         try{
-            result = device.acquireNextImageKHR(core.getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+            accuireNextImageResult = device.acquireNextImageKHR(core.getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        }
+        catch(const vk::OutOfDateKHRError outOfDateError){
+            accuireNextImageResult = vk::Result::eErrorOutOfDateKHR;
         }
         catch(const std::exception& e){
             std::cerr << e.what() << '\n';
         }
-        if(result == vk::Result::eErrorOutOfDateKHR){
+
+        if(accuireNextImageResult == vk::Result::eErrorOutOfDateKHR){
             recreateSwapChain();
             return;
         }
-        else if(result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR){
+        else if(accuireNextImageResult != vk::Result::eSuccess && accuireNextImageResult != vk::Result::eSuboptimalKHR){
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
@@ -250,7 +257,7 @@ private:
 
 
         if ((VkFence) imagesInFlight[currentFrame] != VK_NULL_HANDLE){
-            vk::Result result2 = device.waitForFences(imagesInFlight[currentFrame], VK_TRUE, UINT64_MAX);
+            device.waitForFences(imagesInFlight[currentFrame], VK_TRUE, UINT64_MAX);
         }
         imagesInFlight[currentFrame] = inFlightFences[currentFrame];
 
@@ -278,18 +285,24 @@ private:
 
         std::vector<vk::SwapchainKHR> swapChains = {core.getSwapChain()};
         vk::PresentInfoKHR presentInfo(signalSemaphores, swapChains, imageIndex);
+        vk::Result presentResult;
         try{
-            result = core.getPresentQueue().presentKHR(presentInfo);
+            presentResult = core.getPresentQueue().presentKHR(presentInfo);
+        }
+        catch(const vk::OutOfDateKHRError outOfDateError){
+            presentResult = vk::Result::eErrorOutOfDateKHR;
         }
         catch(const std::exception& e){
             std::cerr << e.what() << '\n';
         }
         
-        if(result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || window.wasResized()){
+        if(presentResult == vk::Result::eErrorOutOfDateKHR || presentResult == vk::Result::eSuboptimalKHR || window.wasResized()){
             window.resizeHandled();
             recreateSwapChain();
-        }else if(result != vk::Result::eSuccess)
+        }
+        else if(presentResult != vk::Result::eSuccess){
             throw std::runtime_error("queue Present failed!");
+        }
         currentFrame = (currentFrame + 1) % gpu::MAX_FRAMES_IN_FLIGHT;
     }
 
@@ -374,6 +387,8 @@ private:
         particleRenderPass.destroyFrameResources();
         triangleRenderPass.destroyFrameResources();
         imguiRenderPass.destroyFrameResources();
+        simulation.destroyFrameResources();
+
         cleanupSwapchain();
 
         core.createSwapChain(&window);
@@ -382,6 +397,7 @@ private:
         particleRenderPass.initFrameResources();
         triangleRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
+        simulation.initFrameResources();
 
 
         imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
