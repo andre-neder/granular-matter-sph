@@ -503,6 +503,8 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
             
             // Reset average density error
             AdditionalData resetData;
+            resetData.D = additionalData.D;
+            resetData.frameIndex = currentFrameCount + 1;
             memcpy(mappedData, &resetData, (size_t) sizeof(AdditionalData));
             m_core->flushBuffer(additionalDataBuffer[currentFrame], 0, (size_t) sizeof(AdditionalData));
             m_core->unmapBuffer(additionalDataBuffer[currentFrame]);
@@ -549,12 +551,12 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
             commandBuffers[currentFrame].dispatch(workGroupCountHR, 1, 1);
         }
 
-        // * Wait for copy action
         commandBuffers[currentFrame].pipelineBarrier(vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer | vk::PipelineStageFlagBits::eComputeShader | vk::PipelineStageFlagBits::eVertexInput, {}, writeReadBarrier, nullptr, nullptr);
         commandBuffers[currentFrame].writeTimestamp(vk::PipelineStageFlagBits::eComputeShader, timeQueryPools[currentFrame], (uint32_t)timestampLabels[currentFrame].size());
         
         simulationStepForward = false;
         currentFrameCount++;
+
     }
     else{
         m_core->endCommands(commandBuffers[currentFrame]);

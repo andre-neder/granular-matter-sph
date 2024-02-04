@@ -96,8 +96,10 @@ struct VolumeMapTransform{
 };
 
 struct AdditionalData{
+    glm::mat4 D = glm::mat4(0.0);
     float averageDensityError = 0.f;
-    float pad[3];
+    uint32_t frameIndex = 0;
+    float pad[2];
 };
 
 class GranularMatter

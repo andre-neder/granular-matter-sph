@@ -26,7 +26,7 @@ struct SPHSettings{
     float rho0 = 1450.f;                                //* kg/m^3
     float mass = (4.f / 3.f * (float) M_PI * (r_LR * r_LR * r_LR)) * rho0;                //* kg
 
-    float maxCompression = 0.005f;	  
+    float maxCompression = 0.01f;	  
     float dt = 0.0006f;	                                //* s
     float DOMAIN_WIDTH = 12.f;                         //* m
     float DOMAIN_HEIGHT = 8.f;                        //* m
