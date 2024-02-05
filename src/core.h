@@ -176,8 +176,6 @@ namespace gpu
             vk::Format _swapChainImageFormat;
             vk::Format depthFormat;
             vk::Extent2D _swapChainExtent;
-            // std::vector<vk::Image> swapChainImages;
-            // std::vector<vk::ImageView> swapChainImageViews;
 
             vk::Image swapChainDepthImage;
             vk::ImageView swapChainDepthImageView;
