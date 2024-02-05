@@ -1026,3 +1026,36 @@ vk::Format Core::findDepthFormat() {
         vk::FormatFeatureFlagBits::eDepthStencilAttachment
     );
 }
+
+vk::Result gpu::Core::acquireNextImageKHR(uint32_t* imageIndex, vk::Semaphore semaphore, vk::Fence fence)
+{
+    vk::Result result;
+
+    try{
+        result = device.acquireNextImageKHR(getSwapChain(), UINT64_MAX, semaphore, fence, imageIndex);
+    }
+    catch(const vk::OutOfDateKHRError outOfDateError){
+        result = vk::Result::eErrorOutOfDateKHR;
+    }
+    catch(const std::exception& e){
+        std::cerr << e.what() << '\n';
+    }
+    return result;
+}
+
+vk::Result gpu::Core::presentKHR(uint32_t imageIndex, std::vector<vk::Semaphore> semaphores)
+{
+        std::vector<vk::SwapchainKHR> swapChains = { getSwapChain() };
+        vk::PresentInfoKHR presentInfo(semaphores, swapChains, imageIndex);
+        vk::Result result;
+        try{
+            result = presentQueue.presentKHR(presentInfo);
+        }
+        catch(const vk::OutOfDateKHRError outOfDateError){
+            result = vk::Result::eErrorOutOfDateKHR;
+        }
+        catch(const std::exception& e){
+            std::cerr << e.what() << '\n';
+        }
+        return result;
+}

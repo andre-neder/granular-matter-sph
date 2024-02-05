@@ -231,17 +231,7 @@ private:
 
         uint32_t imageIndex;
         
-        vk::Result accuireNextImageResult;
-
-        try{
-            accuireNextImageResult = device.acquireNextImageKHR(core.getSwapChain(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
-        }
-        catch(const vk::OutOfDateKHRError outOfDateError){
-            accuireNextImageResult = vk::Result::eErrorOutOfDateKHR;
-        }
-        catch(const std::exception& e){
-            std::cerr << e.what() << '\n';
-        }
+        vk::Result accuireNextImageResult = core.acquireNextImageKHR(&imageIndex, imageAvailableSemaphores[currentFrame]);
 
         if(accuireNextImageResult == vk::Result::eErrorOutOfDateKHR){
             recreateSwapChain();
@@ -283,19 +273,8 @@ private:
 
         core.getGraphicsQueue().submit(submitInfo, inFlightFences[currentFrame]);
 
-        std::vector<vk::SwapchainKHR> swapChains = {core.getSwapChain()};
-        vk::PresentInfoKHR presentInfo(signalSemaphores, swapChains, imageIndex);
-        vk::Result presentResult;
-        try{
-            presentResult = core.getPresentQueue().presentKHR(presentInfo);
-        }
-        catch(const vk::OutOfDateKHRError outOfDateError){
-            presentResult = vk::Result::eErrorOutOfDateKHR;
-        }
-        catch(const std::exception& e){
-            std::cerr << e.what() << '\n';
-        }
-        
+        vk::Result presentResult = core.presentKHR(imageIndex, signalSemaphores);
+
         if(presentResult == vk::Result::eErrorOutOfDateKHR || presentResult == vk::Result::eSuboptimalKHR || window.wasResized()){
             window.resizeHandled();
             recreateSwapChain();

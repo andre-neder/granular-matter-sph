@@ -100,6 +100,8 @@ namespace gpu
             vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
             vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
             vk::Format findDepthFormat();
+            vk::Result acquireNextImageKHR(uint32_t* imageIndex, vk::Semaphore semaphore, vk::Fence fence = VK_NULL_HANDLE);
+            vk::Result presentKHR(uint32_t imageIndex, std::vector<vk::Semaphore> semaphores);
             
             //* Buffers
             vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {});
