@@ -90,7 +90,8 @@
         "variant": "cpp",
         "any": "cpp",
         "bitset": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "execution": "cpp"
     },
     "editor.wordWrap": "on"
 }

@@ -16,25 +16,14 @@ Core::Core(bool enableValidation, Window* window){
     m_enableValidation = enableValidation;
     _instance = createInstance(m_enableValidation);
 
-    _mainDeletionQueue.push_function([=](){
-        _instance.destroy();
-    });
 
     if(m_enableValidation){
         _debugMessenger = createDebugMessenger(_instance);
-
-        _mainDeletionQueue.push_function([=](){
-           _instance.destroyDebugUtilsMessengerEXT(_debugMessenger);
-        });
     }
     if (glfwCreateWindowSurface(_instance, window->getGLFWWindow(), nullptr, reinterpret_cast<VkSurfaceKHR*>(&_surface)) != VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
     }
-    else{
-        _mainDeletionQueue.push_function([=](){
-           _instance.destroySurfaceKHR(_surface);
-        });
-    }
+
     pickPhysicalDevice();
     createLogicalDevice();
     createAllocator();
@@ -45,17 +34,17 @@ Core::Core(bool enableValidation, Window* window){
 
 void Core::destroy(){
 
-    _mainDeletionQueue.flush();
 
-    // device.destroyCommandPool(commandPool);
 
-    // _allocator.destroy();
-    // device.destroy();
-    // _instance.destroySurfaceKHR(surface);
-    // if (m_enableValidation) {
-    //     _instance.destroyDebugUtilsMessengerEXT(_debugMessenger);
-    // }
-    // _instance.destroy();
+    device.destroyCommandPool(_commandPool);
+
+    _allocator.destroy();
+    device.destroy();
+    _instance.destroySurfaceKHR(_surface);
+    if (m_enableValidation) {
+        _instance.destroyDebugUtilsMessengerEXT(_debugMessenger);
+    }
+    _instance.destroy();
 }
 
 uint32_t gpu::Core::getIdealWorkGroupSize()
@@ -206,10 +195,6 @@ void Core::createLogicalDevice(){
         std::cerr << "Exception Thrown: " << e.what();
     }
 
-    _mainDeletionQueue.push_function([=](){
-        device.destroy();
-    });
-
     graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
     computeQueue = device.getQueue(indices.computeFamily.value(), 0);
     presentQueue = device.getQueue(indices.presentFamily.value(), 0);
@@ -231,9 +216,6 @@ void Core::createAllocator(){
 		std::cerr << "Exception Thrown: " << e.what();
 	}
 
-    _mainDeletionQueue.push_function([=](){
-        _allocator.destroy();
-    });
 }
 
 vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags){
@@ -584,10 +566,6 @@ void Core::createCommandPool() {
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
-    
-    _mainDeletionQueue.push_function([=](){
-       device.destroyCommandPool(_commandPool);
-    });
 }
 
 void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height, uint32_t depth) {

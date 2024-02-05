@@ -12,23 +12,6 @@
 
 namespace gpu
 {   
-    struct DeletionQueue
-    {
-        std::deque<std::function<void()>> deletors;
-
-        void push_function(std::function<void()>&& function) {
-            deletors.push_back(function);
-        }
-
-        void flush() {
-            // reverse iterate the deletion queue to execute all the functions
-            for (auto it = deletors.rbegin(); it != deletors.rend(); it++) {
-                (*it)(); //call the function
-            }
-
-            deletors.clear();
-        }
-    };
 
     struct DescriptorSetBinding{
         uint32_t binding;
@@ -89,8 +72,6 @@ namespace gpu
             inline vk::ImageView getSwapChainImageView(int index){ return swapChainImageViews[index]; };
             inline vk::ImageView getSwapChainDepthImageView(){ return swapChainDepthImageView; };
             inline vk::SwapchainKHR getSwapChain(){ return swapChain; };
-
-            DeletionQueue _mainDeletionQueue;
 
             //* Helpers
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
