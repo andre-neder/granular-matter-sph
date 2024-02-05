@@ -333,7 +333,6 @@ private:
 
     void cleanupSwapchain(){
         core.getDevice().waitIdle();
-        core.destroySwapChainImageViews();
         core.destroySwapChain(); 
     }
 
@@ -386,7 +385,6 @@ private:
         cleanupSwapchain();
 
         core.createSwapChain(&window);
-        core.createSwapChainImageViews();
    
         particleRenderPass.initFrameResources();
         triangleRenderPass.initFrameResources();

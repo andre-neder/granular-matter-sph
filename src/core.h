@@ -38,6 +38,14 @@ namespace gpu
         vk::ImageLayout imageLayout;
     };
 
+    struct SwapChainFrame{
+        vk::Image _image;
+        vk::ImageView _view;
+        vk::Fence _inFlight;
+        vk::Semaphore _imageAvailable;
+        vk::Semaphore _renderFinished;
+    };
+
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const uint32_t MAX_QUERY_POOL_COUNT = 1024;
     class Core{
@@ -65,13 +73,13 @@ namespace gpu
             inline vk::CommandPool getCommandPool(){ return _commandPool; };
             //* SwapChain
 
-            inline vk::Format getSwapChainImageFormat(){ return swapChainImageFormat; };
+            inline vk::Format getSwapChainImageFormat(){ return _swapChainImageFormat; };
             inline vk::Format getDepthFormat(){ return depthFormat; };
-            inline size_t getSwapChainImageCount(){ return swapChainImages.size(); };
-            inline vk::Extent2D getSwapChainExtent(){ return swapChainExtent; };
-            inline vk::ImageView getSwapChainImageView(int index){ return swapChainImageViews[index]; };
+            inline size_t getSwapChainImageCount(){ return _swapChainFrames.size(); };
+            inline vk::Extent2D getSwapChainExtent(){ return _swapChainExtent; };
+            inline vk::ImageView getSwapChainImageView(int index){ return _swapChainFrames[index]._view; };
             inline vk::ImageView getSwapChainDepthImageView(){ return swapChainDepthImageView; };
-            inline vk::SwapchainKHR getSwapChain(){ return swapChain; };
+            inline vk::SwapchainKHR getSwapChain(){ return _swapChain; };
 
             //* Helpers
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
@@ -133,8 +141,6 @@ namespace gpu
 
             //* Swapchain
             void createSwapChain(Window* window);
-            void createSwapChainImageViews();
-            void destroySwapChainImageViews();
             void destroySwapChain();
 
             //* Shaders
@@ -163,12 +169,13 @@ namespace gpu
             vk::CommandPool _commandPool; 
 
 
-            vk::SwapchainKHR swapChain;
-            vk::Format swapChainImageFormat;
+            vk::SwapchainKHR _swapChain;
+            vk::Format _swapChainImageFormat;
             vk::Format depthFormat;
-            vk::Extent2D swapChainExtent;
-            std::vector<vk::Image> swapChainImages;
-            std::vector<vk::ImageView> swapChainImageViews;
+            vk::Extent2D _swapChainExtent;
+            // std::vector<vk::Image> swapChainImages;
+            // std::vector<vk::ImageView> swapChainImageViews;
+            std::vector<SwapChainFrame> _swapChainFrames;
 
             vk::Image swapChainDepthImage;
             vk::ImageView swapChainDepthImageView;

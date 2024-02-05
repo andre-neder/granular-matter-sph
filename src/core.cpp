@@ -29,7 +29,6 @@ Core::Core(bool enableValidation, Window* window){
     createAllocator();
     createCommandPool();
     createSwapChain(window);
-    createSwapChainImageViews();
 }
 
 void Core::destroy(){
@@ -904,35 +903,37 @@ void Core::createSwapChain(Window* window) {
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
     try{
-        swapChain = device.createSwapchainKHR(createInfo);
+        _swapChain = device.createSwapchainKHR(createInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
-    swapChainImages = device.getSwapchainImagesKHR(swapChain);
-    swapChainImageFormat = surfaceFormat.format;
-    swapChainExtent = extent;
+
+    _swapChainImageFormat = surfaceFormat.format;
+    _swapChainExtent = extent;
+
+    std::vector<vk::Image> swapChainImages = device.getSwapchainImagesKHR(_swapChain);
+
+    _swapChainFrames.resize(swapChainImages.size());
+    for (size_t i = 0; i < getSwapChainImageCount(); i++) {
+        _swapChainFrames[i] = {};
+        _swapChainFrames[i]._image = swapChainImages[i];
+        _swapChainFrames[i]._view = createImageView2D(swapChainImages[i], _swapChainImageFormat);
+    }
 
     depthFormat = findDepthFormat();
-
-    swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},swapChainExtent.width, swapChainExtent.height, depthFormat);
-    
-
-}
-void Core::createSwapChainImageViews(){
-    swapChainImageViews.resize(getSwapChainImageCount());
-    for (size_t i = 0; i < getSwapChainImageCount(); i++) {
-        swapChainImageViews[i] = createImageView2D(swapChainImages[i], swapChainImageFormat);
-    }
+    swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainExtent.width, _swapChainExtent.height, depthFormat);
     swapChainDepthImageView = createImageView2D(swapChainDepthImage, depthFormat, vk::ImageAspectFlagBits::eDepth);
+
+
 }
-void Core::destroySwapChainImageViews(){
-    for (auto imageView : swapChainImageViews) {
-        destroyImageView(imageView);
+
+void Core::destroySwapChain(){
+    for (auto frame : _swapChainFrames) {
+        destroyImageView(frame._view);
     }
     destroyImageView(swapChainDepthImageView);
-}
-void Core::destroySwapChain(){
-    device.destroySwapchainKHR(swapChain);
+
+    device.destroySwapchainKHR(_swapChain);
     destroyImage(swapChainDepthImage);
 }
 
