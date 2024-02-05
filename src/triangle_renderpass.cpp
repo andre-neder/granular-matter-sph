@@ -111,7 +111,7 @@ using namespace gpu;
         }
     }
     
-    void TriangleRenderPass::createGraphicsPipeline(){
+    void TriangleRenderPass::createGraphicsPipeline(bool wireframe){
         vk::PipelineShaderStageCreateInfo vertShaderStageInfo({}, vk::ShaderStageFlagBits::eVertex, vertShaderModule, "main");
         // vk::PipelineShaderStageCreateInfo geomShaderStageInfo({}, vk::ShaderStageFlagBits::eGeometry, geomShaderModule, "main");
         vk::PipelineShaderStageCreateInfo fragShaderStageInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main");
@@ -134,7 +134,7 @@ using namespace gpu;
         vk::Viewport viewport(0.0f, 0.0f, (float) m_core->getSwapChainExtent().width, (float) m_core->getSwapChainExtent().height, 0.0f, 1.0f);
         vk::Rect2D scissor(vk::Offset2D(0, 0),m_core->getSwapChainExtent());
         vk::PipelineViewportStateCreateInfo viewportState({}, viewport, scissor);
-        vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
+        vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, wireframe ? vk::PolygonMode::eLine : vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
         vk::PipelineMultisampleStateCreateInfo multisampling({}, vk::SampleCountFlagBits::e1, VK_FALSE);
         vk::PipelineColorBlendAttachmentState colorBlendAttachment(VK_FALSE, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd, vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
         vk::PipelineColorBlendStateCreateInfo colorBlending({},VK_FALSE, vk::LogicOp::eCopy, colorBlendAttachment);
@@ -162,6 +162,10 @@ using namespace gpu;
         }
     }
 
+    void gpu::TriangleRenderPass::destroyGraphicsPipeline()
+    {
+        m_core->getDevice().destroyPipeline(graphicsPipeline);
+    }
 
     void TriangleRenderPass::createUniformBuffers() {
         vk::DeviceSize bufferSize = sizeof(UniformBufferObject);

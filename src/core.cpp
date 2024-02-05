@@ -1059,3 +1059,4 @@ vk::Result gpu::Core::presentKHR(uint32_t imageIndex, std::vector<vk::Semaphore>
         }
         return result;
 }
+

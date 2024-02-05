@@ -63,6 +63,9 @@ namespace gpu{
             void destroy(); 
             void init();
 
+            void createGraphicsPipeline(bool wireframe = false);
+            void destroyGraphicsPipeline();
+
             std::vector<Model> models;
         private:
             gpu::Camera* m_camera;
@@ -86,7 +89,7 @@ namespace gpu{
 
             void createRenderPass();
             void createDescriptorSets();
-            void createGraphicsPipeline();
+            
             void createDescriptorSetLayout();
             void updateUniformBuffer(uint32_t currentImage);
             void createUniformBuffers();

@@ -29,6 +29,7 @@ namespace gpu{
             void additionalWindows();
 
             std::function<void(int)> changeSceneCallback;
+            std::function<void()> toggleWireframeCallback;
 
         private:
             vk::DescriptorPool descriptorPool;

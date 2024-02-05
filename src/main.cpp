@@ -74,6 +74,19 @@ private:
         camera = gpu::Camera(gpu::Camera::Type::eTrackBall, window.getGLFWWindow(), WIDTH, HEIGHT, glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f));
     }
 
+    void toggleWireframe(){
+        static bool wireframe = false;
+        device.waitIdle();
+
+        if(wireframe){
+            wireframe = false;
+        }
+        else{
+            wireframe = true;
+        }
+        triangleRenderPass.destroyGraphicsPipeline();
+        triangleRenderPass.createGraphicsPipeline(wireframe);
+    }
     
     void loadScene(int scene){
         // simulation.rigidBodies.clear();
@@ -120,6 +133,7 @@ private:
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
         using std::placeholders::_1;
         imguiRenderPass.changeSceneCallback = std::bind(&Application::loadScene, this, _1);
+        imguiRenderPass.toggleWireframeCallback = std::bind(&Application::toggleWireframe, this);
 
         simulation = GranularMatter(&core);
 
@@ -195,7 +209,8 @@ private:
     }
 
     void drawFrame(float dt){
-        device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        vk::Result result;
+        result = device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         device.resetFences(computeInFlightFences[currentFrame]);
 
@@ -227,7 +242,7 @@ private:
             core.getComputeQueue().submit(computeSubmitInfo, computeInFlightFences[currentFrame]);
         }
 
-        device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        result = device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;
         
@@ -247,7 +262,7 @@ private:
 
 
         if ((VkFence) imagesInFlight[currentFrame] != VK_NULL_HANDLE){
-            device.waitForFences(imagesInFlight[currentFrame], VK_TRUE, UINT64_MAX);
+            result = device.waitForFences(imagesInFlight[currentFrame], VK_TRUE, UINT64_MAX);
         }
         imagesInFlight[currentFrame] = inFlightFences[currentFrame];
 

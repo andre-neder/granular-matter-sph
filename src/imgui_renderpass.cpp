@@ -287,6 +287,10 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     ImGui::End();
 
     ImGui::Begin("Scene"); 
+        if (ImGui::Button("Wireframe"))
+        {
+            toggleWireframeCallback();
+        }
         if (ImGui::Button("0"))
         {
             changeSceneCallback(0);
