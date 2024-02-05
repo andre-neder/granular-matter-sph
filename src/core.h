@@ -146,6 +146,9 @@ namespace gpu
             //* Shaders
             vk::ShaderModule createShaderModule(const std::vector<uint32_t> code);
             vk::ShaderModule loadShaderModule(std::string src);
+
+            
+            std::vector<SwapChainFrame> _swapChainFrames;
             
         private:
             bool m_enableValidation = true;
@@ -175,7 +178,6 @@ namespace gpu
             vk::Extent2D _swapChainExtent;
             // std::vector<vk::Image> swapChainImages;
             // std::vector<vk::ImageView> swapChainImageViews;
-            std::vector<SwapChainFrame> _swapChainFrames;
 
             vk::Image swapChainDepthImage;
             vk::ImageView swapChainDepthImageView;

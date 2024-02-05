@@ -63,10 +63,7 @@ private:
 
     std::vector<vk::Fence> computeInFlightFences;
     std::vector<vk::Semaphore> computeFinishedSemaphores;
-    std::vector<vk::Semaphore> imageAvailableSemaphores;
-    std::vector<vk::Semaphore> renderFinishedSemaphores;
-    std::vector<vk::Fence> inFlightFences;
-    std::vector<vk::Fence> imagesInFlight;
+
     size_t currentFrame = 0;
 
     void initWindow(){
@@ -189,18 +186,11 @@ private:
     void createSyncObjects() {
         computeInFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         computeFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        imageAvailableSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        renderFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        inFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
         vk::SemaphoreCreateInfo semaphoreInfo;
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             try{
                 computeFinishedSemaphores[i] = device.createSemaphore(semaphoreInfo);
-                imageAvailableSemaphores[i] = device.createSemaphore(semaphoreInfo);
-                renderFinishedSemaphores[i] = device.createSemaphore(semaphoreInfo);
-                inFlightFences[i] = device.createFence(fenceInfo);
                 computeInFlightFences[i] = device.createFence(fenceInfo);
             }catch(std::exception& e) {
                 std::cerr << "Exception Thrown: " << e.what();
@@ -242,11 +232,12 @@ private:
             core.getComputeQueue().submit(computeSubmitInfo, computeInFlightFences[currentFrame]);
         }
 
-        result = device.waitForFences(inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        result = device.waitForFences(core._swapChainFrames[currentFrame]._inFlight, VK_TRUE, UINT64_MAX);
+        device.resetFences(core._swapChainFrames[currentFrame]._inFlight);
 
         uint32_t imageIndex;
         
-        vk::Result accuireNextImageResult = core.acquireNextImageKHR(&imageIndex, imageAvailableSemaphores[currentFrame]);
+        vk::Result accuireNextImageResult = core.acquireNextImageKHR(&imageIndex, core._swapChainFrames[currentFrame]._imageAvailable);
 
         if(accuireNextImageResult == vk::Result::eErrorOutOfDateKHR){
             recreateSwapChain();
@@ -260,22 +251,16 @@ private:
         triangleRenderPass.update((int) currentFrame, imageIndex, dt);
         imguiRenderPass.update((int) currentFrame, imageIndex, dt);
 
-
-        if ((VkFence) imagesInFlight[currentFrame] != VK_NULL_HANDLE){
-            result = device.waitForFences(imagesInFlight[currentFrame], VK_TRUE, UINT64_MAX);
-        }
-        imagesInFlight[currentFrame] = inFlightFences[currentFrame];
-
         std::vector<vk::Semaphore> waitSemaphores = {
             computeFinishedSemaphores[currentFrame], 
-            imageAvailableSemaphores[currentFrame]
+            core._swapChainFrames[currentFrame]._imageAvailable
         };
         std::vector<vk::PipelineStageFlags> waitStages = {
             vk::PipelineStageFlagBits::eVertexInput, 
             vk::PipelineStageFlagBits::eColorAttachmentOutput
         };
         std::vector<vk::Semaphore> signalSemaphores = {
-            renderFinishedSemaphores[currentFrame]
+            core._swapChainFrames[currentFrame]._renderFinished
         };
         std::array<vk::CommandBuffer, 3> submitCommandBuffers = { 
             particleRenderPass.getCommandBuffer((int) currentFrame), 
@@ -284,9 +269,7 @@ private:
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
 
-        device.resetFences(inFlightFences[currentFrame]);
-
-        core.getGraphicsQueue().submit(submitInfo, inFlightFences[currentFrame]);
+        core.getGraphicsQueue().submit(submitInfo, core._swapChainFrames[currentFrame]._inFlight);
 
         vk::Result presentResult = core.presentKHR(imageIndex, signalSemaphores);
 
@@ -356,10 +339,7 @@ private:
         cleanupSwapchain();
 
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            device.destroySemaphore(imageAvailableSemaphores[i]);
-            device.destroySemaphore(renderFinishedSemaphores[i]);
             device.destroySemaphore(computeFinishedSemaphores[i]);
-            device.destroyFence(inFlightFences[i]);
             device.destroyFence(computeInFlightFences[i]);
         }
         
@@ -390,9 +370,6 @@ private:
         triangleRenderPass.initFrameResources();
         imguiRenderPass.initFrameResources();
         simulation.initFrameResources();
-
-
-        imagesInFlight.resize(gpu::MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 
     }
 };

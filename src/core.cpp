@@ -918,6 +918,13 @@ void Core::createSwapChain(Window* window) {
         _swapChainFrames[i] = {};
         _swapChainFrames[i]._image = swapChainImages[i];
         _swapChainFrames[i]._view = createImageView2D(swapChainImages[i], _swapChainImageFormat);
+
+        vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
+        _swapChainFrames[i]._inFlight = device.createFence(fenceInfo);
+
+        vk::SemaphoreCreateInfo semaphoreInfo;
+        _swapChainFrames[i]._imageAvailable = device.createSemaphore(semaphoreInfo);
+        _swapChainFrames[i]._renderFinished = device.createSemaphore(semaphoreInfo);
     }
 
     depthFormat = findDepthFormat();
@@ -930,6 +937,9 @@ void Core::createSwapChain(Window* window) {
 void Core::destroySwapChain(){
     for (auto frame : _swapChainFrames) {
         destroyImageView(frame._view);
+        device.destroyFence(frame._inFlight);
+        device.destroySemaphore(frame._imageAvailable);
+        device.destroySemaphore(frame._renderFinished);
     }
     destroyImageView(swapChainDepthImageView);
 
