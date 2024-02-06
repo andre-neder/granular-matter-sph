@@ -902,40 +902,43 @@ void Core::createSwapChain(Window* window) {
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    _swapChainBundle = {};
+
     try{
-        _swapChain = _device.createSwapchainKHR(createInfo);
+        _swapChainBundle._swapChain = _device.createSwapchainKHR(createInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
 
-    _swapChainImageFormat = _surfaceFormat.format;
-    _swapChainExtent = extent;
+    _swapChainBundle._imageFormat = _surfaceFormat.format;
+    _swapChainBundle._extent = extent;
 
-    std::vector<vk::Image> swapChainImages = _device.getSwapchainImagesKHR(_swapChain);
+    std::vector<vk::Image> swapChainImages = _device.getSwapchainImagesKHR(_swapChainBundle._swapChain);
 
-    _swapChainFrames.resize(swapChainImages.size());
+    _swapChainBundle._frames.resize(swapChainImages.size());
     for (size_t i = 0; i < getSwapChainImageCount(); i++) {
-        _swapChainFrames[i] = {};
-        _swapChainFrames[i]._image = swapChainImages[i];
-        _swapChainFrames[i]._view = createImageView2D(swapChainImages[i], _swapChainImageFormat);
+        _swapChainBundle._frames[i] = {};
+        _swapChainBundle._frames[i]._image = swapChainImages[i];
+        _swapChainBundle._frames[i]._view = createImageView2D(swapChainImages[i], _swapChainBundle._imageFormat);
 
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
-        _swapChainFrames[i]._inFlight = _device.createFence(fenceInfo);
+        _swapChainBundle._frames[i]._inFlight = _device.createFence(fenceInfo);
 
         vk::SemaphoreCreateInfo semaphoreInfo;
-        _swapChainFrames[i]._imageAvailable = _device.createSemaphore(semaphoreInfo);
-        _swapChainFrames[i]._renderFinished = _device.createSemaphore(semaphoreInfo);
+        _swapChainBundle._frames[i]._imageAvailable = _device.createSemaphore(semaphoreInfo);
+        _swapChainBundle._frames[i]._renderFinished = _device.createSemaphore(semaphoreInfo);
     }
 
-    _depthFormat = findDepthFormat();
-    _swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainExtent.width, _swapChainExtent.height, _depthFormat);
-    _swapChainDepthImageView = createImageView2D(_swapChainDepthImage, _depthFormat, vk::ImageAspectFlagBits::eDepth);
+    _swapChainBundle._depthFormat = findDepthFormat();
+    _swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainBundle._extent.width, _swapChainBundle._extent.height, _swapChainBundle._depthFormat);
+    _swapChainDepthImageView = createImageView2D(_swapChainDepthImage, _swapChainBundle._depthFormat, vk::ImageAspectFlagBits::eDepth);
 
 
 }
 
 void Core::destroySwapChain(){
-    for (auto frame : _swapChainFrames) {
+    for (auto frame : _swapChainBundle._frames) {
         destroyImageView(frame._view);
         _device.destroyFence(frame._inFlight);
         _device.destroySemaphore(frame._imageAvailable);
@@ -943,7 +946,7 @@ void Core::destroySwapChain(){
     }
     destroyImageView(_swapChainDepthImageView);
 
-    _device.destroySwapchainKHR(_swapChain);
+    _device.destroySwapchainKHR(_swapChainBundle._swapChain);
     destroyImage(_swapChainDepthImage);
 }
 

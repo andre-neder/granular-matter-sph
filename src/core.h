@@ -46,6 +46,15 @@ namespace gpu
         vk::Semaphore _renderFinished;
     };
 
+    struct SwapChainBundle{
+        vk::SwapchainKHR _swapChain;
+        vk::Format _imageFormat;
+        vk::Format _depthFormat;
+        vk::Extent2D _extent;
+        size_t _currentFrame;
+        std::vector<SwapChainFrame> _frames;
+    };
+
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const uint32_t MAX_QUERY_POOL_COUNT = 1024;
     class Core{
@@ -73,13 +82,13 @@ namespace gpu
             inline vk::CommandPool getCommandPool(){ return _commandPool; };
             //* SwapChain
 
-            inline vk::Format getSwapChainImageFormat(){ return _swapChainImageFormat; };
-            inline vk::Format getDepthFormat(){ return _depthFormat; };
-            inline size_t getSwapChainImageCount(){ return _swapChainFrames.size(); };
-            inline vk::Extent2D getSwapChainExtent(){ return _swapChainExtent; };
-            inline vk::ImageView getSwapChainImageView(int index){ return _swapChainFrames[index]._view; };
+            inline vk::Format getSwapChainImageFormat(){ return _swapChainBundle._imageFormat; };
+            inline vk::Format getDepthFormat(){ return _swapChainBundle._depthFormat; };
+            inline size_t getSwapChainImageCount(){ return _swapChainBundle._frames.size(); };
+            inline vk::Extent2D getSwapChainExtent(){ return _swapChainBundle._extent; };
+            inline vk::ImageView getSwapChainImageView(int index){ return _swapChainBundle._frames[index]._view; };
             inline vk::ImageView getSwapChainDepthImageView(){ return _swapChainDepthImageView; };
-            inline vk::SwapchainKHR getSwapChain(){ return _swapChain; };
+            inline vk::SwapchainKHR getSwapChain(){ return _swapChainBundle._swapChain; };
 
             //* Helpers
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
@@ -148,8 +157,9 @@ namespace gpu
             vk::ShaderModule loadShaderModule(std::string src);
 
             
-            std::vector<SwapChainFrame> _swapChainFrames;
-            
+            // std::vector<SwapChainFrame> _swapChainFrames;
+            SwapChainBundle _swapChainBundle;
+            inline SwapChainFrame getCurrentFrame(){ return _swapChainBundle._frames[_swapChainBundle._currentFrame]; };
         private:
             bool m_enableValidation = true;
             std::vector<const char*> deviceExtensions = {
@@ -172,10 +182,10 @@ namespace gpu
             vk::CommandPool _commandPool; 
 
 
-            vk::SwapchainKHR _swapChain;
-            vk::Format _swapChainImageFormat;
-            vk::Format _depthFormat;
-            vk::Extent2D _swapChainExtent;
+            // vk::SwapchainKHR _swapChain;
+            // vk::Format _swapChainImageFormat;
+            // vk::Format _depthFormat;
+            // vk::Extent2D _swapChainExtent;
 
             vk::Image _swapChainDepthImage;
             vk::ImageView _swapChainDepthImageView;

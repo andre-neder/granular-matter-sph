@@ -64,7 +64,7 @@ private:
     std::vector<vk::Fence> computeInFlightFences;
     std::vector<vk::Semaphore> computeFinishedSemaphores;
 
-    size_t currentFrame = 0;
+    // size_t currentFrame = 0;
 
     void initWindow(){
         window = gpu::Window("Application", WIDTH, HEIGHT);
@@ -199,6 +199,7 @@ private:
     }
 
     void drawFrame(float dt){
+        size_t currentFrame = core._swapChainBundle._currentFrame;
         vk::Result result;
         result = device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -232,12 +233,12 @@ private:
             core.getComputeQueue().submit(computeSubmitInfo, computeInFlightFences[currentFrame]);
         }
 
-        result = device.waitForFences(core._swapChainFrames[currentFrame]._inFlight, VK_TRUE, UINT64_MAX);
-        device.resetFences(core._swapChainFrames[currentFrame]._inFlight);
+        result = device.waitForFences(core.getCurrentFrame()._inFlight, VK_TRUE, UINT64_MAX);
+        device.resetFences(core.getCurrentFrame()._inFlight);
 
         uint32_t imageIndex;
         
-        vk::Result accuireNextImageResult = core.acquireNextImageKHR(&imageIndex, core._swapChainFrames[currentFrame]._imageAvailable);
+        vk::Result accuireNextImageResult = core.acquireNextImageKHR(&imageIndex, core.getCurrentFrame()._imageAvailable);
 
         if(accuireNextImageResult == vk::Result::eErrorOutOfDateKHR){
             recreateSwapChain();
@@ -253,14 +254,14 @@ private:
 
         std::vector<vk::Semaphore> waitSemaphores = {
             computeFinishedSemaphores[currentFrame], 
-            core._swapChainFrames[currentFrame]._imageAvailable
+            core.getCurrentFrame()._imageAvailable
         };
         std::vector<vk::PipelineStageFlags> waitStages = {
             vk::PipelineStageFlagBits::eVertexInput, 
             vk::PipelineStageFlagBits::eColorAttachmentOutput
         };
         std::vector<vk::Semaphore> signalSemaphores = {
-            core._swapChainFrames[currentFrame]._renderFinished
+            core.getCurrentFrame()._renderFinished
         };
         std::array<vk::CommandBuffer, 3> submitCommandBuffers = { 
             particleRenderPass.getCommandBuffer((int) currentFrame), 
@@ -269,7 +270,7 @@ private:
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
 
-        core.getGraphicsQueue().submit(submitInfo, core._swapChainFrames[currentFrame]._inFlight);
+        core.getGraphicsQueue().submit(submitInfo, core.getCurrentFrame()._inFlight);
 
         vk::Result presentResult = core.presentKHR(imageIndex, signalSemaphores);
 
@@ -280,7 +281,7 @@ private:
         else if(presentResult != vk::Result::eSuccess){
             throw std::runtime_error("queue Present failed!");
         }
-        currentFrame = (currentFrame + 1) % gpu::MAX_FRAMES_IN_FLIGHT;
+        core._swapChainBundle._currentFrame = (currentFrame + 1) % gpu::MAX_FRAMES_IN_FLIGHT;
     }
 
     void mainLoop(){
