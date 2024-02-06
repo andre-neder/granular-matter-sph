@@ -237,7 +237,7 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
     {
         std::cerr << "Exception Thrown: " << e.what();
     }
-    m_bufferAllocations[buffer] = allocation;
+    _bufferAllocations[buffer] = allocation;
     return buffer;
 }
 
@@ -284,18 +284,18 @@ void gpu::Core::updateBufferData(vk::Buffer buffer, void *data, size_t size)
 }
 void *Core::mapBuffer(vk::Buffer buffer)
 {
-    void* mappedData = _allocator.mapMemory(m_bufferAllocations[buffer]);
+    void* mappedData = _allocator.mapMemory(_bufferAllocations[buffer]);
     return mappedData;
 }
 void Core::unmapBuffer(vk::Buffer buffer){
-    _allocator.unmapMemory(m_bufferAllocations[buffer]);
+    _allocator.unmapMemory(_bufferAllocations[buffer]);
 }
 void Core::destroyBuffer(vk::Buffer buffer){
-    _allocator.destroyBuffer(buffer, m_bufferAllocations[buffer]);
-    m_bufferAllocations.erase(buffer);
+    _allocator.destroyBuffer(buffer, _bufferAllocations[buffer]);
+    _bufferAllocations.erase(buffer);
 }
 void Core::flushBuffer(vk::Buffer buffer, size_t offset, size_t size){
-    _allocator.flushAllocation(m_bufferAllocations[buffer], offset, size);
+    _allocator.flushAllocation(_bufferAllocations[buffer], offset, size);
 }
 void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -400,9 +400,9 @@ std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorS
 
     vk::DescriptorSetAllocateInfo allocInfo(pool, count, layouts.data());
     // if the descriptor set layout has the flag
-    // auto flags = m_descriptorBindingFlags.at(layout);
+    // auto flags = _descriptorBindingFlags.at(layout);
     // if((flags & (vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound)) == (vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound)){
-        auto descriptorCount = m_descriptorCount.at(layout);
+        auto descriptorCount = _descriptorCount.at(layout);
         std::vector<uint32_t> counts(count, descriptorCount);
         vk::DescriptorSetVariableDescriptorCountAllocateInfo variableDescriptorCountAllocInfo{count, counts.data()};
         allocInfo.pNext = &variableDescriptorCountAllocInfo;
@@ -411,7 +411,7 @@ std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorS
         auto sets = device.allocateDescriptorSets(allocInfo);
         for(auto& set : sets){
             //* create a write queue for each set
-            m_descriptorWrites[set] = std::vector<vk::WriteDescriptorSet>();
+            _descriptorWrites[set] = std::vector<vk::WriteDescriptorSet>();
         }
         return sets;
     }catch(std::exception& e) {
@@ -421,7 +421,7 @@ std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorS
 
 void gpu::Core::updateDescriptorSet(vk::DescriptorSet set)
 {
-    auto& descriptorWrites = m_descriptorWrites.at(set);
+    auto& descriptorWrites = _descriptorWrites.at(set);
     device.updateDescriptorSets(descriptorWrites, nullptr);
     descriptorWrites.clear();
 }
@@ -432,7 +432,7 @@ void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::BufferDescriptorWrite 
     //Todo: Cleanup
     vk::DescriptorBufferInfo* bufferInfo = new vk::DescriptorBufferInfo(write.buffer, 0, write.size);
     vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, 1, write.type, {}, bufferInfo);
-    m_descriptorWrites.at(set).push_back(descriptorWrite);
+    _descriptorWrites.at(set).push_back(descriptorWrite);
 }
 
 void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite write)
@@ -456,7 +456,7 @@ void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite w
         throw "Unsupported write type";
     }
     vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, (uint32_t)imageInfos->size(), write.type, imageInfos->data());
-    m_descriptorWrites.at(set).push_back(descriptorWrite);
+    _descriptorWrites.at(set).push_back(descriptorWrite);
 }
 
 
@@ -483,8 +483,8 @@ vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<Descrip
 
     try{
         auto descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
-        m_descriptorCount[descriptorSetLayout] = descriptorCount;
-        m_descriptorBindingFlags[descriptorSetLayout] = layoutFlags;
+        _descriptorCount[descriptorSetLayout] = descriptorCount;
+        _descriptorBindingFlags[descriptorSetLayout] = layoutFlags;
         return descriptorSetLayout;
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
@@ -735,7 +735,7 @@ vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
     {
         std::cerr << "Exception Thrown: " << e.what();
     }
-    m_imageAllocations[image] = allocation;
+    _imageAllocations[image] = allocation;
     return image;
 }
 
@@ -764,13 +764,13 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
     {
         std::cerr << "Exception Thrown: " << e.what();
     }
-    m_imageAllocations[image] = allocation;
+    _imageAllocations[image] = allocation;
     return image;
 }
 
 void Core::destroyImage(vk::Image image){
-    _allocator.destroyImage(image, m_imageAllocations[image]);
-    m_imageAllocations.erase(image);
+    _allocator.destroyImage(image, _imageAllocations[image]);
+    _imageAllocations.erase(image);
 }
 
 void Core::destroyImageView(vk::ImageView view){
@@ -927,9 +927,9 @@ void Core::createSwapChain(Window* window) {
         _swapChainFrames[i]._renderFinished = device.createSemaphore(semaphoreInfo);
     }
 
-    depthFormat = findDepthFormat();
-    swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainExtent.width, _swapChainExtent.height, depthFormat);
-    swapChainDepthImageView = createImageView2D(swapChainDepthImage, depthFormat, vk::ImageAspectFlagBits::eDepth);
+    _depthFormat = findDepthFormat();
+    _swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainExtent.width, _swapChainExtent.height, _depthFormat);
+    _swapChainDepthImageView = createImageView2D(_swapChainDepthImage, _depthFormat, vk::ImageAspectFlagBits::eDepth);
 
 
 }
@@ -941,10 +941,10 @@ void Core::destroySwapChain(){
         device.destroySemaphore(frame._imageAvailable);
         device.destroySemaphore(frame._renderFinished);
     }
-    destroyImageView(swapChainDepthImageView);
+    destroyImageView(_swapChainDepthImageView);
 
     device.destroySwapchainKHR(_swapChain);
-    destroyImage(swapChainDepthImage);
+    destroyImage(_swapChainDepthImage);
 }
 
 

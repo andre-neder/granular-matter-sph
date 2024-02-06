@@ -74,11 +74,11 @@ namespace gpu
             //* SwapChain
 
             inline vk::Format getSwapChainImageFormat(){ return _swapChainImageFormat; };
-            inline vk::Format getDepthFormat(){ return depthFormat; };
+            inline vk::Format getDepthFormat(){ return _depthFormat; };
             inline size_t getSwapChainImageCount(){ return _swapChainFrames.size(); };
             inline vk::Extent2D getSwapChainExtent(){ return _swapChainExtent; };
             inline vk::ImageView getSwapChainImageView(int index){ return _swapChainFrames[index]._view; };
-            inline vk::ImageView getSwapChainDepthImageView(){ return swapChainDepthImageView; };
+            inline vk::ImageView getSwapChainDepthImageView(){ return _swapChainDepthImageView; };
             inline vk::SwapchainKHR getSwapChain(){ return _swapChain; };
 
             //* Helpers
@@ -174,17 +174,17 @@ namespace gpu
 
             vk::SwapchainKHR _swapChain;
             vk::Format _swapChainImageFormat;
-            vk::Format depthFormat;
+            vk::Format _depthFormat;
             vk::Extent2D _swapChainExtent;
 
-            vk::Image swapChainDepthImage;
-            vk::ImageView swapChainDepthImageView;
+            vk::Image _swapChainDepthImage;
+            vk::ImageView _swapChainDepthImageView;
 
-            std::map<vk::Buffer, VmaAllocation> m_bufferAllocations;
-            std::map<vk::Image, VmaAllocation> m_imageAllocations;
-            std::map<vk::DescriptorSet, std::vector<vk::WriteDescriptorSet>> m_descriptorWrites;
-            std::map<vk::DescriptorSetLayout, uint32_t> m_descriptorCount;
-            std::map<vk::DescriptorSetLayout, vk::DescriptorBindingFlags> m_descriptorBindingFlags;
+            std::map<vk::Buffer, VmaAllocation> _bufferAllocations;
+            std::map<vk::Image, VmaAllocation> _imageAllocations;
+            std::map<vk::DescriptorSet, std::vector<vk::WriteDescriptorSet>> _descriptorWrites;
+            std::map<vk::DescriptorSetLayout, uint32_t> _descriptorCount;
+            std::map<vk::DescriptorSetLayout, vk::DescriptorBindingFlags> _descriptorBindingFlags;
 
 
             void pickPhysicalDevice();
