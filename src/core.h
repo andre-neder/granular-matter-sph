@@ -58,9 +58,9 @@ namespace gpu
 
             inline vk::Instance getInstance(){ return _instance; };
             inline vk::SurfaceKHR getSurface(){ return _surface; };
-            inline vk::SurfaceFormatKHR getSurfaceFormat(){ return surfaceFormat; };
-            inline vk::PhysicalDevice getPhysicalDevice(){ return physicalDevice; };
-            inline vk::Device getDevice(){ return device; };
+            inline vk::SurfaceFormatKHR getSurfaceFormat(){ return _surfaceFormat; };
+            inline vk::PhysicalDevice getPhysicalDevice(){ return _physicalDevice; };
+            inline vk::Device getDevice(){ return _device; };
             //* Queues
             inline vk::Queue getGraphicsQueue(){ return graphicsQueue; };
             inline vk::Queue getPresentQueue(){ return presentQueue; };
@@ -162,9 +162,9 @@ namespace gpu
             vk::Instance _instance;
             vk::DebugUtilsMessengerEXT _debugMessenger;
             vk::SurfaceKHR _surface;
-            vk::SurfaceFormatKHR surfaceFormat;
-            vk::PhysicalDevice physicalDevice;
-            vk::Device device;
+            vk::SurfaceFormatKHR _surfaceFormat;
+            vk::PhysicalDevice _physicalDevice;
+            vk::Device _device;
             vk::Queue graphicsQueue;
             vk::Queue computeQueue;
             vk::Queue presentQueue;

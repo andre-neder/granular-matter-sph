@@ -35,10 +35,10 @@ void Core::destroy(){
 
 
 
-    device.destroyCommandPool(_commandPool);
+    _device.destroyCommandPool(_commandPool);
 
     _allocator.destroy();
-    device.destroy();
+    _device.destroy();
     _instance.destroySurfaceKHR(_surface);
     if (m_enableValidation) {
         _instance.destroyDebugUtilsMessengerEXT(_debugMessenger);
@@ -48,7 +48,7 @@ void Core::destroy(){
 
 uint32_t gpu::Core::getIdealWorkGroupSize()
 {
-    uint32_t vendorID = physicalDevice.getProperties().vendorID;
+    uint32_t vendorID = _physicalDevice.getProperties().vendorID;
     uint32_t workGroupSize = 1;
     switch (vendorID)
     {
@@ -73,7 +73,7 @@ void Core::pickPhysicalDevice() {
     for (const auto& device : devices) {
         if (isDeviceSuitable(device)) {
             deviceFound = true;
-            physicalDevice = device;
+            _physicalDevice = device;
             break;
         }
     }
@@ -150,7 +150,7 @@ SwapChainSupportDetails Core::querySwapChainSupport(vk::PhysicalDevice pDevice) 
 }
 
 void Core::createLogicalDevice(){
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(_physicalDevice);
     std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
     float queuePriority = 1.0f;
@@ -160,7 +160,7 @@ void Core::createLogicalDevice(){
     }
 
     //MacOS portability extension
-    std::vector<vk::ExtensionProperties> extensionProperties =  physicalDevice.enumerateDeviceExtensionProperties();
+    std::vector<vk::ExtensionProperties> extensionProperties =  _physicalDevice.enumerateDeviceExtensionProperties();
     for(auto extensionProperty : extensionProperties){
         if(std::string(extensionProperty.extensionName.data()) == std::string(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME))
             deviceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
@@ -187,23 +187,23 @@ void Core::createLogicalDevice(){
     
     try
     {
-        device = physicalDevice.createDevice(deviceFeatureCreateInfo.get<vk::DeviceCreateInfo>());
+        _device = _physicalDevice.createDevice(deviceFeatureCreateInfo.get<vk::DeviceCreateInfo>());
     }
     catch(std::exception& e) 
     {
         std::cerr << "Exception Thrown: " << e.what();
     }
 
-    graphicsQueue = device.getQueue(indices.graphicsFamily.value(), 0);
-    computeQueue = device.getQueue(indices.computeFamily.value(), 0);
-    presentQueue = device.getQueue(indices.presentFamily.value(), 0);
+    graphicsQueue = _device.getQueue(indices.graphicsFamily.value(), 0);
+    computeQueue = _device.getQueue(indices.computeFamily.value(), 0);
+    presentQueue = _device.getQueue(indices.presentFamily.value(), 0);
 }
 
 void Core::createAllocator(){
     vma::AllocatorCreateInfo allocatorInfo;
     allocatorInfo.flags = vma::AllocatorCreateFlagBits::eBufferDeviceAddress;
-    allocatorInfo.physicalDevice = physicalDevice;
-    allocatorInfo.device = device;
+    allocatorInfo.physicalDevice = _physicalDevice;
+    allocatorInfo.device = _device;
     allocatorInfo.instance = _instance;
     allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
 	try
@@ -309,7 +309,7 @@ vk::CommandBuffer Core::beginSingleTimeCommands() {
     vk::CommandBufferAllocateInfo allocInfo(_commandPool, vk::CommandBufferLevel::ePrimary, 1);
     vk::CommandBuffer commandBuffer;
     try{
-        commandBuffer = device.allocateCommandBuffers(allocInfo)[0];
+        commandBuffer = _device.allocateCommandBuffers(allocInfo)[0];
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
@@ -333,7 +333,7 @@ void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
     vk::SubmitInfo submitInfoCopy({}, {}, commandBuffer, {});
     graphicsQueue.submit(submitInfoCopy, {});
     graphicsQueue.waitIdle();
-    device.freeCommandBuffers(_commandPool, 1, &commandBuffer);
+    _device.freeCommandBuffers(_commandPool, 1, &commandBuffer);
 }
 
 void gpu::Core::beginCommands(vk::CommandBuffer commandBuffer, vk::CommandBufferBeginInfo beginInfo)
@@ -363,7 +363,7 @@ void gpu::Core::createTimestampQueryPool(vk::QueryPool* pool)
         {}
     };
     
-    vk::Result result = device.createQueryPool(&createInfo, nullptr, pool);
+    vk::Result result = _device.createQueryPool(&createInfo, nullptr, pool);
     if (result != vk::Result::eSuccess)
     {
         throw std::runtime_error("Failed to create time query pool!");
@@ -376,7 +376,7 @@ std::vector<uint64_t> gpu::Core::getTimestampQueryPoolResults(vk::QueryPool *poo
 {
     uint64_t buffer[MAX_QUERY_POOL_COUNT];
 
-    vk::Result result = device.getQueryPoolResults(*pool, 0, MAX_QUERY_POOL_COUNT, sizeof(uint64_t) * MAX_QUERY_POOL_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
+    vk::Result result = _device.getQueryPoolResults(*pool, 0, MAX_QUERY_POOL_COUNT, sizeof(uint64_t) * MAX_QUERY_POOL_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
     if (result == vk::Result::eNotReady)
     {
         return std::vector<uint64_t>(buffer, buffer + MAX_QUERY_POOL_COUNT);
@@ -408,7 +408,7 @@ std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorS
         allocInfo.pNext = &variableDescriptorCountAllocInfo;
     // }
     try{
-        auto sets = device.allocateDescriptorSets(allocInfo);
+        auto sets = _device.allocateDescriptorSets(allocInfo);
         for(auto& set : sets){
             //* create a write queue for each set
             _descriptorWrites[set] = std::vector<vk::WriteDescriptorSet>();
@@ -422,7 +422,7 @@ std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorS
 void gpu::Core::updateDescriptorSet(vk::DescriptorSet set)
 {
     auto& descriptorWrites = _descriptorWrites.at(set);
-    device.updateDescriptorSets(descriptorWrites, nullptr);
+    _device.updateDescriptorSets(descriptorWrites, nullptr);
     descriptorWrites.clear();
 }
 
@@ -482,7 +482,7 @@ vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<Descrip
     
 
     try{
-        auto descriptorSetLayout = device.createDescriptorSetLayout(layoutInfo);
+        auto descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
         _descriptorCount[descriptorSetLayout] = descriptorCount;
         _descriptorBindingFlags[descriptorSetLayout] = layoutFlags;
         return descriptorSetLayout;
@@ -495,7 +495,7 @@ vk::DescriptorPool gpu::Core::createDescriptorPool(std::vector<vk::DescriptorPoo
 {
     vk::DescriptorPoolCreateInfo poolInfo({}, maxSets, sizes);
     try{
-        return device.createDescriptorPool(poolInfo);
+        return _device.createDescriptorPool(poolInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
@@ -503,12 +503,12 @@ vk::DescriptorPool gpu::Core::createDescriptorPool(std::vector<vk::DescriptorPoo
 
 void gpu::Core::destroyDescriptorPool(vk::DescriptorPool pool)
 {
-    device.destroyDescriptorPool(pool);
+    _device.destroyDescriptorPool(pool);
 }
 
 void gpu::Core::destroyDescriptorSetLayout(vk::DescriptorSetLayout layout)
 {
-    device.destroyDescriptorSetLayout(layout);
+    _device.destroyDescriptorSetLayout(layout);
 }
 
 vk::RenderPass gpu::Core::createColorDepthRenderPass(vk::AttachmentLoadOp loadOp, vk::AttachmentStoreOp storeOp)
@@ -551,17 +551,17 @@ vk::RenderPass gpu::Core::createColorDepthRenderPass(vk::AttachmentLoadOp loadOp
 
     vk::RenderPassCreateInfo renderPassInfo({}, attachments, subpass);
     try{
-        return device.createRenderPass(renderPassInfo);
+        return _device.createRenderPass(renderPassInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
 }
 
 void Core::createCommandPool() {
-    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(_physicalDevice);
     vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());
     try{
-        _commandPool = device.createCommandPool(poolInfo);
+        _commandPool = _device.createCommandPool(poolInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
@@ -774,14 +774,14 @@ void Core::destroyImage(vk::Image image){
 }
 
 void Core::destroyImageView(vk::ImageView view){
-    device.destroyImageView(view);
+    _device.destroyImageView(view);
 }
 
 vk::ImageView Core::createImageView2D(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags) {
     vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e2D, format, {}, vk::ImageSubresourceRange( aspectFlags, 0, 1, 0, 1));
     vk::ImageView imageView;
     try{
-        imageView = device.createImageView(viewInfo);
+        imageView = _device.createImageView(viewInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
@@ -792,7 +792,7 @@ vk::ImageView Core::createImageView3D(vk::Image image, vk::Format format) {
     vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e3D, format, {}, vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
     vk::ImageView imageView;
     try{
-        imageView = device.createImageView(viewInfo);
+        imageView = _device.createImageView(viewInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
@@ -801,7 +801,7 @@ vk::ImageView Core::createImageView3D(vk::Image image, vk::Format format) {
 
 vk::Sampler Core::createSampler(vk::SamplerAddressMode addressMode, vk::BorderColor borderColor, vk::Bool32 enableAnisotropy) {
     vk::Sampler sampler;
-    vk::PhysicalDeviceProperties properties = physicalDevice.getProperties();
+    vk::PhysicalDeviceProperties properties = _physicalDevice.getProperties();
 
     vk::SamplerCreateInfo samplerInfo(
         {}, 
@@ -822,14 +822,14 @@ vk::Sampler Core::createSampler(vk::SamplerAddressMode addressMode, vk::BorderCo
         VK_FALSE 
     );
     try{
-        sampler = device.createSampler(samplerInfo);
+        sampler = _device.createSampler(samplerInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
     return sampler;
 }
 void Core::destroySampler(vk::Sampler sampler){
-    device.destroySampler(sampler);
+    _device.destroySampler(sampler);
 }
 
 vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
@@ -867,9 +867,9 @@ vk::Extent2D Core::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabiliti
 }
 
 void Core::createSwapChain(Window* window) {
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(_physicalDevice);
 
-    surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+    _surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
     vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window);
 
@@ -878,15 +878,15 @@ void Core::createSwapChain(Window* window) {
         imageCount = swapChainSupport.capabilities.maxImageCount;
     }
 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(_physicalDevice);
     uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
     
     vk::SwapchainCreateInfoKHR createInfo;
     createInfo.flags = {};
     createInfo.surface = _surface;
     createInfo.minImageCount = imageCount;
-    createInfo.imageFormat = surfaceFormat.format;
-    createInfo.imageColorSpace = surfaceFormat.colorSpace;
+    createInfo.imageFormat = _surfaceFormat.format;
+    createInfo.imageColorSpace = _surfaceFormat.colorSpace;
     createInfo.imageExtent = extent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
@@ -903,15 +903,15 @@ void Core::createSwapChain(Window* window) {
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
     try{
-        _swapChain = device.createSwapchainKHR(createInfo);
+        _swapChain = _device.createSwapchainKHR(createInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
 
-    _swapChainImageFormat = surfaceFormat.format;
+    _swapChainImageFormat = _surfaceFormat.format;
     _swapChainExtent = extent;
 
-    std::vector<vk::Image> swapChainImages = device.getSwapchainImagesKHR(_swapChain);
+    std::vector<vk::Image> swapChainImages = _device.getSwapchainImagesKHR(_swapChain);
 
     _swapChainFrames.resize(swapChainImages.size());
     for (size_t i = 0; i < getSwapChainImageCount(); i++) {
@@ -920,11 +920,11 @@ void Core::createSwapChain(Window* window) {
         _swapChainFrames[i]._view = createImageView2D(swapChainImages[i], _swapChainImageFormat);
 
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
-        _swapChainFrames[i]._inFlight = device.createFence(fenceInfo);
+        _swapChainFrames[i]._inFlight = _device.createFence(fenceInfo);
 
         vk::SemaphoreCreateInfo semaphoreInfo;
-        _swapChainFrames[i]._imageAvailable = device.createSemaphore(semaphoreInfo);
-        _swapChainFrames[i]._renderFinished = device.createSemaphore(semaphoreInfo);
+        _swapChainFrames[i]._imageAvailable = _device.createSemaphore(semaphoreInfo);
+        _swapChainFrames[i]._renderFinished = _device.createSemaphore(semaphoreInfo);
     }
 
     _depthFormat = findDepthFormat();
@@ -937,13 +937,13 @@ void Core::createSwapChain(Window* window) {
 void Core::destroySwapChain(){
     for (auto frame : _swapChainFrames) {
         destroyImageView(frame._view);
-        device.destroyFence(frame._inFlight);
-        device.destroySemaphore(frame._imageAvailable);
-        device.destroySemaphore(frame._renderFinished);
+        _device.destroyFence(frame._inFlight);
+        _device.destroySemaphore(frame._imageAvailable);
+        _device.destroySemaphore(frame._renderFinished);
     }
     destroyImageView(_swapChainDepthImageView);
 
-    device.destroySwapchainKHR(_swapChain);
+    _device.destroySwapchainKHR(_swapChain);
     destroyImage(_swapChainDepthImage);
 }
 
@@ -952,7 +952,7 @@ vk::ShaderModule Core::createShaderModule(const std::vector<uint32_t> code) {
     vk::ShaderModuleCreateInfo createInfo({}, code);
     vk::ShaderModule shaderModule;
     try{
-        shaderModule = device.createShaderModule(createInfo);
+        shaderModule = _device.createShaderModule(createInfo);
     }catch(std::exception& e) {
         std::cerr << "Exception Thrown: " << e.what();
     }
@@ -996,7 +996,7 @@ vk::ShaderModule Core::loadShaderModule(std::string src) {
 vk::Format Core::findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features) {
     for (vk::Format format : candidates) {
         vk::FormatProperties props;
-        physicalDevice.getFormatProperties(format, &props);
+        _physicalDevice.getFormatProperties(format, &props);
 
         if (tiling == vk::ImageTiling::eLinear && (props.linearTilingFeatures & features) == features) {
             return format;
@@ -1021,7 +1021,7 @@ vk::Result gpu::Core::acquireNextImageKHR(uint32_t* imageIndex, vk::Semaphore se
     vk::Result result;
 
     try{
-        result = device.acquireNextImageKHR(getSwapChain(), UINT64_MAX, semaphore, fence, imageIndex);
+        result = _device.acquireNextImageKHR(getSwapChain(), UINT64_MAX, semaphore, fence, imageIndex);
     }
     catch(const vk::OutOfDateKHRError outOfDateError){
         result = vk::Result::eErrorOutOfDateKHR;
