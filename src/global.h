@@ -21,7 +21,7 @@ extern int currentFrameCount;
 struct SPHSettings{
     glm::vec4 g = glm::vec4(0.f, -9.81f, 0.f, 0.f);          //* m/s^2
     
-    float r_LR = 0.2f;                                  //* m
+    float r_LR = 0.25f;                                  //* m
     float h_LR = r_LR * 4;                              //* m
     float rho0 = 1450.f;                                //* kg/m^3
     float mass = (4.f / 3.f * (float) M_PI * (r_LR * r_LR * r_LR)) * rho0;                //* kg

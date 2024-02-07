@@ -55,6 +55,15 @@ namespace gpu
         std::vector<SwapChainFrame> _frames;
     };
 
+    struct ComputeFrame{
+        vk::Fence _inFlight;
+        vk::Semaphore _computeFinished;
+    };
+
+    struct ComputeBundle{
+        std::vector<ComputeFrame> _frames;
+    };
+
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const uint32_t MAX_QUERY_POOL_COUNT = 1024;
     class Core{
@@ -155,6 +164,9 @@ namespace gpu
             //* Shaders
             vk::ShaderModule createShaderModule(const std::vector<uint32_t> code);
             vk::ShaderModule loadShaderModule(std::string src);
+
+            void createComputeBundle(ComputeBundle& bundle);
+            void destroyComputeBundle(ComputeBundle& bundle);
 
             
             // std::vector<SwapChainFrame> _swapChainFrames;

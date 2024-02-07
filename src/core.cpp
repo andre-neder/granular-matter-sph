@@ -1052,3 +1052,23 @@ vk::Result gpu::Core::presentKHR(uint32_t imageIndex, std::vector<vk::Semaphore>
         return result;
 }
 
+void gpu::Core::createComputeBundle(ComputeBundle& bundle)
+{   
+    vk::SemaphoreCreateInfo semaphoreInfo;
+    vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
+
+    bundle._frames.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
+        bundle._frames[i]._computeFinished = _device.createSemaphore(semaphoreInfo);
+        bundle._frames[i]._inFlight = _device.createFence(fenceInfo);
+    }
+}
+
+void gpu::Core::destroyComputeBundle(ComputeBundle& bundle)
+{
+    for (auto frame : bundle._frames) {
+        _device.destroySemaphore(frame._computeFinished);
+        _device.destroyFence(frame._inFlight);
+    }
+}

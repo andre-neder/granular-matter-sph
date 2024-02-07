@@ -73,7 +73,7 @@ void GranularMatter::init(){
 
                 glm::vec3 lrPosition = glm::vec3(
                     -(initialDistance * computeSpace.x / 2) + i * initialDistance + (initialDistance / 2.f),
-                     j * initialDistance + (initialDistance / 2.f) + settings.r_LR + 8.f, //  (initialDistance * computeSpace.y / 2) + // 
+                     j * initialDistance + (initialDistance / 2.f) + settings.r_LR , //  (initialDistance * computeSpace.y / 2) + // + 8.f
                     -(initialDistance * computeSpace.z / 2) + k * initialDistance + (initialDistance / 2.f)
                 );
                 auto p = LRParticle(

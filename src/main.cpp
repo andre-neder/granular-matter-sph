@@ -46,6 +46,8 @@ private:
     gpu::Camera camera;
     gpu::Window window;
 
+    gpu::ComputeBundle computeBundle;
+
     gpu::ParticleRenderPass particleRenderPass;
     gpu::TriangleRenderPass triangleRenderPass;
     gpu::ImguiRenderPass imguiRenderPass;
@@ -59,12 +61,6 @@ private:
     Mesh3D dumpTruck;
     Mesh3D plane;
     Mesh3D hourglas;
-
-
-    std::vector<vk::Fence> computeInFlightFences;
-    std::vector<vk::Semaphore> computeFinishedSemaphores;
-
-    // size_t currentFrame = 0;
 
     void initWindow(){
         window = gpu::Window("Application", WIDTH, HEIGHT);
@@ -125,6 +121,8 @@ private:
         physicalDevice = core.getPhysicalDevice();
         device = core.getDevice();
 
+        core.createComputeBundle(computeBundle);
+
         particleRenderPass = gpu::ParticleRenderPass(&core, &camera);
         triangleRenderPass = gpu::TriangleRenderPass(&core, &camera);
         imguiRenderPass = gpu::ImguiRenderPass(&core, &window);
@@ -180,30 +178,14 @@ private:
         particleRenderPass.init();
         triangleRenderPass.init();
 
-        createSyncObjects();
-    }
-
-    void createSyncObjects() {
-        computeInFlightFences.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        computeFinishedSemaphores.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        vk::SemaphoreCreateInfo semaphoreInfo;
-        vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            try{
-                computeFinishedSemaphores[i] = device.createSemaphore(semaphoreInfo);
-                computeInFlightFences[i] = device.createFence(fenceInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
-        }
     }
 
     void drawFrame(float dt){
         size_t currentFrame = core._swapChainBundle._currentFrame;
         vk::Result result;
-        result = device.waitForFences(computeInFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+        result = device.waitForFences(computeBundle._frames[currentFrame]._inFlight, VK_TRUE, UINT64_MAX);
 
-        device.resetFences(computeInFlightFences[currentFrame]);
+        device.resetFences(computeBundle._frames[currentFrame]._inFlight);
 
         simulation.update((int)currentFrame, 0, dt);
         
@@ -213,7 +195,7 @@ private:
         
         {
             std::vector<vk::Semaphore> signalComputeSemaphores = {
-                computeFinishedSemaphores[currentFrame]
+                computeBundle._frames[currentFrame]._computeFinished
             };
 
             std::vector<vk::Semaphore> waitSemaphores = {
@@ -230,7 +212,7 @@ private:
                 signalComputeSemaphores
             };
 
-            core.getComputeQueue().submit(computeSubmitInfo, computeInFlightFences[currentFrame]);
+            core.getComputeQueue().submit(computeSubmitInfo, computeBundle._frames[currentFrame]._inFlight);
         }
 
         result = device.waitForFences(core.getCurrentFrame()._inFlight, VK_TRUE, UINT64_MAX);
@@ -253,7 +235,7 @@ private:
         imguiRenderPass.update((int) currentFrame, imageIndex, dt);
 
         std::vector<vk::Semaphore> waitSemaphores = {
-            computeFinishedSemaphores[currentFrame], 
+            computeBundle._frames[currentFrame]._computeFinished, 
             core.getCurrentFrame()._imageAvailable
         };
         std::vector<vk::PipelineStageFlags> waitStages = {
@@ -339,10 +321,7 @@ private:
 
         cleanupSwapchain();
 
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            device.destroySemaphore(computeFinishedSemaphores[i]);
-            device.destroyFence(computeInFlightFences[i]);
-        }
+        core.destroyComputeBundle(computeBundle);
         
         window.destroy();
 
