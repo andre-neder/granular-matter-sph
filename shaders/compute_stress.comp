@@ -217,6 +217,9 @@ void main(){
         if(additionalData.frameIndex == 0){
             D += (1.f / settings.rho0) * outerProduct(gradient, gradient);
         }
+
+        //* Drag
+        occluded = max(occluded, dot(normalize(relativeVelocity), normalize(p_pi)));
     )
 
     //* https://dl.acm.org/doi/pdf/10.1145/2019406.2019410
