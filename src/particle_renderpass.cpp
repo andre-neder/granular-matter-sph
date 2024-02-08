@@ -76,7 +76,8 @@ void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt)
     }
     std::array<vk::ClearValue, 2> clearValues = {
         vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}),
-        vk::ClearDepthStencilValue({1.0f, 0})};
+        vk::ClearDepthStencilValue({1.0f, 0})
+    };
     vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
 
     commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
@@ -84,7 +85,7 @@ void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt)
     vk::Viewport viewport(0.0f, 0.0f, (float)m_core->getSwapChainExtent().width, (float)m_core->getSwapChainExtent().height, 0.0f, 1.0f);
     commandBuffers[currentFrame].setViewport(0, viewport);
 
-    vk::Rect2D scissor(vk::Offset2D(0, 0),m_core->getSwapChainExtent());
+    vk::Rect2D scissor(vk::Offset2D(0, 0), m_core->getSwapChainExtent());
     commandBuffers[currentFrame].setScissor(0, scissor);
 
     commandBuffers[currentFrame].bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
@@ -141,7 +142,7 @@ void ParticleRenderPass::createGraphicsPipeline()
         vertShaderStageInfo, 
         // geomShaderStageInfo , 
         fragShaderStageInfo
-    }; // 
+    }; 
 
     auto vertexDescription = Vertex::get_vertex_description();
 
