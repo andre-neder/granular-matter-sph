@@ -109,7 +109,7 @@ namespace gpu
             vk::Format findDepthFormat();
             vk::Result acquireNextImageKHR(uint32_t* imageIndex, vk::Semaphore semaphore, vk::Fence fence = VK_NULL_HANDLE);
             vk::Result presentKHR(uint32_t imageIndex, std::vector<vk::Semaphore> semaphores);
-            
+
             //* Buffers
             vk::Buffer createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {});
             vk::Buffer bufferFromData(void* data, size_t size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage = vma::MemoryUsage::eAuto, vma::AllocationCreateFlags allocationFlags = {});
@@ -168,8 +168,6 @@ namespace gpu
             void createComputeBundle(ComputeBundle& bundle);
             void destroyComputeBundle(ComputeBundle& bundle);
 
-            
-            // std::vector<SwapChainFrame> _swapChainFrames;
             SwapChainBundle _swapChainBundle;
             inline SwapChainFrame getCurrentFrame(){ return _swapChainBundle._frames[_swapChainBundle._currentFrame]; };
         private:
@@ -192,12 +190,6 @@ namespace gpu
             vk::Queue presentQueue;
             vma::Allocator _allocator;
             vk::CommandPool _commandPool; 
-
-
-            // vk::SwapchainKHR _swapChain;
-            // vk::Format _swapChainImageFormat;
-            // vk::Format _depthFormat;
-            // vk::Extent2D _swapChainExtent;
 
             vk::Image _swapChainDepthImage;
             vk::ImageView _swapChainDepthImageView;
