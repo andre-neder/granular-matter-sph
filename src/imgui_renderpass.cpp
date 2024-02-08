@@ -5,6 +5,7 @@ bool simulationRunning = false;
 bool resetSimulation = false;
 int pauseOnFrame = -1;
 int currentFrameCount = 0;
+float simulationSpeedFactor = 1.0;
 
 SPHSettings settings = SPHSettings();
 extern std::vector<std::vector<std::string>> timestampLabels;
@@ -317,18 +318,23 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
            simulationRunning = simulationRunning ? false : true;
         }
         ImGui::BeginTable("", 2);
-        ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("Current Frame");
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text(std::to_string(currentFrameCount).c_str());
+            ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Current Frame");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text(std::to_string(currentFrameCount).c_str());
+            ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("Simulation speed factor");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text(std::to_string(simulationSpeedFactor).c_str());
         ImGui::EndTable();
         
         ImGui::InputInt("Pause on frame", &pauseOnFrame, -1,10000);
 
         ImGui::SliderFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 3000.f );
         ImGui::InputFloat("Maximum compression", &settings.maxCompression, 0.0001f, 0.001f);
-        ImGui::InputFloat("Maximum timestep", &settings.maxTimestep, 0.001);
+        ImGui::InputFloat("Maximum timestep", &settings.maxTimestep, 0.008f);
         ImGui::SliderFloat("Mass (kg)", &settings.mass, 1.f, 100.f);
         // ImGui::DragFloat("Kernel Radius (m)", &settings.h_LR, 1.f, 0.1f, 100.f);
         // ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);

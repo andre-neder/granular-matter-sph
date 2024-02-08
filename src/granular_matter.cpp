@@ -236,6 +236,7 @@ void GranularMatter::update(int currentFrame, int imageIndex, float dt){
     float C_courant = 0.4f; 
     float dt_max = C_courant * (settings.h_LR / settings.v_max);
     settings.dt = std::min(dt, settings.maxTimestep); //  0.004
+    simulationSpeedFactor = settings.dt / dt;
 
     vk::MemoryBarrier writeReadBarrier{
         vk::AccessFlagBits::eMemoryWrite,
