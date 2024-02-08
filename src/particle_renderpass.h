@@ -37,9 +37,7 @@ namespace gpu{
    
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;
-            // vk::Image textureImage;
-            // vk::ImageView textureImageView;
-            // vk::Sampler textureSampler;
+
             vk::DescriptorPool descriptorPool;
             std::vector<vk::DescriptorSet> descriptorSets;
             vk::PipelineLayout pipelineLayout;
@@ -51,8 +49,6 @@ namespace gpu{
             void createRenderPass();
             void createDescriptorSets();
             void createGraphicsPipeline();
-            void createTextureImage();
-            void createDescriptorSetLayout();
             void updateUniformBuffer(uint32_t currentImage);
             void createUniformBuffers();
             void createDescriptorPool();

@@ -25,7 +25,9 @@ void ParticleRenderPass::init()
     fragShaderModule = m_core->loadShaderModule(SHADER_PATH "/shader.frag");
     geomShaderModule = m_core->loadShaderModule(SHADER_PATH"/shader.geom");
 
-    createDescriptorSetLayout();
+    descriptorSetLayout = m_core->createDescriptorSetLayout({
+        {0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry}
+    });
     createRenderPass();
     createGraphicsPipeline();
 
@@ -199,10 +201,6 @@ void ParticleRenderPass::createGraphicsPipeline()
     }
 }
 
-void ParticleRenderPass::createTextureImage()
-{
-}
-
 void ParticleRenderPass::createUniformBuffers()
 {
     vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
@@ -217,11 +215,6 @@ void ParticleRenderPass::createUniformBuffers()
 void ParticleRenderPass::createDescriptorPool()
 {
     descriptorPool = m_core->createDescriptorPool({{vk::DescriptorType::eUniformBuffer, 1 * gpu::MAX_FRAMES_IN_FLIGHT}}, 1 * gpu::MAX_FRAMES_IN_FLIGHT);
-}
-
-void ParticleRenderPass::createDescriptorSetLayout()
-{
-    descriptorSetLayout = m_core->createDescriptorSetLayout({{0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry}});
 }
 
 void ParticleRenderPass::destroyFrameResources()

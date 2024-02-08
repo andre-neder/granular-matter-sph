@@ -17,8 +17,9 @@ using namespace gpu;
         vertShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.vert");
         fragShaderModule = m_core->loadShaderModule(SHADER_PATH"/triangle.frag");
 
-
-        createDescriptorSetLayout();
+        descriptorSetLayout = m_core->createDescriptorSetLayout({
+            {0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex }
+        });
         createRenderPass();
         createGraphicsPipeline();
         initFrameResources();
@@ -199,12 +200,6 @@ using namespace gpu;
         }, 1 * gpu::MAX_FRAMES_IN_FLIGHT );
     }
 
-    void TriangleRenderPass::createDescriptorSetLayout() {
-        descriptorSetLayout = m_core->createDescriptorSetLayout({
-            {0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex }
-        });
-    }
-    
     void TriangleRenderPass::destroyFrameResources(){
         vk::Device device = m_core->getDevice();
         for (auto framebuffer : framebuffers) {

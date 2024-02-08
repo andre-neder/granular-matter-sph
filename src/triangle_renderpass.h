@@ -70,11 +70,6 @@ namespace gpu{
         private:
             gpu::Camera* m_camera;
 
-            // Model hourglassModel;
-
-            // std::vector<vk::Buffer> vertexBuffer;
-            // vk::Buffer vertexBuffer;
-            // vk::Buffer indexBuffer;
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;
 
@@ -90,7 +85,6 @@ namespace gpu{
             void createRenderPass();
             void createDescriptorSets();
             
-            void createDescriptorSetLayout();
             void updateUniformBuffer(uint32_t currentImage);
             void createUniformBuffers();
             void createDescriptorPool();
