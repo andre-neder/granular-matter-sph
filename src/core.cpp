@@ -423,13 +423,18 @@ void gpu::Core::updateDescriptorSet(vk::DescriptorSet set)
 {
     auto& descriptorWrites = _descriptorWrites.at(set);
     _device.updateDescriptorSets(descriptorWrites, nullptr);
+    for(auto descriptorWrite : descriptorWrites){
+        delete descriptorWrite.pBufferInfo;
+    }
+    for(auto descriptorWrite : descriptorWrites){
+        delete descriptorWrite.pImageInfo;
+    }
     descriptorWrites.clear();
 }
 
 
 void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::BufferDescriptorWrite write)
 {
-    //Todo: Cleanup
     vk::DescriptorBufferInfo* bufferInfo = new vk::DescriptorBufferInfo(write.buffer, 0, write.size);
     vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, 1, write.type, {}, bufferInfo);
     _descriptorWrites.at(set).push_back(descriptorWrite);
@@ -437,7 +442,6 @@ void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::BufferDescriptorWrite 
 
 void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite write)
 {
-    //Todo: Cleanup
     std::vector<vk::DescriptorImageInfo>* imageInfos = new std::vector<vk::DescriptorImageInfo>(); 
     if(write.type == vk::DescriptorType::eSampler){
         imageInfos->push_back(vk::DescriptorImageInfo(write.sampler, {}, {}));
