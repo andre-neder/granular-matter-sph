@@ -425,8 +425,6 @@ void gpu::Core::updateDescriptorSet(vk::DescriptorSet set)
     _device.updateDescriptorSets(descriptorWrites, nullptr);
     for(auto descriptorWrite : descriptorWrites){
         delete descriptorWrite.pBufferInfo;
-    }
-    for(auto descriptorWrite : descriptorWrites){
         delete descriptorWrite.pImageInfo;
     }
     descriptorWrites.clear();
