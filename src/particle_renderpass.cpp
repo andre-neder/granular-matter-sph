@@ -50,16 +50,9 @@ void ParticleRenderPass::createFramebuffers()
     {
         std::array<vk::ImageView, 2> attachments = {
             m_core->getSwapChainImageView(i),
-            m_core->getSwapChainDepthImageView()};
-        vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, m_core->getSwapChainExtent().width, m_core->getSwapChainExtent().height, 1);
-        try
-        {
-            framebuffers[i] = m_core->getDevice().createFramebuffer(framebufferInfo);
-        }
-        catch (std::exception &e)
-        {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+            m_core->getSwapChainDepthImageView()
+        };
+        framebuffers[i] = m_core->createFramebuffer(renderPass, attachments);
     }
 }
 

@@ -134,6 +134,8 @@ namespace gpu
             //* Samplers
             vk::Sampler createSampler(vk::SamplerAddressMode addressMode = vk::SamplerAddressMode::eRepeat, vk::BorderColor borderColor = vk::BorderColor::eIntOpaqueBlack, vk::Bool32 enableAnisotropy = VK_FALSE);
             void destroySampler(vk::Sampler sampler);
+
+            vk::Framebuffer createFramebuffer(vk::RenderPass renderPass, vk::ArrayProxy<vk::ImageView> attachments);
             
             //* Commands
             void createCommandPool();

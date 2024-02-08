@@ -32,12 +32,7 @@ using namespace gpu;
                 m_core->getSwapChainImageView(i),
                 m_core->getSwapChainDepthImageView()
             };
-            vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, m_core->getSwapChainExtent().width, m_core->getSwapChainExtent().height, 1);
-            try{
-                framebuffers[i] = m_core->getDevice().createFramebuffer(framebufferInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
+            framebuffers[i] = m_core->createFramebuffer(renderPass, attachments);
         }
     }
 

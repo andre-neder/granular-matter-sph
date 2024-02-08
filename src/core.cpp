@@ -832,6 +832,19 @@ void Core::destroySampler(vk::Sampler sampler){
     _device.destroySampler(sampler);
 }
 
+vk::Framebuffer gpu::Core::createFramebuffer(vk::RenderPass renderPass, vk::ArrayProxy<vk::ImageView> attachments)
+{
+    vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapChainExtent().width, getSwapChainExtent().height, 1);
+    try
+    {
+        return _device.createFramebuffer(framebufferInfo);
+    }
+    catch (std::exception &e)
+    {
+        std::cerr << "Exception Thrown: " << e.what();
+    }
+}
+
 vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
         if (availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
