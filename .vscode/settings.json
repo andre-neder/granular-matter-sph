@@ -92,7 +92,8 @@
         "bitset": "cpp",
         "cinttypes": "cpp",
         "execution": "cpp",
-        "coroutine": "cpp"
+        "coroutine": "cpp",
+        "*.hpp11": "cpp"
     },
     "editor.wordWrap": "on"
 }

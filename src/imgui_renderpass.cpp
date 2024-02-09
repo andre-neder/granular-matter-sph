@@ -124,7 +124,7 @@ ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
     initFrameResources();
 
     ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = m_core->getInstance();
+    init_info.Instance = m_core->getInstance()->get();
     init_info.PhysicalDevice = m_core->getPhysicalDevice();
     init_info.Device = m_core->getDevice();
     init_info.QueueFamily = m_core->findQueueFamilies(m_core->getPhysicalDevice()).graphicsFamily.value();

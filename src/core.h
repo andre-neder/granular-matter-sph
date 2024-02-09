@@ -85,16 +85,24 @@ namespace gpu
 
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
     const uint32_t MAX_QUERY_POOL_COUNT = 1024;
+
     class Core{
         public:
             Core(){};
+            // Core(Core &&){}
             Core(bool enableValidation, Window* window);
             ~Core(){};
+            // Core& operator=(const Core&) = default;
+
+            Core(const Core&) = delete;
+            Core& operator=(const Core&) = delete;
+            Core(Core&&) = default;
+            Core& operator=(Core&&) = default;
 
             void destroy();
 
-            inline vk::Instance getInstance(){ return _instance; };
-            inline vk::SurfaceKHR getSurface(){ return _surface; };
+            inline vk::UniqueInstance* getInstance(){ return &_instance; };
+            // inline vk::UniqueSurfaceKHR* getSurface(){ return &_surface; };
             inline vk::SurfaceFormatKHR getSurfaceFormat(){ return _surfaceFormat; };
             inline vk::PhysicalDevice getPhysicalDevice(){ return _physicalDevice; };
             inline vk::Device getDevice(){ return _device; };
@@ -195,6 +203,7 @@ namespace gpu
             bool _enableValidation = true;
             std::vector<const char*> _deviceExtensions = {
                 VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
+                // "VK_KHR_portability_subset",
                 VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
                 VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME,
                 // VK_NV_COOPERATIVE_MATRIX_EXTENSION_NAME
@@ -203,9 +212,11 @@ namespace gpu
                 "VK_LAYER_KHRONOS_validation"
             };
 
-            vk::Instance _instance;
-            vk::DebugUtilsMessengerEXT _debugMessenger;
-            vk::SurfaceKHR _surface;
+            vk::UniqueInstance _instance;
+            static vk::DispatchLoaderDynamic _dispatchLoaderDynamic;
+            vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::DispatchLoaderDynamic> _debugMessenger;
+
+            vk::UniqueSurfaceKHR _surface;
             vk::SurfaceFormatKHR _surfaceFormat;
             vk::PhysicalDevice _physicalDevice;
             vk::Device _device;
@@ -234,5 +245,6 @@ namespace gpu
             void createAllocator();
             void createInstance();
             void createDebugMessenger();
+            
     };
 } // namespace gpu

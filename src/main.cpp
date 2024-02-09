@@ -39,7 +39,6 @@ public:
         cleanup();
     }
 private:
-    vk::PhysicalDevice physicalDevice;
     vk::Device device;
 
     gpu::Core core;
@@ -127,7 +126,7 @@ private:
 
     void initVulkan(){
         core = gpu::Core(true, &window);
-        physicalDevice = core.getPhysicalDevice();
+        
         device = core.getDevice();
 
         core.createComputeBundle(computeBundle);
