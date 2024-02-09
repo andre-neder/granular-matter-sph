@@ -42,11 +42,6 @@ namespace gpu
         bool _buttonState_SPACE;
         bool _buttonState_MOUSELEFT;
 
-        static void MouseCallback(GLFWwindow* window, double xpos, double ypos);
-        static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-
-        static float _radius;
-        static float _xpos;
-        static float _ypos;
+        float _radius;
     };
 } // namespace gpu

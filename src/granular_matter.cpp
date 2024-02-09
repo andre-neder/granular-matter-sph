@@ -3,9 +3,10 @@
 #include "iostream"
 #include "global.h"
 #include "utils.h"
+#include "input.h"
 
 SimulationMetrics simulationMetrics = SimulationMetrics();
-
+extern bool simulationStepForward = false;
 BitonicSortParameters params;
 uint32_t workGroupSize;
 uint32_t n;
@@ -191,6 +192,10 @@ void GranularMatter::init(){
     integratePass = gpu::ComputePass(m_core, SHADER_PATH"/integrate.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     advectionPass = gpu::ComputePass(m_core, SHADER_PATH"/hr_advection.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
 
+    gpu::InputManager::addKeyBinding([=](){
+        simulationRunning = !simulationRunning;
+    }, GLFW_KEY_SPACE);
+
 }
 
 GranularMatter::~GranularMatter()
@@ -237,6 +242,8 @@ void GranularMatter::initFrameResources(){
 
 void GranularMatter::update(int currentFrame, int imageIndex, float dt){ 
 
+
+    simulationStepForward = gpu::InputManager::isKeyDown(GLFW_KEY_RIGHT);
     if(pauseOnFrame == currentFrameCount){
         simulationRunning = false;
     }

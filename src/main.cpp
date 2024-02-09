@@ -26,6 +26,7 @@
 
 #include "global.h"
 #include "camera.h"
+#include "input.h"
 
 const uint32_t WIDTH = 1280;
 const uint32_t HEIGHT = 720;
@@ -44,6 +45,7 @@ private:
     gpu::Core core;
     gpu::Camera camera;
     gpu::Window window;
+    gpu::InputManager input;
 
     gpu::ComputeBundle computeBundle;
 
@@ -64,6 +66,7 @@ private:
     void initWindow(){
         window = gpu::Window("Application", WIDTH, HEIGHT);
         camera = gpu::Camera(gpu::Camera::Type::eTrackBall, window.getGLFWWindow(), WIDTH, HEIGHT, glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+        input = gpu::InputManager(window);
     }
 
     void toggleWireframe(){
@@ -286,6 +289,7 @@ private:
             float dt = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
             startTime = std::chrono::high_resolution_clock::now();
 
+            input.update();
             glfwPollEvents();
 
             camera.handleInput();

@@ -1,22 +1,9 @@
 #include "camera.h"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/gtc/matrix_transform.hpp>
+#include "input.h"
 
 using namespace gpu;
-
-float Camera::_radius;
-float Camera::_xpos;
-float Camera::_ypos;
-
-void Camera::MouseCallback(GLFWwindow* window, double xpos, double ypos){
-    Camera::_xpos = (float) xpos;
-    Camera::_ypos = (float) ypos;
-}
-
-void Camera::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
-    Camera::_radius -= (float) (yoffset * 0.1);
-	Camera::_radius = glm::max((float)Camera::_radius, 0.000001f);
-}
 
 Camera::Camera(){
     
@@ -25,8 +12,6 @@ Camera::Camera(){
 Camera::Camera(Type type, GLFWwindow* window, uint32_t width, uint32_t height, glm::vec3 eye, glm::vec3 center)
 {
     m_window = window;
-    _xpos = 0.0f;
-    _ypos = 0.0f;
     _radius = glm::length(eye - center);
     _type = type;
     _center = center;
@@ -51,8 +36,6 @@ Camera::Camera(Type type, GLFWwindow* window, uint32_t width, uint32_t height, g
     _buttonState_SPACE = false;
     _buttonState_MOUSELEFT = false;
 
-    glfwSetCursorPosCallback(m_window, MouseCallback);
-    glfwSetScrollCallback(m_window, ScrollCallback);
     update(0);
 }
 
@@ -114,7 +97,13 @@ void Camera::handleInput()
 }
 
 void Camera::update(float dt){
+    handleInput();
     double delta_time = dt;
+    float _xpos = gpu::InputManager::cursorPosition.x;
+    float _ypos = gpu::InputManager::cursorPosition.y;
+
+    Camera::_radius -= (float) (gpu::InputManager::scrollOffset.y * 0.1);
+    Camera::_radius = glm::max((float)Camera::_radius, 0.000001f);
 
     if (_buttonState_MOUSELEFT) {
         _newPos = glm::vec2(_xpos, _ypos);
