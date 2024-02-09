@@ -1,5 +1,5 @@
 #pragma once
-#include "vulkan_utils.h"
+#include <vulkan/vulkan.hpp>
 
 namespace gpu
 {

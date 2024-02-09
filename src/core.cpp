@@ -12,14 +12,94 @@ bool hasStencilComponent(vk::Format format) {
     return format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint;
 }
 
+
+vk::DebugUtilsMessageSeverityFlagsEXT messageSeverityFlags = vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation;
+
+
+PFN_vkCreateDebugUtilsMessengerEXT pfnVkCreateDebugUtilsMessengerEXT;
+PFN_vkDestroyDebugUtilsMessengerEXT pfnVkDestroyDebugUtilsMessengerEXT;
+
+bool QueueFamilyIndices::isComplete() {
+	return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
+}
+
+#ifdef IMGUI_VULKAN_DEBUG_REPORT
+	static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData)
+	{
+		(void)flags; (void)object; (void)location; (void)messageCode; (void)pUserData; (void)pLayerPrefix; // Unused arguments
+		fprintf(stderr, "[vulkan] Debug report from ObjectType: %i\nMessage: %s\n\n", objectType, pMessage);
+		return VK_FALSE;
+	}
+#endif // IMGUI_VULKAN_DEBUG_REPORT
+
+
+VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pMessenger){
+	return pfnVkCreateDebugUtilsMessengerEXT(instance, pCreateInfo, pAllocator, pMessenger);
+}
+
+VKAPI_ATTR void VKAPI_CALL vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger, VkAllocationCallbacks const *pAllocator){
+	return pfnVkDestroyDebugUtilsMessengerEXT(instance, messenger, pAllocator);
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *pUserData)
+{
+	std::ostringstream message;
+	message << vk::to_string(static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>(messageSeverity)) << ": "
+			<< vk::to_string(static_cast<vk::DebugUtilsMessageTypeFlagsEXT>(messageTypes)) << ":\n";
+	message << "\t"
+			<< "messageIDName   = <" << pCallbackData->pMessageIdName << ">\n";
+	message << "\t"
+			<< "messageIdNumber = " << pCallbackData->messageIdNumber << "\n";
+	message << "\t"
+			<< "message         = <" << pCallbackData->pMessage << ">\n";
+	if (0 < pCallbackData->queueLabelCount){
+		message << "\t"
+				<< "Queue Labels:\n";
+		for (uint8_t i = 0; i < pCallbackData->queueLabelCount; i++){
+			message << "\t\t"
+					<< "labelName = <" << pCallbackData->pQueueLabels[i].pLabelName << ">\n";
+		}
+	}
+	if (0 < pCallbackData->cmdBufLabelCount){
+		message << "\t"
+				<< "CommandBuffer Labels:\n";
+		for (uint8_t i = 0; i < pCallbackData->cmdBufLabelCount; i++){
+			message << "\t\t"
+					<< "labelName = <" << pCallbackData->pCmdBufLabels[i].pLabelName << ">\n";
+		}
+	}
+	if (0 < pCallbackData->objectCount){
+		message << "\t"
+				<< "Objects:\n";
+		for (uint8_t i = 0; i < pCallbackData->objectCount; i++){
+			message << "\t\t"
+					<< "Object " << i << "\n";
+			message << "\t\t\t"
+					<< "objectType   = "
+					<< vk::to_string(static_cast<vk::ObjectType>(pCallbackData->pObjects[i].objectType)) << "\n";
+			message << "\t\t\t"
+					<< "objectHandle = " << pCallbackData->pObjects[i].objectHandle << "\n";
+			if (pCallbackData->pObjects[i].pObjectName){
+				message << "\t\t\t"
+						<< "objectName   = <" << pCallbackData->pObjects[i].pObjectName << ">\n";
+			}
+		}
+	}
+	std::cout << message.str() << std::endl;
+	return VK_FALSE;
+}
+
+
+
 Core::Core(bool enableValidation, Window* window){
-    m_enableValidation = enableValidation;
-    _instance = createInstance(m_enableValidation);
+    _enableValidation = enableValidation;
+    createInstance();
 
-
-    if(m_enableValidation){
-        _debugMessenger = createDebugMessenger(_instance);
+    if(_enableValidation){
+        createDebugMessenger();
     }
+
     if (glfwCreateWindowSurface(_instance, window->getGLFWWindow(), nullptr, reinterpret_cast<VkSurfaceKHR*>(&_surface)) != VK_SUCCESS) {
         throw std::runtime_error("failed to create window surface!");
     }
@@ -40,7 +120,7 @@ void Core::destroy(){
     _allocator.destroy();
     _device.destroy();
     _instance.destroySurfaceKHR(_surface);
-    if (m_enableValidation) {
+    if (_enableValidation) {
         _instance.destroyDebugUtilsMessengerEXT(_debugMessenger);
     }
     _instance.destroy();
@@ -134,11 +214,29 @@ QueueFamilyIndices Core::findQueueFamilies(vk::PhysicalDevice pDevice) {
 
 bool Core::checkDeviceExtensionSupport(vk::PhysicalDevice pDevice) {
     std::vector<vk::ExtensionProperties> availableExtensions = pDevice.enumerateDeviceExtensionProperties();
-    std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+    std::set<std::string> requiredExtensions(_deviceExtensions.begin(), _deviceExtensions.end());
     for (const auto& extension : availableExtensions) {
         requiredExtensions.erase(extension.extensionName);
     }
     return requiredExtensions.empty();
+}
+
+bool gpu::Core::checkValidationLayerSupport()
+{
+    std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
+	for (const char* layerName : _validationLayers) {
+		bool layerFound = false;
+		for (const auto& layerProperties : availableLayers) {
+			if (strcmp(layerName, layerProperties.layerName) == 0) {
+				layerFound = true;
+				break;
+			}
+		}
+		if (!layerFound) {
+			return false;
+		}
+	}
+	return true;
 }
 
 SwapChainSupportDetails Core::querySwapChainSupport(vk::PhysicalDevice pDevice) {
@@ -163,17 +261,17 @@ void Core::createLogicalDevice(){
     std::vector<vk::ExtensionProperties> extensionProperties =  _physicalDevice.enumerateDeviceExtensionProperties();
     for(auto extensionProperty : extensionProperties){
         if(std::string(extensionProperty.extensionName.data()) == std::string(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME))
-            deviceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+            _deviceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
     }
 
     vk::DeviceCreateInfo deviceCreateInfo;
-	if (m_enableValidation)
+	if (_enableValidation)
 	{
-		deviceCreateInfo = vk::DeviceCreateInfo({}, queueCreateInfos, validationLayers, deviceExtensions, {});
+		deviceCreateInfo = vk::DeviceCreateInfo({}, queueCreateInfos, _validationLayers, _deviceExtensions, {});
 	}
 	else
 	{
-		deviceCreateInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, deviceExtensions, {});
+		deviceCreateInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, _deviceExtensions, {});
 	}
     vk::StructureChain<vk::DeviceCreateInfo, vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT> deviceFeatureCreateInfo = {
 		deviceCreateInfo,
@@ -215,6 +313,52 @@ void Core::createAllocator(){
 		std::cerr << "Exception Thrown: " << e.what();
 	}
 
+}
+
+void gpu::Core::createInstance()
+{
+    if (_enableValidation && !checkValidationLayerSupport()) {
+		throw std::runtime_error("validation layers requested, but not available!");
+	}
+	uint32_t glfwExtensionCount = 0;
+	const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+	vk::ApplicationInfo applicationInfo("VulkanBase", VK_MAKE_VERSION(0, 0 ,1), "VulkanEngine", 1, VK_API_VERSION_1_1);
+
+	try {
+		if(_enableValidation){
+			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			vk::StructureChain<vk::InstanceCreateInfo, vk::DebugUtilsMessengerCreateInfoEXT> instanceCreateInfoChain{
+				vk::InstanceCreateInfo(vk::InstanceCreateFlags(), &applicationInfo, _validationLayers, extensions),
+				vk::DebugUtilsMessengerCreateInfoEXT({}, messageSeverityFlags, messageTypeFlags, debugCallback)
+			};
+			_instance = vk::createInstance(instanceCreateInfoChain.get<vk::InstanceCreateInfo>());
+		}else{
+			vk::InstanceCreateInfo instanceCreateInfo(vk::InstanceCreateFlags(), &applicationInfo, {}, extensions);
+			_instance = vk::createInstance(instanceCreateInfo);
+		}
+	}catch(std::exception& e) {
+		std::cerr << "Exception Thrown: " << e.what();
+	}
+}
+
+void gpu::Core::createDebugMessenger()
+{
+    pfnVkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(_instance.getProcAddr("vkCreateDebugUtilsMessengerEXT"));
+	if (!pfnVkCreateDebugUtilsMessengerEXT){
+		throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkCreateDebugUtilsMessengerEXT function.");
+	}
+	pfnVkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(_instance.getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
+	if (!pfnVkDestroyDebugUtilsMessengerEXT){
+		throw std::runtime_error("GetInstanceProcAddr: Unable to find pfnVkDestroyDebugUtilsMessengerEXT function.");
+	}
+	vk::DebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo({}, messageSeverityFlags, messageTypeFlags, debugCallback);
+	try{
+		_debugMessenger = _instance.createDebugUtilsMessengerEXT(debugMessengerCreateInfo, nullptr);
+	}catch(std::exception& e) {
+		std::cerr << "Exception Thrown: " << e.what();
+	}
 }
 
 vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags){

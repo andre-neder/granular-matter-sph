@@ -1,17 +1,36 @@
 #pragma once
-
-#include "vulkan_utils.h"
-#include "window.h"
-#include <map>
+#include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
-
+#include <GLFW/glfw3.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
+
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <optional>
+#include <set>
+#include <map>
 #include <queue>
 #include <functional>
 
+#include "window.h"
+
 namespace gpu
 {   
+
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+        std::optional<uint32_t> presentFamily;
+        std::optional<uint32_t> computeFamily;
+        bool isComplete();
+    };
+
+    struct SwapChainSupportDetails {
+        vk::SurfaceCapabilitiesKHR capabilities;
+        std::vector<vk::SurfaceFormatKHR> formats;
+        std::vector<vk::PresentModeKHR> presentModes;
+    };
 
     struct DescriptorSetBinding{
         uint32_t binding;
@@ -173,13 +192,16 @@ namespace gpu
             SwapChainBundle _swapChainBundle;
             inline SwapChainFrame getCurrentFrame(){ return _swapChainBundle._frames[_swapChainBundle._currentFrame]; };
         private:
-            bool m_enableValidation = true;
-            std::vector<const char*> deviceExtensions = {
+            bool _enableValidation = true;
+            std::vector<const char*> _deviceExtensions = {
                 VK_KHR_SWAPCHAIN_EXTENSION_NAME, 
                 VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
                 VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME,
                 // VK_NV_COOPERATIVE_MATRIX_EXTENSION_NAME
             }; 
+            std::vector<const char*> _validationLayers = {
+                "VK_LAYER_KHRONOS_validation"
+            };
 
             vk::Instance _instance;
             vk::DebugUtilsMessengerEXT _debugMessenger;
@@ -203,10 +225,14 @@ namespace gpu
             std::map<vk::DescriptorSetLayout, vk::DescriptorBindingFlags> _descriptorBindingFlags;
 
 
-            void pickPhysicalDevice();
             bool isDeviceSuitable(vk::PhysicalDevice pDevice);
             bool checkDeviceExtensionSupport(vk::PhysicalDevice pDevice);
+            bool checkValidationLayerSupport();
+
+            void pickPhysicalDevice();
             void createLogicalDevice();
             void createAllocator();
+            void createInstance();
+            void createDebugMessenger();
     };
 } // namespace gpu
