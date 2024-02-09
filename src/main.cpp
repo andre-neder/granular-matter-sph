@@ -175,14 +175,14 @@ private:
         for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
             particleRenderPass.vertexBuffer[i] = simulation.particlesBufferHR;
         }
-        particleRenderPass.vertexCount = static_cast<uint32_t>(simulation.hrParticles.size());
+        particleRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
         particleRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
         particleRenderPass.bindingDescription = HRParticle::getBindingDescription();
 
         // for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
         //     particleRenderPass.vertexBuffer[i] = simulation.particlesBufferB;
         // }
-        // particleRenderPass.vertexCount = static_cast<uint32_t>(simulation.lrParticles.size());
+        // particleRenderPass.vertexCount = (uint32_t)simulation.lrParticles.size();
         // particleRenderPass.attributeDescriptions = LRParticle::getAttributeDescriptions();
         // particleRenderPass.bindingDescription = LRParticle::getBindingDescription();
 
@@ -198,10 +198,10 @@ private:
 
         device.resetFences(computeContext._frames[currentFrame]._inFlight);
 
-        simulation.update(static_cast<int>(currentFrame), 0, dt);
+        simulation.update((int)currentFrame, 0, dt);
         
         std::array<vk::CommandBuffer, 1> submitComputeCommandBuffers = { 
-            simulation.getCommandBuffer(static_cast<int>(currentFrame))
+            simulation.getCommandBuffer((int)currentFrame)
         }; 
         
         {
@@ -241,9 +241,9 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        particleRenderPass.update(static_cast<int>(currentFrame), imageIndex, dt);
-        triangleRenderPass.update(static_cast<int>(currentFrame), imageIndex, dt);
-        imguiRenderPass.update(static_cast<int>(currentFrame), imageIndex, dt);
+        particleRenderPass.update((int) currentFrame, imageIndex, dt);
+        triangleRenderPass.update((int) currentFrame, imageIndex, dt);
+        imguiRenderPass.update((int) currentFrame, imageIndex, dt);
 
         std::vector<vk::Semaphore> waitSemaphores = {
             computeContext._frames[currentFrame]._computeFinished, 
@@ -257,9 +257,9 @@ private:
             core.getCurrentFrame()._renderFinished
         };
         std::array<vk::CommandBuffer, 3> submitCommandBuffers = { 
-            particleRenderPass.getCommandBuffer(static_cast<int>(currentFrame)), 
-            triangleRenderPass.getCommandBuffer(static_cast<int>(currentFrame)), 
-            imguiRenderPass.getCommandBuffer(static_cast<int>(currentFrame))
+            particleRenderPass.getCommandBuffer((int) currentFrame), 
+            triangleRenderPass.getCommandBuffer((int) currentFrame), 
+            imguiRenderPass.getCommandBuffer((int) currentFrame)
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
 

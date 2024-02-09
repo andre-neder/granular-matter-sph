@@ -13,7 +13,7 @@ namespace gpu
             vk::DynamicState::eViewport,
             vk::DynamicState::eScissor
         };
-        static vk::PipelineDynamicStateCreateInfo DefaultDynamicStateCreateInfo({}, static_cast<uint32_t>(ViewportScissorDynamicState.size()), ViewportScissorDynamicState.data());
+        static vk::PipelineDynamicStateCreateInfo DefaultDynamicStateCreateInfo({}, (uint32_t) ViewportScissorDynamicState.size(), ViewportScissorDynamicState.data());
         static vk::PipelineViewportStateCreateInfo DynamicViewportState({}, 1, nullptr, 1, nullptr);
     };
     

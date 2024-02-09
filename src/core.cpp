@@ -479,7 +479,7 @@ void Core::addDescriptorWrite(vk::DescriptorSet set, gpu::ImageDescriptorWrite w
     else{
         throw "Unsupported write type";
     }
-    vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, static_cast<uint32_t>(imageInfos->size()), write.type, imageInfos->data());
+    vk::WriteDescriptorSet descriptorWrite(set, write.binding, 0, (uint32_t)imageInfos->size(), write.type, imageInfos->data());
     _descriptorWrites.at(set).push_back(descriptorWrite);
 }
 
@@ -499,9 +499,9 @@ vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<Descrip
         descriptorCount = std::max(descriptorCount, b.count);
     }
 
-    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, static_cast<uint32_t>(descriptorSetLayoutBindings.size()), descriptorSetLayoutBindings.data());
+    vk::DescriptorSetLayoutCreateInfo layoutInfo({}, (uint32_t)descriptorSetLayoutBindings.size(), descriptorSetLayoutBindings.data());
 
-    vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{static_cast<uint32_t>(flags.size()), flags.data()};
+    vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{(uint32_t)flags.size(), flags.data()};
     layoutInfo.pNext = &bindingFlags;
 
     auto descriptorSetLayout = _device->createDescriptorSetLayout(layoutInfo);

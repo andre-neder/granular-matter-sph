@@ -39,7 +39,7 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
     vk::PipelineShaderStageCreateInfo stageInfo;
     if(entries.size() > 0){
         vk::SpecializationInfo spec_info = {
-            static_cast<uint32_t>(entries.size()),
+            (uint32_t)entries.size(),
             entries.data(),
             sizeOfConstant * data.size(),
             data.data()
@@ -61,6 +61,7 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
         };
     }
     vk::PipelineLayoutCreateInfo layoutInfo;
+    // uint32_t pushConstantSize = sizeof(float) * 2;
     if(pushConstantSize > 0){
         vk::PushConstantRange pushConstantRange{
             vk::ShaderStageFlagBits::eCompute,
@@ -70,7 +71,7 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
 
         layoutInfo = {
             {},
-            static_cast<uint32_t>(descriptorSetLayouts.size()),
+            (uint32_t)descriptorSetLayouts.size(),
             descriptorSetLayouts.data(),
             1,
             &pushConstantRange,
@@ -80,7 +81,7 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
     else{
         layoutInfo = {
             {},
-            static_cast<uint32_t>(descriptorSetLayouts.size()),
+            (uint32_t)descriptorSetLayouts.size(),
             descriptorSetLayouts.data(),
             0,
             {},

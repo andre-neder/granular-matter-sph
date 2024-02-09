@@ -43,6 +43,7 @@ void gpu::InputManager::scrollCallback(GLFWwindow *window, double xoffset, doubl
 void gpu::InputManager::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
     if(button > -1 && button < 8){
+        // store button down state
         mouseButtonsDown[button] = (action == GLFW_PRESS || action == GLFW_REPEAT) ? true : false;
     }
 }

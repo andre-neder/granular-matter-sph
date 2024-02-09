@@ -219,7 +219,7 @@ void Model::loadMaterials(tinygltf::Model &input)
 			auto ext = mat.extensions.find("KHR_materials_emissive_strength");
 			if (ext->second.Has("emissiveStrength")) {
 				auto value = ext->second.Get("emissiveStrength");
-				material.emissiveStrength = static_cast<float>(value.Get<double>());
+				material.emissiveStrength = (float)value.Get<double>();
 			}
 		}
 		if (mat.values.find("baseColorFactor") != mat.values.end())
@@ -501,8 +501,8 @@ void Model::createDescriptorSet()
 	// create descriptor set for all textures
 	descriptorPool = core->createDescriptorPool({
         { vk::DescriptorType::eSampler, 1 * gpu::MAX_FRAMES_IN_FLIGHT },
-        { vk::DescriptorType::eSampledImage, static_cast<uint32_t>(views.size())  * gpu::MAX_FRAMES_IN_FLIGHT },
-    }, static_cast<uint32_t>(views.size() + 1) * gpu::MAX_FRAMES_IN_FLIGHT);
+        { vk::DescriptorType::eSampledImage, (uint32_t)views.size()  * gpu::MAX_FRAMES_IN_FLIGHT },
+    }, (uint32_t)(views.size() + 1) * gpu::MAX_FRAMES_IN_FLIGHT);
 
 	descriptorSets = core->allocateDescriptorSets(Model::getTexturesLayout(core), descriptorPool, gpu::MAX_FRAMES_IN_FLIGHT);
 
@@ -519,7 +519,7 @@ void Model::createDescriptorSet()
 	}
 	// create descriptorset for each material
 	materialDescriptorPool = core->createDescriptorPool({
-			{ vk::DescriptorType::eUniformBuffer, static_cast<uint32_t>(1 * _materials.size()) * gpu::MAX_FRAMES_IN_FLIGHT }, 
+			{ vk::DescriptorType::eUniformBuffer, (uint32_t)(1 * _materials.size()) * gpu::MAX_FRAMES_IN_FLIGHT }, 
 		}, (2 * _materials.size()) * gpu::MAX_FRAMES_IN_FLIGHT);
 	
 	int index = 0;

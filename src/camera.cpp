@@ -38,8 +38,8 @@ void Camera::update(float dt){
     float _xpos = gpu::InputManager::cursorPosition.x;
     float _ypos = gpu::InputManager::cursorPosition.y;
 
-    Camera::_radius -= static_cast<float>(gpu::InputManager::scrollOffset.y * 0.1);
-    Camera::_radius = glm::max(static_cast<float>(Camera::_radius), 0.000001f);
+    Camera::_radius -= (float) (gpu::InputManager::scrollOffset.y * 0.1);
+    Camera::_radius = glm::max((float)Camera::_radius, 0.000001f);
 
     if (gpu::InputManager::isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
         _newPos = glm::vec2(_xpos, _ypos);
@@ -83,17 +83,17 @@ void Camera::update(float dt){
         glm::vec3 left = glm::cross(up, forward);
         glm::vec3 right = -1.f * left;
         if (gpu::InputManager::isKeyDown(GLFW_KEY_W))
-            _eye += forward * static_cast<float>(delta_time) * 3.f;
+            _eye += forward * (float) delta_time * 3.f;
         if (gpu::InputManager::isKeyDown(GLFW_KEY_A)) 
-            _eye += left * static_cast<float>(delta_time) * 3.f;
+            _eye += left * (float) delta_time * 3.f;
         if (gpu::InputManager::isKeyDown(GLFW_KEY_S))
-            _eye += backwards * static_cast<float>(delta_time) * 3.f;
+            _eye += backwards * (float) delta_time * 3.f;
 	    if (gpu::InputManager::isKeyDown(GLFW_KEY_D))
-            _eye += right * static_cast<float>(delta_time) * 3.f;
+            _eye += right * (float) delta_time * 3.f;
         if (gpu::InputManager::isKeyDown(GLFW_KEY_LEFT_CONTROL))
-            _eye += down * static_cast<float>(delta_time) * 3.f;
+            _eye += down * (float) delta_time * 3.f;
         if (gpu::InputManager::isKeyDown(GLFW_KEY_LEFT_SHIFT))
-            _eye += up * static_cast<float>(delta_time) * 3.f;
+            _eye += up * (float) delta_time * 3.f;
         _radius = glm::length(_eye);
 
         _forward.x = sin(3.141592f - _angle.y) * sin(_angle.x);

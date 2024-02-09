@@ -93,8 +93,7 @@
         "cinttypes": "cpp",
         "execution": "cpp",
         "coroutine": "cpp",
-        "*.hpp11": "cpp",
-        "numbers": "cpp"
+        "*.hpp11": "cpp"
     },
     "editor.wordWrap": "on"
 }
