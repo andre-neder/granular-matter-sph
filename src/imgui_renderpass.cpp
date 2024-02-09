@@ -1,6 +1,9 @@
 #include "imgui_renderpass.h"
 #include "global.h"
 #include <glm/gtc/type_ptr.hpp>
+#include "input.h"
+
+
 bool simulationRunning = false;
 bool resetSimulation = false;
 int pauseOnFrame = -1;
@@ -253,6 +256,36 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     ImGui::Begin("GPU Info", &showGPUInfo);
         ImGui::Text(m_deviceProperties.deviceName);
     ImGui::End();
+    
+    // ImGui::Begin("Keybindings");
+    //     ImGui::BeginTable("Keybindings", 3);
+    //         for(auto&& keyBinding : gpu::InputManager::getKeyBindings()){
+    //             ImGui::TableNextRow();
+    //             ImGui::TableSetColumnIndex(0);
+    //             ImGui::Text(keyBinding._handle.c_str());
+    //             ImGui::TableSetColumnIndex(1);
+    //             ImGui::Text(keyBinding._key == 32 ? "Space" : std::string(1, (char)keyBinding._key).c_str());
+    //             ImGui::TableSetColumnIndex(2);
+    //             static bool editKey = false;
+                
+    //             if(ImGui::Button("edit")){
+    //                 editKey = !editKey;
+    //             }
+    //             if(editKey){
+    //                 ImGui::Begin("Press a key", &editKey);
+    //                     // static char pressedKey[2];
+    //                     // ImGui::InputText("##pressedKey", pressedKey, IM_ARRAYSIZE(pressedKey));
+    //                     if(ImGui::Button("save")){
+    //                         // std::cout << pressedKey << std::endl;
+    //                         // gpu::InputManager::updateKeyBinding(keyBinding._handle, (int)pressedKey[1]);
+    //                         editKey = false;
+    //                     }
+    //                 ImGui::End();
+    //             }
+    //         }
+           
+    //     ImGui::EndTable();
+    // ImGui::End();
 
     ImGui::Begin("Metrics", &showGPUInfo); 
         ImGui::PlotLines("Average density error", drawAverageDensityError, NULL, SimulationMetrics::MAX_VALUES_PER_METRIC, 0, NULL, 0.0f, settings.maxCompression, ImVec2(0, 80));
@@ -346,7 +379,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         ImGui::DragFloat("Drag Coefficient", &settings.dragCoefficient, 1.f, 0.01f, 10.f);
     ImGui::End();
 
-    // ImGui::ShowDemoWindow(&show_demo_window);
+    ImGui::ShowDemoWindow(&show_demo_window);
 
     ImGui::End();
 

@@ -11,10 +11,17 @@
 
 namespace gpu
 {   
+    enum KeyAction { 
+        ePress = GLFW_PRESS, 
+        eRelease = GLFW_RELEASE, 
+        eHold = GLFW_REPEAT 
+    };
+
     struct KeyBinding{
-        int key;
-        int action;
-        std::function<void()> function;
+        std::string _handle;
+        int _key;
+        KeyAction _action;
+        std::function<void()> _function;
     };
 
     class InputManager
@@ -25,8 +32,10 @@ namespace gpu
         static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
         static std::array<int, GLFW_KEY_LAST> keysDown;
-
         static std::vector<KeyBinding> keyBindings;
+        static bool performKeyBindings;
+        static int lastPressedKey;
+
     public:
         InputManager(){};
         InputManager(Window& window);
@@ -34,7 +43,16 @@ namespace gpu
 
         void update();
         static bool isKeyDown(int key);
-        static void addKeyBinding(std::function<void()>&& function, int key, int action = GLFW_PRESS);
+        // add a keybinding that maps a function to a key
+        static void addKeyBinding(std::string name, std::function<void()>&& function, int key, KeyAction action = KeyAction::ePress);
+        // update a keybinding to use another key
+        static void updateKeyBinding(std::string name, int key);
+        // return the list of key bindings
+        static std::vector<KeyBinding>& getKeyBindings();
+        // hold any key inputs
+        static void suspendKeyInput();
+        static void resumeKeyInput();
+        static int awaitKeyPress();
 
         static glm::vec2 cursorPosition;
         static glm::vec2 scrollOffset;

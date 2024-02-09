@@ -192,7 +192,7 @@ void GranularMatter::init(){
     integratePass = gpu::ComputePass(m_core, SHADER_PATH"/integrate.comp", descriptorSetLayoutsParticle, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
     advectionPass = gpu::ComputePass(m_core, SHADER_PATH"/hr_advection.comp", descriptorSetLayoutsParticleCell, { gpu::SpecializationConstant(1, workGroupSize) }, sizeof(SPHSettings));
 
-    gpu::InputManager::addKeyBinding([=](){
+    gpu::InputManager::addKeyBinding("Toggle simulation state", [=](){
         simulationRunning = !simulationRunning;
     }, GLFW_KEY_SPACE);
 
