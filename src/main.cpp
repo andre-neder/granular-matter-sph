@@ -292,7 +292,6 @@ private:
             input.update();
             glfwPollEvents();
 
-            camera.handleInput();
             camera.update(dt);
 
             drawFrame(dt);
@@ -336,8 +335,6 @@ private:
         core.destroyComputeBundle(computeBundle);
         
         window.destroy();
-
-        core.destroy();
     }
 
     void recreateSwapChain() {

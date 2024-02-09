@@ -57,18 +57,6 @@ Core::Core(bool enableValidation, Window* window){
     createSwapChain(window);
 }
 
-void Core::destroy(){
-
-
-
-    // _device->destroyCommandPool(_commandPool);
-
-    _allocator.destroy();
-    // _device.destroy();
-    // _instance->destroySurfaceKHR(_surface);
-
-}
-
 uint32_t gpu::Core::getIdealWorkGroupSize()
 {
     uint32_t vendorID = _physicalDevice.getProperties().vendorID;
@@ -242,7 +230,7 @@ void Core::createAllocator(){
     allocatorInfo.instance = *_instance;
     allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
 
-    _allocator = vma::createAllocator(allocatorInfo);
+    _allocator = vma::createAllocatorUnique(allocatorInfo);
 }
 
 void gpu::Core::createInstance()
@@ -294,7 +282,7 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
 	bufferAllocInfo.usage = memoryUsage;
 	bufferAllocInfo.flags = allocationFlags;
 
-    std::tie(buffer, allocation) = _allocator.createBuffer(bufferInfo, bufferAllocInfo);
+    std::tie(buffer, allocation) = _allocator->createBuffer(bufferInfo, bufferAllocInfo);
 
     _bufferAllocations[buffer] = allocation;
     return buffer;
@@ -343,18 +331,18 @@ void gpu::Core::updateBufferData(vk::Buffer buffer, void *data, size_t size)
 }
 void *Core::mapBuffer(vk::Buffer buffer)
 {
-    void* mappedData = _allocator.mapMemory(_bufferAllocations[buffer]);
+    void* mappedData = _allocator->mapMemory(_bufferAllocations[buffer]);
     return mappedData;
 }
 void Core::unmapBuffer(vk::Buffer buffer){
-    _allocator.unmapMemory(_bufferAllocations[buffer]);
+    _allocator->unmapMemory(_bufferAllocations[buffer]);
 }
 void Core::destroyBuffer(vk::Buffer buffer){
-    _allocator.destroyBuffer(buffer, _bufferAllocations[buffer]);
+    _allocator->destroyBuffer(buffer, _bufferAllocations[buffer]);
     _bufferAllocations.erase(buffer);
 }
 void Core::flushBuffer(vk::Buffer buffer, size_t offset, size_t size){
-    _allocator.flushAllocation(_bufferAllocations[buffer], offset, size);
+    _allocator->flushAllocation(_bufferAllocations[buffer], offset, size);
 }
 void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::DeviceSize size) {
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -745,7 +733,7 @@ vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
     imageAllocInfo.usage = memoryUsage;
 	imageAllocInfo.flags = allocationFlags;
 
-    std::tie(image, allocation) = _allocator.createImage(imageInfo, imageAllocInfo);
+    std::tie(image, allocation) = _allocator->createImage(imageInfo, imageAllocInfo);
 
     _imageAllocations[image] = allocation;
     return image;
@@ -768,14 +756,14 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
 	imageAllocInfo.usage = memoryUsage;
 	imageAllocInfo.flags = allocationFlags;
 
-    std::tie(image, allocation) = _allocator.createImage(imageInfo, imageAllocInfo);
+    std::tie(image, allocation) = _allocator->createImage(imageInfo, imageAllocInfo);
 
     _imageAllocations[image] = allocation;
     return image;
 }
 
 void Core::destroyImage(vk::Image image){
-    _allocator.destroyImage(image, _imageAllocations[image]);
+    _allocator->destroyImage(image, _imageAllocations[image]);
     _imageAllocations.erase(image);
 }
 

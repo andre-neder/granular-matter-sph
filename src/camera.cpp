@@ -27,77 +27,13 @@ Camera::Camera(Type type, GLFWwindow* window, uint32_t width, uint32_t height, g
     _height = height;
     _oldPos = glm::vec2(width / 2.0f, height / 2.0f);
     _newPos = glm::vec2(width / 2.0f, height / 2.0f);
-    _buttonState_W = false;
-    _buttonState_A = false;
-    _buttonState_S = false;
-    _buttonState_D = false;
-    _buttonState_C = false;
-    _buttonState_SHIFT = false;
-    _buttonState_SPACE = false;
-    _buttonState_MOUSELEFT = false;
 
     update(0);
 }
 
-void Camera::handleInput()
-{
-    
-    if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        _buttonState_MOUSELEFT = true;
-    }
-    if (glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
-        _buttonState_MOUSELEFT = false;
-    }
-
-    if (glfwGetMouseButton(m_window,  GLFW_KEY_W) == GLFW_PRESS) {
-        _buttonState_W = true;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_A) == GLFW_PRESS) {
-        _buttonState_A = true;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_S) == GLFW_PRESS) {
-        _buttonState_S = true;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_D) == GLFW_PRESS) {
-        _buttonState_D = true;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_C) == GLFW_PRESS) {
-        _buttonState_C = true;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-        _buttonState_SHIFT = true;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_SPACE) == GLFW_PRESS) {
-        _buttonState_SPACE = true;
-    }
-
-    if (glfwGetMouseButton(m_window,  GLFW_KEY_W) == GLFW_RELEASE) {
-        _buttonState_W = false;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_A) == GLFW_RELEASE) {
-        _buttonState_A = false;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_S) == GLFW_RELEASE) {
-        _buttonState_S = false;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_D) == GLFW_RELEASE) {
-        _buttonState_D = false;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_C) == GLFW_RELEASE) {
-        _buttonState_C = false;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE) {
-        _buttonState_SHIFT = false;
-    } 
-    else if (glfwGetMouseButton(m_window,  GLFW_KEY_SPACE) == GLFW_RELEASE) {
-        _buttonState_SPACE = false;
-    }
-    
-        
-}
 
 void Camera::update(float dt){
-    handleInput();
+
     double delta_time = dt;
     float _xpos = gpu::InputManager::cursorPosition.x;
     float _ypos = gpu::InputManager::cursorPosition.y;
@@ -105,7 +41,7 @@ void Camera::update(float dt){
     Camera::_radius -= (float) (gpu::InputManager::scrollOffset.y * 0.1);
     Camera::_radius = glm::max((float)Camera::_radius, 0.000001f);
 
-    if (_buttonState_MOUSELEFT) {
+    if (gpu::InputManager::isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT)) {
         _newPos = glm::vec2(_xpos, _ypos);
         float xAngle = (_newPos.x - _oldPos.x) / _width * 2 * 3.141592f;
         float yAngle = (_newPos.y - _oldPos.y) / _height * 3.141592f;
@@ -114,7 +50,7 @@ void Camera::update(float dt){
     }
     _oldPos = glm::vec2(_xpos, _ypos);
 
-    if (_buttonState_C && _timeout <= 0.00001){
+    if (gpu::InputManager::isKeyDown(GLFW_KEY_C) && _timeout <= 0.00001){
         if(_type == eTrackBall){
             _type = eFirstPerson;
             _forward = glm::normalize(_center - _eye);
@@ -146,17 +82,17 @@ void Camera::update(float dt){
         glm::vec3 backwards = -1.f * forward;
         glm::vec3 left = glm::cross(up, forward);
         glm::vec3 right = -1.f * left;
-        if (_buttonState_W)
+        if (gpu::InputManager::isKeyDown(GLFW_KEY_W))
             _eye += forward * (float) delta_time * 3.f;
-        if (_buttonState_A) 
+        if (gpu::InputManager::isKeyDown(GLFW_KEY_A)) 
             _eye += left * (float) delta_time * 3.f;
-        if (_buttonState_S)
+        if (gpu::InputManager::isKeyDown(GLFW_KEY_S))
             _eye += backwards * (float) delta_time * 3.f;
-	    if (_buttonState_D)
+	    if (gpu::InputManager::isKeyDown(GLFW_KEY_D))
             _eye += right * (float) delta_time * 3.f;
-        if (_buttonState_SHIFT)
+        if (gpu::InputManager::isKeyDown(GLFW_KEY_LEFT_CONTROL))
             _eye += down * (float) delta_time * 3.f;
-        if (_buttonState_SPACE)
+        if (gpu::InputManager::isKeyDown(GLFW_KEY_LEFT_SHIFT))
             _eye += up * (float) delta_time * 3.f;
         _radius = glm::length(_eye);
 

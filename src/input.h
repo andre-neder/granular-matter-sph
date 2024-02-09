@@ -30,8 +30,10 @@ namespace gpu
         static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
         static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
         static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+        static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 
         static std::array<int, GLFW_KEY_LAST> keysDown;
+        static std::array<int, 8> mouseButtonsDown;
         static std::vector<KeyBinding> keyBindings;
         static bool performKeyBindings;
 
@@ -42,6 +44,7 @@ namespace gpu
 
         void update();
         static bool isKeyDown(int key);
+        static bool isMouseButtonDown(int button);
         // add a keybinding that maps a function to a key
         static void addKeyBinding(std::string name, std::function<void()>&& function, int key, KeyAction action = KeyAction::ePress);
         // update a keybinding to use another key

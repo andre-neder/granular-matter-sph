@@ -10,6 +10,7 @@ glm::vec2 InputManager::cursorPosition = glm::vec2(0.0);
 glm::vec2 InputManager::scrollOffset = glm::vec2(0.0);
 
 std::array<int, GLFW_KEY_LAST> InputManager::keysDown;
+std::array<int, 8> InputManager::mouseButtonsDown;
 std::vector<KeyBinding> InputManager::keyBindings;
 bool InputManager::performKeyBindings = true;
 
@@ -37,6 +38,14 @@ void gpu::InputManager::mouseCallback(GLFWwindow *window, double xpos, double yp
 void gpu::InputManager::scrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
     scrollOffset = glm::vec2(xoffset, yoffset);
+}
+
+void gpu::InputManager::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+{
+    if(button > 0 && button < 8){
+        // store button down state
+        mouseButtonsDown[button] = (action == GLFW_PRESS || action == GLFW_REPEAT) ? true : false;
+    }
 }
 
 void gpu::InputManager::addKeyBinding(std::string name, std::function<void()>&& function, int key, KeyAction action)
@@ -73,6 +82,7 @@ InputManager::InputManager(Window &window)
     glfwSetKeyCallback(window.getGLFWWindow(), keyCallback);
     glfwSetCursorPosCallback(window.getGLFWWindow(), mouseCallback);
     glfwSetScrollCallback(window.getGLFWWindow(), scrollCallback);
+    glfwSetMouseButtonCallback(window.getGLFWWindow(), mouseButtonCallback);
 }
 
 InputManager::~InputManager()
@@ -87,4 +97,9 @@ void gpu::InputManager::update()
 bool gpu::InputManager::isKeyDown(int key)
 {
     return keysDown[key];
+}
+
+bool gpu::InputManager::isMouseButtonDown(int button)
+{
+    return mouseButtonsDown[button];
 }

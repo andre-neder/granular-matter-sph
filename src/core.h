@@ -99,8 +99,6 @@ namespace gpu
             Core(Core&&) = default;
             Core& operator=(Core&&) = default;
 
-            void destroy();
-
             inline vk::UniqueInstance* getInstance(){ return &_instance; };
             // inline vk::UniqueSurfaceKHR* getSurface(){ return &_surface; };
             inline vk::SurfaceFormatKHR getSurfaceFormat(){ return _surfaceFormat; };
@@ -113,7 +111,7 @@ namespace gpu
 
             uint32_t getIdealWorkGroupSize();
 
-            inline vma::Allocator getAllocator(){ return _allocator; };
+            inline vma::Allocator getAllocator(){ return *_allocator; };
 
             inline vk::CommandPool getCommandPool(){ return *_commandPool; };
             //* SwapChain
@@ -223,7 +221,7 @@ namespace gpu
             vk::Queue graphicsQueue;
             vk::Queue computeQueue;
             vk::Queue presentQueue;
-            vma::Allocator _allocator;
+            vma::UniqueAllocator _allocator;
             vk::UniqueCommandPool _commandPool; 
 
             vk::Image _swapChainDepthImage;

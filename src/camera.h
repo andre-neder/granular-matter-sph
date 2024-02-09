@@ -19,7 +19,6 @@ namespace gpu
         void update(float dt);
         void updateSize(uint32_t width, uint32_t height);
         glm::mat4 getView();
-        void handleInput();
 
     private:
         GLFWwindow* m_window;
@@ -33,14 +32,6 @@ namespace gpu
         double _timeout = 0.0;
         
         Type _type;
-        bool _buttonState_W;
-        bool _buttonState_A;
-        bool _buttonState_S;
-        bool _buttonState_D;
-        bool _buttonState_C;
-        bool _buttonState_SHIFT;
-        bool _buttonState_SPACE;
-        bool _buttonState_MOUSELEFT;
 
         float _radius;
     };
