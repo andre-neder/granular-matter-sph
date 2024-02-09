@@ -8,7 +8,6 @@ using namespace gpu;
 void Window::resizeCallback(GLFWwindow *window, int width, int height){
     auto w = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
     w->m_wasResized = true;
-    // w->onResize(width, height);
 }
 void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods){
     auto w = reinterpret_cast<Window *>(glfwGetWindowUserPointer(window));
@@ -18,7 +17,6 @@ void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS){
         simulationRunning = simulationRunning ? false : true;
     }
-    // w->onResize(width, height);
 }
 
 Window::Window(std::string title, uint32_t width, uint32_t height){
@@ -53,10 +51,3 @@ void Window::destroy(){
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
-// vk::SurfaceKHR Window::createSurface(vk::Instance instance){
-//     vk::SurfaceKHR surface;
-//     if (glfwCreateWindowSurface(instance, m_window, nullptr, reinterpret_cast<VkSurfaceKHR*>(&surface)) != VK_SUCCESS) {
-//         throw std::runtime_error("failed to create window surface!");
-//     }
-//     return surface;
-// }

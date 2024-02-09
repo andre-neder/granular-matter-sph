@@ -17,16 +17,12 @@ namespace gpu {
             bool shouldClose();
             bool wasResized(){ return m_wasResized; };
             void resizeHandled(){ m_wasResized = false; };
-            // void bindResizeCallback(std::function<void(uint16_t, uint16_t)> fn);
             void setTitle(std::string title);
             void getSize(int* width, int* height);
             void destroy();
-            // vk::SurfaceKHR createSurface(vk::Instance instance);
         private:
             GLFWwindow* m_window;
             bool m_wasResized = false;
-
-            // std::function<void(uint16_t, uint16_t)> onResize;
 
             static void resizeCallback(GLFWwindow *window, int width, int height);
             static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
