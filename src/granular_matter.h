@@ -110,7 +110,9 @@ public:
     ~GranularMatter();
 
     std::vector<LRParticle> lrParticles;
+    std::vector<LRParticle> lrParticles2;
     std::vector<HRParticle> hrParticles;
+    std::vector<HRParticle> hrParticles2;
     vk::Buffer particlesBufferB;
     vk::Buffer particlesBufferHR;
 

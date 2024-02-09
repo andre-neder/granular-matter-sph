@@ -76,23 +76,47 @@ void GranularMatter::init(){
                      j * initialDistance + (initialDistance / 2.f) + settings.r_LR , //  (initialDistance * computeSpace.y / 2) + // + 8.f
                     -(initialDistance * computeSpace.z / 2) + k * initialDistance + (initialDistance / 2.f)
                 );
-                auto p = LRParticle(
-                    lrPosition.x,// + RandomFloat(-settings.r_LR, settings.r_LR), 
-                    lrPosition.y,// + RandomFloat(-settings.r_LR, settings.r_LR), 
-                    lrPosition.z// + RandomFloat(-settings.r_LR, settings.r_LR)
+                glm::vec3 lrPosition2 = glm::vec3(
+                    -(initialDistance * computeSpace.x / 2) + i * initialDistance + (initialDistance / 2.f),
+                     j * initialDistance + (initialDistance / 2.f) + settings.r_LR + 8.f, //  (initialDistance * computeSpace.y / 2) + // 
+                    -(initialDistance * computeSpace.z / 2) + k * initialDistance + (initialDistance / 2.f)
                 );
-                p.color = colorPalette[std::floor((((float) rand()) / (float) RAND_MAX) * (colorPalette.size() - 1))];
-                lrParticles.push_back(p);
-
+                {
+                    auto p = LRParticle(
+                        lrPosition.x,// + RandomFloat(-settings.r_LR, settings.r_LR), 
+                        lrPosition.y,// + RandomFloat(-settings.r_LR, settings.r_LR), 
+                        lrPosition.z// + RandomFloat(-settings.r_LR, settings.r_LR)
+                    );
+                    auto p2 = LRParticle(
+                        lrPosition2.x,// + RandomFloat(-settings.r_LR, settings.r_LR), 
+                        lrPosition2.y,// + RandomFloat(-settings.r_LR, settings.r_LR), 
+                        lrPosition2.z// + RandomFloat(-settings.r_LR, settings.r_LR)
+                    );
+                    p.color = colorPalette[std::floor((((float) rand()) / (float) RAND_MAX) * (colorPalette.size() - 1))];
+                    p2.color = colorPalette[std::floor((((float) rand()) / (float) RAND_MAX) * (colorPalette.size() - 1))];
+                    lrParticles.push_back(p);
+                    lrParticles2.push_back(p2);
+                }
                 for(uint32_t l = 0; l < settings.n_HR; l++){
                     glm::vec3 offset = hrParticleOffsets[l % hrParticleOffsets.size()];
-                    auto p1 = HRParticle(
-                        lrPosition.x + offset.x + RandomFloat(-settings.r_LR, settings.r_LR), 
-                        lrPosition.y + offset.y + RandomFloat(-settings.r_LR, settings.r_LR),
-                        lrPosition.z + offset.z + RandomFloat(-settings.r_LR, settings.r_LR)
-                    );
-                    p1.color = colorPalette[std::floor((((float) rand()) / (float) RAND_MAX) * (colorPalette.size() - 1))];
-                    hrParticles.push_back(p1);
+                    {
+                        auto p1 = HRParticle(
+                            lrPosition.x + offset.x + RandomFloat(-settings.r_LR, settings.r_LR), 
+                            lrPosition.y + offset.y + RandomFloat(-settings.r_LR, settings.r_LR),
+                            lrPosition.z + offset.z + RandomFloat(-settings.r_LR, settings.r_LR)
+                        );
+                        p1.color = colorPalette[std::floor((((float) rand()) / (float) RAND_MAX) * (colorPalette.size() - 1))];
+                        hrParticles.push_back(p1);
+                    }
+                    {
+                        auto p1 = HRParticle(
+                            lrPosition2.x + offset.x + RandomFloat(-settings.r_LR, settings.r_LR), 
+                            lrPosition2.y + offset.y + RandomFloat(-settings.r_LR, settings.r_LR),
+                            lrPosition2.z + offset.z + RandomFloat(-settings.r_LR, settings.r_LR)
+                        );
+                        p1.color = colorPalette[std::floor((((float) rand()) / (float) RAND_MAX) * (colorPalette.size() - 1))];
+                        hrParticles2.push_back(p1);
+                    }
                 }
                 
             }

@@ -65,8 +65,8 @@ void main() {
 
     mat4 model = mat4(vec4(scale.x,0,0,0),vec4(0,scale.y,0,0),vec4(0,0,scale.z,0),vec4(inPosition,1.0));
     eye = ubo.view[3].xyz;
-    // outNormal = (ubo.proj * ubo.view * vec4(vNormal, 0)).xyz;
-    outNormal = (transpose(inverse(model)) * vec4(vNormal, 0.0)).xyz;
+    outNormal = (ubo.proj * ubo.view * vec4(vNormal, 0)).xyz;
+    // outNormal = (transpose(inverse(model)) * vec4(vNormal, 0.0)).xyz;
     gl_Position = ubo.proj * ubo.view * model * vec4(vPosition, 1.0);
 
     outPosition = inPosition;

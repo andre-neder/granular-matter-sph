@@ -80,7 +80,7 @@ private:
         triangleRenderPass.destroyGraphicsPipeline();
         triangleRenderPass.createGraphicsPipeline(wireframe);
     }
-    
+
     void loadScene(int scene){
         // simulation.rigidBodies.clear();
         triangleRenderPass.models.clear();
@@ -90,6 +90,9 @@ private:
             triangleRenderPass.models.push_back(dumpTruckModel);
             triangleRenderPass.models.push_back(planeModel);
 
+            core.updateBufferData(simulation.particlesBufferB, simulation.lrParticles2.data(), simulation.lrParticles2.size() * sizeof(LRParticle));
+            core.updateBufferData(simulation.particlesBufferHR, simulation.hrParticles2.data(), simulation.hrParticles2.size() * sizeof(HRParticle));
+
             simulation.volumeMapTransforms[0].enable(); // enable dump_truck
             simulation.volumeMapTransforms[1].enable(); // enable plane
             simulation.volumeMapTransforms[2].disable(); // disable hourglas
@@ -97,12 +100,18 @@ private:
         case 1: // Plane only
             triangleRenderPass.models.push_back(planeModel);
 
+            core.updateBufferData(simulation.particlesBufferB, simulation.lrParticles.data(), simulation.lrParticles.size() * sizeof(LRParticle));
+            core.updateBufferData(simulation.particlesBufferHR, simulation.hrParticles.data(), simulation.hrParticles.size() * sizeof(HRParticle));
+
             simulation.volumeMapTransforms[0].disable(); // disable dump_truck
             simulation.volumeMapTransforms[1].enable(); // enable plane
             simulation.volumeMapTransforms[2].disable(); // disable hourglas
             break;
         case 2: // hourglas scene
             triangleRenderPass.models.push_back(hourglasModel);
+
+            core.updateBufferData(simulation.particlesBufferB, simulation.lrParticles2.data(), simulation.lrParticles2.size() * sizeof(LRParticle));
+            core.updateBufferData(simulation.particlesBufferHR, simulation.hrParticles2.data(), simulation.hrParticles2.size() * sizeof(HRParticle));
 
             simulation.volumeMapTransforms[0].disable(); // disable dump_truck
             simulation.volumeMapTransforms[1].disable(); // disable plane

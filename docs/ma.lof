@@ -5,6 +5,6 @@
 \contentsline {figure}{\numberline {4}{\ignorespaces Slice of a volume map for a dump truck model, showing the nearest point and volume. Extracted using Nvidia Nsight Graphics.}}{19}{figure.caption.7}%
 \contentsline {figure}{\numberline {5}{\ignorespaces 2D Example of the HR sampling of a LR particle (grey area) with $n = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.}}{20}{figure.caption.8}%
 \contentsline {figure}{\numberline {6}{\ignorespaces Screenshot of the User interface.}}{22}{figure.caption.9}%
-\contentsline {figure}{\numberline {7}{\ignorespaces Three piles with different angles of repose, simulated for x frames.}}{23}{figure.caption.10}%
+\contentsline {figure}{\numberline {7}{\ignorespaces Three piles with different angles of repose, simulated for 1000 frames.}}{23}{figure.caption.10}%
 \contentsline {figure}{\numberline {8}{\ignorespaces Example of the step between the first and the second layer of particles above ground. On the left with LR particles and on the right with HR particles}}{24}{figure.caption.11}%
 \contentsline {figure}{\numberline {9}{\ignorespaces Example of high resolution particles sticking to the wall of a dump truck.}}{25}{figure.caption.12}%

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  8 FEB 2024 20:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  9 FEB 2024 11:13
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -915,43 +915,49 @@ File: figures/sampling.png Graphic file (type png)
 Package pdftex.def Info: figures/sampling.png  used on input line 479.
 (pdftex.def)             Requested size: 180.0pt x 180.00212pt.
  [19 <./figures/volume_map_slice_xyz.png (PNG copy)> <./figures/volume_map_slice_w.png>] [20 <./figures/sampling.png>]
-<figures/placeholder.png, id=445, 1204.5pt x 803.0pt>
-File: figures/placeholder.png Graphic file (type png)
-<use figures/placeholder.png>
-Package pdftex.def Info: figures/placeholder.png  used on input line 524.
-(pdftex.def)             Requested size: 360.0pt x 239.99515pt.
- [21] [22 <./figures/placeholder.png>]
-File: figures/placeholder.png Graphic file (type png)
-<use figures/placeholder.png>
-Package pdftex.def Info: figures/placeholder.png  used on input line 537.
-(pdftex.def)             Requested size: 115.20264pt x 76.8004pt.
-File: figures/placeholder.png Graphic file (type png)
-<use figures/placeholder.png>
-Package pdftex.def Info: figures/placeholder.png  used on input line 538.
-(pdftex.def)             Requested size: 115.20264pt x 76.8004pt.
-File: figures/placeholder.png Graphic file (type png)
-<use figures/placeholder.png>
-Package pdftex.def Info: figures/placeholder.png  used on input line 539.
-(pdftex.def)             Requested size: 115.20264pt x 76.8004pt.
-File: figures/placeholder.png Graphic file (type png)
-<use figures/placeholder.png>
-Package pdftex.def Info: figures/placeholder.png  used on input line 551.
-(pdftex.def)             Requested size: 180.0pt x 119.99144pt.
-File: figures/placeholder.png Graphic file (type png)
-<use figures/placeholder.png>
-Package pdftex.def Info: figures/placeholder.png  used on input line 552.
-(pdftex.def)             Requested size: 180.0pt x 119.99144pt.
+<figures/ui.png, id=445, 1446.15282pt x 777.65532pt>
+File: figures/ui.png Graphic file (type png)
+<use figures/ui.png>
+Package pdftex.def Info: figures/ui.png  used on input line 524.
+(pdftex.def)             Requested size: 360.0pt x 193.58273pt.
+ [21] [22 <./figures/ui.png>]
+<figures/pile_30_1000.png, id=469, 1047.16219pt x 266.49562pt>
+File: figures/pile_30_1000.png Graphic file (type png)
+<use figures/pile_30_1000.png>
+Package pdftex.def Info: figures/pile_30_1000.png  used on input line 537.
+(pdftex.def)             Requested size: 216.0022pt x 54.96945pt.
+<figures/pile_45_1000.png, id=470, 1047.16219pt x 266.49562pt>
+File: figures/pile_45_1000.png Graphic file (type png)
+<use figures/pile_45_1000.png>
+Package pdftex.def Info: figures/pile_45_1000.png  used on input line 538.
+(pdftex.def)             Requested size: 216.0022pt x 54.96945pt.
+<figures/pile_60_1000.png, id=471, 1047.16219pt x 266.49562pt>
+File: figures/pile_60_1000.png Graphic file (type png)
+<use figures/pile_60_1000.png>
+Package pdftex.def Info: figures/pile_60_1000.png  used on input line 539.
+(pdftex.def)             Requested size: 216.0022pt x 54.96945pt.
+<figures/layer_step.png, id=480, 773.13844pt x 263.48438pt>
+File: figures/layer_step.png Graphic file (type png)
+<use figures/layer_step.png>
+Package pdftex.def Info: figures/layer_step.png  used on input line 551.
+(pdftex.def)             Requested size: 180.0pt x 61.3439pt.
+<figures/layer_step_hr.png, id=481, 1053.9375pt x 355.3275pt>
+File: figures/layer_step_hr.png Graphic file (type png)
+<use figures/layer_step_hr.png>
+Package pdftex.def Info: figures/layer_step_hr.png  used on input line 552.
+(pdftex.def)             Requested size: 180.0pt x 60.68138pt.
 
 Overfull \hbox (2.42162pt too wide) in paragraph at lines 551--553
 [][] [] 
  []
 
-[23]
-File: figures/placeholder.png Graphic file (type png)
-<use figures/placeholder.png>
-Package pdftex.def Info: figures/placeholder.png  used on input line 560.
-(pdftex.def)             Requested size: 251.9989pt x 167.99783pt.
- [24] [25] (ma.lof)
+[23 <./figures/pile_30_1000.png> <./figures/pile_45_1000.png> <./figures/pile_60_1000.png>]
+<figures/sticking.png, id=491, 859.71187pt x 587.19376pt>
+File: figures/sticking.png Graphic file (type png)
+<use figures/sticking.png>
+Package pdftex.def Info: figures/sticking.png  used on input line 560.
+(pdftex.def)             Requested size: 251.9989pt x 172.11859pt.
+ [24 <./figures/layer_step.png> <./figures/layer_step_hr.png>] [25 <./figures/sticking.png>] (ma.lof)
 \tf@lof=\write6
 \openout6 = `ma.lof'.
 
@@ -1002,17 +1008,17 @@ Package logreq Info: Writing requests to 'ma.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 25225 strings out of 475248
- 451319 string characters out of 5757812
+ 25268 strings out of 475248
+ 452530 string characters out of 5757812
  1936785 words of memory out of 5000000
- 46262 multiletter control sequences out of 15000+600000
+ 46305 multiletter control sequences out of 15000+600000
  583672 words of font info for 102 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,12n,81p,2245b,2532s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on ma.pdf (33 pages, 1411943 bytes).
+ <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+Output written on ma.pdf (33 pages, 2632199 bytes).
 PDF statistics:
- 1234 PDF objects out of 1440 (max. 8388607)
+ 1255 PDF objects out of 1440 (max. 8388607)
  169 named destinations out of 1000 (max. 500000)
- 246 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 276 words of extra memory for PDF output out of 10000 (max. 10000000)
 
