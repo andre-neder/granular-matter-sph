@@ -75,6 +75,6 @@ struct Mesh3D : public RigidBody2D{
     };
     float signedDistance(glm::vec3 p) override {
         tmd::Result result = mesh_distance.signed_distance({ p.x, p.y, p.z });
-        return result.distance;
+        return static_cast<float>(result.distance);
     };
 };

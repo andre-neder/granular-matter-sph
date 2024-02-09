@@ -65,7 +65,7 @@ using namespace gpu;
 
         commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
             
-            vk::Viewport viewport(0.0f, 0.0f, (float)m_core->getSwapChainExtent().width, (float)m_core->getSwapChainExtent().height, 0.0f, 1.0f);
+            vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(m_core->getSwapChainExtent().width), static_cast<float>(m_core->getSwapChainExtent().height), 0.0f, 1.0f);
             commandBuffers[currentFrame].setViewport(0, viewport);
 
             vk::Rect2D scissor(vk::Offset2D(0, 0),m_core->getSwapChainExtent());
@@ -135,7 +135,7 @@ using namespace gpu;
             Model::getTexturesLayout(m_core),
             Model::getMaterialLayout(m_core)
         };
-        vk::PipelineLayoutCreateInfo pipelineLayoutInfo({}, allLayouts.size(), allLayouts.data(), 1, &pushConstantRange, nullptr);
+        vk::PipelineLayoutCreateInfo pipelineLayoutInfo({}, static_cast<uint32_t>(allLayouts.size()), allLayouts.data(), 1, &pushConstantRange, nullptr);
 
         pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
 
@@ -219,7 +219,7 @@ using namespace gpu;
         UniformBufferObject ubo{};
         ubo.model = glm::scale(glm::mat4(1.0), glm::vec3(1.0));// glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.view =  m_camera->getView();//glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / (float) m_core->getSwapChainExtent().height, 0.1f, 1000.0f);
+        ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / static_cast<float>(m_core->getSwapChainExtent().height), 0.1f, 1000.0f);
         ubo.proj[1][1] *= -1;
         
 

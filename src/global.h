@@ -11,6 +11,7 @@
 #include <random>
 #include <queue>
 #include <glm/glm.hpp>
+#include <numbers>
 
 extern bool simulationRunning;
 extern bool simulationStepForward;
@@ -25,7 +26,7 @@ struct SPHSettings{
     float r_LR = 0.25f;                                  //* m
     float h_LR = r_LR * 4;                              //* m
     float rho0 = 1450.f;                                //* kg/m^3
-    float mass = (4.f / 3.f * (float) M_PI * (r_LR * r_LR * r_LR)) * rho0;                //* kg
+    float mass = (4.f / 3.f * std::numbers::pi_v<float> * (r_LR * r_LR * r_LR)) * rho0;                //* kg
 
     float maxCompression = 0.01f;	  
     float dt = 0.0006f;	                                //* s
@@ -34,16 +35,16 @@ struct SPHSettings{
 
     float sleepingSpeed = 0.0005f;                      //* m/s
     float h_HR = r_LR * 3;
-    float theta = 45.f * (float)M_PI / 180.f;           //* rad (angle of repose)
+    float theta = 45.f * std::numbers::pi_v<float> / 180.f;           //* rad (angle of repose)
     float rhoAir = 1293.f;                              //* Air density   
 
     glm::vec4 windDirection = glm::vec4(0.0);           //* Wind Direction
                                         
     float dragCoefficient = 0.47f;                      //* Sphere Reynoldsnumber 10^6
     uint32_t n_HR = 7 * 10;                             //* number of HR lrParticles per LR particle 2D: (/5) 3D: (/7)      
-    float scale_W = 15.f / (float)(M_PI * pow(h_LR, 6.0));
-    float scale_GradW = 60.f / (float) (pow(h_LR, 6.0) * M_PI);    
-    float A_LR = r_LR * r_LR * (float)M_PI;                               
+    float scale_W = 15.f / pow(h_LR, 6.0) * std::numbers::pi_v<float>;
+    float scale_GradW = 60.f / pow(h_LR, 6.0) * std::numbers::pi_v<float>;    
+    float A_LR = r_LR * r_LR * std::numbers::pi_v<float>;                               
     float v_max = ((2.f * mass * glm::length(g)) / (rhoAir * A_LR * dragCoefficient));       
     float maxTimestep=0.016f;                        
     float pad1;                        

@@ -19,7 +19,7 @@ Mesh3D::Mesh3D(std::string src)
         }
         for (uint32_t i = 0; i < model._indices.size(); i+=3)
         {
-            triangles.push_back(std::array<int, 3>{(int)model._indices[i], (int)model._indices[i + 1], (int)model._indices[i + 2]});
+            triangles.push_back(std::array<int, 3>{static_cast<int>(model._indices[i]), static_cast<int>(model._indices[i + 1]), static_cast<int>(model._indices[i + 2])});
         }
         mesh_distance = tmd::TriangleMeshDistance(vertices, triangles);
 };

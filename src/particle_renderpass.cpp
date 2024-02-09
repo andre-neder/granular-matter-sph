@@ -76,7 +76,7 @@ void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt)
 
     commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-    vk::Viewport viewport(0.0f, 0.0f, (float)m_core->getSwapChainExtent().width, (float)m_core->getSwapChainExtent().height, 0.0f, 1.0f);
+    vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(m_core->getSwapChainExtent().width), static_cast<float>(m_core->getSwapChainExtent().height), 0.0f, 1.0f);
     commandBuffers[currentFrame].setViewport(0, viewport);
 
     vk::Rect2D scissor(vk::Offset2D(0, 0), m_core->getSwapChainExtent());
@@ -235,7 +235,7 @@ void ParticleRenderPass::updateUniformBuffer(uint32_t currentImage)
     UniformBufferObject ubo{};
     ubo.model = glm::mat4(1.0f);
     ubo.view = m_camera->getView();
-    ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / (float)m_core->getSwapChainExtent().height, 0.1f, 1000.0f);
+    ubo.proj = glm::perspective(glm::radians(45.0f), m_core->getSwapChainExtent().width / static_cast<float>(m_core->getSwapChainExtent().height), 0.1f, 1000.0f);
     ubo.proj[1][1] *= -1;
 
     m_core->updateBufferData(uniformBuffers[currentImage], &ubo, (size_t) sizeof(ubo));

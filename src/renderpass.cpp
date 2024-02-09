@@ -16,7 +16,7 @@ using namespace gpu;
 
     void RenderPass::createCommandBuffers(){
         commandBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-        vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
+        vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, static_cast<uint32_t>(commandBuffers.size()));
         commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
     }
 

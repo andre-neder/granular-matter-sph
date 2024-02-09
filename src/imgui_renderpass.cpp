@@ -275,7 +275,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     //                     static char pressedKey[2];
     //                     ImGui::InputText("##pressedKey", pressedKey, IM_ARRAYSIZE(pressedKey));
     //                     if(ImGui::Button("save")){
-    //                         gpu::InputManager::updateKeyBinding(keyBinding._handle, (int)toupper(pressedKey[0]));
+    //                         gpu::InputManager::updateKeyBinding(keyBinding._handle, static_cast<int>(toupper(pressedKey[0])));
     //                         editKey = false;
     //                         gpu::InputManager::resumeKeyInput();
     //                     }
@@ -298,7 +298,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text(timestampLabels[currentFrame][row].c_str());
                 ImGui::TableSetColumnIndex(1);
-                ImGui::Text((std::to_string((timestamps[currentFrame][row + 1] - timestamps[currentFrame][row]) / (float)1000000) + " ms").c_str());
+                ImGui::Text((std::to_string((timestamps[currentFrame][row + 1] - timestamps[currentFrame][row]) / 1000000.f) + " ms").c_str());
             }
             if(!timestampLabels[currentFrame].empty())
             {
@@ -306,7 +306,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Text("Total");
                 ImGui::TableSetColumnIndex(1);
-                ImGui::Text((std::to_string((timestamps[currentFrame][timestampLabels[currentFrame].size() - 1] - timestamps[currentFrame][0]) / (float)1000000) + " ms").c_str());
+                ImGui::Text((std::to_string((timestamps[currentFrame][timestampLabels[currentFrame].size() - 1] - timestamps[currentFrame][0]) / 1000000.f) + " ms").c_str());
             }
             {
                 ImGui::TableNextRow();
@@ -378,7 +378,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         ImGui::DragFloat("Drag Coefficient", &settings.dragCoefficient, 1.f, 0.01f, 10.f);
     ImGui::End();
 
-    ImGui::ShowDemoWindow(&show_demo_window);
+    // ImGui::ShowDemoWindow(&show_demo_window);
 
     ImGui::End();
 
