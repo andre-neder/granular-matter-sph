@@ -55,6 +55,11 @@ void ParticleRenderPass::createFramebuffers()
         framebuffers[i] = m_core->createFramebuffer(renderPass, attachments);
     }
 }
+void ParticleRenderPass::createCommandBuffers(){
+    commandBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
+    commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
+}
 
 void ParticleRenderPass::createRenderPass()
 {

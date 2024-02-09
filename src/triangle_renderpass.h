@@ -2,8 +2,7 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include <tiny_gltf.h>
-#include "renderpass.h"
-
+#include "core.h"
 #include "global.h"
 #include "camera.h"
 #include "model.h"
@@ -50,18 +49,21 @@ const std::vector<uint32_t> indices = {
 };
 
 namespace gpu{
-    class TriangleRenderPass : public RenderPass{
+    class TriangleRenderPass{
         public:
             TriangleRenderPass(){};
             TriangleRenderPass(gpu::Core* core, gpu::Camera* camera);
             ~TriangleRenderPass(){};
 
             void createFramebuffers();
+            void createCommandBuffers();
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);
             void destroyFrameResources();
             void destroy(); 
             void init();
+
+            inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
 
             void createGraphicsPipeline(bool wireframe = false);
             void destroyGraphicsPipeline();
@@ -69,6 +71,13 @@ namespace gpu{
             std::vector<Model> models;
         private:
             gpu::Camera* m_camera;
+            gpu::Core* m_core;
+
+            vk::RenderPass renderPass;
+            std::vector<vk::Framebuffer> framebuffers;
+            std::vector<vk::CommandBuffer> commandBuffers;
+            vk::Pipeline graphicsPipeline;
+
 
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;

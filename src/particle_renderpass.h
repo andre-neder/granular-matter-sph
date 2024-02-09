@@ -3,24 +3,27 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include <tiny_gltf.h>
-#include "renderpass.h"
 #include "camera.h"
 #include "model.h"
+#include "core.h"
 
 
 namespace gpu{
-    class ParticleRenderPass : public RenderPass{
+    class ParticleRenderPass{
         public:
             ParticleRenderPass(){};
             ParticleRenderPass(gpu::Core* core, gpu::Camera* camera);
             ~ParticleRenderPass(){};
 
             void createFramebuffers();
+            void createCommandBuffers();
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);
             void destroyFrameResources();
             void destroy(); 
             void init();
+
+            inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
 
             std::vector<vk::Buffer> vertexBuffer;
             uint32_t vertexCount;
@@ -30,6 +33,13 @@ namespace gpu{
 
         private:
             gpu::Camera* m_camera;
+            gpu::Core* m_core;
+
+            vk::RenderPass renderPass;
+            std::vector<vk::Framebuffer> framebuffers;
+            std::vector<vk::CommandBuffer> commandBuffers;
+            vk::Pipeline graphicsPipeline;
+
 
             Model particleModel;
             vk::Buffer particleModelIndexBuffer;
