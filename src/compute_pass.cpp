@@ -89,11 +89,7 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
         };
     }
 
-    try{
-        m_pipelineLayout = core->getDevice().createPipelineLayout(layoutInfo, nullptr);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    m_pipelineLayout = core->getDevice().createPipelineLayout(layoutInfo, nullptr);
 
     vk::ComputePipelineCreateInfo pipelineInfo{
         {},

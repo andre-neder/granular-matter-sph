@@ -105,7 +105,7 @@ namespace gpu
             // inline vk::UniqueSurfaceKHR* getSurface(){ return &_surface; };
             inline vk::SurfaceFormatKHR getSurfaceFormat(){ return _surfaceFormat; };
             inline vk::PhysicalDevice getPhysicalDevice(){ return _physicalDevice; };
-            inline vk::Device getDevice(){ return _device; };
+            inline vk::Device getDevice(){ return *_device; };
             //* Queues
             inline vk::Queue getGraphicsQueue(){ return graphicsQueue; };
             inline vk::Queue getPresentQueue(){ return presentQueue; };
@@ -115,7 +115,7 @@ namespace gpu
 
             inline vma::Allocator getAllocator(){ return _allocator; };
 
-            inline vk::CommandPool getCommandPool(){ return _commandPool; };
+            inline vk::CommandPool getCommandPool(){ return *_commandPool; };
             //* SwapChain
 
             inline vk::Format getSwapChainImageFormat(){ return _swapChainBundle._imageFormat; };
@@ -219,12 +219,12 @@ namespace gpu
             vk::UniqueSurfaceKHR _surface;
             vk::SurfaceFormatKHR _surfaceFormat;
             vk::PhysicalDevice _physicalDevice;
-            vk::Device _device;
+            vk::UniqueDevice _device;
             vk::Queue graphicsQueue;
             vk::Queue computeQueue;
             vk::Queue presentQueue;
             vma::Allocator _allocator;
-            vk::CommandPool _commandPool; 
+            vk::UniqueCommandPool _commandPool; 
 
             vk::Image _swapChainDepthImage;
             vk::ImageView _swapChainDepthImageView;

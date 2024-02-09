@@ -61,10 +61,10 @@ void Core::destroy(){
 
 
 
-    _device.destroyCommandPool(_commandPool);
+    // _device->destroyCommandPool(_commandPool);
 
     _allocator.destroy();
-    _device.destroy();
+    // _device.destroy();
     // _instance->destroySurfaceKHR(_surface);
 
 }
@@ -225,37 +225,24 @@ void Core::createLogicalDevice(){
 		vk::PhysicalDeviceDescriptorIndexingFeatures().setRuntimeDescriptorArray(true).setShaderSampledImageArrayNonUniformIndexing(true).setDescriptorBindingVariableDescriptorCount(true).setDescriptorBindingPartiallyBound(true),
         vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT().setShaderBufferFloat32Atomics(true).setShaderBufferFloat32AtomicAdd(true)
 	};
-    
-    try
-    {
-        _device = _physicalDevice.createDevice(deviceFeatureCreateInfo.get<vk::DeviceCreateInfo>());
-    }
-    catch(std::exception& e) 
-    {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
 
-    graphicsQueue = _device.getQueue(indices.graphicsFamily.value(), 0);
-    computeQueue = _device.getQueue(indices.computeFamily.value(), 0);
-    presentQueue = _device.getQueue(indices.presentFamily.value(), 0);
+    _device = _physicalDevice.createDeviceUnique(deviceFeatureCreateInfo.get<vk::DeviceCreateInfo>());
+
+
+    graphicsQueue = _device->getQueue(indices.graphicsFamily.value(), 0);
+    computeQueue = _device->getQueue(indices.computeFamily.value(), 0);
+    presentQueue = _device->getQueue(indices.presentFamily.value(), 0);
 }
 
 void Core::createAllocator(){
     vma::AllocatorCreateInfo allocatorInfo;
     allocatorInfo.flags = vma::AllocatorCreateFlagBits::eBufferDeviceAddress;
     allocatorInfo.physicalDevice = _physicalDevice;
-    allocatorInfo.device = _device;
+    allocatorInfo.device = *_device;
     allocatorInfo.instance = *_instance;
     allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_2;
-	try
-	{
-		_allocator = vma::createAllocator(allocatorInfo);
-	}
-	catch (std::exception &e)
-	{
-		std::cerr << "Exception Thrown: " << e.what();
-	}
 
+    _allocator = vma::createAllocator(allocatorInfo);
 }
 
 void gpu::Core::createInstance()
@@ -307,14 +294,8 @@ vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUs
 	bufferAllocInfo.usage = memoryUsage;
 	bufferAllocInfo.flags = allocationFlags;
 
-    try
-    {
-        std::tie(buffer, allocation) = _allocator.createBuffer(bufferInfo, bufferAllocInfo);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    std::tie(buffer, allocation) = _allocator.createBuffer(bufferInfo, bufferAllocInfo);
+
     _bufferAllocations[buffer] = allocation;
     return buffer;
 }
@@ -384,52 +365,33 @@ void Core::copyBufferToBuffer(vk::Buffer srcBuffer, vk::Buffer dstBuffer, vk::De
     endSingleTimeCommands(commandBuffer);
 }
 vk::CommandBuffer Core::beginSingleTimeCommands() {
-    vk::CommandBufferAllocateInfo allocInfo(_commandPool, vk::CommandBufferLevel::ePrimary, 1);
-    vk::CommandBuffer commandBuffer;
-    try{
-        commandBuffer = _device.allocateCommandBuffers(allocInfo)[0];
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    vk::CommandBufferAllocateInfo allocInfo(*_commandPool, vk::CommandBufferLevel::ePrimary, 1);
+    vk::CommandBuffer commandBuffer = _device->allocateCommandBuffers(allocInfo)[0];
 
     vk::CommandBufferBeginInfo beginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
-    try{
-        commandBuffer.begin(beginInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    commandBuffer.begin(beginInfo);
+
     return commandBuffer;
 }
 void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
-    try{
-        commandBuffer.end();
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+
+    commandBuffer.end();
 
     vk::SubmitInfo submitInfoCopy({}, {}, commandBuffer, {});
     graphicsQueue.submit(submitInfoCopy, {});
     graphicsQueue.waitIdle();
-    _device.freeCommandBuffers(_commandPool, 1, &commandBuffer);
+    _device->freeCommandBuffers(*_commandPool, 1, &commandBuffer);
 }
 
 void gpu::Core::beginCommands(vk::CommandBuffer commandBuffer, vk::CommandBufferBeginInfo beginInfo)
 {
-    try{
-        commandBuffer.begin(beginInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    commandBuffer.begin(beginInfo);
 }
 
 void gpu::Core::endCommands(vk::CommandBuffer commandBuffer)
 {
-    try{
-        commandBuffer.end();
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    commandBuffer.end();
 }
 
 void gpu::Core::createTimestampQueryPool(vk::QueryPool* pool)
@@ -441,7 +403,7 @@ void gpu::Core::createTimestampQueryPool(vk::QueryPool* pool)
         {}
     };
     
-    vk::Result result = _device.createQueryPool(&createInfo, nullptr, pool);
+    vk::Result result = _device->createQueryPool(&createInfo, nullptr, pool);
     if (result != vk::Result::eSuccess)
     {
         throw std::runtime_error("Failed to create time query pool!");
@@ -454,7 +416,7 @@ std::vector<uint64_t> gpu::Core::getTimestampQueryPoolResults(vk::QueryPool *poo
 {
     uint64_t buffer[MAX_QUERY_POOL_COUNT];
 
-    vk::Result result = _device.getQueryPoolResults(*pool, 0, MAX_QUERY_POOL_COUNT, sizeof(uint64_t) * MAX_QUERY_POOL_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
+    vk::Result result = _device->getQueryPoolResults(*pool, 0, MAX_QUERY_POOL_COUNT, sizeof(uint64_t) * MAX_QUERY_POOL_COUNT, buffer, sizeof(uint64_t), vk::QueryResultFlagBits::e64);
     if (result == vk::Result::eNotReady)
     {
         return std::vector<uint64_t>(buffer, buffer + MAX_QUERY_POOL_COUNT);
@@ -475,32 +437,26 @@ std::vector<vk::DescriptorSet> gpu::Core::allocateDescriptorSets(vk::DescriptorS
     //Duplicate layout for each set
     std::vector<vk::DescriptorSetLayout> layouts(count, layout);
 
-
     vk::DescriptorSetAllocateInfo allocInfo(pool, count, layouts.data());
-    // if the descriptor set layout has the flag
-    // auto flags = _descriptorBindingFlags.at(layout);
-    // if((flags & (vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound)) == (vk::DescriptorBindingFlagBits::eVariableDescriptorCount | vk::DescriptorBindingFlagBits::ePartiallyBound)){
-        auto descriptorCount = _descriptorCount.at(layout);
-        std::vector<uint32_t> counts(count, descriptorCount);
-        vk::DescriptorSetVariableDescriptorCountAllocateInfo variableDescriptorCountAllocInfo{count, counts.data()};
-        allocInfo.pNext = &variableDescriptorCountAllocInfo;
-    // }
-    try{
-        auto sets = _device.allocateDescriptorSets(allocInfo);
-        for(auto& set : sets){
-            //* create a write queue for each set
-            _descriptorWrites[set] = std::vector<vk::WriteDescriptorSet>();
-        }
-        return sets;
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
+    auto descriptorCount = _descriptorCount.at(layout);
+    std::vector<uint32_t> counts(count, descriptorCount);
+    vk::DescriptorSetVariableDescriptorCountAllocateInfo variableDescriptorCountAllocInfo{count, counts.data()};
+    allocInfo.pNext = &variableDescriptorCountAllocInfo;
+
+   
+    auto sets = _device->allocateDescriptorSets(allocInfo);
+    for(auto& set : sets){
+        //* create a write queue for each set
+        _descriptorWrites[set] = std::vector<vk::WriteDescriptorSet>();
     }
+    return sets;
+
 }
 
 void gpu::Core::updateDescriptorSet(vk::DescriptorSet set)
 {
     auto& descriptorWrites = _descriptorWrites.at(set);
-    _device.updateDescriptorSets(descriptorWrites, nullptr);
+    _device->updateDescriptorSets(descriptorWrites, nullptr);
     for(auto descriptorWrite : descriptorWrites){
         delete descriptorWrite.pBufferInfo;
         delete descriptorWrite.pImageInfo;
@@ -559,36 +515,28 @@ vk::DescriptorSetLayout gpu::Core::createDescriptorSetLayout(std::vector<Descrip
 
     vk::DescriptorSetLayoutBindingFlagsCreateInfo bindingFlags{(uint32_t)flags.size(), flags.data()};
     layoutInfo.pNext = &bindingFlags;
-    
 
-    try{
-        auto descriptorSetLayout = _device.createDescriptorSetLayout(layoutInfo);
-        _descriptorCount[descriptorSetLayout] = descriptorCount;
-        _descriptorBindingFlags[descriptorSetLayout] = layoutFlags;
-        return descriptorSetLayout;
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    auto descriptorSetLayout = _device->createDescriptorSetLayout(layoutInfo);
+    _descriptorCount[descriptorSetLayout] = descriptorCount;
+    _descriptorBindingFlags[descriptorSetLayout] = layoutFlags;
+    return descriptorSetLayout;
+
 }
 
 vk::DescriptorPool gpu::Core::createDescriptorPool(std::vector<vk::DescriptorPoolSize> sizes, uint32_t maxSets)
 {
     vk::DescriptorPoolCreateInfo poolInfo({}, maxSets, sizes);
-    try{
-        return _device.createDescriptorPool(poolInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    return _device->createDescriptorPool(poolInfo);
 }
 
 void gpu::Core::destroyDescriptorPool(vk::DescriptorPool pool)
 {
-    _device.destroyDescriptorPool(pool);
+    _device->destroyDescriptorPool(pool);
 }
 
 void gpu::Core::destroyDescriptorSetLayout(vk::DescriptorSetLayout layout)
 {
-    _device.destroyDescriptorSetLayout(layout);
+    _device->destroyDescriptorSetLayout(layout);
 }
 
 vk::RenderPass gpu::Core::createColorDepthRenderPass(vk::AttachmentLoadOp loadOp, vk::AttachmentStoreOp storeOp)
@@ -630,21 +578,14 @@ vk::RenderPass gpu::Core::createColorDepthRenderPass(vk::AttachmentLoadOp loadOp
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
     vk::RenderPassCreateInfo renderPassInfo({}, attachments, subpass);
-    try{
-        return _device.createRenderPass(renderPassInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+
+    return _device->createRenderPass(renderPassInfo);
 }
 
 void Core::createCommandPool() {
     QueueFamilyIndices queueFamilyIndices = findQueueFamilies(_physicalDevice);
     vk::CommandPoolCreateInfo poolInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queueFamilyIndices.graphicsFamily.value());
-    try{
-        _commandPool = _device.createCommandPool(poolInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    _commandPool = _device->createCommandPoolUnique(poolInfo);
 }
 
 void Core::copyBufferToImage(vk::Buffer buffer, vk::Image image, uint32_t width, uint32_t height, uint32_t depth) {
@@ -695,62 +636,59 @@ void Core::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk:
     vk::CommandBuffer commandBuffer = beginSingleTimeCommands();
     vk::AccessFlags srcAccessMask = {};
     vk::AccessFlags dstAccessMask = {};
-    try{
-        switch (oldLayout)
-        {
-            case vk::ImageLayout::eUndefined:
-                srcAccessMask = vk::AccessFlagBits::eNone;
-                break;
-            case vk::ImageLayout::ePreinitialized:
-                srcAccessMask = vk::AccessFlagBits::eHostWrite;
-                break;
-            case vk::ImageLayout::eColorAttachmentOptimal:
-                srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-                break;
-            case vk::ImageLayout::eDepthStencilAttachmentOptimal:
-                srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-                break;
-            case vk::ImageLayout::eTransferSrcOptimal:
-                srcAccessMask = vk::AccessFlagBits::eTransferRead;
-                break;
-            case vk::ImageLayout::eTransferDstOptimal:
-                srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-                break;
-            case vk::ImageLayout::eShaderReadOnlyOptimal:
-                srcAccessMask = vk::AccessFlagBits::eShaderRead;
-                break;
-            default:
-                throw std::invalid_argument("unsupported layout transition!");
-        }
 
-        switch (newLayout)
-        {
-            case vk::ImageLayout::eTransferDstOptimal:
-                dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-                break;
-            case vk::ImageLayout::eTransferSrcOptimal:
-                dstAccessMask = vk::AccessFlagBits::eTransferRead;
-                break;
-            case vk::ImageLayout::eColorAttachmentOptimal:
-                dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-                break;
-            case vk::ImageLayout::eDepthStencilAttachmentOptimal:
-                dstAccessMask = dstAccessMask | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-                break;
-            case vk::ImageLayout::eShaderReadOnlyOptimal:
-                if (srcAccessMask == vk::AccessFlagBits::eNone)
-                {
-                    srcAccessMask = vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite;
-                }
-                dstAccessMask = vk::AccessFlagBits::eShaderRead;
-                break;
-            default:
-                throw std::invalid_argument("unsupported layout transition!");
-        }
+    switch (oldLayout)
+    {
+        case vk::ImageLayout::eUndefined:
+            srcAccessMask = vk::AccessFlagBits::eNone;
+            break;
+        case vk::ImageLayout::ePreinitialized:
+            srcAccessMask = vk::AccessFlagBits::eHostWrite;
+            break;
+        case vk::ImageLayout::eColorAttachmentOptimal:
+            srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+            break;
+        case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+            srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+            break;
+        case vk::ImageLayout::eTransferSrcOptimal:
+            srcAccessMask = vk::AccessFlagBits::eTransferRead;
+            break;
+        case vk::ImageLayout::eTransferDstOptimal:
+            srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+            break;
+        case vk::ImageLayout::eShaderReadOnlyOptimal:
+            srcAccessMask = vk::AccessFlagBits::eShaderRead;
+            break;
+        default:
+            throw std::invalid_argument("unsupported layout transition!");
     }
-    catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
+
+    switch (newLayout)
+    {
+        case vk::ImageLayout::eTransferDstOptimal:
+            dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+            break;
+        case vk::ImageLayout::eTransferSrcOptimal:
+            dstAccessMask = vk::AccessFlagBits::eTransferRead;
+            break;
+        case vk::ImageLayout::eColorAttachmentOptimal:
+            dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+            break;
+        case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+            dstAccessMask = dstAccessMask | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+            break;
+        case vk::ImageLayout::eShaderReadOnlyOptimal:
+            if (srcAccessMask == vk::AccessFlagBits::eNone)
+            {
+                srcAccessMask = vk::AccessFlagBits::eHostWrite | vk::AccessFlagBits::eTransferWrite;
+            }
+            dstAccessMask = vk::AccessFlagBits::eShaderRead;
+            break;
+        default:
+            throw std::invalid_argument("unsupported layout transition!");
     }
+
 
     vk::ImageMemoryBarrier barrier(srcAccessMask, dstAccessMask, oldLayout, newLayout, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, image, vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
@@ -807,14 +745,8 @@ vk::Image Core::createImage2D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
     imageAllocInfo.usage = memoryUsage;
 	imageAllocInfo.flags = allocationFlags;
 
-    try
-    {
-        std::tie(image, allocation) = _allocator.createImage(imageInfo, imageAllocInfo);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    std::tie(image, allocation) = _allocator.createImage(imageInfo, imageAllocInfo);
+
     _imageAllocations[image] = allocation;
     return image;
 }
@@ -836,14 +768,8 @@ vk::Image Core::createImage3D(vk::ImageUsageFlags imageUsage, vma::MemoryUsage m
 	imageAllocInfo.usage = memoryUsage;
 	imageAllocInfo.flags = allocationFlags;
 
-    try
-    {
-        std::tie(image, allocation) = _allocator.createImage(imageInfo, imageAllocInfo);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    std::tie(image, allocation) = _allocator.createImage(imageInfo, imageAllocInfo);
+
     _imageAllocations[image] = allocation;
     return image;
 }
@@ -854,33 +780,21 @@ void Core::destroyImage(vk::Image image){
 }
 
 void Core::destroyImageView(vk::ImageView view){
-    _device.destroyImageView(view);
+    _device->destroyImageView(view);
 }
 
 vk::ImageView Core::createImageView2D(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags) {
     vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e2D, format, {}, vk::ImageSubresourceRange( aspectFlags, 0, 1, 0, 1));
-    vk::ImageView imageView;
-    try{
-        imageView = _device.createImageView(viewInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-    return imageView;
+    return _device->createImageView(viewInfo);
 }
 
 vk::ImageView Core::createImageView3D(vk::Image image, vk::Format format) {
     vk::ImageViewCreateInfo viewInfo({}, image, vk::ImageViewType::e3D, format, {}, vk::ImageSubresourceRange( vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-    vk::ImageView imageView;
-    try{
-        imageView = _device.createImageView(viewInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-    return imageView;
+    return _device->createImageView(viewInfo);;
 }
 
 vk::Sampler Core::createSampler(vk::SamplerAddressMode addressMode, vk::BorderColor borderColor, vk::Bool32 enableAnisotropy) {
-    vk::Sampler sampler;
+
     vk::PhysicalDeviceProperties properties = _physicalDevice.getProperties();
 
     vk::SamplerCreateInfo samplerInfo(
@@ -901,28 +815,18 @@ vk::Sampler Core::createSampler(vk::SamplerAddressMode addressMode, vk::BorderCo
         borderColor, 
         VK_FALSE 
     );
-    try{
-        sampler = _device.createSampler(samplerInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-    return sampler;
+
+    return _device->createSampler(samplerInfo);
 }
 void Core::destroySampler(vk::Sampler sampler){
-    _device.destroySampler(sampler);
+    _device->destroySampler(sampler);
 }
 
 vk::Framebuffer gpu::Core::createFramebuffer(vk::RenderPass renderPass, vk::ArrayProxy<vk::ImageView> attachments)
 {
     vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapChainExtent().width, getSwapChainExtent().height, 1);
-    try
-    {
-        return _device.createFramebuffer(framebufferInfo);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    return _device->createFramebuffer(framebufferInfo);
+
 }
 
 vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
@@ -997,17 +901,11 @@ void Core::createSwapChain(Window* window) {
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
     _swapChainBundle = {};
-
-    try{
-        _swapChainBundle._swapChain = _device.createSwapchainKHR(createInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-
+    _swapChainBundle._swapChain = _device->createSwapchainKHR(createInfo);
     _swapChainBundle._imageFormat = _surfaceFormat.format;
     _swapChainBundle._extent = extent;
 
-    std::vector<vk::Image> swapChainImages = _device.getSwapchainImagesKHR(_swapChainBundle._swapChain);
+    std::vector<vk::Image> swapChainImages = _device->getSwapchainImagesKHR(_swapChainBundle._swapChain);
 
     _swapChainBundle._frames.resize(swapChainImages.size());
     for (size_t i = 0; i < getSwapChainImageCount(); i++) {
@@ -1016,11 +914,11 @@ void Core::createSwapChain(Window* window) {
         _swapChainBundle._frames[i]._view = createImageView2D(swapChainImages[i], _swapChainBundle._imageFormat);
 
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
-        _swapChainBundle._frames[i]._inFlight = _device.createFence(fenceInfo);
+        _swapChainBundle._frames[i]._inFlight = _device->createFence(fenceInfo);
 
         vk::SemaphoreCreateInfo semaphoreInfo;
-        _swapChainBundle._frames[i]._imageAvailable = _device.createSemaphore(semaphoreInfo);
-        _swapChainBundle._frames[i]._renderFinished = _device.createSemaphore(semaphoreInfo);
+        _swapChainBundle._frames[i]._imageAvailable = _device->createSemaphore(semaphoreInfo);
+        _swapChainBundle._frames[i]._renderFinished = _device->createSemaphore(semaphoreInfo);
     }
 
     _swapChainBundle._depthFormat = findDepthFormat();
@@ -1033,26 +931,20 @@ void Core::createSwapChain(Window* window) {
 void Core::destroySwapChain(){
     for (auto frame : _swapChainBundle._frames) {
         destroyImageView(frame._view);
-        _device.destroyFence(frame._inFlight);
-        _device.destroySemaphore(frame._imageAvailable);
-        _device.destroySemaphore(frame._renderFinished);
+        _device->destroyFence(frame._inFlight);
+        _device->destroySemaphore(frame._imageAvailable);
+        _device->destroySemaphore(frame._renderFinished);
     }
     destroyImageView(_swapChainDepthImageView);
 
-    _device.destroySwapchainKHR(_swapChainBundle._swapChain);
+    _device->destroySwapchainKHR(_swapChainBundle._swapChain);
     destroyImage(_swapChainDepthImage);
 }
 
 
 vk::ShaderModule Core::createShaderModule(const std::vector<uint32_t> code) {
     vk::ShaderModuleCreateInfo createInfo({}, code);
-    vk::ShaderModule shaderModule;
-    try{
-        shaderModule = _device.createShaderModule(createInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
-    return shaderModule;
+    return _device->createShaderModule(createInfo);
 }
 
 vk::ShaderModule Core::loadShaderModule(std::string src) {
@@ -1117,7 +1009,7 @@ vk::Result gpu::Core::acquireNextImageKHR(uint32_t* imageIndex, vk::Semaphore se
     vk::Result result;
 
     try{
-        result = _device.acquireNextImageKHR(getSwapChain(), UINT64_MAX, semaphore, fence, imageIndex);
+        result = _device->acquireNextImageKHR(getSwapChain(), UINT64_MAX, semaphore, fence, imageIndex);
     }
     catch(const vk::OutOfDateKHRError outOfDateError){
         result = vk::Result::eErrorOutOfDateKHR;
@@ -1153,15 +1045,15 @@ void gpu::Core::createComputeBundle(ComputeBundle& bundle)
     bundle._frames.resize(gpu::MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        bundle._frames[i]._computeFinished = _device.createSemaphore(semaphoreInfo);
-        bundle._frames[i]._inFlight = _device.createFence(fenceInfo);
+        bundle._frames[i]._computeFinished = _device->createSemaphore(semaphoreInfo);
+        bundle._frames[i]._inFlight = _device->createFence(fenceInfo);
     }
 }
 
 void gpu::Core::destroyComputeBundle(ComputeBundle& bundle)
 {
     for (auto frame : bundle._frames) {
-        _device.destroySemaphore(frame._computeFinished);
-        _device.destroyFence(frame._inFlight);
+        _device->destroySemaphore(frame._computeFinished);
+        _device->destroyFence(frame._inFlight);
     }
 }

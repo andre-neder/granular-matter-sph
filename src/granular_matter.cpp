@@ -204,11 +204,7 @@ GranularMatter::~GranularMatter()
 void GranularMatter::createCommandBuffers(){
     commandBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
     vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
-    try{
-        commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
 }
 
 void GranularMatter::destroyFrameResources(){
@@ -229,12 +225,8 @@ void GranularMatter::initFrameResources(){
     vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
     vk::SemaphoreCreateInfo semaphoreInfo;
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        try{
-            iisphFences[i] = m_core->getDevice().createFence(fenceInfo);
-            iisphSemaphores[i] = m_core->getDevice().createSemaphore(semaphoreInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+        iisphFences[i] = m_core->getDevice().createFence(fenceInfo);
+        iisphSemaphores[i] = m_core->getDevice().createSemaphore(semaphoreInfo);
     }
 
 }

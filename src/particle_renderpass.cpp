@@ -66,14 +66,8 @@ void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt)
     updateUniformBuffer(currentFrame);
 
     vk::CommandBufferBeginInfo beginInfo;
-    try
-    {
-        commandBuffers[currentFrame].begin(beginInfo);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    commandBuffers[currentFrame].begin(beginInfo);
+  
     std::array<vk::ClearValue, 2> clearValues = {
         vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}),
         vk::ClearDepthStencilValue({1.0f, 0})
@@ -110,14 +104,8 @@ void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt)
     }
 
     commandBuffers[currentFrame].endRenderPass();
-    try
-    {
-        commandBuffers[currentFrame].end();
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    commandBuffers[currentFrame].end();
+
 }
 
 void ParticleRenderPass::createDescriptorSets()
@@ -159,14 +147,8 @@ void ParticleRenderPass::createGraphicsPipeline()
     vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(SPHSettings)};
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo({}, 1, &descriptorSetLayout, 1, &pushConstantRange, nullptr);
 
-    try
-    {
-        pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
-    }
-    catch (std::exception &e)
-    {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
+
 
     vk::GraphicsPipelineCreateInfo pipelineInfo(
         {}, 

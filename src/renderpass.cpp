@@ -10,21 +10,13 @@ using namespace gpu;
                 m_core->getSwapChainImageView(i)
             };
             vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, m_core->getSwapChainExtent().width, m_core->getSwapChainExtent().height, 1);
-            try{
-                framebuffers[i] = m_core->getDevice().createFramebuffer(framebufferInfo);
-            }catch(std::exception& e) {
-                std::cerr << "Exception Thrown: " << e.what();
-            }
+            framebuffers[i] = m_core->getDevice().createFramebuffer(framebufferInfo);
         }
     }
 
     void RenderPass::createCommandBuffers(){
         commandBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
         vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
-        try{
-            commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+        commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
     }
 

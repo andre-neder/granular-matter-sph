@@ -187,11 +187,9 @@ void ImguiRenderPass::createRenderPass(){
         1,
         &dependency
     );
-    try{
-        renderPass = m_core->getDevice().createRenderPass(renderPassInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+
+    renderPass = m_core->getDevice().createRenderPass(renderPassInfo);
+
 }
 float drawAverageDensityError(void*, int i) { return simulationMetrics.averageDensityError.get(i) / settings.rho0; };
 float drawIterationCount(void*, int i) { return simulationMetrics.iterationCount.get(i); };
@@ -389,11 +387,8 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     additionalWindows();
 
     vk::CommandBufferBeginInfo beginInfo;
-    try{
-        commandBuffers[currentFrame].begin(beginInfo);
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+    commandBuffers[currentFrame].begin(beginInfo);
+
     std::array<vk::ClearValue, 1> clearValues{
         vk::ClearValue(vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}))
     };
@@ -404,11 +399,8 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
 
     commandBuffers[currentFrame].endRenderPass();
-    try{
-        commandBuffers[currentFrame].end();
-    }catch(std::exception& e) {
-        std::cerr << "Exception Thrown: " << e.what();
-    }
+
+    commandBuffers[currentFrame].end();
 }
 
 void ImguiRenderPass::createDescriptorPool() {

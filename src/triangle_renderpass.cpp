@@ -51,11 +51,7 @@ using namespace gpu;
         updateUniformBuffer(currentFrame);
 
         vk::CommandBufferBeginInfo beginInfo;
-        try{
-            commandBuffers[currentFrame].begin(beginInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+        commandBuffers[currentFrame].begin(beginInfo);
         vk::ClearValue colorClear;
         colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
         vk::ClearValue depthClear;
@@ -97,11 +93,8 @@ using namespace gpu;
             }
             // commandBuffers[currentFrame].drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
             commandBuffers[currentFrame].endRenderPass();
-        try{
             commandBuffers[currentFrame].end();
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+      
     }
     
     void TriangleRenderPass::createDescriptorSets() {
@@ -144,11 +137,7 @@ using namespace gpu;
         };
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo({}, allLayouts.size(), allLayouts.data(), 1, &pushConstantRange, nullptr);
 
-        try{
-            pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
-        }catch(std::exception& e) {
-            std::cerr << "Exception Thrown: " << e.what();
-        }
+        pipelineLayout = m_core->getDevice().createPipelineLayout(pipelineLayoutInfo);
 
         vk::GraphicsPipelineCreateInfo pipelineInfo(
             {}, 
