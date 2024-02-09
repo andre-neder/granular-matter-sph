@@ -12,7 +12,6 @@ glm::vec2 InputManager::scrollOffset = glm::vec2(0.0);
 std::array<int, GLFW_KEY_LAST> InputManager::keysDown;
 std::vector<KeyBinding> InputManager::keyBindings;
 bool InputManager::performKeyBindings = true;
-int InputManager::lastPressedKey = -1;
 
 void InputManager::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
@@ -27,9 +26,6 @@ void InputManager::keyCallback(GLFWwindow *window, int key, int scancode, int ac
         for(auto&& b : bindings){
             (b._function)();
         }
-    }
-    if(action == GLFW_PRESS){
-        lastPressedKey = key;
     }
 }
 
@@ -71,11 +67,6 @@ void gpu::InputManager::resumeKeyInput()
     performKeyBindings = true;
 }
 
-int gpu::InputManager::awaitKeyPress()
-{
-    glfwWaitEvents();	
-    return lastPressedKey;
-}
 
 InputManager::InputManager(Window &window)
 {

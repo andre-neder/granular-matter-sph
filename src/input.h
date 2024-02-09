@@ -34,7 +34,6 @@ namespace gpu
         static std::array<int, GLFW_KEY_LAST> keysDown;
         static std::vector<KeyBinding> keyBindings;
         static bool performKeyBindings;
-        static int lastPressedKey;
 
     public:
         InputManager(){};
@@ -52,7 +51,6 @@ namespace gpu
         // hold any key inputs
         static void suspendKeyInput();
         static void resumeKeyInput();
-        static int awaitKeyPress();
 
         static glm::vec2 cursorPosition;
         static glm::vec2 scrollOffset;

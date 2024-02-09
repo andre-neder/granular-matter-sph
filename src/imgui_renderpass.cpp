@@ -2,7 +2,7 @@
 #include "global.h"
 #include <glm/gtc/type_ptr.hpp>
 #include "input.h"
-
+#include <cctype>
 
 bool simulationRunning = false;
 bool resetSimulation = false;
@@ -259,7 +259,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     
     // ImGui::Begin("Keybindings");
     //     ImGui::BeginTable("Keybindings", 3);
-    //         for(auto&& keyBinding : gpu::InputManager::getKeyBindings()){
+    //         for(auto& keyBinding : gpu::InputManager::getKeyBindings()){
     //             ImGui::TableNextRow();
     //             ImGui::TableSetColumnIndex(0);
     //             ImGui::Text(keyBinding._handle.c_str());
@@ -272,13 +272,14 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     //                 editKey = !editKey;
     //             }
     //             if(editKey){
+    //                 gpu::InputManager::suspendKeyInput();
     //                 ImGui::Begin("Press a key", &editKey);
-    //                     // static char pressedKey[2];
-    //                     // ImGui::InputText("##pressedKey", pressedKey, IM_ARRAYSIZE(pressedKey));
+    //                     static char pressedKey[2];
+    //                     ImGui::InputText("##pressedKey", pressedKey, IM_ARRAYSIZE(pressedKey));
     //                     if(ImGui::Button("save")){
-    //                         // std::cout << pressedKey << std::endl;
-    //                         // gpu::InputManager::updateKeyBinding(keyBinding._handle, (int)pressedKey[1]);
+    //                         gpu::InputManager::updateKeyBinding(keyBinding._handle, (int)toupper(pressedKey[0]));
     //                         editKey = false;
+    //                         gpu::InputManager::resumeKeyInput();
     //                     }
     //                 ImGui::End();
     //             }
