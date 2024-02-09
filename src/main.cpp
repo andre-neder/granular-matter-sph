@@ -47,7 +47,7 @@ private:
     gpu::Window window;
     gpu::InputManager input;
 
-    gpu::ComputeBundle computeBundle;
+    gpu::ComputeContext computeContext;
 
     gpu::ParticleRenderPass particleRenderPass;
     gpu::TriangleRenderPass triangleRenderPass;
@@ -132,7 +132,7 @@ private:
         
         device = core.getDevice();
 
-        core.createComputeBundle(computeBundle);
+        core.createComputeContext(computeContext);
 
         particleRenderPass = gpu::ParticleRenderPass(&core, &camera);
         triangleRenderPass = gpu::TriangleRenderPass(&core, &camera);
@@ -192,11 +192,11 @@ private:
     }
 
     void drawFrame(float dt){
-        size_t currentFrame = core._swapChainBundle._currentFrame;
+        size_t currentFrame = core._swapChainContext._currentFrame;
         vk::Result result;
-        result = device.waitForFences(computeBundle._frames[currentFrame]._inFlight, VK_TRUE, UINT64_MAX);
+        result = device.waitForFences(computeContext._frames[currentFrame]._inFlight, VK_TRUE, UINT64_MAX);
 
-        device.resetFences(computeBundle._frames[currentFrame]._inFlight);
+        device.resetFences(computeContext._frames[currentFrame]._inFlight);
 
         simulation.update(static_cast<int>(currentFrame), 0, dt);
         
@@ -206,7 +206,7 @@ private:
         
         {
             std::vector<vk::Semaphore> signalComputeSemaphores = {
-                computeBundle._frames[currentFrame]._computeFinished
+                computeContext._frames[currentFrame]._computeFinished
             };
 
             std::vector<vk::Semaphore> waitSemaphores = {
@@ -223,7 +223,7 @@ private:
                 signalComputeSemaphores
             };
 
-            core.getComputeQueue().submit(computeSubmitInfo, computeBundle._frames[currentFrame]._inFlight);
+            core.getComputeQueue().submit(computeSubmitInfo, computeContext._frames[currentFrame]._inFlight);
         }
 
         result = device.waitForFences(core.getCurrentFrame()._inFlight, VK_TRUE, UINT64_MAX);
@@ -246,7 +246,7 @@ private:
         imguiRenderPass.update(static_cast<int>(currentFrame), imageIndex, dt);
 
         std::vector<vk::Semaphore> waitSemaphores = {
-            computeBundle._frames[currentFrame]._computeFinished, 
+            computeContext._frames[currentFrame]._computeFinished, 
             core.getCurrentFrame()._imageAvailable
         };
         std::vector<vk::PipelineStageFlags> waitStages = {
@@ -274,7 +274,7 @@ private:
         else if(presentResult != vk::Result::eSuccess){
             throw std::runtime_error("queue Present failed!");
         }
-        core._swapChainBundle._currentFrame = (currentFrame + 1) % gpu::MAX_FRAMES_IN_FLIGHT;
+        core._swapChainContext._currentFrame = (currentFrame + 1) % gpu::MAX_FRAMES_IN_FLIGHT;
     }
 
     void mainLoop(){
@@ -332,7 +332,7 @@ private:
 
         cleanupSwapchain();
 
-        core.destroyComputeBundle(computeBundle);
+        core.destroyComputeContext(computeContext);
         
         window.destroy();
     }

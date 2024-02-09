@@ -888,36 +888,36 @@ void Core::createSwapChain(Window* window) {
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    _swapChainBundle = {};
-    _swapChainBundle._swapChain = _device->createSwapchainKHR(createInfo);
-    _swapChainBundle._imageFormat = _surfaceFormat.format;
-    _swapChainBundle._extent = extent;
+    _swapChainContext = {};
+    _swapChainContext._swapChain = _device->createSwapchainKHR(createInfo);
+    _swapChainContext._imageFormat = _surfaceFormat.format;
+    _swapChainContext._extent = extent;
 
-    std::vector<vk::Image> swapChainImages = _device->getSwapchainImagesKHR(_swapChainBundle._swapChain);
+    std::vector<vk::Image> swapChainImages = _device->getSwapchainImagesKHR(_swapChainContext._swapChain);
 
-    _swapChainBundle._frames.resize(swapChainImages.size());
+    _swapChainContext._frames.resize(swapChainImages.size());
     for (size_t i = 0; i < getSwapChainImageCount(); i++) {
-        _swapChainBundle._frames[i] = {};
-        _swapChainBundle._frames[i]._image = swapChainImages[i];
-        _swapChainBundle._frames[i]._view = createImageView2D(swapChainImages[i], _swapChainBundle._imageFormat);
+        _swapChainContext._frames[i] = {};
+        _swapChainContext._frames[i]._image = swapChainImages[i];
+        _swapChainContext._frames[i]._view = createImageView2D(swapChainImages[i], _swapChainContext._imageFormat);
 
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
-        _swapChainBundle._frames[i]._inFlight = _device->createFence(fenceInfo);
+        _swapChainContext._frames[i]._inFlight = _device->createFence(fenceInfo);
 
         vk::SemaphoreCreateInfo semaphoreInfo;
-        _swapChainBundle._frames[i]._imageAvailable = _device->createSemaphore(semaphoreInfo);
-        _swapChainBundle._frames[i]._renderFinished = _device->createSemaphore(semaphoreInfo);
+        _swapChainContext._frames[i]._imageAvailable = _device->createSemaphore(semaphoreInfo);
+        _swapChainContext._frames[i]._renderFinished = _device->createSemaphore(semaphoreInfo);
     }
 
-    _swapChainBundle._depthFormat = findDepthFormat();
-    _swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainBundle._extent.width, _swapChainBundle._extent.height, _swapChainBundle._depthFormat);
-    _swapChainDepthImageView = createImageView2D(_swapChainDepthImage, _swapChainBundle._depthFormat, vk::ImageAspectFlagBits::eDepth);
+    _swapChainContext._depthFormat = findDepthFormat();
+    _swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainContext._extent.width, _swapChainContext._extent.height, _swapChainContext._depthFormat);
+    _swapChainDepthImageView = createImageView2D(_swapChainDepthImage, _swapChainContext._depthFormat, vk::ImageAspectFlagBits::eDepth);
 
 
 }
 
 void Core::destroySwapChain(){
-    for (auto frame : _swapChainBundle._frames) {
+    for (auto frame : _swapChainContext._frames) {
         destroyImageView(frame._view);
         _device->destroyFence(frame._inFlight);
         _device->destroySemaphore(frame._imageAvailable);
@@ -925,7 +925,7 @@ void Core::destroySwapChain(){
     }
     destroyImageView(_swapChainDepthImageView);
 
-    _device->destroySwapchainKHR(_swapChainBundle._swapChain);
+    _device->destroySwapchainKHR(_swapChainContext._swapChain);
     destroyImage(_swapChainDepthImage);
 }
 
@@ -1025,22 +1025,22 @@ vk::Result gpu::Core::presentKHR(uint32_t imageIndex, std::vector<vk::Semaphore>
         return result;
 }
 
-void gpu::Core::createComputeBundle(ComputeBundle& bundle)
+void gpu::Core::createComputeContext(ComputeContext& context)
 {   
     vk::SemaphoreCreateInfo semaphoreInfo;
     vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
 
-    bundle._frames.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    context._frames.resize(gpu::MAX_FRAMES_IN_FLIGHT);
 
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-        bundle._frames[i]._computeFinished = _device->createSemaphore(semaphoreInfo);
-        bundle._frames[i]._inFlight = _device->createFence(fenceInfo);
+        context._frames[i]._computeFinished = _device->createSemaphore(semaphoreInfo);
+        context._frames[i]._inFlight = _device->createFence(fenceInfo);
     }
 }
 
-void gpu::Core::destroyComputeBundle(ComputeBundle& bundle)
+void gpu::Core::destroyComputeContext(ComputeContext& context)
 {
-    for (auto frame : bundle._frames) {
+    for (auto frame : context._frames) {
         _device->destroySemaphore(frame._computeFinished);
         _device->destroyFence(frame._inFlight);
     }

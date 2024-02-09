@@ -65,7 +65,7 @@ namespace gpu
         vk::Semaphore _renderFinished;
     };
 
-    struct SwapChainBundle{
+    struct SwapChainContext{
         vk::SwapchainKHR _swapChain;
         vk::Format _imageFormat;
         vk::Format _depthFormat;
@@ -79,7 +79,7 @@ namespace gpu
         vk::Semaphore _computeFinished;
     };
 
-    struct ComputeBundle{
+    struct ComputeContext{
         std::vector<ComputeFrame> _frames;
     };
 
@@ -116,13 +116,13 @@ namespace gpu
             inline vk::CommandPool getCommandPool(){ return *_commandPool; };
             //* SwapChain
 
-            inline vk::Format getSwapChainImageFormat(){ return _swapChainBundle._imageFormat; };
-            inline vk::Format getDepthFormat(){ return _swapChainBundle._depthFormat; };
-            inline size_t getSwapChainImageCount(){ return _swapChainBundle._frames.size(); };
-            inline vk::Extent2D getSwapChainExtent(){ return _swapChainBundle._extent; };
-            inline vk::ImageView getSwapChainImageView(int index){ return _swapChainBundle._frames[index]._view; };
+            inline vk::Format getSwapChainImageFormat(){ return _swapChainContext._imageFormat; };
+            inline vk::Format getDepthFormat(){ return _swapChainContext._depthFormat; };
+            inline size_t getSwapChainImageCount(){ return _swapChainContext._frames.size(); };
+            inline vk::Extent2D getSwapChainExtent(){ return _swapChainContext._extent; };
+            inline vk::ImageView getSwapChainImageView(int index){ return _swapChainContext._frames[index]._view; };
             inline vk::ImageView getSwapChainDepthImageView(){ return _swapChainDepthImageView; };
-            inline vk::SwapchainKHR getSwapChain(){ return _swapChainBundle._swapChain; };
+            inline vk::SwapchainKHR getSwapChain(){ return _swapChainContext._swapChain; };
 
             //* Helpers
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
@@ -192,11 +192,11 @@ namespace gpu
             vk::ShaderModule createShaderModule(const std::vector<uint32_t> code);
             vk::ShaderModule loadShaderModule(std::string src);
 
-            void createComputeBundle(ComputeBundle& bundle);
-            void destroyComputeBundle(ComputeBundle& bundle);
+            void createComputeContext(ComputeContext& context);
+            void destroyComputeContext(ComputeContext& context);
 
-            SwapChainBundle _swapChainBundle;
-            inline SwapChainFrame getCurrentFrame(){ return _swapChainBundle._frames[_swapChainBundle._currentFrame]; };
+            SwapChainContext _swapChainContext;
+            inline SwapChainFrame getCurrentFrame(){ return _swapChainContext._frames[_swapChainContext._currentFrame]; };
         private:
             bool _enableValidation = true;
             std::vector<const char*> _deviceExtensions = {
