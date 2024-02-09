@@ -567,6 +567,8 @@
     The performance of the simulation is mostly limited by the upsampling step, as it has to approximate the velocity field for all HR particles, by iterating of all neighboring LR particles. This steps takes 50\% of the computation time for the before mentioned amount of particles. For this process, it would make sense to store the velocity field of the low-resolution particles into a texture to sample it for every high resolution particle instead of looping overall neighbors. This might be an idea for future implementations, as it does no longer fully follow the SPH princliple.\\
     % conclusion
     In conclusion, this work has achieved its goal of exploring the feasibility of a Smoothed Particle Hydrodynamics simulation for granular matter, despite encountering limitations of SPH. However, due to time constraints and limitations of the choosen technique the resulting simulation may not be fully suitable for a correct simulation of granular matter in realtime. By combining the used approach with ideas from other methods, such as the Material Point Method \cite{BARDENHAGEN2000529}, Position-Based Dynamics\cite{10.2312:egt.20151045} or other techniques involving multiple grids \cite{Shao:2022:Multigrid} or AI \cite{sanchezgonzalez2020learning}, a correct simulation of granular matter in realtime might be possible. 
+
+    The code for this project can be found here \url{https://github.com/andre-neder/granular-matter-sph}.
     \pagebreak
     \listoffigures
     \pagebreak

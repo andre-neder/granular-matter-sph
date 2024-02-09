@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  9 FEB 2024 11:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  9 FEB 2024 11:35
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -957,42 +957,47 @@ File: figures/sticking.png Graphic file (type png)
 <use figures/sticking.png>
 Package pdftex.def Info: figures/sticking.png  used on input line 560.
 (pdftex.def)             Requested size: 251.9989pt x 172.11859pt.
- [24 <./figures/layer_step.png> <./figures/layer_step_hr.png>] [25 <./figures/sticking.png>] (ma.lof)
+ [24 <./figures/layer_step.png> <./figures/layer_step_hr.png>]
+Overfull \hbox (33.51523pt too wide) in paragraph at lines 571--573
+[]\T1/cmr/m/n/10.95 The code for this project can be found here []$\T1/cmtt/m/n/10.95 https : / / github . com / andre-[]neder /
+ []
+
+[25 <./figures/sticking.png>] (ma.lof)
 \tf@lof=\write6
 \openout6 = `ma.lof'.
 
  [26]
-Overfull \hbox (9.0571pt too wide) in paragraph at lines 574--574
+Overfull \hbox (9.0571pt too wide) in paragraph at lines 576--576
 \T1/cmr/m/n/10.95 Gran-u-lar Me-dia,^^Q in \T1/cmr/m/it/10.95 CEIG 09 - Con-greso Es-panol de In-for-mat-ica Grafica\T1/cmr/m/n/10.95 ,
  []
 
 [27]
-Overfull \hbox (12.014pt too wide) in paragraph at lines 574--574
+Overfull \hbox (12.014pt too wide) in paragraph at lines 576--576
 []\T1/cmr/m/n/10.95 A. Som-mer, U. Schwa-necke, and E. Schoe-mer, ^^P  In-ter-ac-tive high-resolution
  []
 
 [28]
-Overfull \hbox (13.28271pt too wide) in paragraph at lines 574--574
+Overfull \hbox (13.28271pt too wide) in paragraph at lines 576--576
 \T1/cmr/m/n/10.95 frac-tals, de-moscene and more,^^Q [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / iquilezles .
  []
 
 
-Overfull \hbox (13.28271pt too wide) in paragraph at lines 574--574
+Overfull \hbox (13.28271pt too wide) in paragraph at lines 576--576
 \T1/cmr/m/n/10.95 frac-tals, de-moscene and more,^^Q [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / iquilezles .
  []
 
 
-Overfull \hbox (25.93573pt too wide) in paragraph at lines 574--574
+Overfull \hbox (25.93573pt too wide) in paragraph at lines 576--576
 []\T1/cmr/m/n/10.95 J. Ben-der \T1/cmr/m/it/10.95 et al.\T1/cmr/m/n/10.95 , ^^P  Splish-splash,^^Q [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / splishsplash .
  []
 
 [29]
-Overfull \hbox (25.19208pt too wide) in paragraph at lines 574--574
+Overfull \hbox (25.19208pt too wide) in paragraph at lines 576--576
 \T1/cmr/m/n/10.95 [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / github . com / InteractiveComputerGraphics /
  []
 
 
-Overfull \hbox (7.3339pt too wide) in paragraph at lines 574--574
+Overfull \hbox (7.3339pt too wide) in paragraph at lines 576--576
 []\T1/cmr/m/n/10.95 S. Bar-den-hagen, J. Brack-bill, and D. Sul-sky, ^^P  The material-point method
  []
 
@@ -1016,9 +1021,9 @@ Here is how much of TeX's memory you used:
  1141 hyphenation exceptions out of 8191
  75i,12n,81p,2245b,2532s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on ma.pdf (33 pages, 2632199 bytes).
+Output written on ma.pdf (33 pages, 2632785 bytes).
 PDF statistics:
- 1255 PDF objects out of 1440 (max. 8388607)
+ 1257 PDF objects out of 1440 (max. 8388607)
  169 named destinations out of 1000 (max. 500000)
  276 words of extra memory for PDF output out of 10000 (max. 10000000)
 
