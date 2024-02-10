@@ -40,10 +40,6 @@ Core::Core(bool enableValidation, Window* window){
     if(_enableValidation){
         createDebugMessenger();
     }
-
-    // if (glfwCreateWindowSurface(*_instance, window->getGLFWWindow(), nullptr, reinterpret_cast<VkSurfaceKHR*>(&_surface)) != VK_SUCCESS) {
-    //     throw std::runtime_error("failed to create window surface!");
-    // }
     
     VkSurfaceKHR surfaceTmp;
     VkResult err = glfwCreateWindowSurface(*_instance, window->getGLFWWindow(), nullptr, &surfaceTmp);
@@ -54,7 +50,10 @@ Core::Core(bool enableValidation, Window* window){
     createLogicalDevice();
     createAllocator();
     createCommandPool();
-    createSwapChain(window);
+
+    int width, height;
+    window->getSize(&width, &height);
+    createSwapChain(width, height);
 }
 
 uint32_t gpu::Core::getIdealWorkGroupSize()
@@ -864,28 +863,24 @@ vk::PresentModeKHR Core::chooseSwapPresentMode(const std::vector<vk::PresentMode
     return vk::PresentModeKHR::eFifo;
 }
 
-vk::Extent2D Core::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window) {
+vk::Extent2D Core::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height) {
     if (capabilities.currentExtent.width != UINT32_MAX) {
         return capabilities.currentExtent;
     } else {
-        int width, height;
-        window->getSize(&width, &height);
-        vk::Extent2D actualExtent = {
-            static_cast<uint32_t>(width),
-            static_cast<uint32_t>(height)
-        };
+        vk::Extent2D actualExtent = { width, height };
         actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
         actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
         return actualExtent;
     }
 }
 
-void Core::createSwapChain(Window* window) {
+void Core::createSwapChain(uint32_t width, uint32_t height)
+{
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(_physicalDevice);
 
     _surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
     vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities, window);
+    vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities, width, height);
 
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
     if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
@@ -915,7 +910,14 @@ void Core::createSwapChain(Window* window) {
     createInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    if(_previousSwapChainContext == nullptr){
+        createInfo.oldSwapchain = VK_NULL_HANDLE;
+    }
+    // else{
+    //     createInfo.oldSwapchain = _previousSwapChainContext->_swapChain;
+    // }
+    
 
     _swapChainContext = {};
     _swapChainContext._swapChain = _device->createSwapchainKHR(createInfo);
@@ -941,9 +943,8 @@ void Core::createSwapChain(Window* window) {
     _swapChainContext._depthFormat = findDepthFormat();
     _swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainContext._extent.width, _swapChainContext._extent.height, _swapChainContext._depthFormat);
     _swapChainDepthImageView = createImageView2D(_swapChainDepthImage, _swapChainContext._depthFormat, vk::ImageAspectFlagBits::eDepth);
-
-
 }
+
 
 void Core::destroySwapChain(){
     for (auto frame : _swapChainContext._frames) {

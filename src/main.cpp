@@ -348,7 +348,9 @@ private:
 
         cleanupSwapchain();
 
-        core.createSwapChain(&window);
+        int width, height;
+        window.getSize(&width, &height);
+        core.createSwapChain(width, height);
    
         particleRenderPass.initFrameResources();
         triangleRenderPass.initFrameResources();

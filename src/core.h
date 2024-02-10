@@ -129,7 +129,7 @@ namespace gpu
             SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
             vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
             vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
-            vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, Window* window);
+            vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height);
             vk::Format findSupportedFormat(const std::vector<vk::Format>& candidates, vk::ImageTiling tiling, vk::FormatFeatureFlags features);
             vk::Format findDepthFormat();
             vk::Result acquireNextImageKHR(uint32_t* imageIndex, vk::Semaphore semaphore, vk::Fence fence = VK_NULL_HANDLE);
@@ -186,10 +186,6 @@ namespace gpu
     
             vk::RenderPass createColorDepthRenderPass(vk::AttachmentLoadOp loadOp, vk::AttachmentStoreOp storeOp);
 
-            //* Swapchain
-            void createSwapChain(Window* window);
-            void destroySwapChain();
-
             //* Shaders
             vk::ShaderModule createShaderModule(const std::vector<uint32_t> code);
             vk::ShaderModule loadShaderModule(std::string src);
@@ -197,7 +193,11 @@ namespace gpu
             void createComputeContext(ComputeContext& context);
             void destroyComputeContext(ComputeContext& context);
 
+            //* Swapchain
+            void createSwapChain(uint32_t width, uint32_t height);
+            void destroySwapChain();
             SwapChainContext _swapChainContext;
+            std::shared_ptr<SwapChainContext> _previousSwapChainContext;
             inline SwapChainFrame getCurrentFrame(){ return _swapChainContext._frames[_swapChainContext._currentFrame]; };
 
         private:
