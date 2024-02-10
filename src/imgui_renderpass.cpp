@@ -397,6 +397,7 @@ void ImguiRenderPass::destroy(){
     
     // device.freeCommandBuffers(_core->getCommandPool(), commandBuffers);
     _renderContext.freeCommandBuffers();
+    _renderContext.destroyRenderPass();
     _core->destroyDescriptorPool(descriptorPool);
 
     ImGui_ImplVulkan_Shutdown();
