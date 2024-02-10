@@ -199,7 +199,6 @@ namespace gpu
 
             SwapChainContext _swapChainContext;
             inline SwapChainFrame getCurrentFrame(){ return _swapChainContext._frames[_swapChainContext._currentFrame]; };
-            void recreateSwapChain();
 
         private:
             bool _enableValidation = true;
