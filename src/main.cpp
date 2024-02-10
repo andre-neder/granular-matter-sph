@@ -34,7 +34,7 @@ const uint32_t HEIGHT = 720;
 class Application {
 public:
     void run() {
-        initWindow();
+        // initWindow();
         initVulkan();
         mainLoop();
         cleanup();
@@ -63,11 +63,6 @@ private:
     Mesh3D plane;
     Mesh3D hourglas;
 
-    void initWindow(){
-        window = gpu::Window("Application", WIDTH, HEIGHT);
-        camera = gpu::Camera(gpu::Camera::Type::eTrackBall, window.getGLFWWindow(), WIDTH, HEIGHT, glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-        input = gpu::InputManager(window);
-    }
 
     void toggleWireframe(){
         static bool wireframe = false;
@@ -126,8 +121,11 @@ private:
         simulation.updateVolumeMapTransforms();
     }
 
-
     void initVulkan(){
+        window = gpu::Window("Application", WIDTH, HEIGHT);
+        camera = gpu::Camera(gpu::Camera::Type::eTrackBall, window.getGLFWWindow(), WIDTH, HEIGHT, glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+        input = gpu::InputManager(window);
+
         core = gpu::Core(true, &window);
         
         device = core.getDevice();
@@ -338,11 +336,8 @@ private:
     }
 
     void recreateSwapChain() {
-        int width = 0, height = 0;
-        window.getSize(&width, &height);
-        while (width == 0 || height == 0) {
-            window.getSize(&width, &height);
-            glfwWaitEvents();
+        while (window.isMinimized()) {
+            window.sleep();
         }
         device.waitIdle();
 

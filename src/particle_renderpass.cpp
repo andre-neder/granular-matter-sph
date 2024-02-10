@@ -164,7 +164,6 @@ void ParticleRenderPass::createDescriptorPool()
 
 void ParticleRenderPass::destroyFrameResources()
 {
-    vk::Device device = _core->getDevice();
     _renderContext.destroyFramebuffers();
     _renderContext.freeCommandBuffers();
 
@@ -179,18 +178,16 @@ void ParticleRenderPass::destroy()
 {
     destroyFrameResources();
 
-    vk::Device device = _core->getDevice();
-
-    device.destroyShaderModule(fragShaderModule);
-    device.destroyShaderModule(vertShaderModule);
-    device.destroyShaderModule(geomShaderModule);
+    _core->getDevice().destroyShaderModule(fragShaderModule);
+    _core->getDevice().destroyShaderModule(vertShaderModule);
+    _core->getDevice().destroyShaderModule(geomShaderModule);
 
     particleModel.destroy();
     _core->destroyBuffer(particleModelIndexBuffer);
     _core->destroyBuffer(particleModelVertexBuffer);
         
-    device.destroyPipelineLayout(pipelineLayout);
-    device.destroyPipeline(graphicsPipeline);
+    _core->getDevice().destroyPipelineLayout(pipelineLayout);
+    _core->getDevice().destroyPipeline(graphicsPipeline);
     _renderContext.destroyRenderPass();
 
     _core->destroyDescriptorSetLayout(descriptorSetLayout);

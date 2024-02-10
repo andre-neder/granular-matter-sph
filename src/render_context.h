@@ -25,15 +25,12 @@ namespace gpu
         RenderContext(Core* core, vk::AttachmentLoadOp loadOp, vk::AttachmentStoreOp storeOp);
         ~RenderContext();
 
-        // RenderContext(const RenderContext&) = delete;
-        // RenderContext& operator=(const RenderContext&) = delete;
-        // RenderContext(RenderContext&&) = default;
-        // RenderContext& operator=(RenderContext&&) = default;
-
         void initFramebuffers();
         void initCommandBuffers();
+        
         void destroyFramebuffers();
         void freeCommandBuffers();
+
         void destroyRenderPass();
         vk::RenderPass& getRenderPass();
 

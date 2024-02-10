@@ -32,10 +32,21 @@ void Window::getSize(int* width, int* height){
     glfwGetFramebufferSize(m_window, width, height);
 }
 
+void gpu::Window::sleep()
+{
+    glfwWaitEvents();
+}
+
 bool Window::shouldClose(){ 
     return glfwWindowShouldClose(m_window); 
 }
-void Window::destroy(){
+bool gpu::Window::isMinimized()
+{
+    getSize(&_width, &_height);
+    return _width == 0 || _height == 0;
+}
+void Window::destroy()
+{
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }

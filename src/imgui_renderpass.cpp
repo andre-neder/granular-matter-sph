@@ -147,11 +147,12 @@ ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
     _core->endSingleTimeCommands(command_buffer);    
 
-    _renderContext.initCommandBuffers();
+    
 }
 
 void ImguiRenderPass::initFrameResources(){
     _renderContext.initFramebuffers();
+    _renderContext.initCommandBuffers();
 }
 
 
