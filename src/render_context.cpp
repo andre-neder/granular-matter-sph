@@ -69,6 +69,7 @@ gpu::RenderContext::RenderContext(Core *core, vk::AttachmentLoadOp loadOp, vk::A
 
 RenderContext::~RenderContext()
 {
+
 }
 
 void gpu::RenderContext::initFramebuffers()
@@ -107,7 +108,7 @@ void gpu::RenderContext::freeCommandBuffers()
 
 void gpu::RenderContext::destroyRenderPass()
 {
-    _core->getDevice().destroyRenderPass();
+    _core->getDevice().destroyRenderPass(_renderPass);
 }
 
 vk::RenderPass& gpu::RenderContext::getRenderPass()
