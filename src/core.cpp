@@ -817,6 +817,35 @@ vk::Framebuffer gpu::Core::createFramebuffer(vk::RenderPass renderPass, vk::Arra
 
 }
 
+std::vector<vk::Framebuffer> gpu::Core::createColorFramebuffer(vk::RenderPass renderPass)
+{
+    std::vector<vk::Framebuffer> framebuffers;
+    framebuffers.resize(getSwapChainImageCount());
+    for (int i = 0; i < getSwapChainImageCount(); i++) {
+        std::vector<vk::ImageView> attachments = {
+            getSwapChainImageView(i)
+        };
+        vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapChainExtent().width, getSwapChainExtent().height, 1);
+        framebuffers[i] = _device->createFramebuffer(framebufferInfo);
+    }
+    return framebuffers;
+}
+
+std::vector<vk::Framebuffer> gpu::Core::createColorDepthFramebuffer(vk::RenderPass renderPass)
+{
+    std::vector<vk::Framebuffer> framebuffers;
+    framebuffers.resize(getSwapChainImageCount());
+    for (int i = 0; i < getSwapChainImageCount(); i++) {
+        std::vector<vk::ImageView> attachments = {
+            getSwapChainImageView(i),
+            getSwapChainDepthImageView()
+        };
+        vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapChainExtent().width, getSwapChainExtent().height, 1);
+        framebuffers[i] = _device->createFramebuffer(framebufferInfo);
+    }
+    return framebuffers;
+}
+
 vk::SurfaceFormatKHR Core::chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) {
     for (const auto& availableFormat : availableFormats) {
         if (availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {

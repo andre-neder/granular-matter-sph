@@ -17,7 +17,7 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
 }
 ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk::DescriptorSetLayout> descriptorSetLayouts, std::vector<gpu::SpecializationConstant> specializations, uint32_t pushConstantSize)
 {
-    m_core = core;
+    _core = core;
     m_shaderModule = core->loadShaderModule(shaderFile);
 
     vk::Result result;
@@ -107,7 +107,7 @@ ComputePass::ComputePass(gpu::Core *core, std::string shaderFile, std::vector<vk
 
 void ComputePass::destroy()
 {
-    m_core->getDevice().destroyShaderModule(m_shaderModule);
-    m_core->getDevice().destroyPipelineLayout(m_pipelineLayout);
-    m_core->getDevice().destroyPipeline(m_pipeline);
+    _core->getDevice().destroyShaderModule(m_shaderModule);
+    _core->getDevice().destroyPipelineLayout(m_pipelineLayout);
+    _core->getDevice().destroyPipeline(m_pipeline);
 }

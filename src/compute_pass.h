@@ -20,7 +20,7 @@ namespace gpu {
             vk::Pipeline m_pipeline;
             vk::PipelineLayout m_pipelineLayout;
         private:
-            gpu::Core* m_core;
+            gpu::Core* _core;
 
             vk::ShaderModule m_shaderModule;
     };    

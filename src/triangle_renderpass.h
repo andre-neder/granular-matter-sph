@@ -6,6 +6,7 @@
 #include "global.h"
 #include "camera.h"
 #include "model.h"
+#include "render_context.h"
 
 struct TriangleVertex {
     glm::vec4 pos;
@@ -55,15 +56,18 @@ namespace gpu{
             TriangleRenderPass(gpu::Core* core, gpu::Camera* camera);
             ~TriangleRenderPass(){};
 
-            void createFramebuffers();
-            void createCommandBuffers();
+            TriangleRenderPass(const TriangleRenderPass&) = delete;
+            TriangleRenderPass& operator=(const TriangleRenderPass&) = delete;
+            TriangleRenderPass(TriangleRenderPass&&) = default;
+            TriangleRenderPass& operator=(TriangleRenderPass&&) = default;
+
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);
             void destroyFrameResources();
             void destroy(); 
             void init();
 
-            inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
+            inline vk::CommandBuffer getCommandBuffer(int index){ return _renderContext.getCommandBuffer(); };
 
             void createGraphicsPipeline(bool wireframe = false);
             void destroyGraphicsPipeline();
@@ -71,13 +75,11 @@ namespace gpu{
             std::vector<Model> models;
         private:
             gpu::Camera* m_camera;
-            gpu::Core* m_core;
+            gpu::Core* _core;
 
-            vk::RenderPass renderPass;
-            std::vector<vk::Framebuffer> framebuffers;
-            std::vector<vk::CommandBuffer> commandBuffers;
             vk::Pipeline graphicsPipeline;
-
+            
+            RenderContext _renderContext;
 
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;
@@ -91,7 +93,6 @@ namespace gpu{
             vk::ShaderModule fragShaderModule;
             // vk::ShaderModule geomShaderModule;
 
-            void createRenderPass();
             void createDescriptorSets();
             
             void updateUniformBuffer(uint32_t currentImage);

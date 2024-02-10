@@ -132,7 +132,7 @@ public:
     void createDescriptorSets();
     void updateVolumeMapTransforms();
 private:
-    gpu::Core* m_core;
+    gpu::Core* _core;
     
 
     AdditionalData additionalData;

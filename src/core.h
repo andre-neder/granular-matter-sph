@@ -161,6 +161,8 @@ namespace gpu
             void destroySampler(vk::Sampler sampler);
 
             vk::Framebuffer createFramebuffer(vk::RenderPass renderPass, vk::ArrayProxy<vk::ImageView> attachments);
+            std::vector<vk::Framebuffer> createColorFramebuffer(vk::RenderPass renderPass);
+            std::vector<vk::Framebuffer> createColorDepthFramebuffer(vk::RenderPass renderPass);
             
             //* Commands
             void createCommandPool();
@@ -197,6 +199,7 @@ namespace gpu
 
             SwapChainContext _swapChainContext;
             inline SwapChainFrame getCurrentFrame(){ return _swapChainContext._frames[_swapChainContext._currentFrame]; };
+
         private:
             bool _enableValidation = true;
             std::vector<const char*> _deviceExtensions = {

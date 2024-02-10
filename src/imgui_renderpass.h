@@ -4,6 +4,7 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <functional> 
 #include "core.h"
+#include "render_context.h"
 
 static void check_vk_result(VkResult err)
 {
@@ -21,13 +22,18 @@ namespace gpu{
             ImguiRenderPass(gpu::Core* core, gpu::Window* window);
             ~ImguiRenderPass(){};
 
+            ImguiRenderPass(const ImguiRenderPass&) = delete;
+            ImguiRenderPass& operator=(const ImguiRenderPass&) = delete;
+            ImguiRenderPass(ImguiRenderPass&&) = default;
+            ImguiRenderPass& operator=(ImguiRenderPass&&) = default;
+
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);
             void destroyFrameResources();
             void destroy(); 
 
             void additionalWindows();
-            inline vk::CommandBuffer getCommandBuffer(int index){ return commandBuffers[index]; };
+            inline vk::CommandBuffer getCommandBuffer(int index){ return _renderContext.getCommandBuffer(); };
 
             std::function<void(int)> changeSceneCallback;
             std::function<void()> toggleWireframeCallback;
@@ -35,18 +41,13 @@ namespace gpu{
         private:
             vk::DescriptorPool descriptorPool;
             gpu::Window* m_window;
-            gpu::Core* m_core;
+            gpu::Core* _core;
 
-            vk::RenderPass renderPass;
-            std::vector<vk::Framebuffer> framebuffers;
-            std::vector<vk::CommandBuffer> commandBuffers;
             vk::Pipeline graphicsPipeline;
 
-            void createFramebuffers();
-            void createCommandBuffers();
+            gpu::RenderContext _renderContext;
             
             void createDescriptorPool();
-            void createRenderPass();
 
             vk::PhysicalDeviceProperties m_deviceProperties;
     };

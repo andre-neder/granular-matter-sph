@@ -21,9 +21,9 @@ bool showSimulationSettings = true;
 using namespace gpu;
 
 ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
-    m_core = core;
+    _core = core;
     m_window = window;
-    m_deviceProperties = m_core->getPhysicalDevice().getProperties();
+    m_deviceProperties = _core->getPhysicalDevice().getProperties();
 
     createDescriptorPool();
 
@@ -124,90 +124,37 @@ ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
 
     ImGui_ImplGlfw_InitForVulkan(window->getGLFWWindow(), true);
 
+    _renderContext = RenderContext(_core, RenderContextType::eColor);
     initFrameResources();
 
     ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = m_core->getInstance()->get();
-    init_info.PhysicalDevice = m_core->getPhysicalDevice();
-    init_info.Device = m_core->getDevice();
-    init_info.QueueFamily = m_core->findQueueFamilies(m_core->getPhysicalDevice()).graphicsFamily.value();
-    init_info.Queue = m_core->getGraphicsQueue();
+    init_info.Instance = _core->getInstance()->get();
+    init_info.PhysicalDevice = _core->getPhysicalDevice();
+    init_info.Device = _core->getDevice();
+    init_info.QueueFamily = _core->findQueueFamilies(_core->getPhysicalDevice()).graphicsFamily.value();
+    init_info.Queue = _core->getGraphicsQueue();
     init_info.PipelineCache = VK_NULL_HANDLE;
     init_info.DescriptorPool = descriptorPool;
     init_info.Subpass = 0;
     init_info.Allocator = VK_NULL_HANDLE;
-    init_info.MinImageCount = static_cast<uint32_t>(m_core->getSwapChainImageCount());
-    init_info.ImageCount = static_cast<uint32_t>(m_core->getSwapChainImageCount());
+    init_info.MinImageCount = static_cast<uint32_t>(_core->getSwapChainImageCount());
+    init_info.ImageCount = static_cast<uint32_t>(_core->getSwapChainImageCount());
     init_info.CheckVkResultFn = check_vk_result;
-    init_info.ColorAttachmentFormat = static_cast<VkFormat>(m_core->getSurfaceFormat().format);
-    ImGui_ImplVulkan_Init(&init_info, renderPass);
+    init_info.ColorAttachmentFormat = static_cast<VkFormat>(_core->getSurfaceFormat().format);
+    ImGui_ImplVulkan_Init(&init_info, _renderContext.getRenderPass());
 
-    vk::CommandBuffer command_buffer = m_core->beginSingleTimeCommands();
+    vk::CommandBuffer command_buffer = _core->beginSingleTimeCommands();
     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-    m_core->endSingleTimeCommands(command_buffer);    
+    _core->endSingleTimeCommands(command_buffer);    
 
-    createCommandBuffers();
-}
-
-void ImguiRenderPass::createFramebuffers(){
-    framebuffers.resize(m_core->getSwapChainImageCount());
-    for (int i = 0; i < m_core->getSwapChainImageCount(); i++) {
-        std::vector<vk::ImageView> attachments = {
-            m_core->getSwapChainImageView(i)
-        };
-        vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, m_core->getSwapChainExtent().width, m_core->getSwapChainExtent().height, 1);
-        framebuffers[i] = m_core->getDevice().createFramebuffer(framebufferInfo);
-    }
-}
-
-void ImguiRenderPass::createCommandBuffers(){
-    commandBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-    vk::CommandBufferAllocateInfo allocInfo(m_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
-    commandBuffers = m_core->getDevice().allocateCommandBuffers(allocInfo);
+    _renderContext.initCommandBuffers();
 }
 
 void ImguiRenderPass::initFrameResources(){
-    createRenderPass();
-    createFramebuffers();
+    _renderContext.initFramebuffers();
 }
 
-void ImguiRenderPass::createRenderPass(){
-    vk::AttachmentDescription attachment(
-        {}, 
-        m_core->getSurfaceFormat().format, 
-        vk::SampleCountFlagBits::e1, 
-        vk::AttachmentLoadOp::eLoad, 
-        vk::AttachmentStoreOp::eStore, 
-        vk::AttachmentLoadOp::eDontCare, 
-        vk::AttachmentStoreOp::eDontCare, 
-        vk::ImageLayout::eColorAttachmentOptimal, 
-        vk::ImageLayout::ePresentSrcKHR
-    );
-    vk::AttachmentReference attachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
 
-    vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, {}, 1, &attachmentRef, {}, {}, {}, {});
-
-    vk::SubpassDependency dependency(
-        VK_SUBPASS_EXTERNAL, 
-        0, 
-        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-        vk::AccessFlagBits::eNoneKHR, 
-        vk::AccessFlagBits::eColorAttachmentWrite);
-
-    vk::RenderPassCreateInfo renderPassInfo(
-        {}, 
-        1,
-        &attachment, 
-        1,
-        &subpass, 
-        1,
-        &dependency
-    );
-
-    renderPass = m_core->getDevice().createRenderPass(renderPassInfo);
-
-}
 float drawAverageDensityError(void*, int i) { return simulationMetrics.averageDensityError.get(i) / settings.rho0; };
 float drawIterationCount(void*, int i) { return simulationMetrics.iterationCount.get(i); };
 
@@ -268,9 +215,9 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
     }
 
-    ImGui::Begin("GPU Info", &showGPUInfo);
-        ImGui::Text(m_deviceProperties.deviceName);
-    ImGui::End();
+    // ImGui::Begin("GPU Info", &showGPUInfo);
+    //     ImGui::Text(m_deviceProperties.deviceName);
+    // ImGui::End();
     
     // ImGui::Begin("Keybindings");
     //     ImGui::BeginTable("Keybindings", 3);
@@ -304,6 +251,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     // ImGui::End();
 
     ImGui::Begin("Metrics", &showGPUInfo); 
+    {
         ImGui::PlotLines("Average density error", drawAverageDensityError, NULL, SimulationMetrics::MAX_VALUES_PER_METRIC, 0, NULL, 0.0f, settings.maxCompression, ImVec2(0, 80));
         ImGui::PlotLines("IISPH Iteration count", drawIterationCount, NULL, SimulationMetrics::MAX_VALUES_PER_METRIC, 0, NULL, 0, 20, ImVec2(0, 80));
 
@@ -334,9 +282,11 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
             }
             ImGui::EndTable();
         }
+    }
     ImGui::End();
 
     ImGui::Begin("Scene"); 
+    {
         if (ImGui::Button("Wireframe"))
         {
             toggleWireframeCallback();
@@ -353,11 +303,12 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         {
             changeSceneCallback(2);
         }
+    }
     ImGui::End();
 
 
     ImGui::Begin("Simulation", &showSimulationSettings);
-        
+    {
         if (ImGui::Button("Reset"))
         {
             resetSimulation = true;
@@ -393,9 +344,10 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         ImGui::DragFloat3("Air velocity (m/s)", glm::value_ptr(settings.windDirection));
         ImGui::DragFloat("Air Density", &settings.rhoAir, 1.f, 0.01f, 10.f);
         ImGui::DragFloat("Drag Coefficient", &settings.dragCoefficient, 1.f, 0.01f, 10.f);
+    }
     ImGui::End();
 
-    ImGui::ShowDemoWindow(&show_demo_window);
+    // ImGui::ShowDemoWindow(&show_demo_window);
 
     ImGui::End();
 
@@ -403,25 +355,18 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
 
     additionalWindows();
 
-    vk::CommandBufferBeginInfo beginInfo;
-    commandBuffers[currentFrame].begin(beginInfo);
+    _renderContext.beginCommandBuffer();
 
-    std::array<vk::ClearValue, 1> clearValues{
-        vk::ClearValue(vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}))
-    };
-    vk::RenderPassBeginInfo renderPassInfo(renderPass, framebuffers[imageIndex], vk::Rect2D({0, 0}, m_core->getSwapChainExtent()), clearValues);
+    _renderContext.beginRenderPass(imageIndex);
 
-    commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), _renderContext.getCommandBuffer());
 
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
-
-    commandBuffers[currentFrame].endRenderPass();
-
-    commandBuffers[currentFrame].end();
+    _renderContext.endRenderPass();
+    _renderContext.endCommandBuffer();
 }
 
 void ImguiRenderPass::createDescriptorPool() {
-    descriptorPool = m_core->createDescriptorPool({
+    descriptorPool = _core->createDescriptorPool({
         { vk::DescriptorType::eSampler, 1000 },
         { vk::DescriptorType::eCombinedImageSampler, 1000 },
         { vk::DescriptorType::eSampledImage, 1000 },
@@ -437,20 +382,22 @@ void ImguiRenderPass::createDescriptorPool() {
 }
 
 void ImguiRenderPass::destroyFrameResources(){
-    vk::Device device = m_core->getDevice();
-    for (auto framebuffer : framebuffers) {
-        device.destroyFramebuffer(framebuffer);
-    }
-    m_core->getDevice().destroyRenderPass(renderPass);
+    // vk::Device device = _core->getDevice();
+    // for (auto framebuffer : framebuffers) {
+    //     device.destroyFramebuffer(framebuffer);
+    // }
+    _renderContext.destroyFramebuffers();
 }
 
 void ImguiRenderPass::destroy(){
     destroyFrameResources();
+    // _core->getDevice().destroyRenderPass(renderPass);
     
-    vk::Device device = m_core->getDevice();
+    // vk::Device device = _core->getDevice();
     
-    device.freeCommandBuffers(m_core->getCommandPool(), commandBuffers);
-    m_core->destroyDescriptorPool(descriptorPool);
+    // device.freeCommandBuffers(_core->getCommandPool(), commandBuffers);
+    _renderContext.freeCommandBuffers();
+    _core->destroyDescriptorPool(descriptorPool);
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
