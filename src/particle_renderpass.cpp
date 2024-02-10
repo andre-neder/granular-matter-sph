@@ -13,7 +13,6 @@ ParticleRenderPass::ParticleRenderPass(gpu::Core *core, gpu::Camera *camera)
     m_camera = camera;
 
     particleModel = Model();
-    // particleModel.load_from_glb(ASSETS_PATH "/models/sphere.glb");
     particleModel.load_from_glb(ASSETS_PATH "/models/grain_smooth.glb");
     particleModelIndexBuffer = _core->bufferFromData(particleModel._indices.data(), particleModel._indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
     particleModelVertexBuffer = _core->bufferFromData(particleModel._vertices.data(), particleModel._vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice);
