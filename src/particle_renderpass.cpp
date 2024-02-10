@@ -44,12 +44,6 @@ void ParticleRenderPass::initFrameResources()
     _renderContext.initCommandBuffers();
 }
 
-// void ParticleRenderPass::createCommandBuffers(){
-//     commandBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-//     vk::CommandBufferAllocateInfo allocInfo(_core->getCommandPool(), vk::CommandBufferLevel::ePrimary, (uint32_t) commandBuffers.size());
-//     commandBuffers = _core->getDevice().allocateCommandBuffers(allocInfo);
-// }
-
 void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt)
 {
     updateUniformBuffer(currentFrame);

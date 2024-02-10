@@ -16,12 +16,6 @@ namespace gpu{
             ParticleRenderPass(gpu::Core* core, gpu::Camera* camera);
             ~ParticleRenderPass(){};
 
-            // ParticleRenderPass(const ParticleRenderPass&) = delete;
-            // ParticleRenderPass& operator=(const ParticleRenderPass&) = delete;
-            // ParticleRenderPass(ParticleRenderPass&&) = default;
-            // ParticleRenderPass& operator=(ParticleRenderPass&&) = default;
-
-            // void createCommandBuffers();
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);
             void destroyFrameResources();
@@ -40,9 +34,6 @@ namespace gpu{
             gpu::Camera* m_camera;
             gpu::Core* _core;
 
-            // vk::RenderPass renderPass;
-            // std::vector<vk::Framebuffer> framebuffers;
-            // std::vector<vk::CommandBuffer> commandBuffers;
             vk::Pipeline graphicsPipeline;
 
             RenderContext _renderContext;

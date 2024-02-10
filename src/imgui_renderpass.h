@@ -22,11 +22,6 @@ namespace gpu{
             ImguiRenderPass(gpu::Core* core, gpu::Window* window);
             ~ImguiRenderPass(){};
 
-            // ImguiRenderPass(const ImguiRenderPass&) = delete;
-            // ImguiRenderPass& operator=(const ImguiRenderPass&) = delete;
-            // ImguiRenderPass(ImguiRenderPass&&) = default;
-            // ImguiRenderPass& operator=(ImguiRenderPass&&) = default;
-
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);
             void destroyFrameResources();

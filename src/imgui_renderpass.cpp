@@ -193,11 +193,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
         window_flags |= ImGuiWindowFlags_NoBackground;
 
-    // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-    // This is because we want to keep our DockSpace() active. If a DockSpace() is inactive,
-    // all active windows docked into it will lose their parent and become undocked.
-    // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
-    // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+
     if (!opt_padding)
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::Begin("DockSpace Demo", &p_dockSpaceOpen, window_flags);
@@ -214,10 +210,6 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
         ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
         ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
     }
-
-    // ImGui::Begin("GPU Info", &showGPUInfo);
-    //     ImGui::Text(m_deviceProperties.deviceName);
-    // ImGui::End();
     
     // ImGui::Begin("Keybindings");
     //     ImGui::BeginTable("Keybindings", 3);
@@ -382,20 +374,13 @@ void ImguiRenderPass::createDescriptorPool() {
 }
 
 void ImguiRenderPass::destroyFrameResources(){
-    // vk::Device device = _core->getDevice();
-    // for (auto framebuffer : framebuffers) {
-    //     device.destroyFramebuffer(framebuffer);
-    // }
+
     _renderContext.destroyFramebuffers();
 }
 
 void ImguiRenderPass::destroy(){
     destroyFrameResources();
-    // _core->getDevice().destroyRenderPass(renderPass);
-    
-    // vk::Device device = _core->getDevice();
-    
-    // device.freeCommandBuffers(_core->getCommandPool(), commandBuffers);
+
     _renderContext.freeCommandBuffers();
     _renderContext.destroyRenderPass();
     _core->destroyDescriptorPool(descriptorPool);
