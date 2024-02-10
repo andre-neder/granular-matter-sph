@@ -56,10 +56,10 @@ namespace gpu{
             TriangleRenderPass(gpu::Core* core, gpu::Camera* camera);
             ~TriangleRenderPass(){};
 
-            TriangleRenderPass(const TriangleRenderPass&) = delete;
-            TriangleRenderPass& operator=(const TriangleRenderPass&) = delete;
-            TriangleRenderPass(TriangleRenderPass&&) = default;
-            TriangleRenderPass& operator=(TriangleRenderPass&&) = default;
+            // TriangleRenderPass(const TriangleRenderPass&) = delete;
+            // TriangleRenderPass& operator=(const TriangleRenderPass&) = delete;
+            // TriangleRenderPass(TriangleRenderPass&&) = default;
+            // TriangleRenderPass& operator=(TriangleRenderPass&&) = default;
 
             void initFrameResources();
             void update(int currentFrame, int imageIndex, float dt);

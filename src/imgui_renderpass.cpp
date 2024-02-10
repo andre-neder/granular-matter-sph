@@ -124,7 +124,7 @@ ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
 
     ImGui_ImplGlfw_InitForVulkan(window->getGLFWWindow(), true);
 
-    _renderContext = RenderContext(_core, RenderContextType::eColor);
+    _renderContext = RenderContext(_core);
     initFrameResources();
 
     ImGui_ImplVulkan_InitInfo init_info = {};

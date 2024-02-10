@@ -7,123 +7,64 @@ RenderContext::RenderContext(/* args */)
 {
 }
 
-gpu::RenderContext::RenderContext(Core* core, RenderContextType type) : _type(type), _core(core)
+gpu::RenderContext::RenderContext(Core* core) : _core(core)
 {
-    if(_type == RenderContextType::eColor){ // Just for imgui now
-        vk::AttachmentDescription attachment(
-            {}, 
-            _core->getSurfaceFormat().format, 
-            vk::SampleCountFlagBits::e1, 
-            vk::AttachmentLoadOp::eLoad, 
-            vk::AttachmentStoreOp::eStore, 
-            vk::AttachmentLoadOp::eDontCare, 
-            vk::AttachmentStoreOp::eDontCare, 
-            vk::ImageLayout::eColorAttachmentOptimal, 
-            vk::ImageLayout::ePresentSrcKHR
-        );
-        vk::AttachmentReference attachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
+    vk::AttachmentDescription attachment(
+        {}, 
+        _core->getSurfaceFormat().format, 
+        vk::SampleCountFlagBits::e1, 
+        vk::AttachmentLoadOp::eLoad, 
+        vk::AttachmentStoreOp::eStore, 
+        vk::AttachmentLoadOp::eDontCare, 
+        vk::AttachmentStoreOp::eDontCare, 
+        vk::ImageLayout::eColorAttachmentOptimal, 
+        vk::ImageLayout::ePresentSrcKHR
+    );
+    vk::AttachmentReference attachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
 
-        vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, {}, 1, &attachmentRef, {}, {}, {}, {});
+    vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, {}, 1, &attachmentRef, {}, {}, {}, {});
 
-        vk::SubpassDependency dependency(
-            VK_SUBPASS_EXTERNAL, 
-            0, 
-            vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-            vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-            vk::AccessFlagBits::eNoneKHR, 
-            vk::AccessFlagBits::eColorAttachmentWrite);
+    vk::SubpassDependency dependency(
+        VK_SUBPASS_EXTERNAL, 
+        0, 
+        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+        vk::PipelineStageFlagBits::eColorAttachmentOutput, 
+        vk::AccessFlagBits::eNoneKHR, 
+        vk::AccessFlagBits::eColorAttachmentWrite);
 
-        vk::RenderPassCreateInfo renderPassInfo(
-            {}, 
-            1,
-            &attachment, 
-            1,
-            &subpass, 
-            1,
-            &dependency
-        );
+    vk::RenderPassCreateInfo renderPassInfo(
+        {}, 
+        1,
+        &attachment, 
+        1,
+        &subpass, 
+        1,
+        &dependency
+    );
 
-        vk::ClearValue colorClear;
-        colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
-        _clearValues = {
-            colorClear
-        };
+    vk::ClearValue colorClear;
+    colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
+    _clearValues = {
+        colorClear
+    };
 
-        _renderPass = _core->getDevice().createRenderPass(renderPassInfo);
-    }
-    else if(_type == RenderContextType::eColorDepth){
-
-        vk::ClearValue colorClear;
-        colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
-        vk::ClearValue depthClear;
-        depthClear.depthStencil = vk::ClearDepthStencilValue(1.f);
-        _clearValues = {
-            colorClear, 
-            depthClear
-        };
-
-        _renderPass = _core->createColorDepthRenderPass(vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore);
-    }
-
+    _depth = false;
+    _renderPass = _core->getDevice().createRenderPass(renderPassInfo);
 }
 
-gpu::RenderContext::RenderContext(Core *core, RenderContextType type, vk::AttachmentLoadOp loadOp, vk::AttachmentStoreOp storeOp)
+gpu::RenderContext::RenderContext(Core *core, vk::AttachmentLoadOp loadOp, vk::AttachmentStoreOp storeOp) : _core(core)
 {
-    if(_type == RenderContextType::eColor){ // Just for imgui now
-        vk::AttachmentDescription attachment(
-            {}, 
-            _core->getSurfaceFormat().format, 
-            vk::SampleCountFlagBits::e1, 
-            vk::AttachmentLoadOp::eLoad, 
-            vk::AttachmentStoreOp::eStore, 
-            vk::AttachmentLoadOp::eDontCare, 
-            vk::AttachmentStoreOp::eDontCare, 
-            vk::ImageLayout::eColorAttachmentOptimal, 
-            vk::ImageLayout::ePresentSrcKHR
-        );
-        vk::AttachmentReference attachmentRef(0, vk::ImageLayout::eColorAttachmentOptimal);
+   vk::ClearValue colorClear;
+    colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
+    vk::ClearValue depthClear;
+    depthClear.depthStencil = vk::ClearDepthStencilValue(1.f);
+    _clearValues = {
+        colorClear, 
+        depthClear
+    };
 
-        vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, {}, 1, &attachmentRef, {}, {}, {}, {});
-
-        vk::SubpassDependency dependency(
-            VK_SUBPASS_EXTERNAL, 
-            0, 
-            vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-            vk::PipelineStageFlagBits::eColorAttachmentOutput, 
-            vk::AccessFlagBits::eNoneKHR, 
-            vk::AccessFlagBits::eColorAttachmentWrite);
-
-        vk::RenderPassCreateInfo renderPassInfo(
-            {}, 
-            1,
-            &attachment, 
-            1,
-            &subpass, 
-            1,
-            &dependency
-        );
-
-        vk::ClearValue colorClear;
-        colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
-        _clearValues = {
-            colorClear
-        };
-
-        _renderPass = _core->getDevice().createRenderPass(renderPassInfo);
-    }
-    else if(_type == RenderContextType::eColorDepth){
-
-        vk::ClearValue colorClear;
-        colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
-        vk::ClearValue depthClear;
-        depthClear.depthStencil = vk::ClearDepthStencilValue(1.f);
-        _clearValues = {
-            colorClear, 
-            depthClear
-        };
-
-        _renderPass = _core->createColorDepthRenderPass(loadOp, storeOp);
-    }
+    _depth = true;
+    _renderPass = _core->createColorDepthRenderPass(loadOp, storeOp);
 }
 
 RenderContext::~RenderContext()
@@ -137,7 +78,7 @@ void gpu::RenderContext::initFramebuffers()
         std::vector<vk::ImageView> attachments = {
             _core->getSwapChainImageView(i)
         };
-        if(_type == RenderContextType::eColorDepth){
+        if(_depth){
             attachments.push_back(_core->getSwapChainDepthImageView());
         }
         vk::FramebufferCreateInfo framebufferInfo({}, _renderPass, attachments, _core->getSwapChainExtent().width, _core->getSwapChainExtent().height, 1);

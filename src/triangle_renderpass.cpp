@@ -20,7 +20,7 @@ using namespace gpu;
         descriptorSetLayout = _core->createDescriptorSetLayout({
             {0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex }
         });
-        _renderContext = RenderContext(_core, RenderContextType::eColorDepth, vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore);
+        _renderContext = RenderContext(_core, vk::AttachmentLoadOp::eLoad, vk::AttachmentStoreOp::eStore);
         createGraphicsPipeline();
         initFrameResources();
     }
