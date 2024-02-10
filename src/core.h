@@ -26,7 +26,7 @@ namespace gpu
         bool isComplete();
     };
 
-    struct SwapChainSupportDetails {
+    struct SwapchainSupportDetails {
         vk::SurfaceCapabilitiesKHR capabilities;
         std::vector<vk::SurfaceFormatKHR> formats;
         std::vector<vk::PresentModeKHR> presentModes;
@@ -57,7 +57,7 @@ namespace gpu
         vk::ImageLayout imageLayout;
     };
 
-    struct SwapChainFrame{
+    struct SwapchainFrame{
         vk::Image _image;
         vk::ImageView _view;
         vk::Fence _inFlight;
@@ -65,13 +65,13 @@ namespace gpu
         vk::Semaphore _renderFinished;
     };
 
-    struct SwapChainContext{
-        vk::SwapchainKHR _swapChain;
+    struct SwapchainContext{
+        vk::SwapchainKHR _swapchain;
         vk::Format _imageFormat;
         vk::Format _depthFormat;
         vk::Extent2D _extent;
         size_t _currentFrame;
-        std::vector<SwapChainFrame> _frames;
+        std::vector<SwapchainFrame> _frames;
     };
 
     struct ComputeFrame{
@@ -114,19 +114,19 @@ namespace gpu
             inline vma::Allocator getAllocator(){ return *_allocator; };
 
             inline vk::CommandPool getCommandPool(){ return *_commandPool; };
-            //* SwapChain
+            //* Swapchain
 
-            inline vk::Format getSwapChainImageFormat(){ return _swapChainContext._imageFormat; };
-            inline vk::Format getDepthFormat(){ return _swapChainContext._depthFormat; };
-            inline size_t getSwapChainImageCount(){ return _swapChainContext._frames.size(); };
-            inline vk::Extent2D getSwapChainExtent(){ return _swapChainContext._extent; };
-            inline vk::ImageView getSwapChainImageView(int index){ return _swapChainContext._frames[index]._view; };
-            inline vk::ImageView getSwapChainDepthImageView(){ return _swapChainDepthImageView; };
-            inline vk::SwapchainKHR getSwapChain(){ return _swapChainContext._swapChain; };
+            inline vk::Format getSwapchainImageFormat(){ return _swapchainContext._imageFormat; };
+            inline vk::Format getDepthFormat(){ return _swapchainContext._depthFormat; };
+            inline size_t getSwapchainImageCount(){ return _swapchainContext._frames.size(); };
+            inline vk::Extent2D getSwapchainExtent(){ return _swapchainContext._extent; };
+            inline vk::ImageView getSwapchainImageView(int index){ return _swapchainContext._frames[index]._view; };
+            inline vk::ImageView getSwapchainDepthImageView(){ return _swapchainDepthImageView; };
+            inline vk::SwapchainKHR getSwapchain(){ return _swapchainContext._swapchain; };
 
             //* Helpers
             QueueFamilyIndices findQueueFamilies(vk::PhysicalDevice pDevice);
-            SwapChainSupportDetails querySwapChainSupport(vk::PhysicalDevice pDevice);
+            SwapchainSupportDetails querySwapchainSupport(vk::PhysicalDevice pDevice);
             vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
             vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
             vk::Extent2D chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height);
@@ -194,11 +194,11 @@ namespace gpu
             void destroyComputeContext(ComputeContext& context);
 
             //* Swapchain
-            void createSwapChain(uint32_t width, uint32_t height);
-            void destroySwapChain();
-            SwapChainContext _swapChainContext;
-            std::shared_ptr<SwapChainContext> _previousSwapChainContext;
-            inline SwapChainFrame getCurrentFrame(){ return _swapChainContext._frames[_swapChainContext._currentFrame]; };
+            void createSwapchain(uint32_t width, uint32_t height);
+            void destroySwapchain();
+            SwapchainContext _swapchainContext;
+            std::shared_ptr<SwapchainContext> _previousSwapchainContext;
+            inline SwapchainFrame getCurrentFrame(){ return _swapchainContext._frames[_swapchainContext._currentFrame]; };
 
         private:
             bool _enableValidation = true;
@@ -227,8 +227,8 @@ namespace gpu
             vma::UniqueAllocator _allocator;
             vk::UniqueCommandPool _commandPool; 
 
-            vk::Image _swapChainDepthImage;
-            vk::ImageView _swapChainDepthImageView;
+            vk::Image _swapchainDepthImage;
+            vk::ImageView _swapchainDepthImageView;
 
             std::map<vk::Buffer, VmaAllocation> _bufferAllocations;
             std::map<vk::Image, VmaAllocation> _imageAllocations;

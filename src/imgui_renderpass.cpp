@@ -137,8 +137,8 @@ ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
     init_info.DescriptorPool = descriptorPool;
     init_info.Subpass = 0;
     init_info.Allocator = VK_NULL_HANDLE;
-    init_info.MinImageCount = static_cast<uint32_t>(_core->getSwapChainImageCount());
-    init_info.ImageCount = static_cast<uint32_t>(_core->getSwapChainImageCount());
+    init_info.MinImageCount = static_cast<uint32_t>(_core->getSwapchainImageCount());
+    init_info.ImageCount = static_cast<uint32_t>(_core->getSwapchainImageCount());
     init_info.CheckVkResultFn = check_vk_result;
     init_info.ColorAttachmentFormat = static_cast<VkFormat>(_core->getSurfaceFormat().format);
     ImGui_ImplVulkan_Init(&init_info, _renderContext.getRenderPass());

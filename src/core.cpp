@@ -53,7 +53,7 @@ Core::Core(bool enableValidation, Window* window){
 
     int width, height;
     window->getSize(&width, &height);
-    createSwapChain(width, height);
+    createSwapchain(width, height);
 }
 
 uint32_t gpu::Core::getIdealWorkGroupSize()
@@ -96,11 +96,11 @@ void Core::pickPhysicalDevice() {
 bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
     QueueFamilyIndices indices = findQueueFamilies(pDevice);
     bool extensionsSupported = checkDeviceExtensionSupport(pDevice);
-    bool swapChainAdequate = false;
+    bool swapchainAdequate = false;
     
     if (extensionsSupported) {
-        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(pDevice);
-        swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+        SwapchainSupportDetails swapchainSupport = querySwapchainSupport(pDevice);
+        swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
     }
 
     auto m_deviceFeatures2 = pDevice.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>();
@@ -119,7 +119,7 @@ bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
         m_deviceFeatures2.get<vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>().shaderBufferFloat32Atomics &&
         m_deviceFeatures2.get<vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>().shaderBufferFloat32AtomicAdd;
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportsAllFeatures;
+    return indices.isComplete() && extensionsSupported && swapchainAdequate && supportsAllFeatures;
 }
 
 QueueFamilyIndices Core::findQueueFamilies(vk::PhysicalDevice pDevice) {
@@ -169,8 +169,8 @@ bool gpu::Core::checkValidationLayerSupport()
 	return true;
 }
 
-SwapChainSupportDetails Core::querySwapChainSupport(vk::PhysicalDevice pDevice) {
-    SwapChainSupportDetails details;
+SwapchainSupportDetails Core::querySwapchainSupport(vk::PhysicalDevice pDevice) {
+    SwapchainSupportDetails details;
     details.capabilities = pDevice.getSurfaceCapabilitiesKHR(*_surface);
     details.formats = pDevice.getSurfaceFormatsKHR(*_surface);
     details.presentModes = pDevice.getSurfacePresentModesKHR(*_surface);
@@ -530,7 +530,7 @@ vk::RenderPass gpu::Core::createColorDepthRenderPass(vk::AttachmentLoadOp loadOp
 {
     vk::AttachmentDescription colorAttachment(
         {}, 
-        getSwapChainImageFormat(), 
+        getSwapchainImageFormat(), 
         vk::SampleCountFlagBits::e1, 
         loadOp, 
         storeOp, 
@@ -811,7 +811,7 @@ void Core::destroySampler(vk::Sampler sampler){
 
 vk::Framebuffer gpu::Core::createFramebuffer(vk::RenderPass renderPass, vk::ArrayProxy<vk::ImageView> attachments)
 {
-    vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapChainExtent().width, getSwapChainExtent().height, 1);
+    vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapchainExtent().width, getSwapchainExtent().height, 1);
     return _device->createFramebuffer(framebufferInfo);
 
 }
@@ -819,12 +819,12 @@ vk::Framebuffer gpu::Core::createFramebuffer(vk::RenderPass renderPass, vk::Arra
 std::vector<vk::Framebuffer> gpu::Core::createColorFramebuffer(vk::RenderPass renderPass)
 {
     std::vector<vk::Framebuffer> framebuffers;
-    framebuffers.resize(getSwapChainImageCount());
-    for (int i = 0; i < getSwapChainImageCount(); i++) {
+    framebuffers.resize(getSwapchainImageCount());
+    for (int i = 0; i < getSwapchainImageCount(); i++) {
         std::vector<vk::ImageView> attachments = {
-            getSwapChainImageView(i)
+            getSwapchainImageView(i)
         };
-        vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapChainExtent().width, getSwapChainExtent().height, 1);
+        vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapchainExtent().width, getSwapchainExtent().height, 1);
         framebuffers[i] = _device->createFramebuffer(framebufferInfo);
     }
     return framebuffers;
@@ -833,13 +833,13 @@ std::vector<vk::Framebuffer> gpu::Core::createColorFramebuffer(vk::RenderPass re
 std::vector<vk::Framebuffer> gpu::Core::createColorDepthFramebuffer(vk::RenderPass renderPass)
 {
     std::vector<vk::Framebuffer> framebuffers;
-    framebuffers.resize(getSwapChainImageCount());
-    for (int i = 0; i < getSwapChainImageCount(); i++) {
+    framebuffers.resize(getSwapchainImageCount());
+    for (int i = 0; i < getSwapchainImageCount(); i++) {
         std::vector<vk::ImageView> attachments = {
-            getSwapChainImageView(i),
-            getSwapChainDepthImageView()
+            getSwapchainImageView(i),
+            getSwapchainDepthImageView()
         };
-        vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapChainExtent().width, getSwapChainExtent().height, 1);
+        vk::FramebufferCreateInfo framebufferInfo({}, renderPass, attachments, getSwapchainExtent().width, getSwapchainExtent().height, 1);
         framebuffers[i] = _device->createFramebuffer(framebufferInfo);
     }
     return framebuffers;
@@ -874,17 +874,17 @@ vk::Extent2D Core::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabiliti
     }
 }
 
-void Core::createSwapChain(uint32_t width, uint32_t height)
+void Core::createSwapchain(uint32_t width, uint32_t height)
 {
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(_physicalDevice);
+    SwapchainSupportDetails swapchainSupport = querySwapchainSupport(_physicalDevice);
 
-    _surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-    vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    vk::Extent2D extent = chooseSwapExtent(swapChainSupport.capabilities, width, height);
+    _surfaceFormat = chooseSwapSurfaceFormat(swapchainSupport.formats);
+    vk::PresentModeKHR presentMode = chooseSwapPresentMode(swapchainSupport.presentModes);
+    vk::Extent2D extent = chooseSwapExtent(swapchainSupport.capabilities, width, height);
 
-    uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-    if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) {
-        imageCount = swapChainSupport.capabilities.maxImageCount;
+    uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
+    if (swapchainSupport.capabilities.maxImageCount > 0 && imageCount > swapchainSupport.capabilities.maxImageCount) {
+        imageCount = swapchainSupport.capabilities.maxImageCount;
     }
 
     QueueFamilyIndices indices = findQueueFamilies(_physicalDevice);
@@ -906,57 +906,57 @@ void Core::createSwapChain(uint32_t width, uint32_t height)
     } else {
         createInfo.imageSharingMode = vk::SharingMode::eExclusive;
     }
-    createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+    createInfo.preTransform = swapchainSupport.capabilities.currentTransform;
     createInfo.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
 
-    if(_previousSwapChainContext == nullptr){
+    if(_previousSwapchainContext == nullptr){
         createInfo.oldSwapchain = VK_NULL_HANDLE;
     }
     // else{
-    //     createInfo.oldSwapchain = _previousSwapChainContext->_swapChain;
+    //     createInfo.oldSwapchain = _previousSwapchainContext->_swapchain;
     // }
     
 
-    _swapChainContext = {};
-    _swapChainContext._swapChain = _device->createSwapchainKHR(createInfo);
-    _swapChainContext._imageFormat = _surfaceFormat.format;
-    _swapChainContext._extent = extent;
+    _swapchainContext = {};
+    _swapchainContext._swapchain = _device->createSwapchainKHR(createInfo);
+    _swapchainContext._imageFormat = _surfaceFormat.format;
+    _swapchainContext._extent = extent;
 
-    std::vector<vk::Image> swapChainImages = _device->getSwapchainImagesKHR(_swapChainContext._swapChain);
+    std::vector<vk::Image> swapchainImages = _device->getSwapchainImagesKHR(_swapchainContext._swapchain);
 
-    _swapChainContext._frames.resize(swapChainImages.size());
-    for (size_t i = 0; i < getSwapChainImageCount(); i++) {
-        _swapChainContext._frames[i] = {};
-        _swapChainContext._frames[i]._image = swapChainImages[i];
-        _swapChainContext._frames[i]._view = createImageView2D(swapChainImages[i], _swapChainContext._imageFormat);
+    _swapchainContext._frames.resize(swapchainImages.size());
+    for (size_t i = 0; i < getSwapchainImageCount(); i++) {
+        _swapchainContext._frames[i] = {};
+        _swapchainContext._frames[i]._image = swapchainImages[i];
+        _swapchainContext._frames[i]._view = createImageView2D(swapchainImages[i], _swapchainContext._imageFormat);
 
         vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
-        _swapChainContext._frames[i]._inFlight = _device->createFence(fenceInfo);
+        _swapchainContext._frames[i]._inFlight = _device->createFence(fenceInfo);
 
         vk::SemaphoreCreateInfo semaphoreInfo;
-        _swapChainContext._frames[i]._imageAvailable = _device->createSemaphore(semaphoreInfo);
-        _swapChainContext._frames[i]._renderFinished = _device->createSemaphore(semaphoreInfo);
+        _swapchainContext._frames[i]._imageAvailable = _device->createSemaphore(semaphoreInfo);
+        _swapchainContext._frames[i]._renderFinished = _device->createSemaphore(semaphoreInfo);
     }
 
-    _swapChainContext._depthFormat = findDepthFormat();
-    _swapChainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapChainContext._extent.width, _swapChainContext._extent.height, _swapChainContext._depthFormat);
-    _swapChainDepthImageView = createImageView2D(_swapChainDepthImage, _swapChainContext._depthFormat, vk::ImageAspectFlagBits::eDepth);
+    _swapchainContext._depthFormat = findDepthFormat();
+    _swapchainDepthImage = createImage2D(vk::ImageUsageFlagBits::eDepthStencilAttachment, vma::MemoryUsage::eAutoPreferDevice, {},_swapchainContext._extent.width, _swapchainContext._extent.height, _swapchainContext._depthFormat);
+    _swapchainDepthImageView = createImageView2D(_swapchainDepthImage, _swapchainContext._depthFormat, vk::ImageAspectFlagBits::eDepth);
 }
 
 
-void Core::destroySwapChain(){
-    for (auto frame : _swapChainContext._frames) {
+void Core::destroySwapchain(){
+    for (auto frame : _swapchainContext._frames) {
         destroyImageView(frame._view);
         _device->destroyFence(frame._inFlight);
         _device->destroySemaphore(frame._imageAvailable);
         _device->destroySemaphore(frame._renderFinished);
     }
-    destroyImageView(_swapChainDepthImageView);
+    destroyImageView(_swapchainDepthImageView);
 
-    _device->destroySwapchainKHR(_swapChainContext._swapChain);
-    destroyImage(_swapChainDepthImage);
+    _device->destroySwapchainKHR(_swapchainContext._swapchain);
+    destroyImage(_swapchainDepthImage);
 }
 
 
@@ -1027,7 +1027,7 @@ vk::Result gpu::Core::acquireNextImageKHR(uint32_t* imageIndex, vk::Semaphore se
     vk::Result result;
 
     try{
-        result = _device->acquireNextImageKHR(getSwapChain(), UINT64_MAX, semaphore, fence, imageIndex);
+        result = _device->acquireNextImageKHR(getSwapchain(), UINT64_MAX, semaphore, fence, imageIndex);
     }
     catch(const vk::OutOfDateKHRError outOfDateError){
         result = vk::Result::eErrorOutOfDateKHR;
@@ -1040,8 +1040,8 @@ vk::Result gpu::Core::acquireNextImageKHR(uint32_t* imageIndex, vk::Semaphore se
 
 vk::Result gpu::Core::presentKHR(uint32_t imageIndex, std::vector<vk::Semaphore> semaphores)
 {
-        std::vector<vk::SwapchainKHR> swapChains = { getSwapChain() };
-        vk::PresentInfoKHR presentInfo(semaphores, swapChains, imageIndex);
+        std::vector<vk::SwapchainKHR> swapchains = { getSwapchain() };
+        vk::PresentInfoKHR presentInfo(semaphores, swapchains, imageIndex);
         vk::Result result;
         try{
             result = presentQueue.presentKHR(presentInfo);

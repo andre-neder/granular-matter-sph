@@ -74,15 +74,15 @@ RenderContext::~RenderContext()
 
 void gpu::RenderContext::initFramebuffers()
 {
-    _framebuffers.resize(_core->getSwapChainImageCount());
-    for (int i = 0; i < _core->getSwapChainImageCount(); i++) {
+    _framebuffers.resize(_core->getSwapchainImageCount());
+    for (int i = 0; i < _core->getSwapchainImageCount(); i++) {
         std::vector<vk::ImageView> attachments = {
-            _core->getSwapChainImageView(i)
+            _core->getSwapchainImageView(i)
         };
         if(_depth){
-            attachments.push_back(_core->getSwapChainDepthImageView());
+            attachments.push_back(_core->getSwapchainDepthImageView());
         }
-        vk::FramebufferCreateInfo framebufferInfo({}, _renderPass, attachments, _core->getSwapChainExtent().width, _core->getSwapChainExtent().height, 1);
+        vk::FramebufferCreateInfo framebufferInfo({}, _renderPass, attachments, _core->getSwapchainExtent().width, _core->getSwapchainExtent().height, 1);
         _framebuffers[i] = _core->getDevice().createFramebuffer(framebufferInfo);
     }
 }
@@ -118,26 +118,26 @@ vk::RenderPass& gpu::RenderContext::getRenderPass()
 
 void gpu::RenderContext::beginCommandBuffer()
 {
-    size_t currentFrame = _core->_swapChainContext._currentFrame;
+    size_t currentFrame = _core->_swapchainContext._currentFrame;
     vk::CommandBufferBeginInfo beginInfo;
     _commandBuffers[currentFrame].begin(beginInfo);
 }
 
 vk::CommandBuffer gpu::RenderContext::getCommandBuffer()
 {
-    size_t currentFrame = _core->_swapChainContext._currentFrame;
+    size_t currentFrame = _core->_swapchainContext._currentFrame;
     return _commandBuffers[currentFrame];
 }
 
 void gpu::RenderContext::endCommandBuffer()
 {
-    size_t currentFrame = _core->_swapChainContext._currentFrame;
+    size_t currentFrame = _core->_swapchainContext._currentFrame;
     _commandBuffers[currentFrame].end();
 }
 
 void gpu::RenderContext::beginRenderPass(uint32_t imageIndex)
 {
-    size_t currentFrame = _core->_swapChainContext._currentFrame;
+    size_t currentFrame = _core->_swapchainContext._currentFrame;
     vk::ClearValue colorClear;
     colorClear.color = vk::ClearColorValue(0.1f, 0.1f, 0.1f, 1.0f);
     vk::ClearValue depthClear;
@@ -147,18 +147,18 @@ void gpu::RenderContext::beginRenderPass(uint32_t imageIndex)
         depthClear
     };
     
-    vk::RenderPassBeginInfo renderPassInfo(_renderPass, _framebuffers[imageIndex], vk::Rect2D({0, 0}, _core->getSwapChainExtent()), clearValues);
+    vk::RenderPassBeginInfo renderPassInfo(_renderPass, _framebuffers[imageIndex], vk::Rect2D({0, 0}, _core->getSwapchainExtent()), clearValues);
     _commandBuffers[currentFrame].beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-    vk::Viewport viewport(0.0f, 0.0f, (float)_core->getSwapChainExtent().width, (float)_core->getSwapChainExtent().height, 0.0f, 1.0f);
+    vk::Viewport viewport(0.0f, 0.0f, (float)_core->getSwapchainExtent().width, (float)_core->getSwapchainExtent().height, 0.0f, 1.0f);
     _commandBuffers[currentFrame].setViewport(0, viewport);
 
-    vk::Rect2D scissor(vk::Offset2D(0, 0),_core->getSwapChainExtent());
+    vk::Rect2D scissor(vk::Offset2D(0, 0),_core->getSwapchainExtent());
     _commandBuffers[currentFrame].setScissor(0, scissor);
 }
 
 void gpu::RenderContext::endRenderPass()
 {
-    size_t currentFrame = _core->_swapChainContext._currentFrame;
+    size_t currentFrame = _core->_swapchainContext._currentFrame;
     _commandBuffers[currentFrame].endRenderPass();
 }

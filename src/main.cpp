@@ -190,7 +190,7 @@ private:
     }
 
     void drawFrame(float dt){
-        size_t currentFrame = core._swapChainContext._currentFrame;
+        size_t currentFrame = core._swapchainContext._currentFrame;
         vk::Result result;
         result = device.waitForFences(computeContext._frames[currentFrame]._inFlight, VK_TRUE, UINT64_MAX);
 
@@ -232,7 +232,7 @@ private:
         vk::Result accuireNextImageResult = core.acquireNextImageKHR(&imageIndex, core.getCurrentFrame()._imageAvailable);
 
         if(accuireNextImageResult == vk::Result::eErrorOutOfDateKHR){
-            recreateSwapChain();
+            recreateSwapchain();
             return;
         }
         else if(accuireNextImageResult != vk::Result::eSuccess && accuireNextImageResult != vk::Result::eSuboptimalKHR){
@@ -267,12 +267,12 @@ private:
 
         if(presentResult == vk::Result::eErrorOutOfDateKHR || presentResult == vk::Result::eSuboptimalKHR || window.wasResized()){
             window.resizeHandled();
-            recreateSwapChain();
+            recreateSwapchain();
         }
         else if(presentResult != vk::Result::eSuccess){
             throw std::runtime_error("queue Present failed!");
         }
-        core._swapChainContext._currentFrame = (currentFrame + 1) % gpu::MAX_FRAMES_IN_FLIGHT;
+        core._swapchainContext._currentFrame = (currentFrame + 1) % gpu::MAX_FRAMES_IN_FLIGHT;
     }
 
     void mainLoop(){
@@ -308,7 +308,7 @@ private:
 
     void cleanupSwapchain(){
         core.getDevice().waitIdle();
-        core.destroySwapChain(); 
+        core.destroySwapchain(); 
     }
 
     void cleanup(){
@@ -335,7 +335,7 @@ private:
         window.destroy();
     }
 
-    void recreateSwapChain() {
+    void recreateSwapchain() {
         while (window.isMinimized()) {
             window.sleep();
         }
@@ -350,7 +350,7 @@ private:
 
         int width, height;
         window.getSize(&width, &height);
-        core.createSwapChain(width, height);
+        core.createSwapchain(width, height);
    
         particleRenderPass.initFrameResources();
         triangleRenderPass.initFrameResources();
