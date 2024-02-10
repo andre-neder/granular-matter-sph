@@ -43,15 +43,15 @@ void ParticleRenderPass::initFrameResources()
     _renderContext.initCommandBuffers();
 }
 
-void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt)
+void ParticleRenderPass::update(int imageIndex, float dt)
 {
-    updateUniformBuffer(currentFrame);
+    updateUniformBuffer(_core->_swapchainContext._currentFrame);
 
     _renderContext.beginCommandBuffer();
     _renderContext.beginRenderPass(imageIndex);
 
     _renderContext.getCommandBuffer().bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-    std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[currentFrame]};
+    std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[_core->_swapchainContext._currentFrame]};
     std::vector<vk::DeviceSize> offsets = {0};
 
     _renderContext.getCommandBuffer().bindVertexBuffers(0, particleModelVertexBuffer, offsets);
@@ -59,7 +59,7 @@ void ParticleRenderPass::update(int currentFrame, int imageIndex, float dt)
 
     _renderContext.getCommandBuffer().bindVertexBuffers(1, vertexBuffers, offsets);
 
-    _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+    _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[_core->_swapchainContext._currentFrame], 0, nullptr);
 
     _renderContext.getCommandBuffer().pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(SPHSettings), &settings);
 

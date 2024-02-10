@@ -23,12 +23,12 @@ namespace gpu{
             ~ImguiRenderPass(){};
 
             void initFrameResources();
-            void update(int currentFrame, int imageIndex, float dt);
+            void update(int imageIndex, float dt);
             void destroyFrameResources();
             void destroy(); 
 
             void additionalWindows();
-            inline vk::CommandBuffer getCommandBuffer(int index){ return _renderContext.getCommandBuffer(); };
+            inline vk::CommandBuffer getCommandBuffer(){ return _renderContext.getCommandBuffer(); };
 
             std::function<void(int)> changeSceneCallback;
             std::function<void()> toggleWireframeCallback;

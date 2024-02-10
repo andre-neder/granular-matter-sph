@@ -239,9 +239,9 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
-        particleRenderPass.update((int) currentFrame, imageIndex, dt);
-        triangleRenderPass.update((int) currentFrame, imageIndex, dt);
-        imguiRenderPass.update((int) currentFrame, imageIndex, dt);
+        particleRenderPass.update(imageIndex, dt);
+        triangleRenderPass.update(imageIndex, dt);
+        imguiRenderPass.update(imageIndex, dt);
 
         std::vector<vk::Semaphore> waitSemaphores = {
             computeContext._frames[currentFrame]._computeFinished, 
@@ -255,9 +255,9 @@ private:
             core.getCurrentFrame()._renderFinished
         };
         std::array<vk::CommandBuffer, 3> submitCommandBuffers = { 
-            particleRenderPass.getCommandBuffer((int) currentFrame), 
-            triangleRenderPass.getCommandBuffer((int) currentFrame), 
-            imguiRenderPass.getCommandBuffer((int) currentFrame)
+            particleRenderPass.getCommandBuffer(), 
+            triangleRenderPass.getCommandBuffer(), 
+            imguiRenderPass.getCommandBuffer()
         };
         vk::SubmitInfo submitInfo(waitSemaphores, waitStages, submitCommandBuffers, signalSemaphores);
 

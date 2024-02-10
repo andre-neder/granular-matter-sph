@@ -36,15 +36,15 @@ using namespace gpu;
     }
 
     
-    void TriangleRenderPass::update(int currentFrame, int imageIndex, float dt){
-        updateUniformBuffer(currentFrame);
+    void TriangleRenderPass::update(int imageIndex, float dt){
+        updateUniformBuffer(_core->_swapchainContext._currentFrame);
 
         _renderContext.beginCommandBuffer();
         _renderContext.beginRenderPass(imageIndex);
 
             _renderContext.getCommandBuffer().bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
             
-            _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[_core->_swapchainContext._currentFrame], 0, nullptr);
             _renderContext.getCommandBuffer().pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment, 0, sizeof(SPHSettings), &settings);
 
             for (auto&& model : models){
@@ -52,12 +52,12 @@ using namespace gpu;
                 std::vector<vk::DeviceSize> offsets = {0};
                 _renderContext.getCommandBuffer().bindVertexBuffers(0, vertexBuffers, offsets);
                 _renderContext.getCommandBuffer().bindIndexBuffer(model.indexBuffer, 0, vk::IndexType::eUint32);
-                _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &model.descriptorSets[currentFrame], 0, nullptr);
+                _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 1, 1, &model.descriptorSets[_core->_swapchainContext._currentFrame], 0, nullptr);
                 for (auto&& node : model._linearNodes)
                 {
                     for (auto&& primitive : node->primitives)
                     {
-                        _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 2, 1, &model.materialDescriptorSets[primitive->materialIndex][currentFrame], 0, nullptr);
+                        _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 2, 1, &model.materialDescriptorSets[primitive->materialIndex][_core->_swapchainContext._currentFrame], 0, nullptr);
                         _renderContext.getCommandBuffer().drawIndexed(primitive->indexCount, 1, primitive->firstIndex, 0, 0);
                     }
                 }

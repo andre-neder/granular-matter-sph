@@ -159,7 +159,7 @@ void ImguiRenderPass::initFrameResources(){
 float drawAverageDensityError(void*, int i) { return simulationMetrics.averageDensityError.get(i) / settings.rho0; };
 float drawIterationCount(void*, int i) { return simulationMetrics.iterationCount.get(i); };
 
-void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
+void ImguiRenderPass::update(int imageIndex, float dt){
     
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -247,7 +247,7 @@ void ImguiRenderPass::update(int currentFrame, int imageIndex, float dt){
     {
         ImGui::PlotLines("Average density error", drawAverageDensityError, NULL, SimulationMetrics::MAX_VALUES_PER_METRIC, 0, NULL, 0.0f, settings.maxCompression, ImVec2(0, 80));
         ImGui::PlotLines("IISPH Iteration count", drawIterationCount, NULL, SimulationMetrics::MAX_VALUES_PER_METRIC, 0, NULL, 0, 20, ImVec2(0, 80));
-
+        size_t currentFrame = _core->_swapchainContext._currentFrame;
         if (ImGui::BeginTable("Timings", 2))
         {
             for (int row = 0; row < timestampLabels[currentFrame].size(); row++)

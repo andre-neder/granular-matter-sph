@@ -17,12 +17,12 @@ namespace gpu{
             ~ParticleRenderPass(){};
 
             void initFrameResources();
-            void update(int currentFrame, int imageIndex, float dt);
+            void update(int imageIndex, float dt);
             void destroyFrameResources();
             void destroy(); 
             void init();
 
-            inline vk::CommandBuffer getCommandBuffer(int index){ return _renderContext.getCommandBuffer(); };
+            inline vk::CommandBuffer getCommandBuffer(){ return _renderContext.getCommandBuffer(); };
 
             std::vector<vk::Buffer> vertexBuffer;
             uint32_t vertexCount;
