@@ -531,8 +531,6 @@
             x,              & \text{otherwise}
         \end{cases}
     \end{equation}
-
-
     
     \subsection{Visualization}
     As the visualisation was not the main focus of this work, it is kept simple. To visualize the simulation, all particles were rendered as instanced meshes, as the number of particles to draw can become quite large and in this way all of them can be rendered in just one draw call. A detailed explanation of instanced rendering can be found on \url{https://learnopengl.com/Advanced-OpenGL/Instancing}. The rigid bodies were rendered by drawing each node of the model with its associated material, as its own draw call and were shaded with a simple diffuse lighting model.
@@ -575,7 +573,8 @@
         \label[fig]{fig:layer_step}
     \end{figure}
     % upsampling
-    Through the upsampling of the low resolution simulation a visually plausible representation of vast amounts of granular material, comparable to other papers, is achieved. A major problem that Ihmsen et al. \cite{10.2312:PE:vriphys:vriphys12:053-060} already tried to solve by their upsampling approach, is the clumping of high resolution particles, which is still visible. Another problem is the sticking of particles to some shapes as visible in illustration \ref{fig:sticking}. This seems to come from the use of the volume maps, as the kernel used for the upsampling does not capture the contribution of the boundary quite right. This may also be solved by the approach of Bender et al. \cite{9123549}.
+    Through the upsampling of the low resolution simulation a visually plausible representation of vast amounts of granular material, comparable to other papers, is achieved. A major problem that Ihmsen et al. \cite{10.2312:PE:vriphys:vriphys12:053-060} already tried to solve by their upsampling approach, is the clumping of high resolution particles, which is still visible. Another problem were particles falling through boundaries, which was countered by the approach presented in section \ref{sec:upsampling}. This introduced another problem, which is the sticking of particles to some shapes as visible in illustration \ref{fig:sticking}. 
+    
     \begin{figure}[H]
         \centering
         \includegraphics[width=0.7\textwidth]{figures/sticking.png}

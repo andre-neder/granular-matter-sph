@@ -2438,11 +2438,10 @@
     <bcf:citekey order="71" intorder="1">9123549</bcf:citekey>
     <bcf:citekey order="72" intorder="1">10.1145/3180486</bcf:citekey>
     <bcf:citekey order="73" intorder="1">10.2312:PE:vriphys:vriphys12:053-060</bcf:citekey>
-    <bcf:citekey order="74" intorder="1">9123549</bcf:citekey>
-    <bcf:citekey order="75" intorder="1">BARDENHAGEN2000529</bcf:citekey>
-    <bcf:citekey order="76" intorder="1">10.2312:egt.20151045</bcf:citekey>
-    <bcf:citekey order="77" intorder="1">Shao:2022:Multigrid</bcf:citekey>
-    <bcf:citekey order="78" intorder="1">sanchezgonzalez2020learning</bcf:citekey>
+    <bcf:citekey order="74" intorder="1">BARDENHAGEN2000529</bcf:citekey>
+    <bcf:citekey order="75" intorder="1">10.2312:egt.20151045</bcf:citekey>
+    <bcf:citekey order="76" intorder="1">Shao:2022:Multigrid</bcf:citekey>
+    <bcf:citekey order="77" intorder="1">sanchezgonzalez2020learning</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="none">

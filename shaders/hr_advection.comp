@@ -230,7 +230,8 @@ void main(){
     // weighted target velocity
     vec3 targetVelocity = (1.0 - alpha) * velocity + alpha * (p.velocity.xyz + settings.dt * (externalForce / settings.mass));
 
-    
+    // integrate position 
+    p.position.xyz += settings.dt * p.velocity.xyz;
 
     for_all_volume_maps(
         vec3 normal = normalize(-p_pi.xyz);
@@ -241,15 +242,13 @@ void main(){
         targetVelocity -= (weight * normalVelocity); 
 
         // limit position to plane surface
-        float dist = dot(p_pi.xyz, normal);
-        float dir = dot(p.velocity.xyz, normal);
-        p.position.xyz += (dist >= 0.0 && dir >= 0.0) ? (dist + settings.r_LR) * normal : vec3(0);
+        float dist = dot(p_pi.xyz, normal) - settings.r_LR ;
+        p.position.xyz += (-dist < 0.0) ? (dist + settings.r_LR) * normal : vec3(0);
     )
     
     // Integrate v
     p.velocity.xyz = targetVelocity;
-    // integrate position 
-    p.position.xyz += settings.dt * p.velocity.xyz;
+
 
     ssbo_hr.particles[particleID] = p;
 }

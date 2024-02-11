@@ -125,8 +125,8 @@
       \strng{editorbibnamehash}{e0fc0f539395013fe8ecff54c979c0b1}
       \strng{editornamehash}{e0fc0f539395013fe8ecff54c979c0b1}
       \strng{editorfullhash}{e0fc0f539395013fe8ecff54c979c0b1}
-      \field{sortinit}{8}
-      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{booktitle}{CEIG 09 - Congreso Espanol de Informatica Grafica}
@@ -644,8 +644,8 @@
       \strng{authorbibnamehash}{678dd34ef215d7b3db7ba6d5053f83e9}
       \strng{authornamehash}{93c4b6f6acfb9e857317f2b7a8df1bfc}
       \strng{authorfullhash}{678dd34ef215d7b3db7ba6d5053f83e9}
-      \field{sortinit}{9}
-      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{issn}{0730-0301}
@@ -1111,8 +1111,8 @@
       \strng{authornamehash}{00f9bcdad45f435417911d040feff60a}
       \strng{authorfullhash}{00f9bcdad45f435417911d040feff60a}
       \field{extraname}{2}
-      \field{sortinit}{1}
-      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
       \field{labelnamesource}{author}
       \field{labeltitlesource}{title}
       \field{title}{Inigo Quilez :: computer graphics, mathematics, shaders, fractals, demoscene and more}
