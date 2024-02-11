@@ -513,13 +513,8 @@
 
     The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length \cite{10.2312:PE:vriphys:vriphys12:053-060}. 
     
-    To prevent the HR particles from penetrating the boundaries, an additional loop over all volume maps is performed. In this loop each boundaries weight is computed by applying $w(d_{ib})$ with $d_{ib}$ being the distance to the boundary. Then the normal part of the velocity $v_n$ is computed as:
+    To prevent the HR particles from penetrating the boundaries multiple different approaches have been investigated. For these, an additional loop over all volume maps is performed. The first approach tried to modify the $\alpha$ value, by multiplying it with 1 minus the dot product of the external force and the vector to the boundary, clamped between 0 and 1, which prevented the particles from falling through, but made a lot of particles stick to vertical boundaries. For the next approach each boundaries weight was computed by applying the weighting kernel $w(d_{ib})$ with $d_{ib}$ being the distance to the boundary. Then a weighted velocity $w(d_{ib}) v_i(t + \Delta t)$ was computed and subtracted from $v_i(t + \Delta t)$. This also prevented the particles from falling through boundaries and had a lot less sticking occuring.
 
-    \begin{equation}
-        v_n = w(d_{ib}) n (v_i(t + \Delta t) \cdot n)
-    \end{equation}
-
-    and subtrated from the final velocity. With $n$ being the surface normal of the boundary which is determined by normalizing the distance to the boundary, read from the volume map.
     Additionaly the position of the particle is offset to counteract any penetration, by first determining the signed distance to the boundary, using a dot product of the distance to the boundary $x_{i,b}$ and the surface normal $n$ and adjusting this distance by the low-resolution particle radius and then offseting the position by this distance $\Delta x_{i,b}$ if it is negative. The computation of the final particle position $x_{final}$ is summarized as:
     \begin{equation}
         \Delta x_{i,b} = (x_i - x_b) \cdot n

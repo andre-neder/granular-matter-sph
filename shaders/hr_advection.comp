@@ -238,8 +238,14 @@ void main(){
         
         float weight = w(r);
         // counteract normal velocity
-        vec3 normalVelocity = dot(targetVelocity, normal) * normal;    
-        targetVelocity -= (weight * normalVelocity); 
+        // float n_factor = dot(targetVelocity, normal); 
+        // float t_factor = floor(max(-dot(normalize(externalForce), normal), 0)); // 0 for walls 1 for floor
+
+        // vec3 v_n = n_factor * normal; // normal part
+        // vec3 v_t = targetVelocity - v_n; // tangential part
+        // vec3 v_c = v_n + v_t * t_factor; // counteracting velocity
+        targetVelocity -= (weight * targetVelocity); 
+       
 
         // limit position to plane surface
         float dist = dot(p_pi.xyz, normal) - settings.r_LR ;
