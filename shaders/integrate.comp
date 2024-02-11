@@ -170,19 +170,13 @@ void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     LRParticle p = ssbo.particles[particleID];
 
-    // Semi-implicit euler
-    // vec3 vel = (p.position + p.velocity * settings.dt) - (p.position);
-    // if(length(vel) > settings.sleepingSpeed){
-    //     p.position += p.velocity * settings.dt;
-    // }
-    // p.velocity += ((p.internalForce + p.externalForce) / settings.mass) * settings.dt;
-    // Forward Euler
     p.velocity += p.internalForce / settings.mass * settings.dt;
+    p.position.xyz += p.velocity.xyz * settings.dt;
+    
     // p.position += p.velocity * settings.dt;
-    vec3 vel = (p.position.xyz + p.velocity.xyz * settings.dt) - (p.position.xyz);
-    if(length(vel) > settings.sleepingSpeed){
-        p.position.xyz += p.velocity.xyz * settings.dt;
-    }
+    // vec3 vel = (p.position.xyz + p.velocity.xyz * settings.dt) - (p.position.xyz);
+    // if(length(vel) > settings.sleepingSpeed){
+    // }
 
     ssbo.particles[particleID] = p;
 }

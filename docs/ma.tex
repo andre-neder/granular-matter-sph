@@ -520,14 +520,14 @@
     \end{equation}
 
     and subtrated from the final velocity. With $n$ being the surface normal of the boundary which is determined by normalizing the distance to the boundary, read from the volume map.
-    Additionaly the position of the particle is offset to counteract any penetration, by first determining the signed distance to the boundary, using a dot product of the distance to the boundary and the surface normal and adjusting this distance by the low-resolution particle radius and then offseting the position by this distance $x_{i,b}$ if it is negative. The computation of the final particle position $x_{final}$ is summarized as:
+    Additionaly the position of the particle is offset to counteract any penetration, by first determining the signed distance to the boundary, using a dot product of the distance to the boundary $x_{i,b}$ and the surface normal $n$ and adjusting this distance by the low-resolution particle radius and then offseting the position by this distance $\Delta x_{i,b}$ if it is negative. The computation of the final particle position $x_{final}$ is summarized as:
     \begin{equation}
-        x_{i,b} = (x_i - x_b) \cdot n - r_{LR}\\
+        \Delta x_{i,b} = (x_i - x_b) \cdot n
     \end{equation}
     \begin{equation}
         x_{final} = 
         \begin{cases}
-            x + x_{i,b} n,     & \text{if } x_{i,b} < 0 \\
+            x + (\Delta x_{i,b} + r_{LR}) n,     & \text{if } x_{i,b} < 0 \\
             x,              & \text{otherwise}
         \end{cases}
     \end{equation}

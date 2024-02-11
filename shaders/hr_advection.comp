@@ -188,7 +188,6 @@ mat3 rotateZ(float theta) {
 
 mat3 rotate10DegXYZ = rotateX(10) * rotateY(10) * rotateZ(10);
 
-
 void main(){
     uint particleID = gl_GlobalInvocationID.x;;
     HRParticle p = ssbo_hr.particles[particleID];
@@ -231,8 +230,7 @@ void main(){
     // weighted target velocity
     vec3 targetVelocity = (1.0 - alpha) * velocity + alpha * (p.velocity.xyz + settings.dt * (externalForce / settings.mass));
 
-    // integrate position 
-    p.position.xyz += settings.dt * p.velocity.xyz;
+    
 
     for_all_volume_maps(
         vec3 normal = normalize(-p_pi.xyz);
@@ -241,15 +239,17 @@ void main(){
         // counteract normal velocity
         vec3 normalVelocity = dot(targetVelocity, normal) * normal;    
         targetVelocity -= (weight * normalVelocity); 
-        float r_HR = settings.r_LR / 5; 
-        // limit position to plane surface
-        float dist = dot(p_pi.xyz, normal) - settings.r_LR;
-        p.position.xyz += dist > 0.0 ? dist * normal : vec3(0);
-    )
 
+        // limit position to plane surface
+        float dist = dot(p_pi.xyz, normal);
+        float dir = dot(p.velocity.xyz, normal);
+        p.position.xyz += (dist >= 0.0 && dir >= 0.0) ? (dist + settings.r_LR) * normal : vec3(0);
+    )
+    
     // Integrate v
     p.velocity.xyz = targetVelocity;
-
+    // integrate position 
+    p.position.xyz += settings.dt * p.velocity.xyz;
 
     ssbo_hr.particles[particleID] = p;
 }
