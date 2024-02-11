@@ -37,7 +37,14 @@ using namespace gpu;
 
     
     void TriangleRenderPass::update(int imageIndex, float dt){
-        updateUniformBuffer(_core->_swapchainContext._currentFrame);
+        UniformBufferObject ubo{};
+        ubo.model = glm::scale(glm::mat4(1.0), glm::vec3(1.0));// glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view =  m_camera->getView();//glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        ubo.proj = glm::perspective(glm::radians(45.0f), _core->getSwapchainExtent().width / (float) _core->getSwapchainExtent().height, 0.1f, 1000.0f);
+        ubo.proj[1][1] *= -1;
+        
+
+        _core->updateBufferData(uniformBuffers[_core->_swapchainContext._currentFrame], &ubo, (size_t) sizeof(ubo));
 
         _renderContext.beginCommandBuffer();
         _renderContext.beginRenderPass(imageIndex);
@@ -178,16 +185,4 @@ using namespace gpu;
         _renderContext.destroyRenderPass();
 
         _core->destroyDescriptorSetLayout(descriptorSetLayout);
-    }
-    void TriangleRenderPass::updateUniformBuffer(uint32_t currentImage) {
-
-        UniformBufferObject ubo{};
-        ubo.model = glm::scale(glm::mat4(1.0), glm::vec3(1.0));// glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view =  m_camera->getView();//glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), _core->getSwapchainExtent().width / (float) _core->getSwapchainExtent().height, 0.1f, 1000.0f);
-        ubo.proj[1][1] *= -1;
-        
-
-        _core->updateBufferData(uniformBuffers[currentImage], &ubo, (size_t) sizeof(ubo));
-
     }

@@ -37,7 +37,13 @@ void ParticleRenderPass::init()
 void ParticleRenderPass::initFrameResources()
 {
     _renderContext.initFramebuffers();
-    createUniformBuffers();
+
+    uniformBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
+    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        uniformBuffers[i] = _core->createBuffer(sizeof(UniformBufferObject), vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
+    }
+
     createDescriptorPool();
     createDescriptorSets();
     _renderContext.initCommandBuffers();
@@ -45,7 +51,13 @@ void ParticleRenderPass::initFrameResources()
 
 void ParticleRenderPass::update(int imageIndex, float dt)
 {
-    updateUniformBuffer(_core->_swapchainContext._currentFrame);
+    UniformBufferObject ubo{};
+    ubo.model = glm::mat4(1.0f);
+    ubo.view = m_camera->getView();
+    ubo.proj = glm::perspective(glm::radians(45.0f), _core->getSwapchainExtent().width / (float)_core->getSwapchainExtent().height, 0.1f, 1000.0f);
+    ubo.proj[1][1] *= -1;
+
+    _core->updateBufferData(uniformBuffers[_core->_swapchainContext._currentFrame], &ubo, (size_t) sizeof(ubo));
 
     _renderContext.beginCommandBuffer();
     _renderContext.beginRenderPass(imageIndex);
@@ -145,16 +157,6 @@ void ParticleRenderPass::createGraphicsPipeline()
     }
 }
 
-void ParticleRenderPass::createUniformBuffers()
-{
-    vk::DeviceSize bufferSize = sizeof(UniformBufferObject);
-
-    uniformBuffers.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-    for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        uniformBuffers[i] = _core->createBuffer(bufferSize, vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst, vma::MemoryUsage::eAutoPreferDevice, vma::AllocationCreateFlagBits::eHostAccessSequentialWrite);
-    }
-}
 
 void ParticleRenderPass::createDescriptorPool()
 {
@@ -190,15 +192,4 @@ void ParticleRenderPass::destroy()
     _renderContext.destroyRenderPass();
 
     _core->destroyDescriptorSetLayout(descriptorSetLayout);
-}
-void ParticleRenderPass::updateUniformBuffer(uint32_t currentImage)
-{
-
-    UniformBufferObject ubo{};
-    ubo.model = glm::mat4(1.0f);
-    ubo.view = m_camera->getView();
-    ubo.proj = glm::perspective(glm::radians(45.0f), _core->getSwapchainExtent().width / (float)_core->getSwapchainExtent().height, 0.1f, 1000.0f);
-    ubo.proj[1][1] *= -1;
-
-    _core->updateBufferData(uniformBuffers[currentImage], &ubo, (size_t) sizeof(ubo));
 }

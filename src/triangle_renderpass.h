@@ -48,8 +48,7 @@ namespace gpu{
             // vk::ShaderModule geomShaderModule;
 
             void createDescriptorSets();
-            
-            void updateUniformBuffer(uint32_t currentImage);
+
             void createUniformBuffers();
             void createDescriptorPool();
     };

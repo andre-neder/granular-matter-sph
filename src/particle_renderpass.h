@@ -55,8 +55,6 @@ namespace gpu{
 
             void createDescriptorSets();
             void createGraphicsPipeline();
-            void updateUniformBuffer(uint32_t currentImage);
-            void createUniformBuffers();
             void createDescriptorPool();
     };
 }

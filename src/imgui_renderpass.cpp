@@ -23,7 +23,6 @@ using namespace gpu;
 ImguiRenderPass::ImguiRenderPass(gpu::Core* core, gpu::Window* window){
     _core = core;
     m_window = window;
-    m_deviceProperties = _core->getPhysicalDevice().getProperties();
 
     createDescriptorPool();
 

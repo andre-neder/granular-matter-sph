@@ -127,7 +127,7 @@
     \subsection{Libraries \& Technologies}
 
     \subsubsection*{C++ \& Vulkan}
-    When choosing a framework for a fluid simulation using SPH most implementations (for example: \cite{splishsplash} \cite{dualsphysics}) use C++ in combination with OpenMP to achieve parallelization, other implementations involve Cuda to use the massive parallel compute performance of GPUs \cite{dualsphysics}. For rendering these simulations, dedicated renderers are used. In this implementation Vulkan in combination with C++ 20 is used to simulate and visualize the granular material on the GPU using a combination of compute shaders and the rasterization pipeline. This allows for massive parallel computation of the simulation togehter with the visualization in real time, giving maximum flexibility and extensibility by for example a raytraced visualisation. Vulkan uses SPIRV Shaders, which allows the use of any shading language that can be compiled to it. This work opted for GLSL for its well known C like structure. \url{https://www.vulkan.org/}
+    When choosing a framework for a fluid simulation using SPH most implementations (for example: \cite{splishsplash} \cite{dualsphysics}) use C++ in combination with OpenMP to achieve parallelization, other implementations involve Cuda to use the massive parallel compute performance of GPUs \cite{dualsphysics}. For rendering these simulations, dedicated renderers are used. In this implementation Vulkan in combination with C++ 20 is used to simulate and visualize the granular material on the GPU using a combination of compute shaders and the rasterization pipeline. This allows for massive parallel computation of the simulation togehter with the visualization in real time, giving maximum flexibility and extensibility by for example a raytraced visualisation. Vulkan uses SPIRV Shaders, which allows the use of any shading language that can be compiled to it. This work opted for GLSL for its well known C like structure. To make the shader code more readable C style macros were employed. \url{https://www.vulkan.org/}
 
     \subsubsection*{CMake}    
     CMake is a cross-platform build system and project configuration tool and a popular choice in software development, streamlining the build process, enhancing code portability, and offering flexibility in managing diverse project structures and dependencies. \url{https://cmake.org/}
@@ -472,12 +472,12 @@
 
     \subsection{Upsampling}
     As granular matter consists of vast number of grains, simulating them all as individual particles, would not only make the computational cost and memory consuption extremly high, but would also result in a very restricted time step due to the CFL condition. To achieve real time results, the simulation is done for a set of low-resolution (LR) particles which approximate the granular flow, which are then upsampled to another set of high-resolution (HR) particles. \cite{10.2312:PE:vriphys:vriphys12:053-060}
-    A volume around each low-resolution particle is initially sampled with a special pattern of high-resolution particles, which tries to minimize the effect of clumping. For this, each LR particles bounding box is sampled with $n$ HR particles. Then 6 bounding box sized volumes, offset in both positive and negativ X, Y and Z direction by the particle radius, are also sampled with $n$ particles, resulting in $7n$ HR particles for each LR particle. 
+    A volume around each low-resolution particle is initially sampled with a special pattern of high-resolution particles, which tries to minimize the effect of clumping. For this, each LR particles bounding box is sampled with $N$ HR particles. Then 6 bounding box sized volumes, offset in both positive and negativ X, Y and Z direction by the particle radius, are also sampled with $N$ particles, resulting in $7N$ HR particles for each LR particle. 
 
     \begin{figure}[H]
         \centering
         \includegraphics[width=0.5\textwidth]{figures/sampling.png}
-        \caption[2D Example of the HR sampling of a LR particle (grey area) with $n = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.]{2D Example of the HR sampling of a LR particle (grey area) with $n = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.}
+        \caption[2D Example of the HR sampling of a LR particle (grey area) with $N = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.]{2D Example of the HR sampling of a LR particle (grey area) with $N = 5$. Particles of the same region are colored the same to show the denser sampling of the reagion in the area of the LR particle.}
         \label[fig]{fig:sampling}
     \end{figure}
 
@@ -511,7 +511,28 @@
         \end{cases}
     \end{equation}
 
-    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length. \cite{10.2312:PE:vriphys:vriphys12:053-060} I then additionally modified the alpha value, by multiplying it with 1 minus the dot product of the external force and the vector to the boundary, clamped between 0 and 1, to prevent hr particles falling through the volume map based boundaries, as the above presented method seems to be not fully applicable to volume map boundaries.
+    The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length \cite{10.2312:PE:vriphys:vriphys12:053-060}. 
+    
+    To prevent the HR particles from penetrating the boundaries, an additional loop over all volume maps is performed. In this loop each boundaries weight is computed by applying $w(d_{ib})$ with $d_{ib}$ being the distance to the boundary. Then the normal part of the velocity $v_n$ is computed as:
+
+    \begin{equation}
+        v_n = w(d_{ib}) n (v_i(t + \Delta t) \cdot n)
+    \end{equation}
+
+    and subtrated from the final velocity. With $n$ being the surface normal of the boundary which is determined by normalizing the distance to the boundary, read from the volume map.
+    Additionaly the position of the particle is offset to counteract any penetration, by first determining the signed distance to the boundary, using a dot product of the distance to the boundary and the surface normal and adjusting this distance by the low-resolution particle radius and then offseting the position by this distance $x_{i,b}$ if it is negative. The computation of the final particle position $x_{final}$ is summarized as:
+    \begin{equation}
+        x_{i,b} = (x_i - x_b) \cdot n - r_{LR}\\
+    \end{equation}
+    \begin{equation}
+        x_{final} = 
+        \begin{cases}
+            x + x_{i,b} n,     & \text{if } x_{i,b} < 0 \\
+            x,              & \text{otherwise}
+        \end{cases}
+    \end{equation}
+
+
     
     \subsection{Visualization}
     As the visualisation was not the main focus of this work, it is kept simple. To visualize the simulation, all particles were rendered as instanced meshes, as the number of particles to draw can become quite large and in this way all of them can be rendered in just one draw call. A detailed explanation of instanced rendering can be found on \url{https://learnopengl.com/Advanced-OpenGL/Instancing}. The rigid bodies were rendered by drawing each node of the model with its associated material, as its own draw call and were shaded with a simple diffuse lighting model.

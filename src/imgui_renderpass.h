@@ -27,23 +27,20 @@ namespace gpu{
             void destroyFrameResources();
             void destroy(); 
 
-            void additionalWindows();
+
             inline vk::CommandBuffer getCommandBuffer(){ return _renderContext.getCommandBuffer(); };
 
             std::function<void(int)> changeSceneCallback;
             std::function<void()> toggleWireframeCallback;
 
         private:
-            vk::DescriptorPool descriptorPool;
             gpu::Window* m_window;
             gpu::Core* _core;
-
             vk::Pipeline graphicsPipeline;
-
+            vk::DescriptorPool descriptorPool;
             gpu::RenderContext _renderContext;
             
             void createDescriptorPool();
-
-            vk::PhysicalDeviceProperties m_deviceProperties;
+            void additionalWindows();
     };
 }
