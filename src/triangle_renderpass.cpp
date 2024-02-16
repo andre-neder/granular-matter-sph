@@ -143,6 +143,7 @@ using namespace gpu;
     void gpu::TriangleRenderPass::destroyGraphicsPipeline()
     {
         _core->getDevice().destroyPipeline(graphicsPipeline);
+        _core->getDevice().destroyPipelineLayout(pipelineLayout);
     }
 
     void TriangleRenderPass::createUniformBuffers() {

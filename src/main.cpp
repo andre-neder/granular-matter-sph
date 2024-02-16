@@ -76,6 +76,7 @@ private:
         }
         triangleRenderPass.destroyGraphicsPipeline();
         triangleRenderPass.createGraphicsPipeline(wireframe);
+        recreateSwapchain();
     }
 
     void loadScene(int scene){
