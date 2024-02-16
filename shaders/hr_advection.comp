@@ -9,16 +9,16 @@
 layout (local_size_x_id = 1, local_size_y = 1, local_size_z = 1) in;
 
 struct HRParticle{
-    vec4 position;
-    vec4 velocity;
+    vec3 position;
+    vec3 velocity;
     vec4 color;
 };
 
 struct LRParticle{
-    vec4 position;
-    vec4 velocity;
+    vec3 position;
+    vec3 velocity;
     vec4 externalForce;
-    vec4 internalForce;
+    vec3 internalForce;
     vec4 d;
     vec4 dijpj;
     mat4 stress;
@@ -103,7 +103,7 @@ layout(set = 0, binding = 6) uniform texture3D sdfTexture[];
 
 // modified for advection
 #define for_all_fluid_neighbors(code) { \
-    ivec3 particleCell = ivec3(floor(vec3(p.position.xyz / settings.h_LR))); \
+    ivec3 particleCell = ivec3(floor(vec3(p.position / settings.h_LR))); \
     for (int k = -1; k <= 1; k++){ \
         for (int l = -1; l <= 1; l++){ \
             for (int m = -1; m <= 1; m++){ \
@@ -116,7 +116,7 @@ layout(set = 0, binding = 6) uniform texture3D sdfTexture[];
                     } \
                     uint particleIndex = gridLookup.entries[i].particleIndex; \
                     LRParticle pi = ssbo_lr.particles[particleIndex]; \
-                    vec3 p_pi = p.position.xyz - pi.position.xyz;\
+                    vec3 p_pi = p.position - pi.position;\
                     float r = length(p_pi); \
                     if (r < settings.h_HR){\
                         code \
@@ -133,7 +133,7 @@ layout(set = 0, binding = 6) uniform texture3D sdfTexture[];
         if(volumeMaps.transform[i].position.w == 0.0){\
             continue;\
         }\
-        vec3 samplePosition = ((p.position.xyz - volumeMaps.transform[i].position.xyz)  * volumeMaps.transform[i].scale.xyz) + 0.5; \
+        vec3 samplePosition = ((p.position - volumeMaps.transform[i].position.xyz)  * volumeMaps.transform[i].scale.xyz) + 0.5; \
         vec4 vM = texture(sampler3D(sdfTexture[i], volumeMapSampler), samplePosition); \
         vec3 p_pi = vM.rgb; \
         float volume = vM.a; \
@@ -201,7 +201,7 @@ void main(){
 
     for_all_fluid_neighbors(
         float weight = w(r);
-        averageWeightedVelocity += weight * pi.velocity.xyz;
+        averageWeightedVelocity += weight * pi.velocity;
         rho += weight * pi.rho;
 
         overallWeight += weight;   
@@ -228,10 +228,10 @@ void main(){
     vec3 externalForce = settings.g.xyz * settings.mass;
 
     // weighted target velocity
-    vec3 targetVelocity = (1.0 - alpha) * velocity + alpha * (p.velocity.xyz + settings.dt * (externalForce / settings.mass));
+    vec3 targetVelocity = (1.0 - alpha) * velocity + alpha * (p.velocity + settings.dt * (externalForce / settings.mass));
 
     // integrate position 
-    p.position.xyz += settings.dt * p.velocity.xyz;
+    p.position += settings.dt * p.velocity;
 
     for_all_volume_maps(
         vec3 normal = normalize(-p_pi.xyz);
@@ -249,11 +249,11 @@ void main(){
 
         // limit position to plane surface
         float dist = dot(p_pi.xyz, normal) - settings.r_LR ;
-        p.position.xyz += (-dist < 0.0) ? (dist + settings.r_LR) * normal : vec3(0);
+        p.position += (-dist < 0.0) ? (dist + settings.r_LR) * normal : vec3(0);
     )
     
     // Integrate v
-    p.velocity.xyz = targetVelocity;
+    p.velocity = targetVelocity;
 
 
     ssbo_hr.particles[particleID] = p;
