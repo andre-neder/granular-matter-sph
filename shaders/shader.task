@@ -1,0 +1,132 @@
+#version 450
+#extension GL_EXT_mesh_shader : require
+#extension GL_EXT_control_flow_attributes: require
+// #extension GL_KHR_shader_subgroup_basic : require
+// #extension GL_KHR_shader_subgroup_ballot : require
+// #extension GL_KHR_shader_subgroup_vote : require
+#extension GL_EXT_shader_8bit_storage: require
+// #extension GL_EXT_shader_explicit_arithmetic_types: require
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+#extension GL_KHR_shader_subgroup_vote : require
+
+#define MESHLETS_PER_TASK 32
+
+layout(local_size_x = MESHLETS_PER_TASK) in;
+
+layout(set = 0, binding = 0) uniform UniformBufferObject {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} ubo;
+
+struct Vertex{
+  vec4 position;
+  vec4 normal;
+  vec2 uv;
+  vec4 color;
+  vec4 joint;
+  vec4 weight;
+  vec4 tangent;
+};
+
+layout(set = 0, binding = 1) readonly buffer VertexBuffer {
+    Vertex vertices[];
+} vertexBuffer; 
+
+struct Meshlet{
+  	uint vertex_offset;
+	uint triangle_offset;
+	uint vertex_count;
+	uint triangle_count;
+};
+
+layout(set = 0, binding = 2) readonly buffer MeshletBuffer {
+    Meshlet meshlets[];
+} meshletBuffer; 
+
+layout(set = 0, binding = 3) readonly buffer MeshletVertices {
+    uint vertices[];
+} meshletVertices; 
+
+layout(set = 0, binding = 4) readonly buffer MeshletTriangles {
+    uint8_t triangles[];
+} meshletTriangles; 
+
+struct MeshletBounds{
+	float center[3];
+	float radius;
+	float cone_apex[3];
+	float cone_axis[3];
+	float cone_cutoff;
+	int8_t cone_axis_s8[3];
+	int8_t cone_cutoff_s8;
+};
+
+layout(set = 0, binding = 5) readonly buffer MeshletBoundsBuffer {
+    MeshletBounds bounds[];
+} meshletBoundsBuffer; 
+
+
+struct HRParticle{
+    vec4 position;
+    vec4 velocity;
+    vec4 color;
+};
+
+layout(set = 0, binding = 6) buffer SSBO_HR{
+    HRParticle particles[];
+} ssbo_hr;
+
+
+// uint taskID = gl_WorkGroupID.y; // always 0
+uint instanceID = gl_WorkGroupID.x;
+uint instanceCount = gl_WorkGroupSize.x;
+uint laneID = gl_LocalInvocationID.x;
+
+struct Task {
+    uint meshletID;
+	uint instanceIDs[MESHLETS_PER_TASK];
+	vec4 instancePositions[MESHLETS_PER_TASK];
+};
+taskPayloadSharedEXT Task task;
+
+shared uint s_outMeshletsCount;
+
+void main()
+{	
+	if (laneID == 0) {
+		s_outMeshletsCount = 0; // set shared meshletCount on one thread
+	}
+	
+	uint firstInstance = instanceID * MESHLETS_PER_TASK;
+	uint lastInstance = min(firstInstance + MESHLETS_PER_TASK, ssbo_hr.particles.length() - 1); 
+
+	uint outMeshletsCount = 0;
+	uint instanceID = firstInstance + laneID;
+	
+	bool render = (instanceID <= lastInstance);// && !cullMeshlet(meshletID);
+	uvec4 voteMeshlets = subgroupBallot(render); // get a bitmask for rendered or not for each thread
+	uint  numRenderedMeshlets  = subgroupBallotBitCount(voteMeshlets); // count rendered
+
+	if (gl_SubgroupInvocationID == 0) {
+      outMeshletsCount = atomicAdd(s_outMeshletsCount, numRenderedMeshlets); // set our meshlets count
+    }
+    outMeshletsCount = subgroupBroadcastFirst(outMeshletsCount); // broadcast to all other subgroup invocations
+
+	uint idxOffset  = subgroupBallotExclusiveBitCount(voteMeshlets) + outMeshletsCount; // get the index of true values of this thread in the mask
+	if(render){
+		task.instanceIDs[idxOffset] = instanceID;
+		task.instancePositions[idxOffset] = ssbo_hr.particles[instanceID].position;
+	}
+	
+	memoryBarrierShared(); 
+  	barrier();
+
+	outMeshletsCount = s_outMeshletsCount;
+
+	if (laneID == 0) {
+		task.meshletID = 0; // set instance id on one thread
+	}
+	EmitMeshTasksEXT(outMeshletsCount, 1, 1);
+}

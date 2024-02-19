@@ -59,6 +59,8 @@ set(USE_BACKEND_VULKAN ON)
 set(USE_BACKEND_GLFW ON)
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/imgui)
 
+#add meshoptimizer
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/meshoptimizer)
 
 #shaderc
 set(SHADERC_SKIP_TESTS ON)
@@ -73,6 +75,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
     tinygltf
     imgui 
     shaderc
+    meshoptimizer
 )
 
 #add include dirs
@@ -82,4 +85,5 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}/vendor/tinygltf
     ${PROJECT_SOURCE_DIR}/vendor/imgui
     ${PROJECT_SOURCE_DIR}/vendor/TriangleMeshDistance/TriangleMeshDistance/include
+    ${PROJECT_SOURCE_DIR}/third_party/meshoptimizer
 )

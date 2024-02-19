@@ -169,11 +169,7 @@ private:
 
         loadScene(0);
         
-        particleRenderPass.vertexBuffer.resize(gpu::MAX_FRAMES_IN_FLIGHT);
-
-        for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++) {
-            particleRenderPass.vertexBuffer[i] = simulation.particlesBufferHR;
-        }
+        particleRenderPass.vertexBuffer = simulation.particlesBufferHR;
         particleRenderPass.vertexCount = (uint32_t)simulation.hrParticles.size();
         particleRenderPass.attributeDescriptions = HRParticle::getAttributeDescriptions();
         particleRenderPass.bindingDescription = HRParticle::getBindingDescription();

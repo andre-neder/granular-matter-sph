@@ -7,7 +7,7 @@
 #include "model.h"
 #include "core.h"
 #include "render_context.h"
-
+#include <meshoptimizer.h>
 
 namespace gpu{
     class ParticleRenderPass{
@@ -24,7 +24,7 @@ namespace gpu{
 
             inline vk::CommandBuffer getCommandBuffer(){ return _renderContext.getCommandBuffer(); };
 
-            std::vector<vk::Buffer> vertexBuffer;
+            vk::Buffer vertexBuffer;
             uint32_t vertexCount;
 
             std::array<vk::VertexInputBindingDescription, 1> bindingDescription;
@@ -41,6 +41,14 @@ namespace gpu{
             Model particleModel;
             vk::Buffer particleModelIndexBuffer;
             vk::Buffer particleModelVertexBuffer;
+            std::vector<meshopt_Meshlet> _meshlets;
+            std::vector<meshopt_Bounds> _meshletBounds;
+            vk::Buffer _meshletBuffer;
+            vk::Buffer _meshletBoundsBuffer;
+            vk::Buffer _meshletVerticesBuffer;
+            vk::Buffer _meshletTrianglesBuffer;
+            std::vector<unsigned int> _meshletVertices;
+            std::vector<unsigned char> _meshletTriangles;
    
             std::vector<vk::Buffer> uniformBuffers;
             std::vector<vk::Buffer> uniformBuffersSettings;
@@ -49,7 +57,8 @@ namespace gpu{
             std::vector<vk::DescriptorSet> descriptorSets;
             vk::PipelineLayout pipelineLayout;
             vk::DescriptorSetLayout descriptorSetLayout;
-            vk::ShaderModule vertShaderModule;
+            vk::ShaderModule meshShaderModule;
+            vk::ShaderModule taskShaderModule;
             vk::ShaderModule fragShaderModule;
             vk::ShaderModule geomShaderModule;
 

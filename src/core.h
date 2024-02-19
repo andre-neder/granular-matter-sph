@@ -1,4 +1,5 @@
 #pragma once
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 #include <GLFW/glfw3.h>
@@ -23,6 +24,7 @@ namespace gpu
         std::optional<uint32_t> graphicsFamily;
         std::optional<uint32_t> presentFamily;
         std::optional<uint32_t> computeFamily;
+        std::optional<uint32_t> transferFamily;
         bool isComplete();
     };
 
@@ -208,13 +210,17 @@ namespace gpu
                 VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
                 VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME,
                 // VK_NV_COOPERATIVE_MATRIX_EXTENSION_NAME
+                VK_EXT_MESH_SHADER_EXTENSION_NAME,
+                VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME,
+                VK_KHR_SPIRV_1_4_EXTENSION_NAME,
+                VK_KHR_8BIT_STORAGE_EXTENSION_NAME
             }; 
             std::vector<const char*> _validationLayers = {
                 "VK_LAYER_KHRONOS_validation"
             };
-
+            vk::DynamicLoader _dl;
             vk::UniqueInstance _instance;
-            static vk::DispatchLoaderDynamic _dispatchLoaderDynamic;
+            static vk::DispatchLoaderDynamic dispatchLoaderDynamic;
             vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::DispatchLoaderDynamic> _debugMessenger;
 
             vk::UniqueSurfaceKHR _surface;
@@ -224,6 +230,7 @@ namespace gpu
             vk::Queue graphicsQueue;
             vk::Queue computeQueue;
             vk::Queue presentQueue;
+            vk::Queue transferQueue;
             vma::UniqueAllocator _allocator;
             vk::UniqueCommandPool _commandPool; 
 

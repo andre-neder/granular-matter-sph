@@ -1,10 +1,13 @@
-#include "core.h"
-#include "shader_utils.h"
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
 
+#include "core.h"
+#include "shader_utils.h"
+
 #define MAX_VARIABLE_DESCRIPTOR_COUNT 32
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 using namespace gpu;
 
@@ -91,6 +94,19 @@ void Core::pickPhysicalDevice() {
         throw std::runtime_error("failed to find a suitable GPU!");
     }
     
+    auto deviceProperties = _physicalDevice.getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceMeshShaderPropertiesEXT>();
+    vk::PhysicalDeviceMeshShaderPropertiesEXT& meshShaderProperties = deviceProperties.get<vk::PhysicalDeviceMeshShaderPropertiesEXT>();
+    std::cout << "[properties] " << "maxMeshOutputPrimitives" << ": " << meshShaderProperties.maxMeshOutputPrimitives <<  std::endl;
+    std::cout << "[properties] " << "maxMeshOutputVertices" << ": " << meshShaderProperties.maxMeshOutputVertices <<  std::endl;
+    std::cout << "[properties] " << "maxMeshWorkGroupInvocations" << ": " << meshShaderProperties.maxMeshWorkGroupInvocations <<  std::endl;
+    std::cout << "[properties] " << "maxMeshWorkGroupCount x" << ": " << meshShaderProperties.maxMeshWorkGroupCount[0] <<  std::endl;
+    std::cout << "[properties] " << "maxMeshWorkGroupCount y" << ": " << meshShaderProperties.maxMeshWorkGroupCount[1] <<  std::endl;
+    std::cout << "[properties] " << "maxMeshWorkGroupCount z" << ": " << meshShaderProperties.maxMeshWorkGroupCount[2] <<  std::endl;
+    std::cout << "[properties] " << "maxTaskWorkGroupInvocations" << ": " << meshShaderProperties.maxTaskWorkGroupInvocations <<  std::endl;
+    std::cout << "[properties] " << "maxTaskWorkGroupCount x" << ": " << meshShaderProperties.maxTaskWorkGroupCount[0] <<  std::endl;
+    std::cout << "[properties] " << "maxTaskWorkGroupCount y" << ": " << meshShaderProperties.maxTaskWorkGroupCount[1] <<  std::endl;
+    std::cout << "[properties] " << "maxTaskWorkGroupCount z" << ": " << meshShaderProperties.maxTaskWorkGroupCount[2] <<  std::endl;
+
 }
 
 bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
@@ -103,7 +119,7 @@ bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
         swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
     }
 
-    auto m_deviceFeatures2 = pDevice.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>();
+    auto m_deviceFeatures2 = pDevice.getFeatures2<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceMeshShaderFeaturesEXT, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT, vk::PhysicalDevice8BitStorageFeatures>();
     bool supportsAllFeatures =
         m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy &&
         m_deviceFeatures2.get<vk::PhysicalDeviceFeatures2>().features.geometryShader &&
@@ -116,8 +132,12 @@ bool Core::isDeviceSuitable(vk::PhysicalDevice pDevice) {
         m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().shaderSampledImageArrayNonUniformIndexing && 
         m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().descriptorBindingVariableDescriptorCount && 
         m_deviceFeatures2.get<vk::PhysicalDeviceDescriptorIndexingFeatures>().descriptorBindingPartiallyBound &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceMeshShaderFeaturesEXT>().meshShader &&
+        m_deviceFeatures2.get<vk::PhysicalDeviceMeshShaderFeaturesEXT>().taskShader &&
         m_deviceFeatures2.get<vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>().shaderBufferFloat32Atomics &&
-        m_deviceFeatures2.get<vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>().shaderBufferFloat32AtomicAdd;
+        m_deviceFeatures2.get<vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT>().shaderBufferFloat32AtomicAdd &&
+        m_deviceFeatures2.get<vk::PhysicalDevice8BitStorageFeatures>().storageBuffer8BitAccess &&
+        m_deviceFeatures2.get<vk::PhysicalDevice8BitStorageFeatures>().uniformAndStorageBuffer8BitAccess;
 
     return indices.isComplete() && extensionsSupported && swapchainAdequate && supportsAllFeatures;
 }
@@ -131,6 +151,9 @@ QueueFamilyIndices Core::findQueueFamilies(vk::PhysicalDevice pDevice) {
         }
         if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eCompute && queueFamilies[i].timestampValidBits > 0) {
             indices.computeFamily = i;
+        }
+        if (queueFamilies[i].queueFlags & vk::QueueFlagBits::eTransfer && queueFamilies[i].timestampValidBits > 0) {
+            indices.transferFamily = i;
         }
         if (pDevice.getSurfaceSupportKHR(i, *_surface)) {
             indices.presentFamily = i;
@@ -203,22 +226,26 @@ void Core::createLogicalDevice(){
 	{
 		deviceCreateInfo = vk::DeviceCreateInfo({}, queueCreateInfos, {}, _deviceExtensions, {});
 	}
-    vk::StructureChain<vk::DeviceCreateInfo, vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT> deviceFeatureCreateInfo = {
+    vk::StructureChain<vk::DeviceCreateInfo, vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceRayTracingPipelineFeaturesKHR, vk::PhysicalDeviceAccelerationStructureFeaturesKHR, vk::PhysicalDeviceBufferDeviceAddressFeatures, vk::PhysicalDeviceDescriptorIndexingFeatures, vk::PhysicalDeviceMeshShaderFeaturesEXT, vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT, vk::PhysicalDevice8BitStorageFeatures> deviceFeatureCreateInfo = {
 		deviceCreateInfo,
 		vk::PhysicalDeviceFeatures2().setFeatures(vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true).setGeometryShader(true).setShaderSampledImageArrayDynamicIndexing(true).setFillModeNonSolid(true)),
 		vk::PhysicalDeviceRayTracingPipelineFeaturesKHR().setRayTracingPipeline(true),
 		vk::PhysicalDeviceAccelerationStructureFeaturesKHR().setAccelerationStructure(true),
 		vk::PhysicalDeviceBufferDeviceAddressFeatures().setBufferDeviceAddress(true),
 		vk::PhysicalDeviceDescriptorIndexingFeatures().setRuntimeDescriptorArray(true).setShaderSampledImageArrayNonUniformIndexing(true).setDescriptorBindingVariableDescriptorCount(true).setDescriptorBindingPartiallyBound(true),
-        vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT().setShaderBufferFloat32Atomics(true).setShaderBufferFloat32AtomicAdd(true)
+        vk::PhysicalDeviceMeshShaderFeaturesEXT().setMeshShader(true).setTaskShader(true),
+        vk::PhysicalDeviceShaderAtomicFloatFeaturesEXT().setShaderBufferFloat32Atomics(true).setShaderBufferFloat32AtomicAdd(true),
+        vk::PhysicalDevice8BitStorageFeatures().setStorageBuffer8BitAccess(true).setUniformAndStorageBuffer8BitAccess(true)
 	};
 
     _device = _physicalDevice.createDeviceUnique(deviceFeatureCreateInfo.get<vk::DeviceCreateInfo>());
 
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*_device);
 
     graphicsQueue = _device->getQueue(indices.graphicsFamily.value(), 0);
     computeQueue = _device->getQueue(indices.computeFamily.value(), 0);
     presentQueue = _device->getQueue(indices.presentFamily.value(), 0);
+    transferQueue = _device->getQueue(indices.transferFamily.value(), 0);
 }
 
 void Core::createAllocator(){
@@ -234,6 +261,10 @@ void Core::createAllocator(){
 
 void gpu::Core::createInstance()
 {
+
+    PFN_vkGetInstanceProcAddr getInstanceProcAddr = _dl.getProcAddress<PFN_vkGetInstanceProcAddr>( "vkGetInstanceProcAddr" );
+    VULKAN_HPP_DEFAULT_DISPATCHER.init( getInstanceProcAddr );
+
     if (_enableValidation && !checkValidationLayerSupport()) {
 		throw std::runtime_error("validation layers requested, but not available!");
 	}
@@ -243,6 +274,7 @@ void gpu::Core::createInstance()
 
     extensions.push_back("VK_EXT_debug_utils");
     extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    extensions.push_back( VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 	vk::ApplicationInfo applicationInfo("VulkanBase", VK_MAKE_VERSION(0, 0 ,1), "VulkanEngine", 1, VK_API_VERSION_1_1);
 
@@ -252,13 +284,13 @@ void gpu::Core::createInstance()
         static_cast<uint32_t>(extensions.size()), extensions.data() 
     });
 
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*_instance);
+
 }
-vk::DispatchLoaderDynamic Core::_dispatchLoaderDynamic;
+vk::DispatchLoaderDynamic Core::dispatchLoaderDynamic;
 void gpu::Core::createDebugMessenger()
 {
-  
-    Core::_dispatchLoaderDynamic = vk::DispatchLoaderDynamic(*_instance, vkGetInstanceProcAddr);
-
+    dispatchLoaderDynamic = vk::DispatchLoaderDynamic(*_instance, vkGetInstanceProcAddr);
     _debugMessenger = _instance->createDebugUtilsMessengerEXTUnique(
         vk::DebugUtilsMessengerCreateInfoEXT{ {},
             vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
@@ -266,7 +298,7 @@ void gpu::Core::createDebugMessenger()
             vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
                 vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
             debugCallback },
-        nullptr, _dispatchLoaderDynamic);
+        nullptr, dispatchLoaderDynamic);
 }
 
 vk::Buffer Core::createBuffer(vk::DeviceSize size, vk::BufferUsageFlags bufferUsage, vma::MemoryUsage memoryUsage, vma::AllocationCreateFlags allocationFlags){
@@ -366,8 +398,8 @@ void Core::endSingleTimeCommands(vk::CommandBuffer commandBuffer) {
     commandBuffer.end();
 
     vk::SubmitInfo submitInfoCopy({}, {}, commandBuffer, {});
-    graphicsQueue.submit(submitInfoCopy, {});
-    graphicsQueue.waitIdle();
+    transferQueue.submit(submitInfoCopy, {});
+    transferQueue.waitIdle();
     _device->freeCommandBuffers(*_commandPool, 1, &commandBuffer);
 }
 
@@ -981,6 +1013,12 @@ vk::ShaderModule Core::loadShaderModule(std::string src) {
     }
     else if (fileExtension == ".geom"){
         stage = shaderc_glsl_geometry_shader;
+    }
+    else if (fileExtension == ".mesh"){
+        stage = shaderc_glsl_mesh_shader;
+    }
+    else if (fileExtension == ".task"){
+        stage = shaderc_glsl_task_shader;
     }
 
     std::ifstream input_file(src);

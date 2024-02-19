@@ -1,0 +1,176 @@
+#version 450
+#extension GL_EXT_mesh_shader : require
+#extension GL_EXT_shader_8bit_storage: require
+#extension GL_EXT_control_flow_attributes: require
+// #extension GL_EXT_shader_explicit_arithmetic_types: require
+
+#define MESHLETS_PER_TASK 32
+#define THREADS_PER_MESHLET 32
+
+layout(local_size_x = THREADS_PER_MESHLET) in;
+layout(triangles) out;
+layout(max_vertices=256, max_primitives=256) out;
+
+
+layout( push_constant ) uniform Settings{
+    vec4 g; 
+
+    float r_LR;         
+    float h_LR; 
+    float rho0; 
+    float mass;
+
+    float maxCompression;	
+    float dt;	 
+    float DOMAIN_WIDTH; 
+    float DOMAIN_HEIGHT;  
+
+    float sleepingSpeed;
+    float h_HR;
+    float theta;                               
+    float rhoAir;                                 
+    
+    vec4 windDirection;      
+
+    float dragCoefficient;                
+    uint n_HR; 
+    float scale_W;
+    float scale_GradW;
+    float A_LR; 
+    float v_max;
+    float pad0;
+    float pad1; 
+} settings;
+
+layout(set = 0, binding = 0) uniform UniformBufferObject {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} camera;
+
+struct Vertex{
+  vec4 position;
+  vec4 normal;
+  vec2 uv;
+  vec4 color;
+  vec4 joint;
+  vec4 weight;
+  vec4 tangent;
+};
+
+layout(set = 0, binding = 1) readonly buffer VertexBuffer {
+    Vertex vertices[];
+} vertexBuffer; 
+
+struct Meshlet{
+  	uint vertex_offset;
+	uint triangle_offset;
+	uint vertex_count;
+	uint triangle_count;
+};
+
+layout(set = 0, binding = 2) readonly buffer MeshletBuffer {
+    Meshlet meshlets[];
+} meshletBuffer; 
+
+layout(set = 0, binding = 3) readonly buffer MeshletVertices {
+    uint vertices[];
+} meshletVertices; 
+
+layout(set = 0, binding = 4) readonly buffer MeshletTriangles {
+    uint8_t triangles[];
+} meshletTriangles; 
+
+struct MeshletBounds{
+	float center[3];
+	float radius;
+	float cone_apex[3];
+	float cone_axis[3];
+	float cone_cutoff;
+	int8_t cone_axis_s8[3];
+	int8_t cone_cutoff_s8;
+};
+
+layout(set = 0, binding = 5) readonly buffer MeshletBoundsBuffer {
+    MeshletBounds bounds[];
+} meshletBoundsBuffer; 
+
+
+struct HRParticle{
+    vec4 position;
+    vec4 velocity;
+    vec4 color;
+};
+
+layout(set = 0, binding = 6) buffer SSBO_HR{
+    HRParticle particles[];
+} ssbo_hr;
+
+struct Task {
+    uint meshletID;
+	  uint instanceIDs[MESHLETS_PER_TASK];
+    vec4 instancePositions[MESHLETS_PER_TASK];
+};
+taskPayloadSharedEXT Task task;
+
+// layout (location = 0) out vec3 outColor[];
+layout (location = 0) out vec4 outPosition[];
+layout (location = 1) out vec4 outNormal[];
+layout (location = 2) out vec2 outUV[];
+layout (location = 3) out vec4 outColor[];
+layout (location = 4) out vec4 outJoint[];
+layout (location = 5) out vec4 outWeight[];
+layout (location = 6) out vec4 outTangent[];
+
+uint meshletIndex = gl_WorkGroupID.x;
+uint laneID = gl_LocalInvocationID.x;
+
+void main()
+{
+  uint particleID = task.instanceIDs[meshletIndex];
+  mat4 VP = camera.proj * camera.view;
+
+  uint meshletID = task.meshletID;
+
+  Meshlet meshlet = meshletBuffer.meshlets[meshletID];
+  SetMeshOutputsEXT(meshlet.vertex_count, meshlet.triangle_count);
+  
+  uint vertexIterations = (meshlet.vertex_count + THREADS_PER_MESHLET - 1) / THREADS_PER_MESHLET;
+
+  // set positions
+  [[unroll]]
+  for(uint iteration = 0; iteration < vertexIterations; iteration++){
+    uint i = iteration * THREADS_PER_MESHLET + laneID;
+    if(i >= meshlet.vertex_count){
+      continue;
+    }
+    uint index = meshlet.vertex_offset + i;
+    uint vertexIndex = meshletVertices.vertices[index];
+    Vertex vertex = vertexBuffer.vertices[vertexIndex];
+
+    outColor[i] = ssbo_hr.particles[particleID].color;
+    vec4 position = (task.instancePositions[meshletIndex] + (settings.r_LR / 5) * vertex.position);
+    outNormal[i] = VP * vertex.normal; // this is not transposed inverse on purpose
+
+    gl_MeshVerticesEXT[i].gl_Position = VP * position;
+  }
+  //Await all vertices
+  barrier();
+
+  uint triangleIterations = (meshlet.triangle_count + THREADS_PER_MESHLET - 1) / THREADS_PER_MESHLET;
+
+  // set indices
+  [[unroll]]
+  for(uint iteration = 0; iteration < triangleIterations; iteration++){
+      uint i = iteration * THREADS_PER_MESHLET + laneID;
+      if(i >= meshlet.triangle_count){
+        continue;
+      }
+      gl_PrimitiveTriangleIndicesEXT[i] = uvec3(
+        meshletTriangles.triangles[meshlet.triangle_offset + i * 3 + 0],
+        meshletTriangles.triangles[meshlet.triangle_offset + i * 3 + 1],
+        meshletTriangles.triangles[meshlet.triangle_offset + i * 3 + 2]
+      );
+  }
+
+}

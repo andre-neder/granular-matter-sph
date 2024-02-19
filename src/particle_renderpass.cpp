@@ -4,6 +4,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/gtc/matrix_transform.hpp>
 #include "initializers.h"
+#include "granular_matter.h"
 
 using namespace gpu;
 
@@ -14,18 +15,57 @@ ParticleRenderPass::ParticleRenderPass(gpu::Core *core, gpu::Camera *camera)
 
     particleModel = Model();
     particleModel.load_from_glb(ASSETS_PATH "/models/grain_smooth.glb");
-    particleModelIndexBuffer = _core->bufferFromData(particleModel._indices.data(), particleModel._indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
-    particleModelVertexBuffer = _core->bufferFromData(particleModel._vertices.data(), particleModel._vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eVertexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+
+    std::vector<unsigned int> remap(particleModel._indices.size()); // allocate temporary memory for the remap table
+    const size_t max_vertices = 64;
+    const size_t max_triangles = 124;
+    const float cone_weight = 0.0f;
+
+    size_t max_meshlets = meshopt_buildMeshletsBound(particleModel._indices.size(), max_vertices, max_triangles);
+    _meshlets = std::vector<meshopt_Meshlet>(max_meshlets);
+    _meshletVertices = std::vector<unsigned int> (max_meshlets * max_vertices);
+    _meshletTriangles = std::vector<unsigned char> (max_meshlets * max_triangles * 3);
+
+    size_t meshlet_count = meshopt_buildMeshlets(_meshlets.data(), _meshletVertices.data(), _meshletTriangles.data(),  particleModel._indices.data(),  particleModel._indices.size(), glm::value_ptr(particleModel._vertices.data()[0].pos), particleModel._vertices.size(), sizeof(Vertex), max_vertices, max_triangles, cone_weight);
+
+    const meshopt_Meshlet& last = _meshlets[meshlet_count - 1];
+
+    _meshletVertices.resize(last.vertex_offset + last.vertex_count);
+    _meshletTriangles.resize(last.triangle_offset + ((last.triangle_count * 3 + 3) & ~3));
+    _meshlets.resize(meshlet_count);
+    _meshletBounds.resize(meshlet_count);
+
+    // generate bounds for meshlets
+    for(int i = 0; i < meshlet_count; i++){
+        auto& m = _meshlets[i];
+        _meshletBounds[i] = meshopt_computeMeshletBounds(&_meshletVertices[m.vertex_offset], &_meshletTriangles[m.triangle_offset],
+        m.triangle_count, glm::value_ptr(particleModel._vertices.data()[0].pos), particleModel._vertices.size(), sizeof(Vertex));  
+    }
+    std::cout << "[model] " << "vertices: " << particleModel._vertices.size() << " indices: " << particleModel._indices.size() << " meshlets: " << meshlet_count << std::endl;
+
+    // particleModelIndexBuffer = _core->bufferFromData(particleModel._indices.data(), particleModel._indices.size() * sizeof(uint32_t), vk::BufferUsageFlagBits::eIndexBuffer, vma::MemoryUsage::eAutoPreferDevice);
+    particleModelVertexBuffer = _core->bufferFromData(particleModel._vertices.data(), particleModel._vertices.size() * sizeof(Vertex), vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
+    _meshletBuffer = _core->bufferFromData(_meshlets.data(), _meshlets.size() * sizeof(meshopt_Meshlet), vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
+    _meshletBoundsBuffer = _core->bufferFromData(_meshletBounds.data(), _meshletBounds.size() * sizeof(meshopt_Bounds), vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
+    _meshletVerticesBuffer = _core->bufferFromData(_meshletVertices.data(), _meshletVertices.size() * sizeof(unsigned int), vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
+    _meshletTrianglesBuffer = _core->bufferFromData(_meshletTriangles.data(), _meshletTriangles.size() * sizeof(unsigned char), vk::BufferUsageFlagBits::eStorageBuffer, vma::MemoryUsage::eAutoPreferDevice);
 }
 void ParticleRenderPass::init()
 {
 
-    vertShaderModule = _core->loadShaderModule(SHADER_PATH "/shader.vert");
+    meshShaderModule = _core->loadShaderModule(SHADER_PATH "/shader.mesh");
+    taskShaderModule = _core->loadShaderModule(SHADER_PATH "/shader.task");
     fragShaderModule = _core->loadShaderModule(SHADER_PATH "/shader.frag");
     geomShaderModule = _core->loadShaderModule(SHADER_PATH"/shader.geom");
 
     descriptorSetLayout = _core->createDescriptorSetLayout({
-        {0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eGeometry}
+        {0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment},
+        {1, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment},
+        {2, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment},
+        {3, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment},
+        {4, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment},
+        {5, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment},
+        {6, vk::DescriptorType::eStorageBuffer, vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT | vk::ShaderStageFlagBits::eFragment},
     });
     
     _renderContext = RenderContext(_core, vk::AttachmentLoadOp::eClear, vk::AttachmentStoreOp::eStore);
@@ -63,25 +103,16 @@ void ParticleRenderPass::update(int imageIndex, float dt)
     _renderContext.beginRenderPass(imageIndex);
 
     _renderContext.getCommandBuffer().bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-    std::vector<vk::Buffer> vertexBuffers = {vertexBuffer[_core->_swapchainContext._currentFrame]};
-    std::vector<vk::DeviceSize> offsets = {0};
-
-    _renderContext.getCommandBuffer().bindVertexBuffers(0, particleModelVertexBuffer, offsets);
-    _renderContext.getCommandBuffer().bindIndexBuffer(particleModelIndexBuffer, 0, vk::IndexType::eUint32);
-
-    _renderContext.getCommandBuffer().bindVertexBuffers(1, vertexBuffers, offsets);
 
     _renderContext.getCommandBuffer().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, 1, &descriptorSets[_core->_swapchainContext._currentFrame], 0, nullptr);
 
-    _renderContext.getCommandBuffer().pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(SPHSettings), &settings);
+    _renderContext.getCommandBuffer().pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT, 0, sizeof(SPHSettings), &settings);
 
-    for (auto node : particleModel._linearNodes)
-    {
-        for (auto primitive : node->primitives)
-        {
-            _renderContext.getCommandBuffer().drawIndexed(primitive->indexCount, vertexCount, primitive->firstIndex, 0, 0);
-        }
-    }
+
+    size_t numTasks = 1; //static_cast<size_t>(std::ceil(_meshlets.size() / 32.f));
+    size_t numInstances = static_cast<size_t>(std::ceil(vertexCount / 32.f));
+    _renderContext.getCommandBuffer().drawMeshTasksEXT( numInstances, numTasks,1);
+
 
     _renderContext.endRenderPass();
     _renderContext.endCommandBuffer();
@@ -96,35 +127,35 @@ void ParticleRenderPass::createDescriptorSets()
     for (size_t i = 0; i < gpu::MAX_FRAMES_IN_FLIGHT; i++)
     {
         _core->addDescriptorWrite(descriptorSets[i], {0, vk::DescriptorType::eUniformBuffer, uniformBuffers[i], sizeof(UniformBufferObject)});
+        _core->addDescriptorWrite(descriptorSets[i], {1, vk::DescriptorType::eStorageBuffer, particleModelVertexBuffer, particleModel._vertices.size() * sizeof(Vertex)});
+        _core->addDescriptorWrite(descriptorSets[i], {2, vk::DescriptorType::eStorageBuffer, _meshletBuffer, _meshlets.size() * sizeof(meshopt_Meshlet)});
+        _core->addDescriptorWrite(descriptorSets[i], {3, vk::DescriptorType::eStorageBuffer, _meshletVerticesBuffer, _meshletVertices.size() * sizeof(unsigned int)});
+        _core->addDescriptorWrite(descriptorSets[i], {4, vk::DescriptorType::eStorageBuffer, _meshletTrianglesBuffer, _meshletTriangles.size() * sizeof(unsigned char)});
+        _core->addDescriptorWrite(descriptorSets[i], {5, vk::DescriptorType::eStorageBuffer, _meshletBoundsBuffer, _meshletBounds.size() * sizeof(meshopt_Bounds)});
+        _core->addDescriptorWrite(descriptorSets[i], {6, vk::DescriptorType::eStorageBuffer, vertexBuffer, vertexCount * sizeof(HRParticle)});
         _core->updateDescriptorSet(descriptorSets[i]);
     }
 }
 
 void ParticleRenderPass::createGraphicsPipeline()
 {
-    vk::PipelineShaderStageCreateInfo vertShaderStageInfo({}, vk::ShaderStageFlagBits::eVertex, vertShaderModule, "main");
-    vk::PipelineShaderStageCreateInfo geomShaderStageInfo({}, vk::ShaderStageFlagBits::eGeometry, geomShaderModule, "main");
+    vk::PipelineShaderStageCreateInfo taskShaderStageInfo({}, vk::ShaderStageFlagBits::eTaskEXT, taskShaderModule, "main");
+    vk::PipelineShaderStageCreateInfo meshShaderStageInfo({}, vk::ShaderStageFlagBits::eMeshEXT, meshShaderModule, "main");
     vk::PipelineShaderStageCreateInfo fragShaderStageInfo({}, vk::ShaderStageFlagBits::eFragment, fragShaderModule, "main");
 
     std::vector<vk::PipelineShaderStageCreateInfo> shaderStages = {
-        vertShaderStageInfo, 
-        // geomShaderStageInfo , 
+        taskShaderStageInfo, 
+        meshShaderStageInfo, 
         fragShaderStageInfo
     }; 
 
-    auto vertexDescription = Vertex::get_vertex_description();
-
     std::vector<vk::VertexInputBindingDescription> bindings;
-    bindings.insert(bindings.end(), vertexDescription.bindings.begin(), vertexDescription.bindings.end());
-    bindings.insert(bindings.end(), bindingDescription.begin(), bindingDescription.end());
     std::vector<vk::VertexInputAttributeDescription> attributes;
-    attributes.insert(attributes.end(), vertexDescription.attributes.begin(), vertexDescription.attributes.end());
-    attributes.insert(attributes.end(), attributeDescriptions.begin(), attributeDescriptions.end());
 
     vk::PipelineVertexInputStateCreateInfo vertexInputInfo({}, bindings, attributes);
     vk::PipelineInputAssemblyStateCreateInfo inputAssembly({}, vk::PrimitiveTopology::eTriangleList, VK_FALSE);
     vk::PipelineRasterizationStateCreateInfo rasterizer({}, VK_FALSE, VK_FALSE, vk::PolygonMode::eFill, vk::CullModeFlagBits::eBack, vk::FrontFace::eCounterClockwise, VK_FALSE, 0.0f, 0.0f, 0.0f, 1.0f);
-    vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eGeometry, 0, sizeof(SPHSettings)};
+    vk::PushConstantRange pushConstantRange{vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eMeshEXT | vk::ShaderStageFlagBits::eTaskEXT, 0, sizeof(SPHSettings)};
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo({}, 1, &descriptorSetLayout, 1, &pushConstantRange, nullptr);
 
     pipelineLayout = _core->getDevice().createPipelineLayout(pipelineLayoutInfo);
@@ -180,12 +211,18 @@ void ParticleRenderPass::destroy()
     destroyFrameResources();
 
     _core->getDevice().destroyShaderModule(fragShaderModule);
-    _core->getDevice().destroyShaderModule(vertShaderModule);
+    _core->getDevice().destroyShaderModule(taskShaderModule);
+    _core->getDevice().destroyShaderModule(meshShaderModule);
     _core->getDevice().destroyShaderModule(geomShaderModule);
 
     particleModel.destroy();
-    _core->destroyBuffer(particleModelIndexBuffer);
+    // _core->destroyBuffer(particleModelIndexBuffer);
     _core->destroyBuffer(particleModelVertexBuffer);
+
+    _core->destroyBuffer(_meshletBuffer);
+    _core->destroyBuffer(_meshletBoundsBuffer);
+    _core->destroyBuffer(_meshletVerticesBuffer);
+    _core->destroyBuffer(_meshletTrianglesBuffer);
         
     _core->getDevice().destroyPipelineLayout(pipelineLayout);
     _core->getDevice().destroyPipeline(graphicsPipeline);

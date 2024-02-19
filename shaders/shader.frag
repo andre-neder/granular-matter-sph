@@ -39,19 +39,34 @@ layout( push_constant ) uniform Settings{
 
 layout(location = 0) out vec4 outColor;
 
-layout(location = 0) in vec3 inNormal;
-layout(location = 1) in vec3 eye;
-layout(location = 2) in vec3 inVelocity;
-layout(location = 3) in vec3 inPosition;
-layout(location = 9) in vec4 inColor;
+// layout(location = 0) in vec3 inNormal;
+// layout(location = 1) in vec3 eye;
+// layout(location = 2) in vec3 inVelocity;
+// layout(location = 3) in vec3 inPosition;
+// layout(location = 9) in vec4 inColor;
+
+layout(set = 0, binding = 0) uniform UniformBufferObject {
+    mat4 model;
+    mat4 view;
+    mat4 proj;
+} camera;
+
+layout (location = 0) in vec4 inPosition;
+layout (location = 1) in vec4 inNormal;
+layout (location = 2) in vec2 inUV;
+layout (location = 3) in vec4 inColor;
+layout (location = 4) in vec4 inJoint;
+layout (location = 5) in vec4 inWeight;
+layout (location = 6) in vec4 inTangent;
 
 vec3 lightDir = vec3(1.0, 1.0, 1.0);
+vec4 lightColor = vec4(1.0);
+vec4 ambient = vec4(0.3);
+
 void main() {
     vec4 sand = inColor; // vec4(inVelocity, 1.0); //vec4(vec3(length(inVelocity), 0.0, 1 - length(inVelocity)),1.0); //
-    vec4 lightColor = vec4(1.0);
-    vec4 ambient = vec4(0.3);
 
-    float phi = max(dot(normalize(inNormal), normalize(eye)), 0.0);
+    float phi = max(dot(normalize(inNormal), normalize(camera.view[3])), 0.0);
     outColor = sand * ambient + sand * cos(1 - phi) * lightColor;
     
     // float diff = max(dot(normalize(inNormal), lightDir), 0.0);
