@@ -69,8 +69,8 @@ layout(set = 0, binding = 5) readonly buffer MeshletBoundsBuffer {
 
 
 struct HRParticle{
-    vec4 position;
-    vec4 velocity;
+    vec3 position;
+    vec3 velocity;
     vec4 color;
 };
 
@@ -87,7 +87,6 @@ uint laneID = gl_LocalInvocationID.x;
 struct Task {
     uint meshletID;
 	uint instanceIDs[MESHLETS_PER_TASK];
-	vec4 instancePositions[MESHLETS_PER_TASK];
 };
 taskPayloadSharedEXT Task task;
 
@@ -117,7 +116,6 @@ void main()
 	uint idxOffset  = subgroupBallotExclusiveBitCount(voteMeshlets) + outMeshletsCount; // get the index of true values of this thread in the mask
 	if(render){
 		task.instanceIDs[idxOffset] = instanceID;
-		task.instancePositions[idxOffset] = ssbo_hr.particles[instanceID].position;
 	}
 	
 	memoryBarrierShared(); 

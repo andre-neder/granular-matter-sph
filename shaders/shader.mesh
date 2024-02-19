@@ -109,7 +109,6 @@ layout(set = 0, binding = 6) buffer SSBO_HR{
 struct Task {
     uint meshletID;
 	  uint instanceIDs[MESHLETS_PER_TASK];
-    vec4 instancePositions[MESHLETS_PER_TASK];
 };
 taskPayloadSharedEXT Task task;
 
@@ -124,6 +123,8 @@ layout (location = 6) out vec4 outTangent[];
 
 uint meshletIndex = gl_WorkGroupID.x;
 uint laneID = gl_LocalInvocationID.x;
+
+#define PARTICLE_SIZE (0.25 / 5)
 
 void main()
 {
@@ -146,11 +147,13 @@ void main()
     }
     uint index = meshlet.vertex_offset + i;
     uint vertexIndex = meshletVertices.vertices[index];
-    Vertex vertex = vertexBuffer.vertices[vertexIndex];
 
     outColor[i] = ssbo_hr.particles[particleID].color;
-    vec4 position = (task.instancePositions[meshletIndex] + (settings.r_LR / 5) * vertex.position);
-    outNormal[i] = VP * vertex.normal; // this is not transposed inverse on purpose
+    vec4 particlePosition = ssbo_hr.particles[particleID].position;
+    vec4 vertexPosition = vertexBuffer.vertices[vertexIndex].position;
+    
+    vec4 position = (particlePosition + PARTICLE_SIZE * vertexPosition);
+    outNormal[i] = VP * vertexBuffer.vertices[vertexIndex].normal; // this is not transposed inverse on purpose
 
     gl_MeshVerticesEXT[i].gl_Position = VP * position;
   }
