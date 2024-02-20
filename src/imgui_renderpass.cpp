@@ -320,13 +320,18 @@ void ImguiRenderPass::update(int imageIndex, float dt){
                 ImGui::Text("Simulation speed factor");
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Text(std::to_string(simulationSpeedFactor).c_str());
+            ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                ImGui::Text("subTimeStep");
+                ImGui::TableSetColumnIndex(1);
+                ImGui::Text(std::to_string(subTimeStep).c_str());
         ImGui::EndTable();
-        
+        ImGui::InputInt("Substeps", &substeps, 1 ,10);
         ImGui::InputInt("Pause on frame", &pauseOnFrame, -1,10000);
-
-        ImGui::SliderFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 3000.f );
         ImGui::InputFloat("Maximum compression", &settings.maxCompression, 0.0001f, 0.001f);
         ImGui::InputFloat("Maximum timestep", &settings.maxTimestep, 0.008f);
+
+        ImGui::SliderFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 3000.f );
         ImGui::SliderFloat("Mass (kg)", &settings.mass, 1.f, 100.f);
         // ImGui::DragFloat("Kernel Radius (m)", &settings.h_LR, 1.f, 0.1f, 100.f);
         // ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);

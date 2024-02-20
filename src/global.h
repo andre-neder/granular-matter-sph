@@ -19,6 +19,9 @@ extern int pauseOnFrame;
 extern int currentFrameCount;
 extern float simulationSpeedFactor;
 
+extern float subTimeStep;
+extern int substeps;
+
 struct SPHSettings{
     glm::vec4 g = glm::vec4(0.f, -9.81f, 0.f, 0.f);          //* m/s^2
     
