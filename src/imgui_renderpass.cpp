@@ -277,7 +277,7 @@ void ImguiRenderPass::update(int imageIndex, float dt){
     }
     ImGui::End();
 
-    ImGui::Begin("Scene"); 
+    ImGui::Begin("Simulation"); 
     {
         if (ImGui::Button("Wireframe"))
         {
@@ -287,20 +287,18 @@ void ImguiRenderPass::update(int imageIndex, float dt){
         {
             changeSceneCallback(0);
         }
+        ImGui::SameLine();
         if (ImGui::Button("1"))
         {
             changeSceneCallback(1);
         }
+        ImGui::SameLine();
         if (ImGui::Button("2"))
         {
             changeSceneCallback(2);
         }
-    }
-    ImGui::End();
-
-
-    ImGui::Begin("Simulation", &showSimulationSettings);
-    {
+        
+        ImGui::SeparatorText("Simulation");
         if (ImGui::Button("Reset"))
         {
             resetSimulation = true;
@@ -326,25 +324,29 @@ void ImguiRenderPass::update(int imageIndex, float dt){
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Text(std::to_string(subTimeStep).c_str());
         ImGui::EndTable();
+
         ImGui::InputInt("Substeps", &substeps, 1 ,10);
         ImGui::InputInt("Pause on frame", &pauseOnFrame, -1,10000);
-        ImGui::InputFloat("Maximum compression", &settings.maxCompression, 0.0001f, 0.001f);
         ImGui::InputFloat("Maximum timestep", &settings.maxTimestep, 0.008f);
 
+    
+        ImGui::SeparatorText("External");
+        ImGui::DragFloat3("Gravity (m/s^2)", glm::value_ptr(settings.g));
+        
+        ImGui::SeparatorText("Material");
+        ImGui::InputFloat("Maximum compression", &settings.maxCompression, 0.0001f, 0.001f);
         ImGui::SliderFloat("Rest Density (kg/m^2)", &settings.rho0, 1.f, 3000.f );
         ImGui::SliderFloat("Mass (kg)", &settings.mass, 1.f, 100.f);
-        // ImGui::DragFloat("Kernel Radius (m)", &settings.h_LR, 1.f, 0.1f, 100.f);
-        // ImGui::DragFloat("Sleeping Speed (m/s)", &settings.sleepingSpeed, 0.05f, 0.01f, 1.f);
         ImGui::SliderAngle("Angle of repose",&settings.theta, 0.f, 90.f, "%.0f°");
-        // ImGui::DragFloat("Viscosity constant", &settings.sigma, 1.f, 0.01f, 10.f);
-        ImGui::DragFloat3("Gravity (m/s^2)", glm::value_ptr(settings.g));
+        
+        ImGui::SeparatorText("Air"); 
         ImGui::DragFloat3("Air velocity (m/s)", glm::value_ptr(settings.windDirection));
         ImGui::DragFloat("Air Density", &settings.rhoAir, 1.f, 0.01f, 10.f);
         ImGui::DragFloat("Drag Coefficient", &settings.dragCoefficient, 1.f, 0.01f, 10.f);
     }
     ImGui::End();
 
-    // ImGui::ShowDemoWindow(&show_demo_window);
+    ImGui::ShowDemoWindow(&show_demo_window);
 
     ImGui::End();
 

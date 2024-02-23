@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  16 FEB 2024 09:43
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.10) (preloaded format=pdflatex 2023.11.13)  23 FEB 2024 12:28
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -866,142 +866,142 @@ Overfull \hbox (1.72432pt too wide) in paragraph at lines 107--108
  []
 
 
-Overfull \hbox (30.6345pt too wide) in paragraph at lines 121--122
+Underfull \hbox (badness 10000) in paragraph at lines 115--116
+
+ []
+
+
+Overfull \hbox (30.6345pt too wide) in paragraph at lines 123--124
 \T1/cmr/m/n/10.95 Predictive-Corrective In-com-press-ible Smoothed Par-ti-cle Hy-dro-dy-nam-ics (PCISPH)
  []
 
-[5] [6]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 130.
+[5] [6] [7]
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 147.
  (C:\Users\andre\AppData\Local\Programs\MiKTeX\tex/latex/base\t1cmtt.fd
 File: t1cmtt.fd 2023/04/13 v2.5m Standard LaTeX font definitions
-) [7]
-Overfull \hbox (19.11086pt too wide) in paragraph at lines 154--155
-[]$\T1/cmtt/m/n/10.95 https : / / github . com / InteractiveComputerGraphics / TriangleMeshDistance$[] 
- []
-
-[8]
-Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 161.
+) [8]
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on input line 163.
  [9]
-Overfull \hbox (1.78055pt too wide) in paragraph at lines 185--189
+Overfull \hbox (1.78055pt too wide) in paragraph at lines 187--191
 \T1/cmr/m/n/10.95 Using the SPH ap-prox-i-ma-tion in-volves find-ing all neigh-bor-ing par-ti-cles within
  []
 
 [10] [11] [12] [13] [14] [15] [16]
-<figures/particle_boundary.png, id=399, 120.57045pt x 60.4659pt>
+<figures/particle_boundary.png, id=411, 120.57045pt x 60.4659pt>
 File: figures/particle_boundary.png Graphic file (type png)
 <use figures/particle_boundary.png>
-Package pdftex.def Info: figures/particle_boundary.png  used on input line 428.
+Package pdftex.def Info: figures/particle_boundary.png  used on input line 430.
 (pdftex.def)             Requested size: 180.0pt x 90.2751pt.
  [17 <./figures/particle_boundary.png>]
-<figures/volume_map_slice_xyz.png, id=414, 24.09pt x 25.59563pt>
+<figures/volume_map_slice_xyz.png, id=425, 24.09pt x 25.59563pt>
 File: figures/volume_map_slice_xyz.png Graphic file (type png)
 <use figures/volume_map_slice_xyz.png>
-Package pdftex.def Info: figures/volume_map_slice_xyz.png  used on input line 466.
+Package pdftex.def Info: figures/volume_map_slice_xyz.png  used on input line 474.
 (pdftex.def)             Requested size: 180.0pt x 191.34369pt.
-<figures/volume_map_slice_w.png, id=415, 355.3275pt x 379.4175pt>
+<figures/volume_map_slice_w.png, id=426, 355.3275pt x 379.4175pt>
 File: figures/volume_map_slice_w.png Graphic file (type png)
 <use figures/volume_map_slice_w.png>
-Package pdftex.def Info: figures/volume_map_slice_w.png  used on input line 467.
+Package pdftex.def Info: figures/volume_map_slice_w.png  used on input line 475.
 (pdftex.def)             Requested size: 180.0pt x 192.2093pt.
 
-Overfull \hbox (2.42162pt too wide) in paragraph at lines 466--468
+Overfull \hbox (2.42162pt too wide) in paragraph at lines 474--476
 [][] [] 
  []
 
 [18]
-<figures/sampling.png, id=425, 375.4025pt x 375.4025pt>
+<figures/sampling.png, id=437, 375.4025pt x 375.4025pt>
 File: figures/sampling.png Graphic file (type png)
 <use figures/sampling.png>
-Package pdftex.def Info: figures/sampling.png  used on input line 480.
+Package pdftex.def Info: figures/sampling.png  used on input line 488.
 (pdftex.def)             Requested size: 180.0pt x 180.00212pt.
  [19 <./figures/volume_map_slice_xyz.png (PNG copy)> <./figures/volume_map_slice_w.png>] [20 <./figures/sampling.png>] [21]
-<figures/ui.png, id=455, 1446.15282pt x 777.65532pt>
+<figures/ui.png, id=467, 1446.15282pt x 777.65532pt>
 File: figures/ui.png Graphic file (type png)
 <use figures/ui.png>
-Package pdftex.def Info: figures/ui.png  used on input line 539.
+Package pdftex.def Info: figures/ui.png  used on input line 547.
 (pdftex.def)             Requested size: 360.0pt x 193.58273pt.
  [22 <./figures/ui.png>]
-<figures/pile_30_1000.png, id=471, 1047.16219pt x 266.49562pt>
+<figures/pile_30_1000.png, id=483, 1047.16219pt x 266.49562pt>
 File: figures/pile_30_1000.png Graphic file (type png)
 <use figures/pile_30_1000.png>
-Package pdftex.def Info: figures/pile_30_1000.png  used on input line 552.
+Package pdftex.def Info: figures/pile_30_1000.png  used on input line 560.
 (pdftex.def)             Requested size: 216.0022pt x 54.96945pt.
-<figures/pile_45_1000.png, id=472, 1047.16219pt x 266.49562pt>
+<figures/pile_45_1000.png, id=484, 1047.16219pt x 266.49562pt>
 File: figures/pile_45_1000.png Graphic file (type png)
 <use figures/pile_45_1000.png>
-Package pdftex.def Info: figures/pile_45_1000.png  used on input line 553.
+Package pdftex.def Info: figures/pile_45_1000.png  used on input line 561.
 (pdftex.def)             Requested size: 216.0022pt x 54.96945pt.
-<figures/pile_60_1000.png, id=473, 1047.16219pt x 266.49562pt>
+<figures/pile_60_1000.png, id=485, 1047.16219pt x 266.49562pt>
 File: figures/pile_60_1000.png Graphic file (type png)
 <use figures/pile_60_1000.png>
-Package pdftex.def Info: figures/pile_60_1000.png  used on input line 554.
+Package pdftex.def Info: figures/pile_60_1000.png  used on input line 562.
 (pdftex.def)             Requested size: 216.0022pt x 54.96945pt.
-<figures/layer_step.png, id=483, 773.13844pt x 263.48438pt>
+<figures/layer_step.png, id=495, 773.13844pt x 263.48438pt>
 File: figures/layer_step.png Graphic file (type png)
 <use figures/layer_step.png>
-Package pdftex.def Info: figures/layer_step.png  used on input line 567.
+Package pdftex.def Info: figures/layer_step.png  used on input line 575.
 (pdftex.def)             Requested size: 180.0pt x 61.3439pt.
-<figures/layer_step_hr.png, id=484, 1053.9375pt x 355.3275pt>
+<figures/layer_step_hr.png, id=496, 1053.9375pt x 355.3275pt>
 File: figures/layer_step_hr.png Graphic file (type png)
 <use figures/layer_step_hr.png>
-Package pdftex.def Info: figures/layer_step_hr.png  used on input line 568.
+Package pdftex.def Info: figures/layer_step_hr.png  used on input line 576.
 (pdftex.def)             Requested size: 180.0pt x 60.68138pt.
 
-Overfull \hbox (2.42162pt too wide) in paragraph at lines 567--569
+Overfull \hbox (2.42162pt too wide) in paragraph at lines 575--577
 [][] [] 
  []
 
-[23 <./figures/pile_30_1000.png> <./figures/pile_45_1000.png> <./figures/pile_60_1000.png>]
-<figures/sticking.png, id=494, 859.71187pt x 587.19376pt>
+[23 <./figures/pile_30_1000.png> <./figures/pile_45_1000.png> <./figures/pile_60_1000.png>] [24 <./figures/layer_step.png> <./figures/layer_step_hr.png>]
+<figures/sticking.png, id=516, 859.71187pt x 587.19376pt>
 File: figures/sticking.png Graphic file (type png)
 <use figures/sticking.png>
-Package pdftex.def Info: figures/sticking.png  used on input line 579.
+Package pdftex.def Info: figures/sticking.png  used on input line 587.
 (pdftex.def)             Requested size: 251.9989pt x 172.11859pt.
- [24 <./figures/layer_step.png> <./figures/layer_step_hr.png>]
-Overfull \hbox (33.51523pt too wide) in paragraph at lines 590--592
-[]\T1/cmr/m/n/10.95 The code for this project can be found here []$\T1/cmtt/m/n/10.95 https : / / github . com / andre-[]neder /
- []
-
-[25 <./figures/sticking.png>] (ma.lof)
+ [25 <./figures/sticking.png>] [26] (ma.lof)
 \tf@lof=\write6
 \openout6 = `ma.lof'.
 
- [26]
-Overfull \hbox (9.0571pt too wide) in paragraph at lines 595--595
+ [27]
+Overfull \hbox (9.0571pt too wide) in paragraph at lines 605--605
 \T1/cmr/m/n/10.95 Gran-u-lar Me-dia,^^Q in \T1/cmr/m/it/10.95 CEIG 09 - Con-greso Es-panol de In-for-mat-ica Grafica\T1/cmr/m/n/10.95 ,
  []
 
-[27]
-Overfull \hbox (12.014pt too wide) in paragraph at lines 595--595
+[28]
+Overfull \hbox (12.014pt too wide) in paragraph at lines 605--605
 []\T1/cmr/m/n/10.95 A. Som-mer, U. Schwa-necke, and E. Schoe-mer, ^^P  In-ter-ac-tive high-resolution
  []
 
-[28]
-Overfull \hbox (13.28271pt too wide) in paragraph at lines 595--595
+[29]
+Overfull \hbox (13.28271pt too wide) in paragraph at lines 605--605
 \T1/cmr/m/n/10.95 frac-tals, de-moscene and more,^^Q [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / iquilezles .
  []
 
 
-Overfull \hbox (13.28271pt too wide) in paragraph at lines 595--595
+Overfull \hbox (13.28271pt too wide) in paragraph at lines 605--605
 \T1/cmr/m/n/10.95 frac-tals, de-moscene and more,^^Q [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / iquilezles .
  []
 
 
-Overfull \hbox (25.93573pt too wide) in paragraph at lines 595--595
+Overfull \hbox (25.93573pt too wide) in paragraph at lines 605--605
 []\T1/cmr/m/n/10.95 J. Ben-der \T1/cmr/m/it/10.95 et al.\T1/cmr/m/n/10.95 , ^^P  Splish-splash,^^Q [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / splishsplash .
  []
 
-[29]
-Overfull \hbox (25.19208pt too wide) in paragraph at lines 595--595
+[30]
+Overfull \hbox (25.19208pt too wide) in paragraph at lines 605--605
 \T1/cmr/m/n/10.95 [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / github . com / InteractiveComputerGraphics /
  []
 
 
-Overfull \hbox (7.3339pt too wide) in paragraph at lines 595--595
+Overfull \hbox (7.3339pt too wide) in paragraph at lines 605--605
 []\T1/cmr/m/n/10.95 S. Bar-den-hagen, J. Brack-bill, and D. Sul-sky, ^^P  The material-point method
  []
 
-[30] (ma.aux)
+[31]
+Overfull \hbox (18.8776pt too wide) in paragraph at lines 605--605
+[]\T1/cmr/m/n/10.95 learnopengl.com, ^^P  In-stanc-ing,^^Q [On-line]. Avail-able: []$\T1/cmtt/m/n/10.95 https : / / learnopengl .
+ []
+
+[32] (ma.aux)
  ***********
 LaTeX2e <2023-06-01> patch level 1
 L3 programming layer <2023-08-29>
@@ -1013,17 +1013,17 @@ Package logreq Info: Writing requests to 'ma.run.xml'.
 
  ) 
 Here is how much of TeX's memory you used:
- 25272 strings out of 475248
- 452593 string characters out of 5757812
+ 25318 strings out of 475248
+ 454006 string characters out of 5757812
  1936785 words of memory out of 5000000
- 46307 multiletter control sequences out of 15000+600000
+ 46340 multiletter control sequences out of 15000+600000
  583672 words of font info for 102 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,12n,81p,2245b,2532s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
-Output written on ma.pdf (33 pages, 2636021 bytes).
+ 75i,12n,81p,2281b,2532s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\eccc1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0900.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1200.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1095.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm2074.pk> <C:\Users\andre\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecbx2074.pk><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmex8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/andre/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msam10.pfb>
+Output written on ma.pdf (35 pages, 2643976 bytes).
 PDF statistics:
- 1262 PDF objects out of 1440 (max. 8388607)
- 171 named destinations out of 1000 (max. 500000)
+ 1304 PDF objects out of 1440 (max. 8388607)
+ 184 named destinations out of 1000 (max. 500000)
  276 words of extra memory for PDF output out of 10000 (max. 10000000)
 
