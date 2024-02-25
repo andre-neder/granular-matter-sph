@@ -18,6 +18,7 @@
 \usepackage{cleveref}
 \usepackage{blindtext}
 \usepackage{titlesec}
+\usepackage[symbols,nogroupskip,record,toc=false]{glossaries-extra}
 \nocite{*}
 \usepackage[
     backend=biber,
@@ -37,6 +38,47 @@
 \zweitgutachterInfo{(Institut für Computervisualistik, AG Computergraphik)}
 % \externLogo{7.46cm}{logos/ExternLogoPlaceholder}
 % \externName{DIN: NewTechnologies}
+
+\glsxtrnewsymbol[description={particle index}]{i, j}{\ensuremath{i}, \ensuremath{j}}
+\glsxtrnewsymbol[description={boundary index}]{b}{\ensuremath{b}}
+\glsxtrnewsymbol[description={iteration index}]{l}{\ensuremath{l}}
+\glsxtrnewsymbol[description={density}]{rho}{\ensuremath{\rho}}
+\glsxtrnewsymbol[description={pressure}]{p}{\ensuremath{p}}
+\glsxtrnewsymbol[description={friction}]{f}{\ensuremath{p}}
+\glsxtrnewsymbol[description={position}]{x}{\ensuremath{x}}
+\glsxtrnewsymbol[description={velocity}]{v, u}{\ensuremath{v}, \ensuremath{u}}
+\glsxtrnewsymbol[description={force}]{F}{\ensuremath{F}}
+\glsxtrnewsymbol[description={time}]{t}{\ensuremath{t}, \ensuremath{\Delta t}}
+\glsxtrnewsymbol[description={mass}]{m}{\ensuremath{m}}
+\glsxtrnewsymbol[description={volume}]{V}{\ensuremath{V}}
+\glsxtrnewsymbol[description={strain}]{varepsilon}{\ensuremath{\varepsilon}}
+\glsxtrnewsymbol[description={stress}]{s}{\ensuremath{s}}
+\glsxtrnewsymbol[description={strain to stress relation tensor}]{D}{\ensuremath{D}}
+\glsxtrnewsymbol[description={gradient operator}]{nabla}{\ensuremath{\nabla}}
+\glsxtrnewsymbol[description={dynamic viscosity}]{mu}{\ensuremath{\mu}}
+\glsxtrnewsymbol[description={an arbitrary field}]{H}{\ensuremath{H}}
+\glsxtrnewsymbol[description={particle radius}]{r}{\ensuremath{r}}
+\glsxtrnewsymbol[description={a kernel function}]{W, w}{\ensuremath{W}, \ensuremath{w}}
+\glsxtrnewsymbol[description={cubic spline kernel function}]{C(x)}{\ensuremath{C(x)}}
+\glsxtrnewsymbol[description={kernel radius (smoothing length)}]{h}{\ensuremath{h}}
+\glsxtrnewsymbol[description={distance between two particles}]{delta}{\ensuremath{\delta}}
+\glsxtrnewsymbol[description={surface normal}]{n}{\ensuremath{n}}
+\glsxtrnewsymbol[description={frictional coefficient}]{alpha}{\ensuremath{\alpha}}
+\glsxtrnewsymbol[description={angle of repose}]{theta}{\ensuremath{\theta}}
+\glsxtrnewsymbol[description={stiffness parameters}]{k, B, gamma}{\ensuremath{k}, \ensuremath{B}, \ensuremath{\gamma}}
+\glsxtrnewsymbol[description={cubic extension function}]{gamma*}{\ensuremath{\gamma^*}}
+\glsxtrnewsymbol[description={relaxation factor}]{omega}{\ensuremath{\omega}}
+\glsxtrnewsymbol[description={IISPH coefficient}]{a_ii}{\ensuremath{a_{ii}}}
+\glsxtrnewsymbol[description={displacement of i due to pressure j}]{d_{ij}p_{j}}{\ensuremath{d_{ii}p_{i}}}
+\glsxtrnewsymbol[description={signed distance function}]{Phi}{\ensuremath{\Phi}}
+\glsxtrnewsymbol[description={blending weight}]{eta}{\ensuremath{\eta}}
+\glsxtrnewsymbol[description={maximum compression}]{lambda}{\ensuremath{\lambda}}
+\glsxtrnewsymbol[description={helper variable}]{psi}{\ensuremath{\psi}}
+\glsxtrnewsymbol[description={occlusion weight}]{Omega}{\ensuremath{\Omega}}
+\glsxtrnewsymbol[description={crosssectional area}]{A}{\ensuremath{A}}
+\glsxtrnewsymbol[description={drag coefficient}]{C_{D}}{\ensuremath{C_{D}}}
+
+
 
 \begin{document}
     \maketitle
@@ -70,7 +112,7 @@
     with $v$ being the velocity and $\nabla$ the gradient operator. It states that the mass of fluid entering a given region must be equal to the mass leaving that region, accounting for any change in density within the fluid. The second part is the incompressible Navier-Stokes equation
 
     \begin{equation}
-        \rho \frac{D v}{D t} = -\nabla p + \mu \nabla^2 v + f_{ext}
+        \rho \frac{D v}{D t} = -\nabla p + \mu \nabla^2 v + F_{ext}
     \end{equation}
 
     which describes the conservation of momentum. Here $\mu$ denotes the dynamic viscosity of the fluid and $f_{ext}$ the influence of external forces. In this context, the pressure $p$ serves as a Lagrange multiplier. Its selection is crucial in ensuring that the conservation of mass is met. Overall the formula describes the interaction of inertial forces, pressure, and viscosity, maintaining the conservation of momentum.
@@ -104,15 +146,22 @@
     \subsection{Smoothed Particle Hydrodynamics}
     Smoothed Particle Hydrodynamics (SPH) is a computational technique widely employed in fluid dynamics and other fields for simulating complex physical phenomena. SPH represents the fluid or material as a collection of discrete particles. Each particle has physical properties such as density, pressure and velocity. 
 
-    These interact through a kernel function $W$ with radius $h$, which smoothes these properties over neighboring particles, allowing for a continuous representation of the material and facilitating the simulation of intricate behaviors, including fluid flow, collision and deformation. An arbitrary field $A$ can be approximated as following, with $m$ being the mass, $x$ and $x_j$ being the position and its neighbor and $\rho$ the density of a particle. \cite{wcsph} 
+    These interact through a kernel function $W$ with radius $h$, which smoothes these properties over neighboring particles, allowing for a continuous representation of the material and facilitating the simulation of intricate behaviors, including fluid flow, collision and deformation. An arbitrary field $H$ can be approximated as following, with $m$ being the mass, $x$ and $x_j$ being the position and its neighbor and $\rho$ the density of a particle. \cite{wcsph} 
 
     \begin{equation}
-        A(x) = \sum_j m_j \frac{A_j}{\rho_j} W(|x - x_j|, h)
+        H(x) = \sum_j m_j \frac{H_j}{\rho_j} W(|x - x_j|, h)
     \end{equation}
 
     This concept is then applied to calculate the properties of a given particle. SPH's versatility extends beyond fluids, making it applicable to problems involving granular materials (e.g. \cite{10.2312:LocalChapterEvents:CEIG:CEIG09:011-018}), astrophysics \cite{Springel_2010}, and even solid mechanics \cite{solid_mechanics}. 
 
-    A typical implementation for a kernel function is the cubic spline kernel by Monaghan \cite{doi:10.1146/annurev.aa.30.090192.002551}. In this work, a spiky kernel as implemented by Sebastian Lague \cite{seblague} is used as it provided better results for granular matter. \\
+    A typical implementation for a kernel function is the cubic spline kernel by Monaghan \cite{doi:10.1146/annurev.aa.30.090192.002551} as shown in figure \ref{fig:kernels}. In this work, a spiky kernel, shown in figure \ref{fig:kernels}, as implemented by Sebastian Lague \cite{seblague} is used, as it provided better results for granular matter. \\
+
+    \begin{figure}[H]
+        \includegraphics[width=0.5\textwidth]{figures/cubic_spline.png}
+        \includegraphics[width=0.5\textwidth]{figures/spiky.png}
+        \caption[Kernel functions]{3D representation of a cubic spline kernel function (left) and the in this work utilized spiky kernel function (right)}
+        \label{fig:kernels}
+    \end{figure}
 
     There are various methods of smoothed particle hydrodynamics (SPH) each tailored to address different challenges in fluid simulation.
 
@@ -144,7 +193,7 @@
     In computer graphics, TinyGLTF \cite{tinygltf} is often used for seamless asset loading of 3D models in the Graphic Language Transmission Format (glTF) and STB Image, which is already integrated into TinyGLTF, is favored for its straightforward approach to handling and processing images, both known for their efficiency and ease of use across different applications.
 
     \subsubsection*{Dear ImGui}
-    Dear ImGui\cite{imgui} is a popular immediate mode graphical user interface (GUI) library. It simplifies the process of creating and integrating user interfaces into applications by providing an intuitive and efficient framework and has implementations for nearly every common graphics API and windowing library. It also supports features like multiple viewports and docking elements to them. \url{}
+    Dear ImGui\cite{imgui} is a popular immediate mode graphical user interface (GUI) library. It simplifies the process of creating and integrating user interfaces into applications by providing an intuitive and efficient framework and has implementations for nearly every common graphics API and windowing library. It also supports features like multiple viewports and docking elements to them.
 
     \subsubsection*{GLFW}
     GLFW \cite{glfw} is a widely-used windowing library that simplifies the creation and management of windows, handling user input and facilitating cross-platform development for OpenGL- and Vulkan-based applications.
@@ -158,7 +207,7 @@
     \pagebreak
     \section{Implementation}\label{sec:impl}
     The whole implementation consists of a simple abstraction over the Vulkan API. This speeds up the creation of all required objects, such as buffers, descriptor sets and pipelines. First all the particles were created on the CPU side and stored as a storage buffer on the GPU. This buffer can later be bound as vertex buffer to be used in the rendering. The rigid bodies, the simulation can interact with, were loaded from the glTF files and processed into buffers and textures to be used by a dedicated renderpass. To incorporate them into the simulation, they were converted into a signed distance representation stored as 3D textures. With this, all the major data for the simulation is accesible on the GPU.
-    The actual algorithm \ref*{alg:main}, which will be explained on the following pages, consists of 14 different compute shaders, which execute the different steps. First, the particles are grouped into their grid cells and the external force for each particle is set to the gravity. Then the resulting grid entries are sorted. Afterwards the start indices of all cells are determined. After that, the density $\rho$, drag force $F^{drag}$, frictional stress $s$, intermediate velocity $v_{adv}$ and intermediate density $\rho_{adv}$ are calulated in separate shaders. Their purpose will be explained in the following subsections. All steps of the simulation are separated by pipeline barriers to ensure a property has been calculated for all particles before accessing them in the next step. After the computation of the intermediate density $\rho_{adv}$ has been issued, the first command buffer is sent to the GPU for processing and its completion is awaited, as the next steps need to be executed for a dynamic amount of iterations. These iterations consist of computing the required variables for the implicit pressure calculation, $d_{ij}p_{j}$ and the predicted pressure $p^{l+1}$ and applying the yield criterion for the stress. After these steps have been executed the average density error $\rho_{avg} - \rho_0$ determines if another iteration is required. For this, the sum of density errors is transfered from the GPU to the CPU and divided by the amount of particles. All other computations happen exclusivly on the GPU by accessing the particles stored in the storage buffer. After the IISPH \ref{sec:iisph} iterations are done, the resulting forces are computed and integrated over the elapsed time. In the last step the simulation is visually enhanced by advecting a set of high resolution particles based on the flow of the before computed low resolution behavior and external forces. After this step the storage buffer containing the high resolution particles is bound to a renderpass for drawing and the algorithm starts from the beginning. All steps will now be explained in detail. Starting of with the neighborhood search in line 1 of the algorithm \ref{alg:main} layed out here:
+    The actual algorithm \ref*{alg:main}, which will be explained on the following pages, consists of 14 different compute shaders, which execute the different steps. First, the particles are grouped into their grid cells and the external force for each particle is set to the gravity. Then the resulting grid entries are sorted. Afterwards the start indices of all cells are determined. After that, the density $\rho$, drag force $F^{drag}$, frictional stress $s$, intermediate velocity $v_{adv}$ and intermediate density $\rho_{adv}$ are calulated in separate shaders. Their purpose will be explained in the following subsections. All steps of the simulation are separated by pipeline barriers to ensure a property has been calculated for all particles before accessing them in the next step. After the computation of the intermediate density $\rho_{adv}$ has been issued, the first command buffer is sent to the GPU for processing and its completion is awaited, as the next steps need to be executed for a dynamic amount of iterations. These iterations consist of computing the required variables for the implicit pressure calculation, such as the displacement due to pressure $d_{ij}p_{j}$ and the predicted pressure $p^{l+1}$ and applying the yield criterion to determine the resulting stress. After these steps have been executed the average density error $\rho_{avg} - \rho_0$ determines if another iteration is required. For this, the sum of density errors is transfered from the GPU to the CPU and divided by the amount of particles. All other computations happen exclusivly on the GPU by accessing the particles stored in the storage buffer. After the IISPH \ref{sec:iisph} iterations are done, the resulting forces are computed and integrated over the elapsed time. In the last step the simulation is visually enhanced by advecting a set of high resolution particles based on the flow of the before computed low resolution behavior and external forces. After this step the storage buffer containing the high resolution particles is bound to a renderpass for drawing and the algorithm starts from the beginning. All steps will now be explained in detail. Starting of with the neighborhood search in line 1 of the algorithm \ref{alg:main} layed out here:
     \begin{algorithm}[H]
         \caption{Full Simulation Frame}
         \label{alg:main}
@@ -170,7 +219,7 @@
         \State compute intermediate velocity$v_{adv}$
         \State compute intermediate density $\rho_{adv}$
         \State iteration index $l = 0$
-        \While {$l < 2$ $||$ $\rho_{avg} - \rho_0 < \eta $}
+        \While {$l < 2$ $||$ $\rho_{avg} - \rho_0 < \lambda $}
             \State compute $d_{ij}p_{j}$
             \State compute $p^{l+1}$
             \State $p(t) = p^{l+1}$
@@ -246,10 +295,10 @@
         v^2_{i,rel} = |v_a - v_i|^2\ \frac{v_a - v_i}{|v_a - v_i|}
     \end{equation}
 
-    The velocity of the air $v_a$ can be set to 0, to represent still air, or could be taken from a velocity field of some kind. Computing the drag force to apply to each particle, involves determining the crosssectional area $A_i$ of a particle. This is approximated by the area of a circle. Then the actual area exposed to oncoming air needs to be determined. For this a cone which is defined by the direction of the relative velocity difference and a set angle is used to check if there are any other particles that shield the current particle from the air. This is done by a dot product of the relative velocity difference and the vector to the neighboring particles, which returns the angle between them. To not only get a boolean value for the shielding, an occlusion value is introduced, which is set to the smallest angle between neighboring particles in the cone. This value is then subtracted from 1 and added to the drag formulation as weight $\omega$. Further parameters for equation \ref{eq:f_drag} by Gissler et al. \cite{10.1016/j.cag.2017.09.002} are $\rho_a$ the density of the air or the medium that surrounds the particles and $C_{D,i}$ the drag coefficient for shape of the particle. The whole formula is then composed as: 
+    The velocity of the air $v_a$ can be set to 0, to represent still air, or could be taken from a velocity field of some kind. Computing the drag force to apply to each particle, involves determining the crosssectional area $A_i$ of a particle. This is approximated by the area of a circle. Then the actual area exposed to oncoming air needs to be determined. For this a cone which is defined by the direction of the relative velocity difference and a set angle is used to check if there are any other particles that shield the current particle from the air. This is done by a dot product of the relative velocity difference and the vector to the neighboring particles, which returns the angle between them. To not only get a boolean value for the shielding, an occlusion value is introduced, which is set to the smallest angle between neighboring particles in the cone. This value is then subtracted from 1 and added to the drag formulation as weight $\Omega$. Further parameters for equation \ref{eq:f_drag} by Gissler et al. \cite{10.1016/j.cag.2017.09.002} are $\rho_a$ the density of the air or the medium that surrounds the particles and $C_{D,i}$ the drag coefficient for shape of the particle. The whole formula is then composed as: 
 
     \begin{equation}
-        F^{drag}_i = \frac{1}{2}\rho_a v^2_{i,rel} C_{D,i}  \omega  A_i
+        F^{drag}_i = \frac{1}{2}\rho_a v^2_{i,rel} C_{D,i}  \Omega  A_i
         \label{eq:f_drag}
     \end{equation}
 
@@ -494,35 +543,35 @@
     After the above described algorithm is executed on the low-resoltion particles, the high resolution particles are advected based on the velocity field of the low-resolution simulation. This is again done by the SPH concept, but with a different smoothing length $h_{HR}$ which is set to $h_{HR} = 3h_{LR}$. To find the velocity of a HR particle a distance based weight $w$ is introduced.
 
     \begin{equation}
-        w(d_{ij}) = \max(0, (1 - \frac{d_{ij}^2}{h_{HR}^2})^3)
+        w(\delta_{ij}) = \max(0, (1 - \frac{\delta_{ij}^2}{h_{HR}^2})^3)
     \end{equation}
 
-    In this equation $i$ refers to a high-resolution particle and $j$ to a low-resoltion particle or a boundary and $d_{ij}$ to the distance between them. The velocity is the computed as the weighted average velocity over the neighboring LR particles.\cite{10.2312:PE:vriphys:vriphys12:053-060}
+    In this equation $i$ refers to a high-resolution particle and $j$ to a low-resoltion particle or a boundary and $\delta_{ij}$ to the distance between them. The velocity is the computed as the weighted average velocity over the neighboring LR particles.\cite{10.2312:PE:vriphys:vriphys12:053-060}
 
     \begin{equation}
-        v_i^*(t + \Delta t) = \frac{1}{\sum_j w(d_{ij})}\sum_j w(d_{ij})v_j
+        v_i^*(t + \Delta t) = \frac{1}{\sum_j w(\delta_{ij})}\sum_j w(\delta_{ij})v_j
     \end{equation}
 
-    As the LR particles should be able to not only follow the flow of the granular material, but react to gravity when there are no LR particles in its range, a blending weight $\alpha$ is introduced, to define the contributions of the simulation and external forces. The final velocity of each HR particle is then computed as:
+    As the LR particles should be able to not only follow the flow of the granular material, but react to gravity when there are no LR particles in its range, a blending weight $\eta$ is introduced, to define the contributions of the simulation and external forces. The final velocity of each HR particle is then computed as:
 
     \begin{equation}
-        v_i(t + \Delta t)  = (1 - \alpha)v_i^*(t + \Delta t) + \alpha(v(t) + \Delta t \frac{F^g}{m})
+        v_i(t + \Delta t)  = (1 - \eta)v_i^*(t + \Delta t) + \eta(v(t) + \Delta t \frac{F^g}{m})
     \end{equation}
 
-    where $\alpha$ is:
+    where $\eta$ is:
 
     \begin{equation}
-        \alpha = 
+        \eta = 
         \begin{cases}
-            1 - \arg \max_j w(d_{ij}),& \text{if } \frac{\arg \max_j w(d_{ij})}{\sum_j w(d_{ij})} \geq 0.6 \\
-            1 - \arg \max_j w(d_{ij}),& \text{if } \arg \max_j w(d_{ij}) \leq w(r_{LR}) \\
+            1 - \arg \max_j w(\delta_{ij}),& \text{if } \frac{\arg \max_j w(\delta_{ij})}{\sum_j w(\delta_{ij})} \geq 0.6 \\
+            1 - \arg \max_j w(\delta_{ij}),& \text{if } \arg \max_j w(\delta_{ij}) \leq w(r_{LR}) \\
             0,              & \text{otherwise}
         \end{cases}
     \end{equation}
 
     The constant $0.6$ is an empirically tested value for the above defined high-resolution smoothing length \cite{10.2312:PE:vriphys:vriphys12:053-060}. 
     
-    To prevent the HR particles from penetrating the boundaries multiple different approaches have been investigated. For these, an additional loop over all volume maps is performed. The first approach tried to modify the $\alpha$ value, by multiplying it with 1 minus the dot product of the external force and the vector to the boundary, clamped between 0 and 1, which prevented the particles from falling through, but made a lot of particles stick to vertical boundaries. For the next approach each boundaries weight was computed by applying the weighting kernel $w(d_{ib})$ with $d_{ib}$ being the distance to the boundary. Then a weighted velocity $w(d_{ib}) v_i(t + \Delta t)$ was computed and subtracted from $v_i(t + \Delta t)$. This also prevented the particles from falling through boundaries and had a lot less sticking occuring.
+    To prevent the HR particles from penetrating the boundaries multiple different approaches have been investigated. For these, an additional loop over all volume maps is performed. The first approach tried to modify the $\eta$ value, by multiplying it with 1 minus the dot product of the external force and the vector to the boundary, clamped between 0 and 1, which prevented the particles from falling through, but made a lot of particles stick to vertical boundaries. For the next approach each boundaries weight was computed by applying the weighting kernel $w(d_{ib})$ with $d_{ib}$ being the distance to the boundary. Then a weighted velocity $w(d_{ib}) v_i(t + \Delta t)$ was computed and subtracted from $v_i(t + \Delta t)$. This also prevented the particles from falling through boundaries and had a lot less sticking occuring.
 
     Additionaly the position of the particle is offset to counteract any penetration, by first determining the signed distance to the boundary, using a dot product of the distance to the boundary $x_{i,b}$ and the surface normal $n$ and adjusting this distance by the low-resolution particle radius and then offseting the position by this distance $\Delta x_{i,b}$ if it is negative. The computation of the final particle position $x_{final}$ is summarized as:
     \begin{equation}
@@ -600,6 +649,8 @@
     \url{https://github.com/andre-neder/granular-matter-sph}.
     \pagebreak
     \listoffigures
+    \pagebreak
+    \printunsrtglossary[type=symbols,style=long]
     \pagebreak
     \printbibliography
 \end{document}
