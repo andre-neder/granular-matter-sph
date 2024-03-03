@@ -285,9 +285,9 @@
 
     \subsection{External forces}
     A change in density can be achieved by applying external forces to the particles. In this simulation a gravitational force and an approximated drag force are employed.
-    \subsection{Gravity}
+    \subsubsection{Gravity}
     Gravity is given as a fixed acceleration in a given direction in 3D space. Multiplied with the weight of a given particle we get a force, which we can use in our integration step.
-    \subsection{Drag}
+    \subsubsection{Drag}
     As an additional force that approximates the interaction with air, a drag force $F^{drag}$ was applied, which uses a simplified implementation of the drag by Gissler et al.\cite{10.1016/j.cag.2017.09.002}. For this the relative velocity difference of a particle to the surrounding air is computed and its length squared. 
 
     \begin{equation}
@@ -322,7 +322,16 @@
         v_{a, i} = v_{a} - v_{a} \cdot n_i
     \end{equation}
 
-    The rough approximation for the air flowing over the surface of the granular matierial $v_{air, i}$, was then plugged into equation \ref{eq:v_rel}.
+    The rough approximation for the air flowing over the surface of the granular matierial $v_{air, i}$, was then plugged into equation \ref{eq:v_rel}. \\
+    This yields an effect where a sandpile blown by wind towers on the windward side (direction the wind is coming from) and flattens on the leeward side (the wind averted side). On the ridge between them, the particles detach from the pile and are fly through the air. The effect is shown in figure \ref{fig:blow} and is comparable to the behavior seen at dunes.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{figures/wind_blown_pile.png}
+        \caption[A pile of sand blown by wind coming from the left]{A pile of sand blown by wind coming from the left}
+        \label{fig:blow}
+    \end{figure}
+
 
     \subsection{Strain \& Stress}
     
