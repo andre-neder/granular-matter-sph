@@ -302,7 +302,15 @@
         \label{eq:f_drag}
     \end{equation}
 
-    The deformation of a particle by the oncoming air is left out in this implementation.
+    The deformation of a particle by the oncoming air is left out in this implementation. \\
+    The drag force deforms a falling pillar of sand at its tip, as it reaches its terminal velocity. This effect is shown in figure \ref*{fig:drag}.
+
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.7\textwidth]{figures/drag.png}
+        \caption[A pillar of sand falling through air]{A pillar of sand falling through air}
+        \label{fig:drag}
+    \end{figure}
 
     To have not only the air influence the granular material, but have the air also flow over and around it, another compute pass was added to calculate the surface normal $n$ for each particle, using the gradient of the so called smoothed color field $\nabla c^s$ as proposed by Müller et al. \cite{10.5555/846276.846298}:
 
@@ -323,7 +331,7 @@
     \end{equation}
 
     The rough approximation for the air flowing over the surface of the granular matierial $v_{air, i}$, was then plugged into equation \ref{eq:v_rel}. \\
-    This yields an effect where a sandpile blown by wind towers on the windward side (direction the wind is coming from) and flattens on the leeward side (the wind averted side). On the ridge between them, the particles detach from the pile and are fly through the air. The effect is shown in figure \ref{fig:blow} and is comparable to the behavior seen at dunes.
+    This yields an effect where a sandpile blown by wind towers on the windward side (direction the wind is coming from) and flattens on the leeward side (the wind averted side). On the ridge between them, the particles detach from the pile and are fly through the air. The effect is shown in figure \ref{fig:blow} and is comparable to the behavior of dunes.
 
     \begin{figure}[H]
         \centering
