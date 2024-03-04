@@ -178,7 +178,7 @@ void Model::loadImages(tinygltf::Model &input)
 			throw std::runtime_error("unsported Image Format!");
 		}
 
-        auto image = core->image2DFromData(buffer, vk::ImageUsageFlagBits::eSampled, vma::MemoryUsage::eAutoPreferDevice, {}, 1, 1, vk::Format::eR8G8B8A8Unorm);
+        auto image = core->image2DFromData(buffer, vk::ImageUsageFlagBits::eSampled, vma::MemoryUsage::eAutoPreferDevice, {}, width, height, vk::Format::eR8G8B8A8Unorm);
 		images.push_back(image);
 
 		if (deleteBuffer) {
