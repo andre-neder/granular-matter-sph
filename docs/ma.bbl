@@ -1978,6 +1978,56 @@
       \verb https://learnopengl.com/Advanced-OpenGL/Instancing
       \endverb
     \endentry
+    \entry{dumptruckmodel}{article}{}
+      \name{author}{1}{}{%
+        {{hash=0a05379ce2fa1bd434759d5a30935e8c}{%
+           family={ElectroNick},
+           familyi={E\bibinitperiod}}}%
+      }
+      \strng{namehash}{0a05379ce2fa1bd434759d5a30935e8c}
+      \strng{fullhash}{0a05379ce2fa1bd434759d5a30935e8c}
+      \strng{bibnamehash}{0a05379ce2fa1bd434759d5a30935e8c}
+      \strng{authorbibnamehash}{0a05379ce2fa1bd434759d5a30935e8c}
+      \strng{authornamehash}{0a05379ce2fa1bd434759d5a30935e8c}
+      \strng{authorfullhash}{0a05379ce2fa1bd434759d5a30935e8c}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Dump Truck Model}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://sketchfab.com/3d-models/dump-truck-781c616da8f44982a59cb3fc3fa67f98
+      \endverb
+      \verb{url}
+      \verb https://sketchfab.com/3d-models/dump-truck-781c616da8f44982a59cb3fc3fa67f98
+      \endverb
+    \endentry
+    \entry{hourglasmodel}{article}{}
+      \name{author}{1}{}{%
+        {{hash=3ce1d10a7783abf937b7431f277f4754}{%
+           family={edmx},
+           familyi={e\bibinitperiod}}}%
+      }
+      \strng{namehash}{3ce1d10a7783abf937b7431f277f4754}
+      \strng{fullhash}{3ce1d10a7783abf937b7431f277f4754}
+      \strng{bibnamehash}{3ce1d10a7783abf937b7431f277f4754}
+      \strng{authorbibnamehash}{3ce1d10a7783abf937b7431f277f4754}
+      \strng{authornamehash}{3ce1d10a7783abf937b7431f277f4754}
+      \strng{authorfullhash}{3ce1d10a7783abf937b7431f277f4754}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Hour Glas Model}
+      \true{nocite}
+      \verb{urlraw}
+      \verb https://www.turbosquid.com/3d-models/hourglass-sand-particle-obj-free/760427
+      \endverb
+      \verb{url}
+      \verb https://www.turbosquid.com/3d-models/hourglass-sand-particle-obj-free/760427
+      \endverb
+    \endentry
   \enddatalist
 \endrefsection
 \endinput
